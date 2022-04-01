@@ -1,0 +1,38 @@
+{
+  "name": "collaborative-data",
+  "version": "1.0.0",
+  "description": "Сервис предоставляющий услугу совместного использования данных в реальном времени.",
+  "repository": "git@github.com:mitya-borodin/collaborative-data.git",
+  "license": "unlicense",
+  "private": true,
+  "scripts": {
+    "prettier:base": "prettier \"**/*.{js,ts{,x},yml,yaml,json,md}\"",
+    "prettier:write": "yarn prettier:base --write",
+    "prettier:check": "yarn prettier:base --check",
+    "lint:check": "yarn eslint --max-warnings 0 --format stylish \"!(node_modules)/!(deps|node_modules)/**/*.ts{,x}\"",
+    "lint:write": "yarn lint:check --fix",
+    "prepare": "husky install",
+    "ncu:outdated": "npm-check-updates",
+    "ncu:upgrade": "npm-check-updates -u --target minor"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "eslint --max-warnings 100 --format stylish --fix"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.17.0",
+    "@typescript-eslint/parser": "^5.17.0",
+    "eslint": "^8.12.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-jest": "^26.1.3",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "npm-check-updates": "^12.5.4",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.7",
+    "prettier": "^2.6.1",
+    "pretty-quick": "^3.1.3",
+    "typescript": "^4.4.4"
+  }
+}

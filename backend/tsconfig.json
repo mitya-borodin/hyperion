@@ -1,0 +1,21 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
+  "include": [
+    "**/src/**/*.ts",
+    "**/test/**/*.ts",
+    "src/infrastructure/sharedb/create-sharedb-backend.js"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "baseUrl": ".",
+    "noEmit": true,
+    "sourceMap": true,
+    "importHelpers": true,
+    "allowSyntheticDefaultImports": true,
+    "noPropertyAccessFromIndexSignature": false
+  }
+}

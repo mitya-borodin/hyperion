@@ -1,0 +1,173 @@
+{
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter.notebook.ipynb"
+  },
+  "workbench.editor.revealIfOpen": true,
+  "workbench.startupEditor": "newUntitledFile",
+  "workbench.colorTheme": "One Dark Pro",
+  "workbench.iconTheme": "material-icon-theme",
+
+  "search.followSymlinks": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/dist": true,
+    "**/coverage": true
+  },
+
+  "npm.packageManager": "yarn",
+
+  "files.autoSave": "afterDelay",
+  "files.associations": {
+    "*.ts": "typescript"
+  },
+  "files.autoGuessEncoding": true,
+
+  "editor.formatOnSave": true,
+  "editor.accessibilitySupport": "off",
+  "editor.wordWrap": "on",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": false,
+    "source.fixAll.eslint": true,
+    "source.fixAll": true,
+    "source.fixAll.stylelint": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[proto3]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "editor.minimap.enabled": false,
+
+  "yaml.format.singleQuote": true,
+
+  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.wordWrap": "off",
+
+  "html.format.endWithNewline": true,
+  "html.format.indentHandlebars": true,
+  "html.format.indentInnerHtml": true,
+  "html.format.templating": true,
+
+  "eslint.alwaysShowStatus": true,
+  "eslint.validate": ["javascript", "typescript"],
+  "eslint.packageManager": "yarn",
+  "eslint.format.enable": true,
+  "eslint.lintTask.enable": true,
+  "eslint.workingDirectories": ["./backend", "./frontend"],
+
+  "git.confirmSync": false,
+  "git.enableStatusBarSync": true,
+  "git.enableSmartCommit": true,
+  "git.showProgress": true,
+  "git.autofetch": true,
+  "git.showPushSuccessNotification": true,
+
+  "githubPullRequests.remotes": ["origin"],
+
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.views.repositories.files.layout": "tree",
+  "gitlens.codeLens.scopes": ["document", "containers"],
+
+  "markdown.extension.tableFormatter.normalizeIndentation": true,
+
+  "typescript.referencesCodeLens.enabled": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.preferences.importModuleSpecifierEnding": "minimal",
+
+  "javascript.preferences.importModuleSpecifierEnding": "minimal",
+  "javascript.preferences.importModuleSpecifier": "project-relative",
+
+  "shellformat.useEditorConfig": true,
+
+  "scss.validate": false,
+  "less.validate": false,
+
+  "better-comments.tags": [
+    {
+      "bold": false,
+      "color": "#FF2D00",
+      "italic": false,
+      "strikethrough": false,
+      "tag": "!",
+      "underline": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "bold": false,
+      "color": "#3498DB",
+      "italic": false,
+      "strikethrough": false,
+      "tag": "?",
+      "underline": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "bold": false,
+      "color": "#474747",
+      "italic": false,
+      "strikethrough": true,
+      "tag": "//",
+      "underline": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "bold": false,
+      "color": "#FF8C00",
+      "italic": false,
+      "strikethrough": false,
+      "tag": "todo",
+      "underline": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "bold": false,
+      "color": "#98C379",
+      "italic": false,
+      "strikethrough": false,
+      "tag": "*",
+      "underline": false,
+      "backgroundColor": "transparent"
+    }
+  ],
+  "cSpell.words": ["objectd", "Pino", "rethinkdb", "sharedb", "wirenboard"],
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
+}

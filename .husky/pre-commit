@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npx --no-install pretty-quick --staged --pattern "**/*.{ts,js,tsx,jsx,yml,yaml,json,md}"
+npx --no-install lint-staged

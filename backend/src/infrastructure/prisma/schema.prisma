@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_PG_DATABASE_URL")
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  accountName    String?
+  theme          Theme            @default(LIGHT)
+  password       String
+  salt           String
+  status         Status           @default(CREATED)
+  createAt       DateTime         @default(now())
+  updateAt       DateTime         @updatedAt
+  confirmEmail   ConfirmEmail?
+  refreshSession RefreshSession[]
+  rooms          Room[]
+  key            Key?             @relation(fields: [keyId], references: [id])
+  keyId          Int?
+  planUsage      PlanUsage?       @relation(fields: [planUsageId], references: [id])
+  planUsageId    Int?
+  stats          Stats?           @relation(fields: [statsId], references: [id])
+  statsId        Int?
+  billing        Billing?         @relation(fields: [billingId], references: [id])
+  billingId      Int?
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+enum Status {
+  CREATED
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+model RefreshSession {
+  id           Int      @id @default(autoincrement())
+  refreshToken String   @unique
+  fingerprint  String   @unique
+  expiresIn    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+}
+
+model ConfirmEmail {
+  id        Int      @id @default(autoincrement())
+  uuid      String
+  ttl       Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+}
+
+model Room {
+  id                        Int      @id @default(autoincrement())
+  name                      String
+  lastUpdate                DateTime
+  maxSimultaneousConnection Int
+  storageSpace              Int
+  createAt                  DateTime @default(now())
+  updateAt                  DateTime @updatedAt
+  user                      User     @relation(fields: [userId], references: [id])
+  userId                    Int
+}
+
+model Key {
+  id       Int      @id @default(autoincrement())
+  public   String
+  private  String
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  user     User[]
+}
+
+model PlanUsage {
+  id                  Int      @id @default(autoincrement())
+  connections         Int
+  simultaneousPerRoom Int
+  storage             BigInt
+  createAt            DateTime @default(now())
+  updateAt            DateTime @updatedAt
+  user                User[]
+}
+
+model Stats {
+  id                             Int                              @id @default(autoincrement())
+  user                           User[]
+  connections                    Connection[]
+  activeRooms                    ActiveRoom[]
+  simultaneousConnections        SimultaneousConnection[]
+  simultaneousConnectionsPerRoom SimultaneousConnectionsPerRoom[]
+}
+
+model ActiveRoom {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @updatedAt
+  value    Int
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  Stats    Stats    @relation(fields: [statsId], references: [id])
+  statsId  Int
+}
+
+model Connection {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @updatedAt
+  value    Int
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  stats    Stats    @relation(fields: [statsId], references: [id])
+  statsId  Int
+}
+
+model SimultaneousConnection {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @updatedAt
+  value    Int
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  stats    Stats    @relation(fields: [statsId], references: [id])
+  statsId  Int
+}
+
+model SimultaneousConnectionsPerRoom {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @updatedAt
+  value    Int
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  stats    Stats    @relation(fields: [statsId], references: [id])
+  statsId  Int
+}
+
+model Billing {
+  id          Int      @id @default(autoincrement())
+  rate        Rate     @default(FREE)
+  stripeToken String
+  createAt    DateTime @default(now())
+  updateAt    DateTime @updatedAt
+  user        User[]
+}
+
+enum Rate {
+  FREE
+  TRIAL
+  STANDART
+  PRO
+}
