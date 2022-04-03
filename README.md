@@ -2,19 +2,19 @@
 
 Butler is software which control all electronic system which powered by [wirenboard controller](https://wirenboard.com/ru/product/wiren-board-7/).
 
-## Технологии
+## Technology
 
 - [Typescript](https://www.typescriptlang.org)
 - [Typescript CLI](https://www.typescriptlang.org/docs/handbook/compiler-options.html#using-the-cli)
 
-### Front-end
+### Frontend
 
 - [SolidJS](https://www.solidjs.com)
 - [Tailwind](https://tailwindcss.com)
 - [Mobx](https://mobx.js.org/README.html)
 - [Snowpack](https://www.snowpack.dev/)
 
-### Back-end
+### Backend
 
 - [NodeJS](https://nodejs.org/en/)
 - [Fastify](https://www.fastify.io)
@@ -25,11 +25,11 @@ Butler is software which control all electronic system which powered by [wirenbo
 - [RethinkDB](https://rethinkdb.com)
 - [Docker only for development in OS which will install on wirenboard](https://www.docker.com/)
 
-## Окружение
+## Environment
 
-- Требуется `Node@14.17.6` `npm@6.14.15` или старше
-- Требуется `Yarn 1.22.17` или старше
-- Требуется `Docker version 20.10.8, build 3967b7d` или старше
+- Required `Node@14.17.6` `npm@6.14.15` or older
+- Required `Yarn 1.22.17` or older
+- Required `Docker version 20.10.8, build 3967b7d` or older
 
 ## IDE
 
