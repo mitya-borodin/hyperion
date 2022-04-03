@@ -1,6 +1,5 @@
 # custom ignores
 dist
-yarn.lock
 
 # Created by https://www.gitignore.io/api/node,macos
 
@@ -139,3 +138,6 @@ terraform/kubectl
 .snowpack
 
 .env
+
+# RethinkDB
+/rethinkdb/rethinkdb_data

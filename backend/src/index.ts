@@ -1,32 +1,23 @@
-import { PrismaClient } from "@prisma/client";
-import type { Files } from "formidable";
-import type Koa from "koa";
+import { AbortController } from "node-abort-controller";
+import pino from "pino";
 
 import { config } from "./infrastructure/config";
-import { createKoaServer } from "./infrastructure/koa-server";
-import { UserRepository } from "./infrastructure/prisma/user-repository";
-import { sharedb } from "./infrastructure/sharedb";
-/* eslint-disable no-unused-vars */
-import type { User } from "./infrastructure/types/user";
+import { connectToRethinkDb } from "./infrastructure/rethinkdb";
+
+const logger = pino({ name: "entrypoint" });
+
+// ! This is entrypoint of whole application
+// TODO Need implement wrapper which will control graceful shutdown and catch unexpected errors.
 
 (async () => {
-  const prisma = new PrismaClient();
+  const abortController = new AbortController();
 
-  const userRepository = new UserRepository(prisma, config);
-
-  const koaServer = createKoaServer({ userRepository });
-
-  console.log(2133444);
-
-  await sharedb.run();
-  await koaServer.run();
+  const rethinkdbConnection = await connectToRethinkDb(
+    abortController.signal,
+    {
+      host: config.rethinkdb.host,
+      password: config.rethinkdb.host,
+    },
+    logger.child({ name: "rethinkdbConnection" }),
+  );
 })();
-
-// declare module "sharedb-mongo";
-declare module "koa" {
-  interface Request extends Koa.BaseRequest {
-    user: User | null;
-    files: Files;
-    body: { [key: string]: unknown };
-  }
-}
