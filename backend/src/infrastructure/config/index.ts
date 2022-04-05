@@ -25,6 +25,8 @@ export class Config {
     port: string;
   };
 
+  public readonly gracefullyShutdownMs: string;
+
   constructor() {
     this.production = process.env.NODE_ENV === "production";
 
@@ -45,6 +47,8 @@ export class Config {
     if (!this.production) {
       logger.info(this, "Application configuration");
     }
+
+    this.gracefullyShutdownMs = process.env.GRACEFULLY_SHUTDOWN_MS ?? "1000";
   }
 
   private toLogLevel(level?: string): Level {

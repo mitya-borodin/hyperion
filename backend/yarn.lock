@@ -706,6 +706,11 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/defer-promise@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/defer-promise/-/defer-promise-1.0.0.tgz#9c5054b7ef63fd0f0497d17b0ea1a849f9c6323b"
+  integrity sha512-NJAgn+jlo8V2TD0rj8zQy1nRzNLX73MQARTSQzWxco94lwzTOwRp7FPu7r4/Cnz715DxCWMGf3epjo7wbDBhVA==
+
 "@types/dotenv@^8.2.0":
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/@types/dotenv/-/dotenv-8.2.0.tgz#5cd64710c3c98e82d9d15844375a33bf1b45d053"
@@ -1647,6 +1652,11 @@ deepmerge@^4.2.2:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.2.2.tgz#44d2ea3679b8f4d4ffba33f03d865fc1e7bf4955"
   integrity sha512-FJ3UgI4gIl+PHZm53knsuSFpE+nESMr7M4v9QcgB7S63Kj/6WqMiFQJpBBYz1Pt+66bZpP3Q7Lye0Oo9MPKEdg==
+
+defer-promise@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/defer-promise/-/defer-promise-3.0.0.tgz#6dc55a40aa28d408b9b8914f27910cae928ff4d8"
+  integrity sha512-GkmLfjdHisLJpzYWreon6j8s8d1EGGNF2Q1uniozoCO53BPXRD55Gs/huNhZDAgbsbL1xoTmxzTBDTSllMfKTQ==
 
 defer-to-connect@^1.0.1:
   version "1.1.3"

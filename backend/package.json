@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "abort-controller-x": "^0.2.6",
+    "defer-promise": "^3.0.0",
     "dotenv": "^14.2.0",
     "fastify": "^3.27.4",
     "fastify-helmet": "^7.0.1",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.2",
+    "@types/defer-promise": "^1.0.0",
     "@types/dotenv": "^8.2.0",
     "@types/jest": "^27.0.3",
     "@types/mocha": "^9.0.0",
