@@ -87,8 +87,8 @@ export function connectToRethinkDb(
       return connection;
     },
     {
-      onError(err, attempt, delayMs) {
-        logger.error({ err, attempt, delayMs }, "Failed to connect to RethinkDB, retrying");
+      onError(error, attempt, delayMs) {
+        logger.error({ error, attempt, delayMs }, "Failed to connect to RethinkDB, retrying");
       },
     },
   );
@@ -113,8 +113,8 @@ export function reconnectToRethinkDb(
       logger.debug("Connection to RethinkDB has been restored");
     },
     {
-      onError(err, attempt, delayMs) {
-        logger.error({ err, attempt, delayMs }, "Failed to reconnect to RethinkDB, retrying");
+      onError(error, attempt, delayMs) {
+        logger.error({ error, attempt, delayMs }, "Failed to reconnect to RethinkDB, retrying");
       },
     },
   );
