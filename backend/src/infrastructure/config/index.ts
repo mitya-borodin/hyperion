@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 
 import dotenv from "dotenv";
@@ -12,22 +13,27 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export class Config {
+  public readonly appName: string;
   public readonly production: boolean;
+
   public readonly log: {
     level: Level;
   };
+
   public readonly fastify: {
     host: string;
-    port: string;
+    port: number;
   };
+
   public readonly rethinkdb: {
     host: string;
-    port: string;
+    port: number;
   };
 
-  public readonly gracefullyShutdownMs: string;
+  public readonly gracefullyShutdownMs: number;
 
   constructor() {
+    this.appName = process.env.APP_NAME ?? os.hostname();
     this.production = process.env.NODE_ENV === "production";
 
     this.log = {
@@ -36,19 +42,31 @@ export class Config {
 
     this.fastify = {
       host: process.env.FASTIFY_HOST ?? "localhost",
-      port: process.env.FASTIFY_PORT ?? "3000",
+      port: parseInt(process.env.FASTIFY_PORT ?? "3000"),
     };
+
+    if (!Number.isSafeInteger(this.fastify.port)) {
+      this.fastify.port = 1000;
+    }
 
     this.rethinkdb = {
       host: process.env.RETHINKDB_HOST ?? "localhost",
-      port: process.env.RETHINKDB_PORT ?? "28015",
+      port: parseInt(process.env.RETHINKDB_PORT ?? "28015"),
     };
+
+    if (!Number.isSafeInteger(this.rethinkdb.port)) {
+      this.rethinkdb.port = 1000;
+    }
 
     if (!this.production) {
       logger.info(this, "Application configuration");
     }
 
-    this.gracefullyShutdownMs = process.env.GRACEFULLY_SHUTDOWN_MS ?? "1000";
+    this.gracefullyShutdownMs = parseInt(process.env.GRACEFULLY_SHUTDOWN_MS ?? "5000");
+
+    if (!Number.isSafeInteger(this.gracefullyShutdownMs)) {
+      this.gracefullyShutdownMs = 5_000;
+    }
   }
 
   private toLogLevel(level?: string): Level {
@@ -76,7 +94,7 @@ export class Config {
       return "trace";
     }
 
-    return "debug";
+    return "info";
   }
 }
 
