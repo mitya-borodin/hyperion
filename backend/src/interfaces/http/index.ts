@@ -14,11 +14,9 @@ type CreateHttpInterfaceParams = {
 
 export const createHttpInterface = ({ config }: CreateHttpInterfaceParams): FastifyInstance => {
   const fastify = Fastify({
-    ignoreTrailingSlash: true,
     logger: {
       level: config.log.level,
     },
-    trustProxy: true,
   });
 
   fastify.register(helmet);
