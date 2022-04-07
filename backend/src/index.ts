@@ -1,3 +1,5 @@
+import { forever } from "abort-controller-x";
+
 import { config } from "./infrastructure/config";
 import { entrypoint } from "./infrastructure/entrypoint";
 import { connectToRethinkDb } from "./infrastructure/rethinkdb";
@@ -13,4 +15,6 @@ entrypoint(async ({ signal, logger, defer }) => {
   );
 
   defer(() => rethinkdbConnection.close());
+
+  await forever(signal);
 });
