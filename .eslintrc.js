@@ -34,6 +34,7 @@ module.exports = {
     ],
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     "linebreak-style": ["warn", require("os").EOL === "\r\n" ? "windows" : "unix"],
+    "no-constant-condition": "off",
   },
   overrides: [
     // eslint-disable-next-line @typescript-eslint/no-var-requires
