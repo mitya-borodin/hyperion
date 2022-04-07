@@ -84,6 +84,8 @@ export function connectToRethinkDb(
         throwIfAborted(signal);
       }
 
+      logger.debug("Connection to RethinkDB has been established");
+
       return connection;
     },
     {

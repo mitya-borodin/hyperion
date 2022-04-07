@@ -2,6 +2,8 @@ import Fastify, { FastifyInstance } from "fastify";
 import helmet from "fastify-helmet";
 import metricsPlugin from "fastify-metrics";
 import Swagger from "fastify-swagger";
+import { Logger } from "pino";
+import { Connection } from "rethinkdb-ts";
 
 import { Config } from "../../infrastructure/config";
 import { register } from "../../infrastructure/prometheus";
@@ -10,6 +12,8 @@ import routerFastifyPlugin from "./routes";
 
 type CreateHttpInterfaceParams = {
   config: Config;
+  rethinkdbConnection: Connection;
+  logger: Logger;
 };
 
 export const createHttpInterface = ({ config }: CreateHttpInterfaceParams): FastifyInstance => {
