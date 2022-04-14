@@ -2,9 +2,7 @@ import os from "os";
 import path from "path";
 
 import dotenv from "dotenv";
-import pino, { Level } from "pino";
-
-const logger = pino({ name: "config", level: "trace" });
+import type { Level } from "pino";
 
 const rootDir = path.resolve(__dirname, "../../..");
 
