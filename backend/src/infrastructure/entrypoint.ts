@@ -108,7 +108,7 @@ export const entrypoint = async (executor: Executor) => {
     );
 
     const gracefullyShutdownTimer = setTimeout(() => {
-      process.exit();
+      process.exit(1);
     }, config.gracefullyShutdownMs);
 
     // https://nodejs.org/api/timers.html#timeoutunref
