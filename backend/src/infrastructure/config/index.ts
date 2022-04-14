@@ -58,10 +58,6 @@ export class Config {
       this.rethinkdb.port = 1000;
     }
 
-    if (!this.production) {
-      logger.info(this, "Application configuration");
-    }
-
     this.gracefullyShutdownMs = parseInt(process.env.GRACEFULLY_SHUTDOWN_MS ?? "5000");
 
     if (!Number.isSafeInteger(this.gracefullyShutdownMs)) {

@@ -2,7 +2,8 @@ import { forever, waitForEvent } from "abort-controller-x";
 
 import { config } from "./infrastructure/config";
 import { entrypoint } from "./infrastructure/entrypoint";
-import { connectToRethinkDb, reconnectToRethinkDb } from "./infrastructure/rethinkdb";
+import { initRethinkdbSchema } from "./infrastructure/rethinkdb";
+import { connectToRethinkDb, reconnectToRethinkDb } from "./infrastructure/rethinkdb/common";
 import { createHttpInterface } from "./interfaces/http";
 
 entrypoint(async ({ signal, logger, defer, fork }) => {
@@ -10,7 +11,7 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
     signal,
     {
       host: config.rethinkdb.host,
-      password: config.rethinkdb.host,
+      port: config.rethinkdb.port,
     },
     logger.child({ name: "connectToRethinkDb" }),
   );
@@ -28,15 +29,15 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
 
   defer(() => rethinkdbConnection.close());
 
+  await initRethinkdbSchema(rethinkdbConnection);
+
   const fastify = createHttpInterface({
     config,
     rethinkdbConnection,
     logger: logger.child({ name: "httpServer" }),
   });
 
-  const address = await fastify.listen(config.fastify.port, config.fastify.host);
-
-  logger.info({ address }, "HTTP server is running");
+  await fastify.listen(config.fastify.port, config.fastify.host);
 
   defer(() => fastify.close());
 

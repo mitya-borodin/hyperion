@@ -1,6 +1,6 @@
 import { Connection } from "rethinkdb-ts";
 
-import { createTable, db } from "..";
+import { createTable, db } from "../common";
 
 const tableName = "illumination";
 
