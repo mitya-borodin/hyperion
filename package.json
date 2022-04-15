@@ -1,10 +1,9 @@
 {
-  "name": "collaborative-data",
+  "name": "butler",
   "version": "1.0.0",
-  "description": "Сервис предоставляющий услугу совместного использования данных в реальном времени.",
-  "repository": "git@github.com:mitya-borodin/collaborative-data.git",
-  "license": "unlicense",
-  "private": true,
+  "description": "Server controlling 'wirenboard' via MQTT protocol",
+  "repository": "git@github.com:mitya-borodin/butler.git",
+  "license": "MIT",
   "scripts": {
     "prettier:base": "prettier \"**/*.{js,ts{,x},yml,yaml,json,md}\"",
     "prettier:write": "yarn prettier:base --write",
