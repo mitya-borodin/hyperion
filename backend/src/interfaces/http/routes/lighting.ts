@@ -1,12 +1,12 @@
 import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 
-import stateLightningQuerystringSchema from "../schemas/illumination/get-state.querystring.json";
-import { StateLightningQuerystringSchema } from "../types/illumination/get-state.querystring";
+import stateLightningQuerystringSchema from "../schemas/lighting/get-state.querystring.json";
+import { StateLightningQuerystringSchema } from "../types/lighting/get-state.querystring";
 
-export type illuminationFastifyPluginOptions = Record<never, never>;
+export type lightingFastifyPluginOptions = Record<never, never>;
 
-const illumination: FastifyPluginAsync<illuminationFastifyPluginOptions> = async (
+const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   fastify,
   options,
 ): Promise<void> => {
@@ -48,9 +48,9 @@ const illumination: FastifyPluginAsync<illuminationFastifyPluginOptions> = async
   });
 };
 
-export const illuminationFastifyPlugin = fp(illumination, {
+export const lightingFastifyPlugin = fp(lighting, {
   fastify: "3.x",
-  name: "fastify-illumination-router",
+  name: "fastify-lighting-router",
 });
 
-export default illuminationFastifyPlugin;
+export default lightingFastifyPlugin;

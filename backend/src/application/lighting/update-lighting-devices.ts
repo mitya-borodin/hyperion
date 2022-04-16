@@ -1,0 +1,22 @@
+import { Either } from "fp-ts/lib/Either";
+
+import { LightingDevice } from "../../domain/lighting/lighting-device";
+import {
+  ILightingRepository,
+  UpdateLightingDevices,
+} from "../../domain/lighting/lighting-repository";
+import type { Command } from "../Command";
+
+type Params = {
+  devices: UpdateLightingDevices[];
+};
+
+type Output = Either<Error, LightingDevice[]>;
+
+export const getUpdateLightingDevicesCommand = (
+  lightingRepository: ILightingRepository,
+): Command<Params, Promise<Output>> => {
+  return async (params: Params): Promise<Output> => {
+    return lightingRepository.updateLightingDevices(params.devices);
+  };
+};

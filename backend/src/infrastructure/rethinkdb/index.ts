@@ -1,11 +1,11 @@
 import { Connection } from "rethinkdb-ts";
 
 import { createDB } from "./common";
-import { createIlluminationTable } from "./tables/illumination";
-import { createIlluminationHistoryTable } from "./tables/illumination-history";
+import { createLightingDeviceTable } from "./tables/lighting-device";
+import { createLightingGroupTableTable } from "./tables/lighting-group";
 
 export const initRethinkdbSchema = async (rethinkdbConnection: Connection) => {
   await createDB(rethinkdbConnection);
-  await createIlluminationTable(rethinkdbConnection, 1);
-  await createIlluminationHistoryTable(rethinkdbConnection, 1);
+  await createLightingDeviceTable(rethinkdbConnection, 1);
+  await createLightingGroupTableTable(rethinkdbConnection, 1);
 };
