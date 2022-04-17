@@ -9,3 +9,12 @@ services:
       - "127.0.0.1:27015:8080"
     volumes:
       - ./rethinkdb:/data
+  rethinkdb_test:
+    restart: "always"
+    image: rethinkdb:2.4.1
+    ports:
+      - "127.0.0.1:29016:29015"
+      - "127.0.0.1:28016:28015"
+      - "127.0.0.1:27016:8080"
+    volumes:
+      - ./rethinkdb_test:/data

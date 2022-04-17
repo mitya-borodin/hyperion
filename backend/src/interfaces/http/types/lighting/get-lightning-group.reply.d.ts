@@ -5,6 +5,13 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface StateLightningQuerystringSchema {
-  name: string;
+export interface GetLightningGroupReplySchema {
+  location: string;
+  state: "ON" | "OFF";
+  /**
+   * Devices is device ids
+   */
+  devices: string[];
+  createdAt: string;
+  updatedAt: string;
 }

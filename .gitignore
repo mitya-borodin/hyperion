@@ -141,3 +141,4 @@ terraform/kubectl
 
 # RethinkDB
 /rethinkdb/rethinkdb_data
+/rethinkdb_test/rethinkdb_data

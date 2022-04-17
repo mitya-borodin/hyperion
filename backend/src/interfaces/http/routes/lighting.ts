@@ -1,49 +1,91 @@
 import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
+import { isLeft } from "fp-ts/lib/Either";
+import HttpStatusCodes from "http-status-codes";
+import { Logger } from "pino";
 
-import stateLightningQuerystringSchema from "../schemas/lighting/get-state.querystring.json";
-import { StateLightningQuerystringSchema } from "../types/lighting/get-state.querystring";
+import { getGetLightningDeviceCommand } from "../../../application/lighting/get-lightning-device";
+import { getGetLightningGroupCommand } from "../../../application/lighting/get-lightning-group";
+import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
+import getLightningDeviceQuerystringSchema from "../schemas/lighting/get-lightning-device.querystring.json";
+import getLightningDeviceReplySchema from "../schemas/lighting/get-lightning-device.reply.json";
+import getLightningGroupQuerystringSchema from "../schemas/lighting/get-lightning-group.querystring.json";
+import getLightningGroupReplySchema from "../schemas/lighting/get-lightning-group.reply.json";
+import { GetLightningDeviceQuerystringSchema } from "../types/lighting/get-lightning-device.querystring";
+import { GetLightningDeviceReplySchema } from "../types/lighting/get-lightning-device.reply";
+import { GetLightningGroupQuerystringSchema } from "../types/lighting/get-lightning-group.querystring";
+import { GetLightningGroupReplySchema } from "../types/lighting/get-lightning-group.reply";
 
-export type lightingFastifyPluginOptions = Record<never, never>;
+export type lightingFastifyPluginOptions = {
+  logger: Logger;
+  lightingRepository: ILightingRepository;
+};
 
 const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   fastify,
   options,
 ): Promise<void> => {
-  fastify.route<{ Querystring: StateLightningQuerystringSchema }>({
+  const logger = options.logger.child({ name: "fastify-lighting-router" });
+
+  const { lightingRepository } = options;
+
+  fastify.route<{
+    Querystring: GetLightningDeviceQuerystringSchema;
+    Reply: GetLightningDeviceReplySchema;
+  }>({
     method: "GET",
-    url: "/state",
+    url: "/get-lightning-device",
     schema: {
-      querystring: stateLightningQuerystringSchema,
+      querystring: getLightningDeviceQuerystringSchema,
+      response: {
+        [HttpStatusCodes.OK]: getLightningDeviceReplySchema,
+      },
+      tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { name } = request.query;
+      const { deviceId } = request.query;
 
-      reply.send({ hello: "options.name" });
+      const getLightningDeviceCommand = getGetLightningDeviceCommand(lightingRepository);
+
+      const lightningDevice = await getLightningDeviceCommand({ deviceId });
+
+      if (isLeft(lightningDevice)) {
+        logger.error({ deviceId, error: lightningDevice.left }, "Lightning device wasn't found");
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply.code(HttpStatusCodes.OK).send(lightningDevice.right);
     },
   });
-  fastify.route<{ Querystring: StateLightningQuerystringSchema }>({
-    method: "POST",
-    url: "/on",
+
+  fastify.route<{
+    Querystring: GetLightningGroupQuerystringSchema;
+    Reply: GetLightningGroupReplySchema;
+  }>({
+    method: "GET",
+    url: "/get-lightning-group",
     schema: {
-      querystring: stateLightningQuerystringSchema,
+      querystring: getLightningGroupQuerystringSchema,
+      response: {
+        [HttpStatusCodes.OK]: getLightningGroupReplySchema,
+      },
+      tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { name } = request.query;
+      const { groupId } = request.query;
 
-      reply.send({ hello: "options.name" });
-    },
-  });
-  fastify.route<{ Querystring: StateLightningQuerystringSchema }>({
-    method: "POST",
-    url: "/off",
-    schema: {
-      querystring: stateLightningQuerystringSchema,
-    },
-    handler: async (request, reply) => {
-      const { name } = request.query;
+      const getLightningGroupCommand = getGetLightningGroupCommand(lightingRepository);
 
-      reply.send({ hello: "options.name" });
+      const lightningGroup = await getLightningGroupCommand({ groupId });
+
+      if (isLeft(lightningGroup)) {
+        logger.error({ groupId, error: lightningGroup.left }, "Lightning group wasn't found");
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply.code(HttpStatusCodes.OK).send(lightningGroup.right);
     },
   });
 };

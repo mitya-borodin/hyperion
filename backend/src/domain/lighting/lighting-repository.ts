@@ -20,25 +20,29 @@ export interface ILightingRepository {
 
   decommissioningLightingDevices(deviceIds: string[]): Promise<Either<Error, LightingDevice[]>>;
 
+  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice>>;
+
   initializeLightingGroup(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 
   addLightingDeviceIntoGroup(
-    lightingGroupLocation: string,
+    location: string,
     deviceIds: string[],
   ): Promise<Either<Error, LightingGroup>>;
 
   removeLightingDeviceFromGroup(
-    lightingGroupLocation: string,
+    location: string,
     deviceIds: string[],
   ): Promise<Either<Error, LightingGroup>>;
 
-  moveLightingDeviceToAnotherGroup(
-    lightingGroupLocationFrom: string,
-    lightingGroupLocationTo: string,
+  moveLightingDeviceToGroup(
+    locationFrom: string,
+    locationTo: string,
     deviceIds: string[],
   ): Promise<Either<Error, [LightingGroup, LightingGroup]>>;
 
-  turnOnGroup(lightingGroupLocation: string): Promise<Either<Error, LightingGroup>>;
+  turnOnGroup(location: string): Promise<Either<Error, LightingGroup>>;
 
-  turnOffGroup(lightingGroupLocation: string): Promise<Either<Error, LightingGroup>>;
+  turnOffGroup(location: string): Promise<Either<Error, LightingGroup>>;
+
+  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup>>;
 }

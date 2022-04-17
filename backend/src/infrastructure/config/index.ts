@@ -21,6 +21,9 @@ export class Config {
   public readonly fastify: {
     host: string;
     port: number;
+    log: {
+      level: Level;
+    };
   };
 
   public readonly rethinkdb: {
@@ -41,6 +44,9 @@ export class Config {
     this.fastify = {
       host: process.env.FASTIFY_HOST ?? "localhost",
       port: parseInt(process.env.FASTIFY_PORT ?? "3000"),
+      log: {
+        level: this.toLogLevel(process.env.FASTIFY_LOG_LEVEL),
+      },
     };
 
     if (!Number.isSafeInteger(this.fastify.port)) {
