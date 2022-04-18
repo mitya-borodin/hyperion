@@ -19,5 +19,5 @@ export async function createLightingGroupTableTable(
   rethinkdbConnection: Connection,
   tableReplicas: number,
 ): Promise<void> {
-  await createTable(rethinkdbConnection, tableName, "id", tableReplicas);
+  await createTable(rethinkdbConnection, tableName, "location", tableReplicas);
 }

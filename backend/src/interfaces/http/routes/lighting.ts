@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
-import { isLeft } from "fp-ts/lib/Either";
+import { isLeft } from "fp-ts/Either";
 import HttpStatusCodes from "http-status-codes";
 import { Logger } from "pino";
 

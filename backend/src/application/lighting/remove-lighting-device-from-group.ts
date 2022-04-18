@@ -1,4 +1,4 @@
-import { Either } from "fp-ts/lib/Either";
+import { Either } from "fp-ts/Either";
 
 import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
