@@ -30,7 +30,7 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
 
   await initRethinkdbSchema(rethinkdbConnection);
 
-  const lightingRepository = new LightingRepository();
+  const lightingRepository = new LightingRepository(rethinkdbConnection, logger);
 
   const fastify = createHttpInterface({
     config,

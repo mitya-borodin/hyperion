@@ -37,9 +37,9 @@ export class LightingRepository implements ILightingRepository {
       .run(this.rethinkdbConnection);
 
     if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error(writeResult, "Lighting devices wasn't created");
+      this.logger.error({ devices, writeResult }, "Lighting devices wasn't created");
 
-      return left(new Error("INSERT_ERROR"));
+      return left(new Error("INSERT_FAILED"));
     }
 
     const result: LightingDeviceTable[] = [];
