@@ -60,6 +60,66 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "PUT",
+    url: "/create-lightning-device",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/update-lightning-device",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/decommissioning-lightning-device",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
     Querystring: GetLightningGroupQuerystringSchema;
     Reply: GetLightningGroupReplySchema;
   }>({
@@ -86,6 +146,126 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       }
 
       reply.code(HttpStatusCodes.OK).send(lightningGroup.right);
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/initialize-lightning-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/add-lightning-device-into-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/remove-lightning-device-from-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/move-lightning-device-to-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/turn-on-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
+    },
+  });
+
+  fastify.route<{
+    Reply: any;
+    Body: { test: string };
+  }>({
+    method: "POST",
+    url: "/turn-off-group",
+    schema: {
+      querystring: {},
+      response: {
+        [HttpStatusCodes.OK]: {},
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { test } = request.body;
+
+      reply.code(HttpStatusCodes.OK).send({ test });
     },
   });
 };

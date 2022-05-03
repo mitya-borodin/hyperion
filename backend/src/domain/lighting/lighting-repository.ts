@@ -14,13 +14,15 @@ export type UpdateLightingDevice = Omit<
 >;
 
 export interface ILightingRepository {
+  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
+
   createLightingDevices(devices: CreateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
   updateLightingDevice(devices: UpdateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
   decommissioningLightingDevices(deviceIds: string[]): Promise<Either<Error, LightingDevice[]>>;
 
-  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
+  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 
   initializeLightingGroup(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 
@@ -43,6 +45,4 @@ export interface ILightingRepository {
   turnOnGroup(location: string): Promise<Either<Error, LightingGroup>>;
 
   turnOffGroup(location: string): Promise<Either<Error, LightingGroup>>;
-
-  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 }

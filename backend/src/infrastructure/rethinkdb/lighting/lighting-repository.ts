@@ -20,6 +20,13 @@ export class LightingRepository implements ILightingRepository {
     this.rethinkdbConnection = rethinkdbConnection;
     this.logger = logger.child({ name: "lighting-repository" });
   }
+
+  async getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>> {
+    const readResult = await lightingDeviceTable.get(deviceId).run(this.rethinkdbConnection);
+
+    return right(readResult);
+  }
+
   async createLightingDevices(
     devices: CreateLightingDevice[],
   ): Promise<Either<Error, LightingDevice[]>> {
@@ -148,8 +155,8 @@ export class LightingRepository implements ILightingRepository {
     return right(result);
   }
 
-  async getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>> {
-    const readResult = await lightingDeviceTable.get(deviceId).run(this.rethinkdbConnection);
+  async getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>> {
+    const readResult = await lightingGroupTable.get(groupId).run(this.rethinkdbConnection);
 
     return right(readResult);
   }
@@ -335,12 +342,6 @@ export class LightingRepository implements ILightingRepository {
 
   async turnOffGroup(location: string): Promise<Either<Error, LightingGroup>> {
     return this.toggleGroup(location, LightingGroupState.OFF);
-  }
-
-  async getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>> {
-    const readResult = await lightingGroupTable.get(groupId).run(this.rethinkdbConnection);
-
-    return right(readResult);
   }
 
   private async toggleGroup(
