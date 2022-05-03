@@ -3,20 +3,20 @@ import { Either } from "fp-ts/Either";
 import { LightingDevice } from "../../domain/lighting/lighting-device";
 import {
   ILightingRepository,
-  UpdateLightingDevices,
+  UpdateLightingDevice,
 } from "../../domain/lighting/lighting-repository";
 import type { Command } from "../Command";
 
 type Params = {
-  devices: UpdateLightingDevices[];
+  devices: UpdateLightingDevice[];
 };
 
 type Output = Either<Error, LightingDevice[]>;
 
-export const getUpdateLightingDevicesCommand = (
+export const getUpdateLightingDeviceCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.updateLightingDevices(params.devices);
+    return lightingRepository.updateLightingDevice(params.devices);
   };
 };

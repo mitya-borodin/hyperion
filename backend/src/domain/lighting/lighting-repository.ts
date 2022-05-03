@@ -8,7 +8,7 @@ export type CreateLightingDevice = Omit<
   "id" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
 >;
 
-export type UpdateLightingDevices = Omit<
+export type UpdateLightingDevice = Omit<
   LightingDevice,
   "state" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
 >;
@@ -16,11 +16,11 @@ export type UpdateLightingDevices = Omit<
 export interface ILightingRepository {
   createLightingDevices(devices: CreateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
-  updateLightingDevices(devices: UpdateLightingDevices[]): Promise<Either<Error, LightingDevice[]>>;
+  updateLightingDevice(devices: UpdateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
   decommissioningLightingDevices(deviceIds: string[]): Promise<Either<Error, LightingDevice[]>>;
 
-  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice>>;
+  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
 
   initializeLightingGroup(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 
@@ -38,11 +38,11 @@ export interface ILightingRepository {
     locationFrom: string,
     locationTo: string,
     deviceIds: string[],
-  ): Promise<Either<Error, [LightingGroup, LightingGroup]>>;
+  ): Promise<Either<[Error, Error], [LightingGroup, LightingGroup]>>;
 
   turnOnGroup(location: string): Promise<Either<Error, LightingGroup>>;
 
   turnOffGroup(location: string): Promise<Either<Error, LightingGroup>>;
 
-  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup>>;
+  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 }
