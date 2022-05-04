@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Update lightning device body schema",
+  "type": "object",
+  "properties": {
+    "deviceId": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "required": ["deviceId"]
+}

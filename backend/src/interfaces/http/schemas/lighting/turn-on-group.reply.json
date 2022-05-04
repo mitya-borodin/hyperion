@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Turn on group reply schema",
+  "type": "object",
+  "properties": {
+    "location": { "type": "string" },
+    "state": {
+      "type": "string",
+      "enum": ["ON", "OFF"]
+    },
+    "devices": {
+      "type": "array",
+      "description": "Devices is device ids",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "required": ["location", "state", "devices", "createdAt", "updatedAt"]
+}

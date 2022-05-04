@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Initialize lightning group body schema",
+  "type": "object",
+  "properties": {
+    "groupId": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "required": ["groupId"]
+}

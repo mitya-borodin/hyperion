@@ -7,14 +7,50 @@ import { Logger } from "pino";
 import { getGetLightningDeviceCommand } from "../../../application/lighting/get-lightning-device";
 import { getGetLightningGroupCommand } from "../../../application/lighting/get-lightning-group";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
+import addLightningGroupBodySchema from "../schemas/lighting/add-lightning-group.body.json";
+import addLightningGroupReplySchema from "../schemas/lighting/add-lightning-group.reply.json";
+import createLightningGroupBodySchema from "../schemas/lighting/create-lightning-device.body.json";
+import createLightningGroupReplaySchema from "../schemas/lighting/create-lightning-device.reply.json";
+import decommissioningLightningGroupBodySchema from "../schemas/lighting/decommissioning-lightning-device.body.json";
+import decommissioningLightningGroupReplaySchema from "../schemas/lighting/decommissioning-lightning-device.reply.json";
 import getLightningDeviceQuerystringSchema from "../schemas/lighting/get-lightning-device.querystring.json";
 import getLightningDeviceReplySchema from "../schemas/lighting/get-lightning-device.reply.json";
 import getLightningGroupQuerystringSchema from "../schemas/lighting/get-lightning-group.querystring.json";
 import getLightningGroupReplySchema from "../schemas/lighting/get-lightning-group.reply.json";
+import initializeLightningGroupBodySchema from "../schemas/lighting/initialize-lightning-group.body.json";
+import initializeLightningGroupReplySchema from "../schemas/lighting/initialize-lightning-group.reply.json";
+import moveLightningGroupBodySchema from "../schemas/lighting/move-lightning-group.body.json";
+import moveLightningGroupReplySchema from "../schemas/lighting/move-lightning-group.reply.json";
+import removeLightningGroupBodySchema from "../schemas/lighting/remove-lightning-group.body.json";
+import removeLightningGroupReplySchema from "../schemas/lighting/remove-lightning-group.reply.json";
+import turnOffGroupBodySchema from "../schemas/lighting/turn-off-group.body.json";
+import turnOffGroupReplySchema from "../schemas/lighting/turn-off-group.reply.json";
+import turnOnGroupBodySchema from "../schemas/lighting/turn-on-group.body.json";
+import turnOnGroupReplySchema from "../schemas/lighting/turn-on-group.reply.json";
+import updateLightningGroupBodySchema from "../schemas/lighting/update-lightning-device.body.json";
+import updateLightningGroupReplaySchema from "../schemas/lighting/update-lightning-device.reply.json";
+import { AddLightningGroupBodySchema } from "../types/lighting/add-lightning-group.body";
+import { AddLightningGroupReplySchema } from "../types/lighting/add-lightning-group.reply";
+import { CreateLightningDeviceBodySchema } from "../types/lighting/create-lightning-device.body";
+import { CreateLightningDeviceReplySchema } from "../types/lighting/create-lightning-device.reply";
+import { DecommissioningLightningDeviceBodySchema } from "../types/lighting/decommissioning-lightning-device.body";
+import { DecommissioningLightningDeviceReplySchema } from "../types/lighting/decommissioning-lightning-device.reply";
 import { GetLightningDeviceQuerystringSchema } from "../types/lighting/get-lightning-device.querystring";
 import { GetLightningDeviceReplySchema } from "../types/lighting/get-lightning-device.reply";
 import { GetLightningGroupQuerystringSchema } from "../types/lighting/get-lightning-group.querystring";
 import { GetLightningGroupReplySchema } from "../types/lighting/get-lightning-group.reply";
+import { InitializeLightningGroupBodySchema } from "../types/lighting/initialize-lightning-group.body";
+import { InitializeLightningGroupReplySchema } from "../types/lighting/initialize-lightning-group.reply";
+import { MoveLightningGroupBodySchema } from "../types/lighting/move-lightning-group.body";
+import { MoveLightningGroupReplySchema } from "../types/lighting/move-lightning-group.reply";
+import { RemoveLightningGroupBodySchema } from "../types/lighting/remove-lightning-group.body";
+import { RemoveLightningGroupReplySchema } from "../types/lighting/remove-lightning-group.reply";
+import { TurnOffGroupBodySchema } from "../types/lighting/turn-off-group.body";
+import { TurnOffGroupReplySchema } from "../types/lighting/turn-off-group.reply";
+import { TurnOnGroupBodySchema } from "../types/lighting/turn-on-group.body";
+import { TurnOnGroupReplySchema } from "../types/lighting/turn-on-group.reply";
+import { UpdateLightningDeviceBodySchema } from "../types/lighting/update-lightning-device.body";
+import { UpdateLightningDeviceReplySchema } from "../types/lighting/update-lightning-device.reply";
 
 export type lightingFastifyPluginOptions = {
   logger: Logger;
@@ -60,62 +96,62 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: CreateLightningDeviceBodySchema;
+    Reply: CreateLightningDeviceReplySchema;
   }>({
     method: "PUT",
     url: "/create-lightning-device",
     schema: {
-      querystring: {},
+      body: createLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: createLightningGroupReplaySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { deviceId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ deviceId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: UpdateLightningDeviceBodySchema;
+    Reply: UpdateLightningDeviceReplySchema;
   }>({
     method: "POST",
     url: "/update-lightning-device",
     schema: {
-      querystring: {},
+      body: updateLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: updateLightningGroupReplaySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { deviceId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ deviceId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: DecommissioningLightningDeviceBodySchema;
+    Reply: DecommissioningLightningDeviceReplySchema;
   }>({
     method: "POST",
     url: "/decommissioning-lightning-device",
     schema: {
-      querystring: {},
+      body: decommissioningLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: decommissioningLightningGroupReplaySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { deviceId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ deviceId });
     },
   });
 
@@ -150,122 +186,122 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: InitializeLightningGroupBodySchema;
+    Reply: InitializeLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/initialize-lightning-group",
     schema: {
-      querystring: {},
+      body: initializeLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: initializeLightningGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: AddLightningGroupBodySchema;
+    Reply: AddLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/add-lightning-device-into-group",
     schema: {
-      querystring: {},
+      body: addLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: addLightningGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: RemoveLightningGroupBodySchema;
+    Reply: RemoveLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/remove-lightning-device-from-group",
     schema: {
-      querystring: {},
+      body: removeLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: removeLightningGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: MoveLightningGroupBodySchema;
+    Reply: MoveLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/move-lightning-device-to-group",
     schema: {
-      querystring: {},
+      body: moveLightningGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: moveLightningGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: TurnOnGroupBodySchema;
+    Reply: TurnOnGroupReplySchema;
   }>({
     method: "POST",
     url: "/turn-on-group",
     schema: {
-      querystring: {},
+      body: turnOnGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: turnOnGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 
   fastify.route<{
-    Reply: any;
-    Body: { test: string };
+    Body: TurnOffGroupBodySchema;
+    Reply: TurnOffGroupReplySchema;
   }>({
     method: "POST",
     url: "/turn-off-group",
     schema: {
-      querystring: {},
+      body: turnOffGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: {},
+        [HttpStatusCodes.OK]: turnOffGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { test } = request.body;
+      const { groupId } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ test });
+      reply.code(HttpStatusCodes.OK).send({ groupId });
     },
   });
 };
