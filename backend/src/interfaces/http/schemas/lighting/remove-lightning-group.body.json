@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Remove lightning group body schema",
+  "title": "Remove lightning device from lightning group body schema",
   "type": "object",
   "properties": {
-    "groupId": { "type": "string" }
+    "lightingGroupLocation": { "type": "string" },
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false,
-  "required": ["groupId"]
+  "required": ["lightingGroupLocation", "deviceIds"]
 }

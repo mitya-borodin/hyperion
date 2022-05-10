@@ -6,12 +6,25 @@
  */
 
 export interface MoveLightningGroupReplySchema {
-  location: string;
-  state: "ON" | "OFF";
-  /**
-   * Devices is device ids
-   */
-  devices: string[];
-  createdAt: string;
-  updatedAt: string;
+  sourceLightningGroup?: {
+    location: string;
+    state: "ON" | "OFF";
+    /**
+     * Devices is device ids
+     */
+    devices: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+  destinationLightningGroup?: {
+    location: string;
+    state: "ON" | "OFF";
+    /**
+     * Devices is device ids
+     */
+    devices: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+  [k: string]: unknown;
 }

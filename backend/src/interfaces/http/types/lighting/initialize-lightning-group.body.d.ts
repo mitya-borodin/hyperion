@@ -6,5 +6,5 @@
  */
 
 export interface InitializeLightningGroupBodySchema {
-  groupId: string;
+  lightingGroupLocations: string[];
 }

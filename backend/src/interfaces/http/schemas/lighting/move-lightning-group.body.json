@@ -3,8 +3,10 @@
   "title": "Move lightning group body schema",
   "type": "object",
   "properties": {
-    "groupId": { "type": "string" }
+    "lightingGroupLocationFrom": { "type": "string" },
+    "lightingGroupLocationTo": { "type": "string" },
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false,
-  "required": ["groupId"]
+  "required": ["lightingGroupLocationFrom", "lightingGroupLocationTo", "deviceIds"]
 }

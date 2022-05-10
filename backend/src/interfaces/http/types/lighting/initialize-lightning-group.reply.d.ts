@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface InitializeLightningGroupReplySchema {
+export type InitializeLightningGroupReplySchema = {
   location: string;
   state: "ON" | "OFF";
   /**
@@ -14,4 +14,4 @@ export interface InitializeLightningGroupReplySchema {
   devices: string[];
   createdAt: string;
   updatedAt: string;
-}
+}[];

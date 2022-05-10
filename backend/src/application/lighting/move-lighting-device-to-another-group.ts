@@ -10,13 +10,13 @@ type Params = {
   deviceIds: string[];
 };
 
-type Output = Either<Error, [LightingGroup, LightingGroup]>;
+type Output = Either<[Error, Error], [LightingGroup, LightingGroup]>;
 
 export const getMoveLightingDeviceToAnotherGroupCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.moveLightingDeviceToAnotherGroup(
+    return lightingRepository.moveLightingDeviceToGroup(
       params.lightingGroupLocationFrom,
       params.lightingGroupLocationTo,
       params.deviceIds,

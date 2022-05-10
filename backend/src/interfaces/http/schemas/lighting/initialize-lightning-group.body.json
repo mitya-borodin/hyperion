@@ -3,8 +3,8 @@
   "title": "Initialize lightning group body schema",
   "type": "object",
   "properties": {
-    "groupId": { "type": "string" }
+    "lightingGroupLocations": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false,
-  "required": ["groupId"]
+  "required": ["lightingGroupLocations"]
 }

@@ -4,12 +4,17 @@ import { isLeft } from "fp-ts/Either";
 import HttpStatusCodes from "http-status-codes";
 import { Logger } from "pino";
 
+import { getAddLightingDeviceIntoGroupCommand } from "../../../application/lighting/add-lighting-device-into-group";
 import { getCreateLightingDevicesCommand } from "../../../application/lighting/create-lighting-devices";
 import { getDecommissioningLightingDevicesCommand } from "../../../application/lighting/decommissioning-lighting-devices";
 import { getGetLightningDeviceCommand } from "../../../application/lighting/get-lightning-device";
 import { getGetLightningGroupCommand } from "../../../application/lighting/get-lightning-group";
+import { getInitializeLightingGroupCommand } from "../../../application/lighting/initialize-lighting-group";
+import { getMoveLightingDeviceToAnotherGroupCommand } from "../../../application/lighting/move-lighting-device-to-another-group";
+import { getRemoveLightingDeviceFromGroupCommand } from "../../../application/lighting/remove-lighting-device-from-group";
 import { getUpdateLightingDevicesCommand } from "../../../application/lighting/update-lighting-devices";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
+import { mapAddLightningDeviceIntoGroupToHttp } from "../mappers/add-lightning-device-into-group-mapper";
 import {
   mapCreateLightningDevicesToApp,
   mapCreateLightningDevicesToHttp,
@@ -17,6 +22,9 @@ import {
 import { mapDecommissioningLightningDeviceToHttp } from "../mappers/decommissioning-lightning-device-mapper";
 import { mapGetLightningDeviceToHttp } from "../mappers/get-lightning-device-mapper";
 import { mapGetLightningGroupToHttp } from "../mappers/get-lightning-group-mapper";
+import { mapInitializeLightningGroupsToHttp } from "../mappers/initialize-lightning-groups-mapper";
+import { mapMoveLightningDeviceToGroupToHttp } from "../mappers/move-lightning-device-to-group-mapper";
+import { mapRemoveLightningDeviceFromGroupToHttp } from "../mappers/remove-lightning-device-from-group-mapper";
 import {
   mapUpdateLightningDevicesToApp,
   mapUpdateLightningDevicesToHttp,
@@ -43,8 +51,8 @@ import turnOnGroupBodySchema from "../schemas/lighting/turn-on-group.body.json";
 import turnOnGroupReplySchema from "../schemas/lighting/turn-on-group.reply.json";
 import updateLightningGroupBodySchema from "../schemas/lighting/update-lightning-device.body.json";
 import updateLightningGroupReplaySchema from "../schemas/lighting/update-lightning-device.reply.json";
-import { AddLightningGroupBodySchema } from "../types/lighting/add-lightning-group.body";
-import { AddLightningGroupReplySchema } from "../types/lighting/add-lightning-group.reply";
+import { AddLightningDeviceInLightningGroupBodySchema } from "../types/lighting/add-lightning-group.body";
+import { AddLightningDeviceInLightningGroupReplySchema } from "../types/lighting/add-lightning-group.reply";
 import { CreateLightningDeviceBodySchema } from "../types/lighting/create-lightning-device.body";
 import { CreateLightningDeviceReplySchema } from "../types/lighting/create-lightning-device.reply";
 import { DecommissioningLightningDeviceBodySchema } from "../types/lighting/decommissioning-lightning-device.body";
@@ -57,8 +65,8 @@ import { InitializeLightningGroupBodySchema } from "../types/lighting/initialize
 import { InitializeLightningGroupReplySchema } from "../types/lighting/initialize-lightning-group.reply";
 import { MoveLightningGroupBodySchema } from "../types/lighting/move-lightning-group.body";
 import { MoveLightningGroupReplySchema } from "../types/lighting/move-lightning-group.reply";
-import { RemoveLightningGroupBodySchema } from "../types/lighting/remove-lightning-group.body";
-import { RemoveLightningGroupReplySchema } from "../types/lighting/remove-lightning-group.reply";
+import { RemoveLightningDeviceFromLightningGroupBodySchema } from "../types/lighting/remove-lightning-group.body";
+import { RemoveLightningDeviceFromLightningGroupReplySchema } from "../types/lighting/remove-lightning-group.reply";
 import { TurnOffGroupBodySchema } from "../types/lighting/turn-off-group.body";
 import { TurnOffGroupReplySchema } from "../types/lighting/turn-off-group.reply";
 import { TurnOnGroupBodySchema } from "../types/lighting/turn-on-group.body";
@@ -267,15 +275,30 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocations } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const initializeLightingGroupCommand = getInitializeLightingGroupCommand(lightingRepository);
+
+      const lightningGroups = await initializeLightingGroupCommand({ lightingGroupLocations });
+
+      if (isLeft(lightningGroups)) {
+        logger.error(
+          { lightingGroupLocations, error: lightningGroups.left },
+          "Lightning group wasn't initialized",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply
+        .code(HttpStatusCodes.OK)
+        .send(mapInitializeLightningGroupsToHttp(lightningGroups.right));
     },
   });
 
   fastify.route<{
-    Body: AddLightningGroupBodySchema;
-    Reply: AddLightningGroupReplySchema;
+    Body: AddLightningDeviceInLightningGroupBodySchema;
+    Reply: AddLightningDeviceInLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/add-lightning-device-into-group",
@@ -287,15 +310,34 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocation, deviceIds } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const addLightingDeviceIntoGroupCommand =
+        getAddLightingDeviceIntoGroupCommand(lightingRepository);
+
+      const lightningGroup = await addLightingDeviceIntoGroupCommand({
+        lightingGroupLocation,
+        deviceIds,
+      });
+
+      if (isLeft(lightningGroup)) {
+        logger.error(
+          { lightingGroupLocation, deviceIds, error: lightningGroup.left },
+          "Lightning device wasn't added to lightning group",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply
+        .code(HttpStatusCodes.OK)
+        .send(mapAddLightningDeviceIntoGroupToHttp(lightningGroup.right));
     },
   });
 
   fastify.route<{
-    Body: RemoveLightningGroupBodySchema;
-    Reply: RemoveLightningGroupReplySchema;
+    Body: RemoveLightningDeviceFromLightningGroupBodySchema;
+    Reply: RemoveLightningDeviceFromLightningGroupReplySchema;
   }>({
     method: "POST",
     url: "/remove-lightning-device-from-group",
@@ -307,9 +349,28 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocation, deviceIds } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const removeLightingDeviceFromGroupCommand =
+        getRemoveLightingDeviceFromGroupCommand(lightingRepository);
+
+      const lightningGroup = await removeLightingDeviceFromGroupCommand({
+        lightingGroupLocation,
+        deviceIds,
+      });
+
+      if (isLeft(lightningGroup)) {
+        logger.error(
+          { lightingGroupLocation, deviceIds, error: lightningGroup.left },
+          "Lightning device wasn't removed from lightning group",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply
+        .code(HttpStatusCodes.OK)
+        .send(mapRemoveLightningDeviceFromGroupToHttp(lightningGroup.right));
     },
   });
 
@@ -327,9 +388,32 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocationFrom, lightingGroupLocationTo, deviceIds } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const moveLightingDeviceToAnotherGroupCommand =
+        getMoveLightingDeviceToAnotherGroupCommand(lightingRepository);
+
+      const result = await moveLightingDeviceToAnotherGroupCommand({
+        lightingGroupLocationFrom,
+        lightingGroupLocationTo,
+        deviceIds,
+      });
+
+      if (isLeft(result)) {
+        logger.error(
+          {
+            lightingGroupLocationFrom,
+            lightingGroupLocationTo,
+            deviceIds,
+            errors: result.left,
+          },
+          "Lightning device wasn't moved from lightning group",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply.code(HttpStatusCodes.OK).send(mapMoveLightningDeviceToGroupToHttp(result.right));
     },
   });
 

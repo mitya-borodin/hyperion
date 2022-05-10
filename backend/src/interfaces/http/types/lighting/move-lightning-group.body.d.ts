@@ -6,5 +6,7 @@
  */
 
 export interface MoveLightningGroupBodySchema {
-  groupId: string;
+  lightingGroupLocationFrom: string;
+  lightingGroupLocationTo: string;
+  deviceIds: string[];
 }

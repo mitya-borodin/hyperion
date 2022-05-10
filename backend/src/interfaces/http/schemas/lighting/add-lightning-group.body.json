@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Add lightning group body schema",
+  "title": "Add lightning device in lightning group body schema",
   "type": "object",
   "properties": {
-    "groupId": { "type": "string" }
+    "lightingGroupLocation": { "type": "string" },
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false,
-  "required": ["groupId"]
+  "required": ["lightingGroupLocation", "deviceIds"]
 }

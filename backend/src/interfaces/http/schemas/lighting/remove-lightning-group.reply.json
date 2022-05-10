@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Remove lightning group reply schema",
+  "title": "Remove lightning device from lightning group reply schema",
   "type": "object",
   "properties": {
     "location": { "type": "string" },

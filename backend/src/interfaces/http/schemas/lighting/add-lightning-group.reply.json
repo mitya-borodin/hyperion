@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Add lightning group reply schema",
+  "title": "Add lightning device in lightning group reply schema",
   "type": "object",
   "properties": {
     "location": { "type": "string" },

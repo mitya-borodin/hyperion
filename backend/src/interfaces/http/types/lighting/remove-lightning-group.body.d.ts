@@ -5,6 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface RemoveLightningGroupBodySchema {
-  groupId: string;
+export interface RemoveLightningDeviceFromLightningGroupBodySchema {
+  lightingGroupLocation: string;
+  deviceIds: string[];
 }
