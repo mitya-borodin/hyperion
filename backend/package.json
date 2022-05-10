@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "nodemon --config nodemon.json --inspect=0.0.0.0:9229 src/index.ts | pino-pretty -c",
-    "test": "jest --no-cache",
+    "test": "jest --no-cache --runInBand",
     "build": "del dist && tsc --project ./tsconfig.build.json",
     "compile:schemas": "json2ts -i ./src/interfaces/http/schemas -o ./src/interfaces/http/types",
     "ncu:outdated": "npm-check-updates",
