@@ -7,72 +7,76 @@ import { Logger } from "pino";
 import { getAddLightingDeviceIntoGroupCommand } from "../../../application/lighting/add-lighting-device-into-group";
 import { getCreateLightingDevicesCommand } from "../../../application/lighting/create-lighting-devices";
 import { getDecommissioningLightingDevicesCommand } from "../../../application/lighting/decommissioning-lighting-devices";
-import { getGetLightningDeviceCommand } from "../../../application/lighting/get-lightning-device";
-import { getGetLightningGroupCommand } from "../../../application/lighting/get-lightning-group";
+import { getGetLightingDeviceCommand } from "../../../application/lighting/get-lighting-device";
+import { getGetLightingGroupCommand } from "../../../application/lighting/get-lighting-group";
 import { getInitializeLightingGroupCommand } from "../../../application/lighting/initialize-lighting-group";
 import { getMoveLightingDeviceToAnotherGroupCommand } from "../../../application/lighting/move-lighting-device-to-another-group";
 import { getRemoveLightingDeviceFromGroupCommand } from "../../../application/lighting/remove-lighting-device-from-group";
+import { getTurnOffGroupCommand } from "../../../application/lighting/turn-off-group";
+import { getTurnOnGroupCommand } from "../../../application/lighting/turn-on-group";
 import { getUpdateLightingDevicesCommand } from "../../../application/lighting/update-lighting-devices";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
-import { mapAddLightningDeviceIntoGroupToHttp } from "../mappers/add-lightning-device-into-group-mapper";
+import { mapAddLightingDeviceInGroupToHttp } from "../mappers/add-lighting-device-in-group-mapper";
 import {
-  mapCreateLightningDevicesToApp,
-  mapCreateLightningDevicesToHttp,
+  mapCreateLightingDevicesToApp,
+  mapCreateLightingDevicesToHttp,
 } from "../mappers/create-lighting-devices-mapper";
-import { mapDecommissioningLightningDeviceToHttp } from "../mappers/decommissioning-lightning-device-mapper";
-import { mapGetLightningDeviceToHttp } from "../mappers/get-lightning-device-mapper";
-import { mapGetLightningGroupToHttp } from "../mappers/get-lightning-group-mapper";
-import { mapInitializeLightningGroupsToHttp } from "../mappers/initialize-lightning-groups-mapper";
-import { mapMoveLightningDeviceToGroupToHttp } from "../mappers/move-lightning-device-to-group-mapper";
-import { mapRemoveLightningDeviceFromGroupToHttp } from "../mappers/remove-lightning-device-from-group-mapper";
+import { mapDecommissioningLightingDeviceToHttp } from "../mappers/decommissioning-lighting-device-mapper";
+import { mapGetLightingDeviceToHttp } from "../mappers/get-lighting-device-mapper";
+import { mapGetLightingGroupToHttp } from "../mappers/get-lighting-group-mapper";
+import { mapInitializeLightingGroupsToHttp } from "../mappers/initialize-lighting-groups-mapper";
+import { mapMoveLightingDeviceToGroupToHttp } from "../mappers/move-lighting-device-to-group-mapper";
+import { mapRemoveLightingDeviceFromGroupToHttp } from "../mappers/remove-lighting-device-from-group-mapper";
+import { mapTurnOffGroupToHttp } from "../mappers/turn-off-group-mapper";
+import { mapTurnOnGroupToHttp } from "../mappers/turn-on-group-mapper";
 import {
-  mapUpdateLightningDevicesToApp,
-  mapUpdateLightningDevicesToHttp,
-} from "../mappers/update-lightning-device-mapper";
-import addLightningGroupBodySchema from "../schemas/lighting/add-lightning-group.body.json";
-import addLightningGroupReplySchema from "../schemas/lighting/add-lightning-group.reply.json";
-import createLightningGroupBodySchema from "../schemas/lighting/create-lightning-device.body.json";
-import createLightningGroupReplaySchema from "../schemas/lighting/create-lightning-device.reply.json";
-import decommissioningLightningGroupBodySchema from "../schemas/lighting/decommissioning-lightning-device.body.json";
-import decommissioningLightningGroupReplaySchema from "../schemas/lighting/decommissioning-lightning-device.reply.json";
-import getLightningDeviceQuerystringSchema from "../schemas/lighting/get-lightning-device.querystring.json";
-import getLightningDeviceReplySchema from "../schemas/lighting/get-lightning-device.reply.json";
-import getLightningGroupQuerystringSchema from "../schemas/lighting/get-lightning-group.querystring.json";
-import getLightningGroupReplySchema from "../schemas/lighting/get-lightning-group.reply.json";
-import initializeLightningGroupBodySchema from "../schemas/lighting/initialize-lightning-group.body.json";
-import initializeLightningGroupReplySchema from "../schemas/lighting/initialize-lightning-group.reply.json";
-import moveLightningGroupBodySchema from "../schemas/lighting/move-lightning-group.body.json";
-import moveLightningGroupReplySchema from "../schemas/lighting/move-lightning-group.reply.json";
-import removeLightningGroupBodySchema from "../schemas/lighting/remove-lightning-group.body.json";
-import removeLightningGroupReplySchema from "../schemas/lighting/remove-lightning-group.reply.json";
+  mapUpdateLightingDevicesToApp,
+  mapUpdateLightingDevicesToHttp,
+} from "../mappers/update-lighting-device-mapper";
+import addLightingDeviceInGroupBodySchema from "../schemas/lighting/add-lighting-device-in-group.body.json";
+import addLightingDeviceInGroupReplySchema from "../schemas/lighting/add-lighting-device-in-group.reply.json";
+import createLightingGroupBodySchema from "../schemas/lighting/create-lighting-device.body.json";
+import createLightingGroupReplaySchema from "../schemas/lighting/create-lighting-device.reply.json";
+import decommissioningLightingGroupBodySchema from "../schemas/lighting/decommissioning-lighting-device.body.json";
+import decommissioningLightingGroupReplaySchema from "../schemas/lighting/decommissioning-lighting-device.reply.json";
+import getLightingDeviceQuerystringSchema from "../schemas/lighting/get-lighting-device.querystring.json";
+import getLightingDeviceReplySchema from "../schemas/lighting/get-lighting-device.reply.json";
+import getLightingGroupQuerystringSchema from "../schemas/lighting/get-lighting-group.querystring.json";
+import getLightingGroupReplySchema from "../schemas/lighting/get-lighting-group.reply.json";
+import initializeLightingGroupBodySchema from "../schemas/lighting/initialize-lighting-group.body.json";
+import initializeLightingGroupReplySchema from "../schemas/lighting/initialize-lighting-group.reply.json";
+import moveLightingGroupBodySchema from "../schemas/lighting/move-lighting-group.body.json";
+import moveLightingGroupReplySchema from "../schemas/lighting/move-lighting-group.reply.json";
+import removeLightingDeviceFromGroupBodySchema from "../schemas/lighting/remove-lighting-device-from-group.body.json";
+import removeLightingDeviceFromGroupReplySchema from "../schemas/lighting/remove-lighting-device-from-group.reply.json";
 import turnOffGroupBodySchema from "../schemas/lighting/turn-off-group.body.json";
 import turnOffGroupReplySchema from "../schemas/lighting/turn-off-group.reply.json";
 import turnOnGroupBodySchema from "../schemas/lighting/turn-on-group.body.json";
 import turnOnGroupReplySchema from "../schemas/lighting/turn-on-group.reply.json";
-import updateLightningGroupBodySchema from "../schemas/lighting/update-lightning-device.body.json";
-import updateLightningGroupReplaySchema from "../schemas/lighting/update-lightning-device.reply.json";
-import { AddLightningDeviceInLightningGroupBodySchema } from "../types/lighting/add-lightning-group.body";
-import { AddLightningDeviceInLightningGroupReplySchema } from "../types/lighting/add-lightning-group.reply";
-import { CreateLightningDeviceBodySchema } from "../types/lighting/create-lightning-device.body";
-import { CreateLightningDeviceReplySchema } from "../types/lighting/create-lightning-device.reply";
-import { DecommissioningLightningDeviceBodySchema } from "../types/lighting/decommissioning-lightning-device.body";
-import { DecommissioningLightningDeviceReplySchema } from "../types/lighting/decommissioning-lightning-device.reply";
-import { GetLightningDeviceQuerystringSchema } from "../types/lighting/get-lightning-device.querystring";
-import { GetLightningDeviceReplySchema } from "../types/lighting/get-lightning-device.reply";
-import { GetLightningGroupQuerystringSchema } from "../types/lighting/get-lightning-group.querystring";
-import { GetLightningGroupReplySchema } from "../types/lighting/get-lightning-group.reply";
-import { InitializeLightningGroupBodySchema } from "../types/lighting/initialize-lightning-group.body";
-import { InitializeLightningGroupReplySchema } from "../types/lighting/initialize-lightning-group.reply";
-import { MoveLightningGroupBodySchema } from "../types/lighting/move-lightning-group.body";
-import { MoveLightningGroupReplySchema } from "../types/lighting/move-lightning-group.reply";
-import { RemoveLightningDeviceFromLightningGroupBodySchema } from "../types/lighting/remove-lightning-group.body";
-import { RemoveLightningDeviceFromLightningGroupReplySchema } from "../types/lighting/remove-lightning-group.reply";
+import updateLightingGroupBodySchema from "../schemas/lighting/update-lighting-device.body.json";
+import updateLightingGroupReplaySchema from "../schemas/lighting/update-lighting-device.reply.json";
+import { AddLightingDeviceInGroupBodySchema } from "../types/lighting/add-lighting-device-in-group.body";
+import { AddLightingDeviceInGroupReplySchema } from "../types/lighting/add-lighting-device-in-group.reply";
+import { CreateLightingDeviceBodySchema } from "../types/lighting/create-lighting-device.body";
+import { CreateLightingDeviceReplySchema } from "../types/lighting/create-lighting-device.reply";
+import { DecommissioningLightingDeviceBodySchema } from "../types/lighting/decommissioning-lighting-device.body";
+import { DecommissioningLightingDeviceReplySchema } from "../types/lighting/decommissioning-lighting-device.reply";
+import { GetLightingDeviceQuerystringSchema } from "../types/lighting/get-lighting-device.querystring";
+import { GetLightingDeviceReplySchema } from "../types/lighting/get-lighting-device.reply";
+import { GetLightingGroupQuerystringSchema } from "../types/lighting/get-lighting-group.querystring";
+import { GetLightingGroupReplySchema } from "../types/lighting/get-lighting-group.reply";
+import { InitializeLightingGroupBodySchema } from "../types/lighting/initialize-lighting-group.body";
+import { InitializeLightingGroupReplySchema } from "../types/lighting/initialize-lighting-group.reply";
+import { MoveLightingGroupBodySchema } from "../types/lighting/move-lighting-group.body";
+import { MoveLightingGroupReplySchema } from "../types/lighting/move-lighting-group.reply";
+import { RemoveLightingDeviceFromGroupBodySchema } from "../types/lighting/remove-lighting-device-from-group.body";
+import { RemoveLightingDeviceFromGroupReplySchema } from "../types/lighting/remove-lighting-device-from-group.reply";
 import { TurnOffGroupBodySchema } from "../types/lighting/turn-off-group.body";
 import { TurnOffGroupReplySchema } from "../types/lighting/turn-off-group.reply";
 import { TurnOnGroupBodySchema } from "../types/lighting/turn-on-group.body";
 import { TurnOnGroupReplySchema } from "../types/lighting/turn-on-group.reply";
-import { UpdateLightningDevicesBodySchema } from "../types/lighting/update-lightning-device.body";
-import { UpdateLightningDevicesReplySchema } from "../types/lighting/update-lightning-device.reply";
+import { UpdateLightingDevicesBodySchema } from "../types/lighting/update-lighting-device.body";
+import { UpdateLightingDevicesReplySchema } from "../types/lighting/update-lighting-device.reply";
 
 export type lightingFastifyPluginOptions = {
   logger: Logger;
@@ -88,51 +92,51 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   const { lightingRepository } = options;
 
   fastify.route<{
-    Querystring: GetLightningDeviceQuerystringSchema;
-    Reply: GetLightningDeviceReplySchema;
+    Querystring: GetLightingDeviceQuerystringSchema;
+    Reply: GetLightingDeviceReplySchema;
   }>({
     method: "GET",
-    url: "/get-lightning-device",
+    url: "/get-lighting-device",
     schema: {
-      querystring: getLightningDeviceQuerystringSchema,
+      querystring: getLightingDeviceQuerystringSchema,
       response: {
-        [HttpStatusCodes.OK]: getLightningDeviceReplySchema,
+        [HttpStatusCodes.OK]: getLightingDeviceReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { deviceId } = request.query;
 
-      const getLightningDeviceCommand = getGetLightningDeviceCommand(lightingRepository);
+      const getLightingDeviceCommand = getGetLightingDeviceCommand(lightingRepository);
 
-      const lightningDevice = await getLightningDeviceCommand({ deviceId });
+      const lightingDevice = await getLightingDeviceCommand({ deviceId });
 
-      if (isLeft(lightningDevice)) {
-        logger.error({ deviceId, error: lightningDevice.left }, "Lightning device wasn't found");
+      if (isLeft(lightingDevice)) {
+        logger.error({ deviceId, error: lightingDevice.left }, "Lighting device wasn't found");
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      if (lightningDevice.right === null) {
-        logger.error({ deviceId }, "Lightning device wasn't found");
+      if (lightingDevice.right === null) {
+        logger.error({ deviceId }, "Lighting device wasn't found");
 
         return reply.code(HttpStatusCodes.NOT_FOUND);
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapGetLightningDeviceToHttp(lightningDevice.right));
+      reply.code(HttpStatusCodes.OK).send(mapGetLightingDeviceToHttp(lightingDevice.right));
     },
   });
 
   fastify.route<{
-    Body: CreateLightningDeviceBodySchema;
-    Reply: CreateLightningDeviceReplySchema;
+    Body: CreateLightingDeviceBodySchema;
+    Reply: CreateLightingDeviceReplySchema;
   }>({
     method: "PUT",
-    url: "/create-lightning-device",
+    url: "/create-lighting-device",
     schema: {
-      body: createLightningGroupBodySchema,
+      body: createLightingGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: createLightningGroupReplaySchema,
+        [HttpStatusCodes.OK]: createLightingGroupReplaySchema,
       },
       tags: ["lighting"],
     },
@@ -142,29 +146,29 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       const createLightingDevicesCommand = getCreateLightingDevicesCommand(lightingRepository);
 
       const lightingDevices = await createLightingDevicesCommand({
-        devices: mapCreateLightningDevicesToApp(devices),
+        devices: mapCreateLightingDevicesToApp(devices),
       });
 
       if (isLeft(lightingDevices)) {
-        logger.error({ devices, error: lightingDevices.left }, "Lightning devices wasn't created");
+        logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't created");
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapCreateLightningDevicesToHttp(lightingDevices.right));
+      reply.code(HttpStatusCodes.OK).send(mapCreateLightingDevicesToHttp(lightingDevices.right));
     },
   });
 
   fastify.route<{
-    Body: UpdateLightningDevicesBodySchema;
-    Reply: UpdateLightningDevicesReplySchema;
+    Body: UpdateLightingDevicesBodySchema;
+    Reply: UpdateLightingDevicesReplySchema;
   }>({
     method: "POST",
-    url: "/update-lightning-device",
+    url: "/update-lighting-device",
     schema: {
-      body: updateLightningGroupBodySchema,
+      body: updateLightingGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: updateLightningGroupReplaySchema,
+        [HttpStatusCodes.OK]: updateLightingGroupReplaySchema,
       },
       tags: ["lighting"],
     },
@@ -174,29 +178,29 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       const updateLightingDevicesCommand = getUpdateLightingDevicesCommand(lightingRepository);
 
       const lightingDevices = await updateLightingDevicesCommand({
-        devices: mapUpdateLightningDevicesToApp(devices),
+        devices: mapUpdateLightingDevicesToApp(devices),
       });
 
       if (isLeft(lightingDevices)) {
-        logger.error({ devices, error: lightingDevices.left }, "Lightning devices wasn't updated");
+        logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't updated");
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapUpdateLightningDevicesToHttp(lightingDevices.right));
+      reply.code(HttpStatusCodes.OK).send(mapUpdateLightingDevicesToHttp(lightingDevices.right));
     },
   });
 
   fastify.route<{
-    Body: DecommissioningLightningDeviceBodySchema;
-    Reply: DecommissioningLightningDeviceReplySchema;
+    Body: DecommissioningLightingDeviceBodySchema;
+    Reply: DecommissioningLightingDeviceReplySchema;
   }>({
     method: "POST",
-    url: "/decommissioning-lightning-device",
+    url: "/decommissioning-lighting-device",
     schema: {
-      body: decommissioningLightningGroupBodySchema,
+      body: decommissioningLightingGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: decommissioningLightningGroupReplaySchema,
+        [HttpStatusCodes.OK]: decommissioningLightingGroupReplaySchema,
       },
       tags: ["lighting"],
     },
@@ -213,7 +217,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingDevices)) {
         logger.error(
           { deviceIds, error: lightingDevices.left },
-          "Lightning devices wasn't decommissioned",
+          "Lighting devices wasn't decommissioned",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
@@ -221,56 +225,56 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
       reply
         .code(HttpStatusCodes.OK)
-        .send(mapDecommissioningLightningDeviceToHttp(lightingDevices.right));
+        .send(mapDecommissioningLightingDeviceToHttp(lightingDevices.right));
     },
   });
 
   fastify.route<{
-    Querystring: GetLightningGroupQuerystringSchema;
-    Reply: GetLightningGroupReplySchema;
+    Querystring: GetLightingGroupQuerystringSchema;
+    Reply: GetLightingGroupReplySchema;
   }>({
     method: "GET",
-    url: "/get-lightning-group",
+    url: "/get-lighting-group",
     schema: {
-      querystring: getLightningGroupQuerystringSchema,
+      querystring: getLightingGroupQuerystringSchema,
       response: {
-        [HttpStatusCodes.OK]: getLightningGroupReplySchema,
+        [HttpStatusCodes.OK]: getLightingGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { groupId } = request.query;
 
-      const getLightningGroupCommand = getGetLightningGroupCommand(lightingRepository);
+      const getLightingGroupCommand = getGetLightingGroupCommand(lightingRepository);
 
-      const lightningGroup = await getLightningGroupCommand({ groupId });
+      const lightingGroup = await getLightingGroupCommand({ groupId });
 
-      if (isLeft(lightningGroup)) {
-        logger.error({ groupId, error: lightningGroup.left }, "Lightning group wasn't found");
+      if (isLeft(lightingGroup)) {
+        logger.error({ groupId, error: lightingGroup.left }, "Lighting group wasn't found");
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      if (lightningGroup.right === null) {
-        logger.error({ groupId }, "Lightning group wasn't found");
+      if (lightingGroup.right === null) {
+        logger.error({ groupId }, "Lighting group wasn't found");
 
         return reply.code(HttpStatusCodes.NOT_FOUND);
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapGetLightningGroupToHttp(lightningGroup.right));
+      reply.code(HttpStatusCodes.OK).send(mapGetLightingGroupToHttp(lightingGroup.right));
     },
   });
 
   fastify.route<{
-    Body: InitializeLightningGroupBodySchema;
-    Reply: InitializeLightningGroupReplySchema;
+    Body: InitializeLightingGroupBodySchema;
+    Reply: InitializeLightingGroupReplySchema;
   }>({
     method: "POST",
-    url: "/initialize-lightning-group",
+    url: "/initialize-lighting-group",
     schema: {
-      body: initializeLightningGroupBodySchema,
+      body: initializeLightingGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: initializeLightningGroupReplySchema,
+        [HttpStatusCodes.OK]: initializeLightingGroupReplySchema,
       },
       tags: ["lighting"],
     },
@@ -279,33 +283,31 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
       const initializeLightingGroupCommand = getInitializeLightingGroupCommand(lightingRepository);
 
-      const lightningGroups = await initializeLightingGroupCommand({ lightingGroupLocations });
+      const lightingGroups = await initializeLightingGroupCommand({ lightingGroupLocations });
 
-      if (isLeft(lightningGroups)) {
+      if (isLeft(lightingGroups)) {
         logger.error(
-          { lightingGroupLocations, error: lightningGroups.left },
-          "Lightning group wasn't initialized",
+          { lightingGroupLocations, error: lightingGroups.left },
+          "Lighting group wasn't initialized",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      reply
-        .code(HttpStatusCodes.OK)
-        .send(mapInitializeLightningGroupsToHttp(lightningGroups.right));
+      reply.code(HttpStatusCodes.OK).send(mapInitializeLightingGroupsToHttp(lightingGroups.right));
     },
   });
 
   fastify.route<{
-    Body: AddLightningDeviceInLightningGroupBodySchema;
-    Reply: AddLightningDeviceInLightningGroupReplySchema;
+    Body: AddLightingDeviceInGroupBodySchema;
+    Reply: AddLightingDeviceInGroupReplySchema;
   }>({
     method: "POST",
-    url: "/add-lightning-device-into-group",
+    url: "/add-lighting-device-into-group",
     schema: {
-      body: addLightningGroupBodySchema,
+      body: addLightingDeviceInGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: addLightningGroupReplySchema,
+        [HttpStatusCodes.OK]: addLightingDeviceInGroupReplySchema,
       },
       tags: ["lighting"],
     },
@@ -315,36 +317,34 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       const addLightingDeviceIntoGroupCommand =
         getAddLightingDeviceIntoGroupCommand(lightingRepository);
 
-      const lightningGroup = await addLightingDeviceIntoGroupCommand({
+      const lightingGroup = await addLightingDeviceIntoGroupCommand({
         lightingGroupLocation,
         deviceIds,
       });
 
-      if (isLeft(lightningGroup)) {
+      if (isLeft(lightingGroup)) {
         logger.error(
-          { lightingGroupLocation, deviceIds, error: lightningGroup.left },
-          "Lightning device wasn't added to lightning group",
+          { lightingGroupLocation, deviceIds, error: lightingGroup.left },
+          "Lighting device wasn't added to lighting group",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      reply
-        .code(HttpStatusCodes.OK)
-        .send(mapAddLightningDeviceIntoGroupToHttp(lightningGroup.right));
+      reply.code(HttpStatusCodes.OK).send(mapAddLightingDeviceInGroupToHttp(lightingGroup.right));
     },
   });
 
   fastify.route<{
-    Body: RemoveLightningDeviceFromLightningGroupBodySchema;
-    Reply: RemoveLightningDeviceFromLightningGroupReplySchema;
+    Body: RemoveLightingDeviceFromGroupBodySchema;
+    Reply: RemoveLightingDeviceFromGroupReplySchema;
   }>({
     method: "POST",
-    url: "/remove-lightning-device-from-group",
+    url: "/remove-lighting-device-from-group",
     schema: {
-      body: removeLightningGroupBodySchema,
+      body: removeLightingDeviceFromGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: removeLightningGroupReplySchema,
+        [HttpStatusCodes.OK]: removeLightingDeviceFromGroupReplySchema,
       },
       tags: ["lighting"],
     },
@@ -354,15 +354,15 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       const removeLightingDeviceFromGroupCommand =
         getRemoveLightingDeviceFromGroupCommand(lightingRepository);
 
-      const lightningGroup = await removeLightingDeviceFromGroupCommand({
+      const lightingGroup = await removeLightingDeviceFromGroupCommand({
         lightingGroupLocation,
         deviceIds,
       });
 
-      if (isLeft(lightningGroup)) {
+      if (isLeft(lightingGroup)) {
         logger.error(
-          { lightingGroupLocation, deviceIds, error: lightningGroup.left },
-          "Lightning device wasn't removed from lightning group",
+          { lightingGroupLocation, deviceIds, error: lightingGroup.left },
+          "Lighting device wasn't removed from lighting group",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
@@ -370,20 +370,20 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
       reply
         .code(HttpStatusCodes.OK)
-        .send(mapRemoveLightningDeviceFromGroupToHttp(lightningGroup.right));
+        .send(mapRemoveLightingDeviceFromGroupToHttp(lightingGroup.right));
     },
   });
 
   fastify.route<{
-    Body: MoveLightningGroupBodySchema;
-    Reply: MoveLightningGroupReplySchema;
+    Body: MoveLightingGroupBodySchema;
+    Reply: MoveLightingGroupReplySchema;
   }>({
     method: "POST",
-    url: "/move-lightning-device-to-group",
+    url: "/move-lighting-device-to-group",
     schema: {
-      body: moveLightningGroupBodySchema,
+      body: moveLightingGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: moveLightningGroupReplySchema,
+        [HttpStatusCodes.OK]: moveLightingGroupReplySchema,
       },
       tags: ["lighting"],
     },
@@ -407,13 +407,13 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
             deviceIds,
             errors: result.left,
           },
-          "Lightning device wasn't moved from lightning group",
+          "Lighting device wasn't moved from lighting group",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapMoveLightningDeviceToGroupToHttp(result.right));
+      reply.code(HttpStatusCodes.OK).send(mapMoveLightingDeviceToGroupToHttp(result.right));
     },
   });
 
@@ -431,9 +431,25 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocation } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const turnOnGroupCommand = getTurnOnGroupCommand(lightingRepository);
+
+      const lightingGroup = await turnOnGroupCommand({ lightingGroupLocation });
+
+      if (isLeft(lightingGroup)) {
+        logger.error(
+          {
+            lightingGroupLocation,
+            errors: lightingGroup.left,
+          },
+          "Lighting group wasn't turned on",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply.code(HttpStatusCodes.OK).send(mapTurnOnGroupToHttp(lightingGroup.right));
     },
   });
 
@@ -451,9 +467,25 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
-      const { groupId } = request.body;
+      const { lightingGroupLocation } = request.body;
 
-      reply.code(HttpStatusCodes.OK).send({ groupId });
+      const turnOffGroupCommand = getTurnOffGroupCommand(lightingRepository);
+
+      const lightingGroup = await turnOffGroupCommand({ lightingGroupLocation });
+
+      if (isLeft(lightingGroup)) {
+        logger.error(
+          {
+            lightingGroupLocation,
+            errors: lightingGroup.left,
+          },
+          "Lighting group wasn't turned off",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+      }
+
+      reply.code(HttpStatusCodes.OK).send(mapTurnOffGroupToHttp(lightingGroup.right));
     },
   });
 };

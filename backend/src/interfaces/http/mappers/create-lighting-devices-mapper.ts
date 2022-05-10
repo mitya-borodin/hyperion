@@ -1,10 +1,10 @@
 import { LightingDevice, LightingDeviceState } from "../../../domain/lighting/lighting-device";
 import { CreateLightingDevice } from "../../../domain/lighting/lighting-repository";
-import { CreateLightningDeviceBodySchema } from "../types/lighting/create-lightning-device.body";
-import { CreateLightningDeviceReplySchema } from "../types/lighting/create-lightning-device.reply";
+import { CreateLightingDeviceBodySchema } from "../types/lighting/create-lighting-device.body";
+import { CreateLightingDeviceReplySchema } from "../types/lighting/create-lighting-device.reply";
 
-export const mapCreateLightningDevicesToApp = (
-  devices: CreateLightningDeviceBodySchema,
+export const mapCreateLightingDevicesToApp = (
+  devices: CreateLightingDeviceBodySchema,
 ): CreateLightingDevice[] => {
   return devices.map((device) => {
     let state: LightingDeviceState = LightingDeviceState.OFF;
@@ -42,8 +42,8 @@ export const mapCreateLightningDevicesToApp = (
   });
 };
 
-export const mapCreateLightningDevicesToHttp = (
+export const mapCreateLightingDevicesToHttp = (
   devices: LightingDevice[],
-): CreateLightningDeviceReplySchema => {
+): CreateLightingDeviceReplySchema => {
   return devices;
 };

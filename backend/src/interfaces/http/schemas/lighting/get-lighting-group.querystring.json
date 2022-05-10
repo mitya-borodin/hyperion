@@ -1,0 +1,9 @@
+{
+  "title": "Get lighting group querystring schema",
+  "type": "object",
+  "properties": {
+    "groupId": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "required": ["groupId"]
+}

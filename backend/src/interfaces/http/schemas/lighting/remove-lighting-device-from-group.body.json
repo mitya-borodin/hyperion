@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Remove lighting device from group body schema",
+  "type": "object",
+  "properties": {
+    "lightingGroupLocation": { "type": "string" },
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false,
+  "required": ["lightingGroupLocation", "deviceIds"]
+}

@@ -5,6 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface TurnOnGroupBodySchema {
-  lightingGroupLocation: string;
+export interface MoveLightingGroupBodySchema {
+  lightingGroupLocationFrom: string;
+  lightingGroupLocationTo: string;
+  deviceIds: string[];
 }

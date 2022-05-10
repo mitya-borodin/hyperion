@@ -3,8 +3,8 @@
   "title": "Turn off group body schema",
   "type": "object",
   "properties": {
-    "groupId": { "type": "string" }
+    "lightingGroupLocation": { "type": "string" }
   },
   "additionalProperties": false,
-  "required": ["groupId"]
+  "required": ["lightingGroupLocation"]
 }

@@ -14,7 +14,7 @@ export type UpdateLightingDevice = Omit<
 >;
 
 export interface ILightingRepository {
-  getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
+  getLightingDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
 
   createLightingDevices(devices: CreateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
@@ -22,7 +22,7 @@ export interface ILightingRepository {
 
   decommissioningLightingDevices(deviceIds: string[]): Promise<Either<Error, LightingDevice[]>>;
 
-  getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
+  getLightingGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 
   initializeLightingGroup(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 

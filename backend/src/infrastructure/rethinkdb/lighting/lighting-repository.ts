@@ -21,7 +21,7 @@ export class LightingRepository implements ILightingRepository {
     this.logger = logger.child({ name: "lighting-repository" });
   }
 
-  async getLightningDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>> {
+  async getLightingDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>> {
     const readResult = await lightingDeviceTable.get(deviceId).run(this.rethinkdbConnection);
 
     return right(readResult);
@@ -155,7 +155,7 @@ export class LightingRepository implements ILightingRepository {
     return right(result);
   }
 
-  async getLightningGroup(groupId: string): Promise<Either<Error, LightingGroup | null>> {
+  async getLightingGroup(groupId: string): Promise<Either<Error, LightingGroup | null>> {
     const readResult = await lightingGroupTable.get(groupId).run(this.rethinkdbConnection);
 
     return right(readResult);

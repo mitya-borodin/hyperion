@@ -6,5 +6,5 @@
  */
 
 export interface TurnOffGroupBodySchema {
-  groupId: string;
+  lightingGroupLocation: string;
 }

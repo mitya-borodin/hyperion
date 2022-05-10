@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Initialize lighting group body schema",
+  "type": "object",
+  "properties": {
+    "lightingGroupLocations": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false,
+  "required": ["lightingGroupLocations"]
+}
