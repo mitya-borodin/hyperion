@@ -8,7 +8,7 @@ type Params = {
   deviceId: string;
 };
 
-type Output = Either<Error, LightingDevice>;
+type Output = Either<Error, LightingDevice | null>;
 
 export const getGetLightningDeviceCommand = (
   lightingRepository: ILightingRepository,

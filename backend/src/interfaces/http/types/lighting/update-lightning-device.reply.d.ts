@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface UpdateLightningDeviceReplySchema {
+export type UpdateLightningDevicesReplySchema = {
   id: string;
   name: string;
   brand: string;
@@ -27,4 +27,4 @@ export interface UpdateLightningDeviceReplySchema {
   }[];
   createdAt: string;
   updatedAt: string;
-}
+}[];

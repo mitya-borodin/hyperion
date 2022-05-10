@@ -6,5 +6,5 @@
  */
 
 export interface DecommissioningLightningDeviceBodySchema {
-  deviceId: string;
+  deviceIds: string[];
 }

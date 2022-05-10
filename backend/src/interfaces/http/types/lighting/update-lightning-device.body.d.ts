@@ -5,6 +5,26 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface UpdateLightningDeviceBodySchema {
-  deviceId: string;
-}
+export type UpdateLightningDevicesBodySchema = {
+  id: string;
+  name: string;
+  brand: string;
+  power: string;
+  lumens: string;
+  lightTemperatureKelvin: number;
+  resourceMs: number;
+  price: string;
+  currency: string;
+  sellersWebsite: string;
+  images: string[];
+  placeOfInstallation: string;
+  state?: "ON" | "OFF" | "IN_STOCK" | "DECOMMISSIONED";
+  history?: {
+    placeOfInstallation: string;
+    turnedOnAt: string;
+    turnedOffAt: string;
+    workedMs: number;
+  }[];
+  createdAt?: string;
+  updatedAt?: string;
+}[];

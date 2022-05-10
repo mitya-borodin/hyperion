@@ -13,7 +13,7 @@ type Params = {
 
 type Output = Either<Error, LightingDevice[]>;
 
-export const getUpdateLightingDeviceCommand = (
+export const getUpdateLightingDevicesCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {

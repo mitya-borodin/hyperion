@@ -8,7 +8,7 @@ type Params = {
   groupId: string;
 };
 
-type Output = Either<Error, LightingGroup>;
+type Output = Either<Error, LightingGroup | null>;
 
 export const getGetLightningGroupCommand = (
   lightingRepository: ILightingRepository,

@@ -3,8 +3,8 @@
   "title": "Decommissioning lightning device body schema",
   "type": "object",
   "properties": {
-    "deviceId": { "type": "string" }
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false,
-  "required": ["deviceId"]
+  "required": ["deviceIds"]
 }
