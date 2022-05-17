@@ -23,6 +23,7 @@ export const createHttpInterface = ({
   config,
   logger,
   lightingRepository,
+  rethinkdbConnection,
 }: CreateHttpInterfaceParams): FastifyInstance => {
   const fastify = Fastify({
     caseSensitive: true,
@@ -80,7 +81,13 @@ export const createHttpInterface = ({
     });
   }
 
-  fastify.register(routerFastifyPlugin, { prefix: "/api", logger, lightingRepository });
+  fastify.register(routerFastifyPlugin, {
+    prefix: "/api",
+    logger,
+    lightingRepository,
+    config,
+    rethinkdbConnection,
+  });
 
   return fastify;
 };

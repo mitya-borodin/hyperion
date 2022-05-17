@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { isLeft } from "fp-ts/Either";
 import HttpStatusCodes from "http-status-codes";
 import { Logger } from "pino";
+import { Connection } from "rethinkdb-ts";
 
 import { getAddLightingDeviceIntoGroupCommand } from "../../../application/lighting/add-lighting-device-into-group";
 import { getCreateLightingDevicesCommand } from "../../../application/lighting/create-lighting-devices";
@@ -16,6 +17,9 @@ import { getTurnOffGroupCommand } from "../../../application/lighting/turn-off-g
 import { getTurnOnGroupCommand } from "../../../application/lighting/turn-on-group";
 import { getUpdateLightingDevicesCommand } from "../../../application/lighting/update-lighting-devices";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
+import { Config } from "../../../infrastructure/config";
+import { lightingDeviceTable } from "../../../infrastructure/rethinkdb/tables/lighting-device";
+import { lightingGroupTable } from "../../../infrastructure/rethinkdb/tables/lighting-group";
 import { mapAddLightingDeviceInGroupToHttp } from "../mappers/add-lighting-device-in-group-mapper";
 import {
   mapCreateLightingDevicesToApp,
@@ -81,6 +85,8 @@ import { UpdateLightingDevicesReplySchema } from "../types/lighting/update-light
 export type lightingFastifyPluginOptions = {
   logger: Logger;
   lightingRepository: ILightingRepository;
+  config: Config;
+  rethinkdbConnection: Connection;
 };
 
 const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
@@ -90,6 +96,30 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   const logger = options.logger.child({ name: "fastify-lighting-router" });
 
   const { lightingRepository } = options;
+
+  if (options.config.rethinkdb.purgeTestDatabase && !options.config.production) {
+    fastify.route({
+      method: "POST",
+      url: "/purge-test-database",
+      schema: {
+        tags: ["lighting"],
+      },
+      handler: async (request, reply) => {
+        try {
+          await lightingDeviceTable.delete().run(options.rethinkdbConnection);
+          await lightingGroupTable.delete().run(options.rethinkdbConnection);
+        } catch (error) {
+          logger.error(error, "Test database was not purged 🚨");
+
+          return reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send();
+        }
+
+        logger.info("Test database was purged successful ✅");
+
+        reply.code(HttpStatusCodes.OK).send();
+      },
+    });
+  }
 
   fastify.route<{
     Querystring: GetLightingDeviceQuerystringSchema;

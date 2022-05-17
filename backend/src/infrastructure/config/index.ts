@@ -29,6 +29,7 @@ export class Config {
   public readonly rethinkdb: {
     host: string;
     port: number;
+    purgeTestDatabase: boolean;
   };
 
   public readonly gracefullyShutdownMs: number;
@@ -56,6 +57,7 @@ export class Config {
     this.rethinkdb = {
       host: process.env.RETHINKDB_HOST ?? "localhost",
       port: parseInt(process.env.RETHINKDB_PORT ?? "28015"),
+      purgeTestDatabase: !!process.env.PURGE_TEST_DATABASE,
     };
 
     if (!Number.isSafeInteger(this.rethinkdb.port)) {

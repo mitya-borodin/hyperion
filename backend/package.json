@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "nodemon --config nodemon.json --inspect=0.0.0.0:9229 src/index.ts | pino-pretty -c",
+    "start:for:test": "nodemon --config nodemon.test.json --inspect=0.0.0.0:9229 src/index.ts | pino-pretty -c",
     "test": "jest --config jest.config.js --no-cache --runInBand",
     "build": "del dist && tsc --project ./tsconfig.build.json",
     "compile:schemas": "json2ts -i ./src/interfaces/http/schemas -o ./src/interfaces/http/types",
