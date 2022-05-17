@@ -1,0 +1,7 @@
+{
+  "title": "Update product data lighting devices reply schema",
+  "type": "array",
+  "items": {
+    "$ref": "./src/interfaces/http/schemas/lighting/lighting-device.json"
+  }
+}

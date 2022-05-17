@@ -1,5 +1,5 @@
 {
-  "title": "Turn on group reply schema",
+  "title": "Move lighting devices to another group reply schema",
   "type": "object",
   "properties": {
     "lightingGroup": {

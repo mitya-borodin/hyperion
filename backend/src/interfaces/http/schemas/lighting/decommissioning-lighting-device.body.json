@@ -1,9 +1,0 @@
-{
-  "title": "Decommissioning lighting device body schema",
-  "type": "object",
-  "properties": {
-    "deviceIds": { "type": "array", "items": { "type": "string" } }
-  },
-  "additionalProperties": false,
-  "required": ["deviceIds"]
-}

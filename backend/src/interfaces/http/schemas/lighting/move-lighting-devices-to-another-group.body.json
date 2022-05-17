@@ -1,0 +1,11 @@
+{
+  "title": "Move lighting devices to another group body schema",
+  "type": "object",
+  "properties": {
+    "lightingGroupLocationFrom": { "type": "string" },
+    "lightingGroupLocationTo": { "type": "string" },
+    "deviceIds": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false,
+  "required": ["lightingGroupLocationFrom", "lightingGroupLocationTo", "deviceIds"]
+}

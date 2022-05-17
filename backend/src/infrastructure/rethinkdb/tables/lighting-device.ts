@@ -7,9 +7,9 @@ const tableName = "lighting-device";
 
 export type LightingDeviceTableHistory = {
   readonly placeOfInstallation: string;
-  readonly turnedOnAt: string;
-  readonly turnedOffAt: string;
-  readonly workedMs: number;
+  readonly turnedOnAt: string | null;
+  readonly turnedOffAt: string | null;
+  readonly workedMs: number | null;
 };
 
 export type LightingDeviceTable = {

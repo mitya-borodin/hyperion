@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface TurnOnGroupReplySchema {
+export interface AddLightingDevicesInGroupReplySchema {
   lightingGroup: {
     location: string;
     state: "ON" | "OFF";

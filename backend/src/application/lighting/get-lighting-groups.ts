@@ -4,16 +4,12 @@ import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
 import type { Command } from "../Command";
 
-type Params = {
-  lightingGroupLocations: string[];
-};
-
 type Output = Either<Error, LightingGroup[]>;
 
-export const getInitializeLightingGroupCommand = (
+export const getGetLightingGroupsCommand = (
   lightingRepository: ILightingRepository,
-): Command<Params, Promise<Output>> => {
-  return async (params: Params): Promise<Output> => {
-    return lightingRepository.initializeLightingGroups(params.lightingGroupLocations);
+): Command<void, Promise<Output>> => {
+  return async (): Promise<Output> => {
+    return lightingRepository.getLightingGroups();
   };
 };

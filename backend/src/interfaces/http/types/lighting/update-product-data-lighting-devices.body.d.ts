@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface GetLightingDeviceReplySchema {
+export type UpdateProductDataLightingDevicesBodySchema = {
   id: string;
   name: string;
   brand: string;
@@ -17,14 +17,4 @@ export interface GetLightingDeviceReplySchema {
   currency: string;
   sellersWebsite: string;
   images: string[];
-  placeOfInstallation: string;
-  state: "ON" | "OFF" | "IN_STOCK" | "DECOMMISSIONED";
-  history: {
-    placeOfInstallation: string;
-    turnedOnAt: string | null;
-    turnedOffAt: string | null;
-    workedMs: number | null;
-  }[];
-  createdAt: string;
-  updatedAt: string;
-}
+}[];

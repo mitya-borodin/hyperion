@@ -5,82 +5,90 @@ import HttpStatusCodes from "http-status-codes";
 import { Logger } from "pino";
 import { Connection } from "rethinkdb-ts";
 
-import { getAddLightingDeviceIntoGroupCommand } from "../../../application/lighting/add-lighting-device-into-group";
+import { getAddLightingDevicesIntoGroupCommand } from "../../../application/lighting/add-lighting-devices-into-group";
 import { getCreateLightingDevicesCommand } from "../../../application/lighting/create-lighting-devices";
 import { getDecommissioningLightingDevicesCommand } from "../../../application/lighting/decommissioning-lighting-devices";
 import { getGetLightingDeviceCommand } from "../../../application/lighting/get-lighting-device";
+import { getGetLightingDevicesCommand } from "../../../application/lighting/get-lighting-devices";
 import { getGetLightingGroupCommand } from "../../../application/lighting/get-lighting-group";
+import { getGetLightingGroupsCommand } from "../../../application/lighting/get-lighting-groups";
 import { getInitializeLightingGroupCommand } from "../../../application/lighting/initialize-lighting-group";
-import { getMoveLightingDeviceToAnotherGroupCommand } from "../../../application/lighting/move-lighting-device-to-another-group";
+import { getMoveLightingDevicesToAnotherGroupCommand } from "../../../application/lighting/move-lighting-devices-to-another-group";
 import { getRemoveLightingDeviceFromGroupCommand } from "../../../application/lighting/remove-lighting-device-from-group";
 import { getTurnOffGroupCommand } from "../../../application/lighting/turn-off-group";
 import { getTurnOnGroupCommand } from "../../../application/lighting/turn-on-group";
-import { getUpdateLightingDevicesCommand } from "../../../application/lighting/update-lighting-devices";
+import { getUpdateProductDataLightingDevicesCommand } from "../../../application/lighting/update-product-data-lighting-devices";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
 import { Config } from "../../../infrastructure/config";
 import { lightingDeviceTable } from "../../../infrastructure/rethinkdb/tables/lighting-device";
 import { lightingGroupTable } from "../../../infrastructure/rethinkdb/tables/lighting-group";
-import { mapAddLightingDeviceInGroupToHttp } from "../mappers/add-lighting-device-in-group-mapper";
+import { mapAddLightingDevicesInGroupToHttp } from "../mappers/add-lighting-devices-in-group-mapper";
 import {
   mapCreateLightingDevicesToApp,
   mapCreateLightingDevicesToHttp,
 } from "../mappers/create-lighting-devices-mapper";
-import { mapDecommissioningLightingDeviceToHttp } from "../mappers/decommissioning-lighting-device-mapper";
+import { mapDecommissioningLightingDevicesToHttp } from "../mappers/decommissioning-lighting-devices-mapper";
 import { mapGetLightingDeviceToHttp } from "../mappers/get-lighting-device-mapper";
 import { mapGetLightingGroupToHttp } from "../mappers/get-lighting-group-mapper";
 import { mapInitializeLightingGroupsToHttp } from "../mappers/initialize-lighting-groups-mapper";
-import { mapMoveLightingDeviceToGroupToHttp } from "../mappers/move-lighting-device-to-group-mapper";
-import { mapRemoveLightingDeviceFromGroupToHttp } from "../mappers/remove-lighting-device-from-group-mapper";
+import { mapMoveLightingDevicesToGroupToHttp } from "../mappers/move-lighting-devices-to-group-mapper";
+import { mapRemoveLightingDevicesFromGroupToHttp } from "../mappers/remove-lighting-devices-from-group-mapper";
 import { mapTurnOffGroupToHttp } from "../mappers/turn-off-group-mapper";
 import { mapTurnOnGroupToHttp } from "../mappers/turn-on-group-mapper";
 import {
-  mapUpdateLightingDevicesToApp,
-  mapUpdateLightingDevicesToHttp,
-} from "../mappers/update-lighting-device-mapper";
-import addLightingDeviceInGroupBodySchema from "../schemas/lighting/add-lighting-device-in-group.body.json";
-import addLightingDeviceInGroupReplySchema from "../schemas/lighting/add-lighting-device-in-group.reply.json";
-import createLightingGroupBodySchema from "../schemas/lighting/create-lighting-device.body.json";
-import createLightingGroupReplaySchema from "../schemas/lighting/create-lighting-device.reply.json";
-import decommissioningLightingGroupBodySchema from "../schemas/lighting/decommissioning-lighting-device.body.json";
-import decommissioningLightingGroupReplaySchema from "../schemas/lighting/decommissioning-lighting-device.reply.json";
+  mapUpdateProductDataLightingDevicesToApp,
+  mapUpdateProductDataLightingDevicesToHttp,
+} from "../mappers/update-product-data-lighting-device-mapper";
+import addLightingDevicesInGroupBodySchema from "../schemas/lighting/add-lighting-devices-in-group.body.json";
+import addLightingDevicesInGroupReplySchema from "../schemas/lighting/add-lighting-devices-in-group.reply.json";
+import createLightingDevicesBodySchema from "../schemas/lighting/create-lighting-devices.body.json";
+import createLightingDevicesReplaySchema from "../schemas/lighting/create-lighting-devices.reply.json";
+import decommissioningLightingDevicesBodySchema from "../schemas/lighting/decommissioning-lighting-devices.body.json";
+import decommissioningLightingDevicesReplaySchema from "../schemas/lighting/decommissioning-lighting-devices.reply.json";
 import getLightingDeviceQuerystringSchema from "../schemas/lighting/get-lighting-device.querystring.json";
 import getLightingDeviceReplySchema from "../schemas/lighting/get-lighting-device.reply.json";
+import getLightingDevicesReplySchema from "../schemas/lighting/get-lighting-devices.reply.json";
 import getLightingGroupQuerystringSchema from "../schemas/lighting/get-lighting-group.querystring.json";
 import getLightingGroupReplySchema from "../schemas/lighting/get-lighting-group.reply.json";
-import initializeLightingGroupBodySchema from "../schemas/lighting/initialize-lighting-group.body.json";
-import initializeLightingGroupReplySchema from "../schemas/lighting/initialize-lighting-group.reply.json";
-import moveLightingGroupBodySchema from "../schemas/lighting/move-lighting-group.body.json";
-import moveLightingGroupReplySchema from "../schemas/lighting/move-lighting-group.reply.json";
-import removeLightingDeviceFromGroupBodySchema from "../schemas/lighting/remove-lighting-device-from-group.body.json";
-import removeLightingDeviceFromGroupReplySchema from "../schemas/lighting/remove-lighting-device-from-group.reply.json";
+import getLightingGroupsReplySchema from "../schemas/lighting/get-lighting-groups.reply.json";
+import initializeLightingGroupssBodySchema from "../schemas/lighting/initialize-lighting-groups.body.json";
+import initializeLightingGroupssReplySchema from "../schemas/lighting/initialize-lighting-groups.reply.json";
+import lightingDeviceSchema from "../schemas/lighting/lighting-device.json";
+import lightingGroupSchema from "../schemas/lighting/lighting-group.json";
+import moveLightingDevicesToAnotherGroupBodySchema from "../schemas/lighting/move-lighting-devices-to-another-group.body.json";
+import moveLightingDevicesToAnotherGroupReplySchema from "../schemas/lighting/move-lighting-devices-to-another-group.reply.json";
+import removeLightingDevicesFromGroupBodySchema from "../schemas/lighting/remove-lighting-devices-from-group.body.json";
+import removeLightingDevicesFromGroupReplySchema from "../schemas/lighting/remove-lighting-devices-from-group.reply.json";
 import turnOffGroupBodySchema from "../schemas/lighting/turn-off-group.body.json";
 import turnOffGroupReplySchema from "../schemas/lighting/turn-off-group.reply.json";
 import turnOnGroupBodySchema from "../schemas/lighting/turn-on-group.body.json";
 import turnOnGroupReplySchema from "../schemas/lighting/turn-on-group.reply.json";
-import updateLightingGroupBodySchema from "../schemas/lighting/update-lighting-device.body.json";
-import updateLightingGroupReplaySchema from "../schemas/lighting/update-lighting-device.reply.json";
-import { AddLightingDeviceInGroupBodySchema } from "../types/lighting/add-lighting-device-in-group.body";
-import { AddLightingDeviceInGroupReplySchema } from "../types/lighting/add-lighting-device-in-group.reply";
-import { CreateLightingDeviceBodySchema } from "../types/lighting/create-lighting-device.body";
-import { CreateLightingDeviceReplySchema } from "../types/lighting/create-lighting-device.reply";
-import { DecommissioningLightingDeviceBodySchema } from "../types/lighting/decommissioning-lighting-device.body";
-import { DecommissioningLightingDeviceReplySchema } from "../types/lighting/decommissioning-lighting-device.reply";
+import updateProductDataLightingDevicessBodySchema from "../schemas/lighting/update-product-data-lighting-devices.body.json";
+import updateProductDataLightingDevicessReplaySchema from "../schemas/lighting/update-product-data-lighting-devices.reply.json";
+import { AddLightingDevicesInGroupBodySchema } from "../types/lighting/add-lighting-devices-in-group.body";
+import { AddLightingDevicesInGroupReplySchema } from "../types/lighting/add-lighting-devices-in-group.reply";
+import { CreateLightingDevicesBodySchema } from "../types/lighting/create-lighting-devices.body";
+import { CreateLightingDevicesReplySchema } from "../types/lighting/create-lighting-devices.reply";
+import { DecommissioningLightingDevicesBodySchema } from "../types/lighting/decommissioning-lighting-devices.body";
+import { DecommissioningLightingDeviceReplySchema } from "../types/lighting/decommissioning-lighting-devices.reply";
 import { GetLightingDeviceQuerystringSchema } from "../types/lighting/get-lighting-device.querystring";
 import { GetLightingDeviceReplySchema } from "../types/lighting/get-lighting-device.reply";
+import { GetLightingDevicesReplySchema } from "../types/lighting/get-lighting-devices.reply";
 import { GetLightingGroupQuerystringSchema } from "../types/lighting/get-lighting-group.querystring";
 import { GetLightingGroupReplySchema } from "../types/lighting/get-lighting-group.reply";
-import { InitializeLightingGroupBodySchema } from "../types/lighting/initialize-lighting-group.body";
-import { InitializeLightingGroupReplySchema } from "../types/lighting/initialize-lighting-group.reply";
-import { MoveLightingGroupBodySchema } from "../types/lighting/move-lighting-group.body";
-import { MoveLightingGroupReplySchema } from "../types/lighting/move-lighting-group.reply";
-import { RemoveLightingDeviceFromGroupBodySchema } from "../types/lighting/remove-lighting-device-from-group.body";
-import { RemoveLightingDeviceFromGroupReplySchema } from "../types/lighting/remove-lighting-device-from-group.reply";
+import { GetLightingGroupsReplySchema } from "../types/lighting/get-lighting-groups.reply";
+import { InitializeLightingGroupBodySchema } from "../types/lighting/initialize-lighting-groups.body";
+import { InitializeLightingGroupReplySchema } from "../types/lighting/initialize-lighting-groups.reply";
+import { MoveLightingDevicesToAnotherGroupBodySchema } from "../types/lighting/move-lighting-devices-to-another-group.body";
+import { MoveLightingDevicesToAnotherGroupReplySchema } from "../types/lighting/move-lighting-devices-to-another-group.reply";
+import { RemoveLightingDevicesFromGroupBodySchema } from "../types/lighting/remove-lighting-devices-from-group.body";
+import { RemoveLightingDevicesFromGroupReplySchema } from "../types/lighting/remove-lighting-devices-from-group.reply";
 import { TurnOffGroupBodySchema } from "../types/lighting/turn-off-group.body";
 import { TurnOffGroupReplySchema } from "../types/lighting/turn-off-group.reply";
 import { TurnOnGroupBodySchema } from "../types/lighting/turn-on-group.body";
 import { TurnOnGroupReplySchema } from "../types/lighting/turn-on-group.reply";
-import { UpdateLightingDevicesBodySchema } from "../types/lighting/update-lighting-device.body";
-import { UpdateLightingDevicesReplySchema } from "../types/lighting/update-lighting-device.reply";
+import { UpdateProductDataLightingDevicesBodySchema } from "../types/lighting/update-product-data-lighting-devices.body";
+import { UpdateProductDataLightingDevicesReplySchema } from "../types/lighting/update-product-data-lighting-devices.reply";
 
 export type lightingFastifyPluginOptions = {
   logger: Logger;
@@ -97,29 +105,36 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
   const { lightingRepository } = options;
 
-  if (options.config.rethinkdb.purgeTestDatabase && !options.config.production) {
-    fastify.route({
-      method: "POST",
-      url: "/purge-test-database",
-      schema: {
-        tags: ["lighting"],
+  logger.debug(getLightingDevicesReplySchema);
+
+  fastify.addSchema(lightingDeviceSchema);
+  fastify.addSchema(lightingGroupSchema);
+
+  fastify.route<{
+    Reply: GetLightingDevicesReplySchema;
+  }>({
+    method: "GET",
+    url: "/get-lighting-devices",
+    schema: {
+      response: {
+        [HttpStatusCodes.OK]: getLightingDevicesReplySchema,
       },
-      handler: async (request, reply) => {
-        try {
-          await lightingDeviceTable.delete().run(options.rethinkdbConnection);
-          await lightingGroupTable.delete().run(options.rethinkdbConnection);
-        } catch (error) {
-          logger.error(error, "Test database was not purged 🚨");
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const getLightingDevicesCommand = getGetLightingDevicesCommand(lightingRepository);
 
-          return reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send();
-        }
+      const lightingDevice = await getLightingDevicesCommand();
 
-        logger.info("Test database was purged successful ✅");
+      if (isLeft(lightingDevice)) {
+        logger.error({ error: lightingDevice.left }, "Lighting devices wasn't found");
 
-        reply.code(HttpStatusCodes.OK).send();
-      },
-    });
-  }
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
+      }
+
+      reply.code(HttpStatusCodes.OK).send(lightingDevice.right.map(mapGetLightingDeviceToHttp));
+    },
+  });
 
   fastify.route<{
     Querystring: GetLightingDeviceQuerystringSchema;
@@ -158,15 +173,15 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Body: CreateLightingDeviceBodySchema;
-    Reply: CreateLightingDeviceReplySchema;
+    Body: CreateLightingDevicesBodySchema;
+    Reply: CreateLightingDevicesReplySchema;
   }>({
     method: "PUT",
-    url: "/create-lighting-device",
+    url: "/create-lighting-devices",
     schema: {
-      body: createLightingGroupBodySchema,
+      body: createLightingDevicesBodySchema,
       response: {
-        [HttpStatusCodes.OK]: createLightingGroupReplaySchema,
+        [HttpStatusCodes.OK]: createLightingDevicesReplaySchema,
       },
       tags: ["lighting"],
     },
@@ -190,25 +205,26 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Body: UpdateLightingDevicesBodySchema;
-    Reply: UpdateLightingDevicesReplySchema;
+    Body: UpdateProductDataLightingDevicesBodySchema;
+    Reply: UpdateProductDataLightingDevicesReplySchema;
   }>({
     method: "POST",
-    url: "/update-lighting-device",
+    url: "/update-product-data-lighting-devices",
     schema: {
-      body: updateLightingGroupBodySchema,
+      body: updateProductDataLightingDevicessBodySchema,
       response: {
-        [HttpStatusCodes.OK]: updateLightingGroupReplaySchema,
+        [HttpStatusCodes.OK]: updateProductDataLightingDevicessReplaySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const devices = request.body;
 
-      const updateLightingDevicesCommand = getUpdateLightingDevicesCommand(lightingRepository);
+      const updateLightingDevicesCommand =
+        getUpdateProductDataLightingDevicesCommand(lightingRepository);
 
       const lightingDevices = await updateLightingDevicesCommand({
-        devices: mapUpdateLightingDevicesToApp(devices),
+        devices: mapUpdateProductDataLightingDevicesToApp(devices),
       });
 
       if (isLeft(lightingDevices)) {
@@ -217,20 +233,22 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapUpdateLightingDevicesToHttp(lightingDevices.right));
+      reply
+        .code(HttpStatusCodes.OK)
+        .send(mapUpdateProductDataLightingDevicesToHttp(lightingDevices.right));
     },
   });
 
   fastify.route<{
-    Body: DecommissioningLightingDeviceBodySchema;
+    Body: DecommissioningLightingDevicesBodySchema;
     Reply: DecommissioningLightingDeviceReplySchema;
   }>({
     method: "POST",
-    url: "/decommissioning-lighting-device",
+    url: "/decommissioning-lighting-devices",
     schema: {
-      body: decommissioningLightingGroupBodySchema,
+      body: decommissioningLightingDevicesBodySchema,
       response: {
-        [HttpStatusCodes.OK]: decommissioningLightingGroupReplaySchema,
+        [HttpStatusCodes.OK]: decommissioningLightingDevicesReplaySchema,
       },
       tags: ["lighting"],
     },
@@ -255,7 +273,33 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
       reply
         .code(HttpStatusCodes.OK)
-        .send(mapDecommissioningLightingDeviceToHttp(lightingDevices.right));
+        .send(mapDecommissioningLightingDevicesToHttp(lightingDevices.right));
+    },
+  });
+
+  fastify.route<{
+    Reply: GetLightingGroupsReplySchema;
+  }>({
+    method: "GET",
+    url: "/get-lighting-groups",
+    schema: {
+      response: {
+        [HttpStatusCodes.OK]: getLightingGroupsReplySchema,
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const getLightingGroupsCommand = getGetLightingGroupsCommand(lightingRepository);
+
+      const lightingGroups = await getLightingGroupsCommand();
+
+      if (isLeft(lightingGroups)) {
+        logger.error({ error: lightingGroups.left }, "Lighting groups wasn't found");
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
+      }
+
+      reply.code(HttpStatusCodes.OK).send(lightingGroups.right.map(mapGetLightingGroupToHttp));
     },
   });
 
@@ -300,20 +344,20 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
     Reply: InitializeLightingGroupReplySchema;
   }>({
     method: "POST",
-    url: "/initialize-lighting-group",
+    url: "/initialize-lighting-groups",
     schema: {
-      body: initializeLightingGroupBodySchema,
+      body: initializeLightingGroupssBodySchema,
       response: {
-        [HttpStatusCodes.OK]: initializeLightingGroupReplySchema,
+        [HttpStatusCodes.OK]: initializeLightingGroupssReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { lightingGroupLocations } = request.body;
 
-      const initializeLightingGroupCommand = getInitializeLightingGroupCommand(lightingRepository);
+      const initializeLightingGroupsCommand = getInitializeLightingGroupCommand(lightingRepository);
 
-      const lightingGroups = await initializeLightingGroupCommand({ lightingGroupLocations });
+      const lightingGroups = await initializeLightingGroupsCommand({ lightingGroupLocations });
 
       if (isLeft(lightingGroups)) {
         logger.error(
@@ -329,25 +373,25 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Body: AddLightingDeviceInGroupBodySchema;
-    Reply: AddLightingDeviceInGroupReplySchema;
+    Body: AddLightingDevicesInGroupBodySchema;
+    Reply: AddLightingDevicesInGroupReplySchema;
   }>({
     method: "POST",
-    url: "/add-lighting-device-into-group",
+    url: "/add-lighting-devices-in-group",
     schema: {
-      body: addLightingDeviceInGroupBodySchema,
+      body: addLightingDevicesInGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: addLightingDeviceInGroupReplySchema,
+        [HttpStatusCodes.OK]: addLightingDevicesInGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { lightingGroupLocation, deviceIds } = request.body;
 
-      const addLightingDeviceIntoGroupCommand =
-        getAddLightingDeviceIntoGroupCommand(lightingRepository);
+      const addLightingDevicesIntoGroupCommand =
+        getAddLightingDevicesIntoGroupCommand(lightingRepository);
 
-      const lightingGroup = await addLightingDeviceIntoGroupCommand({
+      const lightingGroup = await addLightingDevicesIntoGroupCommand({
         lightingGroupLocation,
         deviceIds,
       });
@@ -361,30 +405,30 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapAddLightingDeviceInGroupToHttp(lightingGroup.right));
+      reply.code(HttpStatusCodes.OK).send(mapAddLightingDevicesInGroupToHttp(lightingGroup.right));
     },
   });
 
   fastify.route<{
-    Body: RemoveLightingDeviceFromGroupBodySchema;
-    Reply: RemoveLightingDeviceFromGroupReplySchema;
+    Body: RemoveLightingDevicesFromGroupBodySchema;
+    Reply: RemoveLightingDevicesFromGroupReplySchema;
   }>({
     method: "POST",
-    url: "/remove-lighting-device-from-group",
+    url: "/remove-lighting-devices-from-group",
     schema: {
-      body: removeLightingDeviceFromGroupBodySchema,
+      body: removeLightingDevicesFromGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: removeLightingDeviceFromGroupReplySchema,
+        [HttpStatusCodes.OK]: removeLightingDevicesFromGroupReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { lightingGroupLocation, deviceIds } = request.body;
 
-      const removeLightingDeviceFromGroupCommand =
+      const removeLightingDevicesFromGroupCommand =
         getRemoveLightingDeviceFromGroupCommand(lightingRepository);
 
-      const lightingGroup = await removeLightingDeviceFromGroupCommand({
+      const lightingGroup = await removeLightingDevicesFromGroupCommand({
         lightingGroupLocation,
         deviceIds,
       });
@@ -400,20 +444,20 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
 
       reply
         .code(HttpStatusCodes.OK)
-        .send(mapRemoveLightingDeviceFromGroupToHttp(lightingGroup.right));
+        .send(mapRemoveLightingDevicesFromGroupToHttp(lightingGroup.right));
     },
   });
 
   fastify.route<{
-    Body: MoveLightingGroupBodySchema;
-    Reply: MoveLightingGroupReplySchema;
+    Body: MoveLightingDevicesToAnotherGroupBodySchema;
+    Reply: MoveLightingDevicesToAnotherGroupReplySchema;
   }>({
     method: "POST",
     url: "/move-lighting-device-to-group",
     schema: {
-      body: moveLightingGroupBodySchema,
+      body: moveLightingDevicesToAnotherGroupBodySchema,
       response: {
-        [HttpStatusCodes.OK]: moveLightingGroupReplySchema,
+        [HttpStatusCodes.OK]: moveLightingDevicesToAnotherGroupReplySchema,
       },
       tags: ["lighting"],
     },
@@ -421,7 +465,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       const { lightingGroupLocationFrom, lightingGroupLocationTo, deviceIds } = request.body;
 
       const moveLightingDeviceToAnotherGroupCommand =
-        getMoveLightingDeviceToAnotherGroupCommand(lightingRepository);
+        getMoveLightingDevicesToAnotherGroupCommand(lightingRepository);
 
       const result = await moveLightingDeviceToAnotherGroupCommand({
         lightingGroupLocationFrom,
@@ -443,7 +487,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapMoveLightingDeviceToGroupToHttp(result.right));
+      reply.code(HttpStatusCodes.OK).send(mapMoveLightingDevicesToGroupToHttp(result.right));
     },
   });
 
@@ -518,6 +562,30 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       reply.code(HttpStatusCodes.OK).send(mapTurnOffGroupToHttp(lightingGroup.right));
     },
   });
+
+  if (options.config.rethinkdb.purgeTestDatabase && !options.config.production) {
+    fastify.route({
+      method: "POST",
+      url: "/purge-test-database",
+      schema: {
+        tags: ["lighting"],
+      },
+      handler: async (request, reply) => {
+        try {
+          await lightingDeviceTable.delete().run(options.rethinkdbConnection);
+          await lightingGroupTable.delete().run(options.rethinkdbConnection);
+        } catch (error) {
+          logger.error(error, "Test database was not purged 🚨");
+
+          return reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send();
+        }
+
+        logger.info("Test database was purged successful ✅");
+
+        reply.code(HttpStatusCodes.OK).send();
+      },
+    });
+  }
 };
 
 export const lightingFastifyPlugin = fp(lighting, {

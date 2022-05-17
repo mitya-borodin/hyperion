@@ -6,12 +6,37 @@
  */
 
 export interface TurnOffGroupReplySchema {
-  location: string;
-  state: "ON" | "OFF";
-  /**
-   * Devices is device ids
-   */
-  devices: string[];
-  createdAt: string;
-  updatedAt: string;
+  lightingGroup: {
+    location: string;
+    state: "ON" | "OFF";
+    /**
+     * Devices is device ids
+     */
+    devices: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+  lightingDevices: {
+    id: string;
+    name: string;
+    brand: string;
+    power: string;
+    lumens: string;
+    lightTemperatureKelvin: number;
+    resourceMs: number;
+    price: string;
+    currency: string;
+    sellersWebsite: string;
+    images: string[];
+    placeOfInstallation: string;
+    state: "ON" | "OFF" | "IN_STOCK" | "DECOMMISSIONED";
+    history: {
+      placeOfInstallation: string;
+      turnedOnAt: string | null;
+      turnedOffAt: string | null;
+      workedMs: number | null;
+    }[];
+    createdAt: string;
+    updatedAt: string;
+  }[];
 }

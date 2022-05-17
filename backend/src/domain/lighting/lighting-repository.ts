@@ -5,44 +5,57 @@ import { LightingGroup } from "./lighting-group";
 
 export type CreateLightingDevice = Omit<
   LightingDevice,
-  "id" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
+  "id" | "placeOfInstallation" | "state" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
 >;
 
-export type UpdateLightingDevice = Omit<
+export type UpdateProductDataLightingDevice = Omit<
   LightingDevice,
-  "state" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
+  "placeOfInstallation" | "state" | "history" | "totalWorkedMs" | "createdAt" | "updatedAt"
 >;
+
+export type UpdatePlaceOfInstallationLightingDevice = Pick<
+  LightingDevice,
+  "id" | "placeOfInstallation"
+>;
+
+export type UpdateSateLightingDevice = Pick<LightingDevice, "id" | "state">;
 
 export interface ILightingRepository {
+  getLightingDevices(): Promise<Either<Error, LightingDevice[]>>;
+
   getLightingDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>>;
 
   createLightingDevices(devices: CreateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
 
-  updateLightingDevice(devices: UpdateLightingDevice[]): Promise<Either<Error, LightingDevice[]>>;
+  updateProductDataLightingDevices(
+    devices: UpdateProductDataLightingDevice[],
+  ): Promise<Either<Error, LightingDevice[]>>;
 
   decommissioningLightingDevices(deviceIds: string[]): Promise<Either<Error, LightingDevice[]>>;
 
+  getLightingGroups(): Promise<Either<Error, LightingGroup[]>>;
+
   getLightingGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 
-  initializeLightingGroup(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
+  initializeLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 
-  addLightingDeviceIntoGroup(
+  addLightingDevicesIntoGroup(
     location: string,
     deviceIds: string[],
-  ): Promise<Either<Error, LightingGroup>>;
+  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>>;
 
-  removeLightingDeviceFromGroup(
+  removeLightingDevicesFromGroup(
     location: string,
     deviceIds: string[],
-  ): Promise<Either<Error, LightingGroup>>;
+  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>>;
 
-  moveLightingDeviceToGroup(
+  moveLightingDevicesToGroup(
     locationFrom: string,
     locationTo: string,
     deviceIds: string[],
-  ): Promise<Either<[Error, Error], [LightingGroup, LightingGroup]>>;
+  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>>;
 
-  turnOnGroup(location: string): Promise<Either<Error, LightingGroup>>;
+  turnOnGroup(location: string): Promise<Either<Error, [LightingGroup, LightingDevice[]]>>;
 
-  turnOffGroup(location: string): Promise<Either<Error, LightingGroup>>;
+  turnOffGroup(location: string): Promise<Either<Error, [LightingGroup, LightingDevice[]]>>;
 }

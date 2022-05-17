@@ -6,15 +6,21 @@ import { ILightingRepository } from "../../domain/lighting/lighting-repository";
 import type { Command } from "../Command";
 
 type Params = {
-  lightingGroupLocation: string;
+  lightingGroupLocationFrom: string;
+  lightingGroupLocationTo: string;
+  deviceIds: string[];
 };
 
 type Output = Either<Error, [LightingGroup, LightingDevice[]]>;
 
-export const getTurnOffGroupCommand = (
+export const getMoveLightingDevicesToAnotherGroupCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.turnOffGroup(params.lightingGroupLocation);
+    return lightingRepository.moveLightingDevicesToGroup(
+      params.lightingGroupLocationFrom,
+      params.lightingGroupLocationTo,
+      params.deviceIds,
+    );
   };
 };
