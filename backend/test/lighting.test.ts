@@ -1,4 +1,3 @@
-import { number } from "fp-ts";
 import fetch from "node-fetch";
 
 const BASE_URL = "http://localhost:5000";
@@ -11,7 +10,7 @@ afterEach(async () => {
   await fetch(`${BASE_URL}/purge-test-database`, { method: "POST" });
 });
 
-test("Create lightning device", async () => {
+test("Create lightning devices", async () => {
   const items = [];
 
   for (let i = 5; i > 0; i--) {
