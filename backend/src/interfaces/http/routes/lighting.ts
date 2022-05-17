@@ -114,13 +114,13 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingDevice)) {
         logger.error({ deviceId, error: lightingDevice.left }, "Lighting device wasn't found");
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       if (lightingDevice.right === null) {
         logger.error({ deviceId }, "Lighting device wasn't found");
 
-        return reply.code(HttpStatusCodes.NOT_FOUND);
+        return reply.code(HttpStatusCodes.NOT_FOUND).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapGetLightingDeviceToHttp(lightingDevice.right));
@@ -152,7 +152,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingDevices)) {
         logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't created");
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapCreateLightingDevicesToHttp(lightingDevices.right));
@@ -184,7 +184,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingDevices)) {
         logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't updated");
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapUpdateLightingDevicesToHttp(lightingDevices.right));
@@ -220,7 +220,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting devices wasn't decommissioned",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply
@@ -252,13 +252,13 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingGroup)) {
         logger.error({ groupId, error: lightingGroup.left }, "Lighting group wasn't found");
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       if (lightingGroup.right === null) {
         logger.error({ groupId }, "Lighting group wasn't found");
 
-        return reply.code(HttpStatusCodes.NOT_FOUND);
+        return reply.code(HttpStatusCodes.NOT_FOUND).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapGetLightingGroupToHttp(lightingGroup.right));
@@ -291,7 +291,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting group wasn't initialized",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapInitializeLightingGroupsToHttp(lightingGroups.right));
@@ -328,7 +328,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting device wasn't added to lighting group",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapAddLightingDeviceInGroupToHttp(lightingGroup.right));
@@ -365,7 +365,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting device wasn't removed from lighting group",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply
@@ -410,7 +410,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting device wasn't moved from lighting group",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapMoveLightingDeviceToGroupToHttp(result.right));
@@ -446,7 +446,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting group wasn't turned on",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapTurnOnGroupToHttp(lightingGroup.right));
@@ -482,7 +482,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
           "Lighting group wasn't turned off",
         );
 
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY);
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
       reply.code(HttpStatusCodes.OK).send(mapTurnOffGroupToHttp(lightingGroup.right));
