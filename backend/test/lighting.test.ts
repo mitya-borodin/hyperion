@@ -192,3 +192,44 @@ test("Decommissioning lighting devices", async () => {
 
   expect(compareSourceAndTargetItems(updatedSourceItems, decommissionedItems)).toEqual(true);
 });
+
+test("Initialize lighting groups", async () => {
+  const initializeLightingGroupsResponse = await fetch(`${BASE_URL}/initialize-lighting-groups`, {
+    method: "PUT",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      lightingGroupLocations: ["КУХНЯ", "ГОСТИНАЯ", "ИГРОВАЯ", "ВАННАЯ"],
+    }),
+  });
+
+  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+
+  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+
+  const sourceItems = [
+    {
+      location: "КУХНЯ",
+      state: "OFF",
+      devices: [],
+    },
+    {
+      location: "ГОСТИНАЯ",
+      state: "OFF",
+      devices: [],
+    },
+    {
+      location: "ИГРОВАЯ",
+      state: "OFF",
+      devices: [],
+    },
+    {
+      location: "ВАННАЯ",
+      state: "OFF",
+      devices: [],
+    },
+  ];
+
+  expect(compareSourceAndTargetItems(sourceItems, initializeLightingGroups)).toEqual(true);
+});

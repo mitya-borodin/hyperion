@@ -51,8 +51,8 @@ import getLightingDevicesReplySchema from "../schemas/lighting/get-lighting-devi
 import getLightingGroupQuerystringSchema from "../schemas/lighting/get-lighting-group.querystring.json";
 import getLightingGroupReplySchema from "../schemas/lighting/get-lighting-group.reply.json";
 import getLightingGroupsReplySchema from "../schemas/lighting/get-lighting-groups.reply.json";
-import initializeLightingGroupssBodySchema from "../schemas/lighting/initialize-lighting-groups.body.json";
-import initializeLightingGroupssReplySchema from "../schemas/lighting/initialize-lighting-groups.reply.json";
+import initializeLightingGroupsBodySchema from "../schemas/lighting/initialize-lighting-groups.body.json";
+import initializeLightingGroupsReplySchema from "../schemas/lighting/initialize-lighting-groups.reply.json";
 import lightingDeviceSchema from "../schemas/lighting/lighting-device.json";
 import lightingGroupSchema from "../schemas/lighting/lighting-group.json";
 import moveLightingDevicesToAnotherGroupBodySchema from "../schemas/lighting/move-lighting-devices-to-another-group.body.json";
@@ -77,7 +77,7 @@ import { GetLightingDevicesReplySchema } from "../types/lighting/get-lighting-de
 import { GetLightingGroupQuerystringSchema } from "../types/lighting/get-lighting-group.querystring";
 import { GetLightingGroupReplySchema } from "../types/lighting/get-lighting-group.reply";
 import { GetLightingGroupsReplySchema } from "../types/lighting/get-lighting-groups.reply";
-import { InitializeLightingGroupBodySchema } from "../types/lighting/initialize-lighting-groups.body";
+import { InitializeLightingGroupsBodySchema } from "../types/lighting/initialize-lighting-groups.body";
 import { InitializeLightingGroupReplySchema } from "../types/lighting/initialize-lighting-groups.reply";
 import { MoveLightingDevicesToAnotherGroupBodySchema } from "../types/lighting/move-lighting-devices-to-another-group.body";
 import { MoveLightingDevicesToAnotherGroupReplySchema } from "../types/lighting/move-lighting-devices-to-another-group.reply";
@@ -104,8 +104,6 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   const logger = options.logger.child({ name: "fastify-lighting-router" });
 
   const { lightingRepository } = options;
-
-  logger.debug(getLightingDevicesReplySchema);
 
   fastify.addSchema(lightingDeviceSchema);
   fastify.addSchema(lightingGroupSchema);
@@ -278,15 +276,15 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Body: InitializeLightingGroupBodySchema;
+    Body: InitializeLightingGroupsBodySchema;
     Reply: InitializeLightingGroupReplySchema;
   }>({
-    method: "POST",
+    method: "PUT",
     url: "/initialize-lighting-groups",
     schema: {
-      body: initializeLightingGroupssBodySchema,
+      body: initializeLightingGroupsBodySchema,
       response: {
-        [HttpStatusCodes.OK]: initializeLightingGroupssReplySchema,
+        [HttpStatusCodes.OK]: initializeLightingGroupsReplySchema,
       },
       tags: ["lighting"],
     },

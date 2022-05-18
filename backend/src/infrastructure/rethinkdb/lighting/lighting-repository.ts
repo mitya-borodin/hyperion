@@ -357,8 +357,9 @@ export class LightingRepository implements ILightingRepository {
           state: LightingGroupState.OFF,
           devices: [],
           createdAt: r.now(),
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
+        { returnChanges: "always" },
       )
       .run(this.rethinkdbConnection);
 
