@@ -111,6 +111,38 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   fastify.addSchema(lightingGroupSchema);
 
   fastify.route<{
+    Body: CreateLightingDevicesBodySchema;
+    Reply: CreateLightingDevicesReplySchema;
+  }>({
+    method: "PUT",
+    url: "/create-lighting-devices",
+    schema: {
+      body: createLightingDevicesBodySchema,
+      response: {
+        [HttpStatusCodes.OK]: createLightingDevicesReplaySchema,
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const devices = request.body;
+
+      const createLightingDevicesCommand = getCreateLightingDevicesCommand(lightingRepository);
+
+      const lightingDevices = await createLightingDevicesCommand({
+        devices: mapCreateLightingDevicesToApp(devices),
+      });
+
+      if (isLeft(lightingDevices)) {
+        logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't created");
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
+      }
+
+      reply.code(HttpStatusCodes.OK).send(mapCreateLightingDevicesToHttp(lightingDevices.right));
+    },
+  });
+
+  fastify.route<{
     Reply: GetLightingDevicesReplySchema;
   }>({
     method: "GET",
@@ -169,38 +201,6 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       }
 
       reply.code(HttpStatusCodes.OK).send(mapGetLightingDeviceToHttp(lightingDevice.right));
-    },
-  });
-
-  fastify.route<{
-    Body: CreateLightingDevicesBodySchema;
-    Reply: CreateLightingDevicesReplySchema;
-  }>({
-    method: "PUT",
-    url: "/create-lighting-devices",
-    schema: {
-      body: createLightingDevicesBodySchema,
-      response: {
-        [HttpStatusCodes.OK]: createLightingDevicesReplaySchema,
-      },
-      tags: ["lighting"],
-    },
-    handler: async (request, reply) => {
-      const devices = request.body;
-
-      const createLightingDevicesCommand = getCreateLightingDevicesCommand(lightingRepository);
-
-      const lightingDevices = await createLightingDevicesCommand({
-        devices: mapCreateLightingDevicesToApp(devices),
-      });
-
-      if (isLeft(lightingDevices)) {
-        logger.error({ devices, error: lightingDevices.left }, "Lighting devices wasn't created");
-
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
-      }
-
-      reply.code(HttpStatusCodes.OK).send(mapCreateLightingDevicesToHttp(lightingDevices.right));
     },
   });
 
@@ -278,6 +278,39 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
+    Body: InitializeLightingGroupBodySchema;
+    Reply: InitializeLightingGroupReplySchema;
+  }>({
+    method: "POST",
+    url: "/initialize-lighting-groups",
+    schema: {
+      body: initializeLightingGroupssBodySchema,
+      response: {
+        [HttpStatusCodes.OK]: initializeLightingGroupssReplySchema,
+      },
+      tags: ["lighting"],
+    },
+    handler: async (request, reply) => {
+      const { lightingGroupLocations } = request.body;
+
+      const initializeLightingGroupsCommand = getInitializeLightingGroupCommand(lightingRepository);
+
+      const lightingGroups = await initializeLightingGroupsCommand({ lightingGroupLocations });
+
+      if (isLeft(lightingGroups)) {
+        logger.error(
+          { lightingGroupLocations, error: lightingGroups.left },
+          "Lighting group wasn't initialized",
+        );
+
+        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
+      }
+
+      reply.code(HttpStatusCodes.OK).send(mapInitializeLightingGroupsToHttp(lightingGroups.right));
+    },
+  });
+
+  fastify.route<{
     Reply: GetLightingGroupsReplySchema;
   }>({
     method: "GET",
@@ -336,39 +369,6 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       }
 
       reply.code(HttpStatusCodes.OK).send(mapGetLightingGroupToHttp(lightingGroup.right));
-    },
-  });
-
-  fastify.route<{
-    Body: InitializeLightingGroupBodySchema;
-    Reply: InitializeLightingGroupReplySchema;
-  }>({
-    method: "POST",
-    url: "/initialize-lighting-groups",
-    schema: {
-      body: initializeLightingGroupssBodySchema,
-      response: {
-        [HttpStatusCodes.OK]: initializeLightingGroupssReplySchema,
-      },
-      tags: ["lighting"],
-    },
-    handler: async (request, reply) => {
-      const { lightingGroupLocations } = request.body;
-
-      const initializeLightingGroupsCommand = getInitializeLightingGroupCommand(lightingRepository);
-
-      const lightingGroups = await initializeLightingGroupsCommand({ lightingGroupLocations });
-
-      if (isLeft(lightingGroups)) {
-        logger.error(
-          { lightingGroupLocations, error: lightingGroups.left },
-          "Lighting group wasn't initialized",
-        );
-
-        return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
-      }
-
-      reply.code(HttpStatusCodes.OK).send(mapInitializeLightingGroupsToHttp(lightingGroups.right));
     },
   });
 
