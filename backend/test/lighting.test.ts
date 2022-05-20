@@ -1,4 +1,5 @@
 import isEqual from "lodash.isequal";
+import omit from "lodash.omit";
 import fetch, { Response } from "node-fetch";
 
 const BASE_URL = "http://localhost:5000";
@@ -208,28 +209,128 @@ test("Initialize lighting groups", async () => {
 
   const initializeLightingGroups = await initializeLightingGroupsResponse.json();
 
-  const sourceItems = [
-    {
-      location: "КУХНЯ",
-      state: "OFF",
-      devices: [],
-    },
-    {
-      location: "ГОСТИНАЯ",
-      state: "OFF",
-      devices: [],
-    },
-    {
-      location: "ИГРОВАЯ",
-      state: "OFF",
-      devices: [],
-    },
-    {
-      location: "ВАННАЯ",
-      state: "OFF",
-      devices: [],
-    },
-  ];
+  expect(
+    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+});
 
-  expect(compareSourceAndTargetItems(sourceItems, initializeLightingGroups)).toEqual(true);
+test("Get lighting groups", async () => {
+  const initializeLightingGroupsResponse = await fetch(`${BASE_URL}/initialize-lighting-groups`, {
+    method: "PUT",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      lightingGroupLocations: ["КУХНЯ", "ГОСТИНАЯ", "ИГРОВАЯ", "ВАННАЯ"],
+    }),
+  });
+
+  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+
+  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+
+  expect(
+    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+
+  const getLightingGroupsResponse = await fetch(`${BASE_URL}/get-lighting-groups`, {
+    method: "GET",
+    headers: {
+      "Content-type": "application/json",
+    },
+  });
+
+  expect(getLightingGroupsResponse.ok).toEqual(true);
+
+  const lightingGroups = await getLightingGroupsResponse.json();
+
+  expect(
+    lightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+});
+
+test("Get lighting group", async () => {
+  const initializeLightingGroupsResponse = await fetch(`${BASE_URL}/initialize-lighting-groups`, {
+    method: "PUT",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      lightingGroupLocations: ["КУХНЯ", "ГОСТИНАЯ", "ИГРОВАЯ", "ВАННАЯ"],
+    }),
+  });
+
+  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+
+  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+
+  expect(
+    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+
+  await Promise.all(
+    initializeLightingGroups.map(async (initializeLightingGroup: any) => {
+      const getLightingGroupResponse = await fetch(
+        `${BASE_URL}/get-lighting-group?groupId=${initializeLightingGroup.location}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-type": "application/json",
+          },
+        },
+      );
+
+      expect(getLightingGroupResponse.ok).toEqual(true);
+
+      const lightingGroup = await getLightingGroupResponse.json();
+
+      expect(compareSourceAndTargetItems(initializeLightingGroups, [lightingGroup])).toEqual(true);
+    }),
+  );
+});
+
+test("Add lighting devices in group", async () => {
+  const initializeLightingGroupsResponse = await fetch(`${BASE_URL}/initialize-lighting-groups`, {
+    method: "PUT",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      lightingGroupLocations: ["КУХНЯ", "ГОСТИНАЯ", "ИГРОВАЯ", "ВАННАЯ"],
+    }),
+  });
+
+  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+
+  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+
+  expect(
+    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+
+  const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
+
+  expect(createLightningDeviceResponse.ok).toEqual(true);
+
+  const createdItems = await createLightningDeviceResponse.json();
+
+  expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
+
+  const addLightingDevicesInGroupResponse = await fetch(
+    `${BASE_URL}/add-lighting-devices-in-group`,
+    {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        lightingGroupLocation: "КУХНЯ",
+        deviceIds: createdItems.map(({ id }: any) => id),
+      }),
+    },
+  );
+
+  expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
+
+  const lightingDevicesInGroup = await addLightingDevicesInGroupResponse.json();
 });

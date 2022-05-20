@@ -15,7 +15,7 @@ export type UpdateProductDataLightingDevice = Omit<
 
 export type UpdatePlaceOfInstallationLightingDevice = Pick<
   LightingDevice,
-  "id" | "placeOfInstallation"
+  "id" | "state" | "placeOfInstallation"
 >;
 
 export type UpdateSateLightingDevice = Pick<LightingDevice, "id" | "state">;

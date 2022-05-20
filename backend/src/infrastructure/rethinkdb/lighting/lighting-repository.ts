@@ -72,7 +72,6 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("INSERT_FAILED"));
     }
 
-    // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
     const result: LightingDeviceTable[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -109,7 +108,7 @@ export class LightingRepository implements ILightingRepository {
           returnChanges: "always",
           conflict(
             id,
-            oldDoc: RDatum<UpdateProductDataLightingDevice>,
+            oldDoc: RDatum<LightingDevice>,
             newDoc: RDatum<UpdateProductDataLightingDevice>,
           ) {
             return oldDoc.merge(newDoc);
@@ -119,7 +118,10 @@ export class LightingRepository implements ILightingRepository {
       .run(this.rethinkdbConnection);
 
     if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ devices, writeResult }, "Lighting devices wasn't updated 🚨");
+      this.logger.error(
+        { devices, writeResult },
+        "Lighting devices product data wasn't updated 🚨",
+      );
 
       return left(new Error("UPDATE_FAILED"));
     }
@@ -133,7 +135,10 @@ export class LightingRepository implements ILightingRepository {
       }
     });
 
-    this.logger.debug({ devices, writeResult }, "Lighting devices was updated successful ✅");
+    this.logger.debug(
+      { devices, writeResult },
+      "Lighting devices product data was updated successful ✅",
+    );
 
     return right(result);
   }
@@ -152,17 +157,32 @@ export class LightingRepository implements ILightingRepository {
           returnChanges: "always",
           conflict(
             id,
-            oldDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
+            oldDoc: RDatum<LightingDevice>,
             newDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
           ) {
             if (oldDoc("placeOfInstallation").eq(newDoc("placeOfInstallation")).not()) {
+              const historyIsEmpty = oldDoc("history").count().eq(0);
+
+              const lastHistoryIndex = oldDoc("history").count().sub(1);
+              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+
+              const placeOfInstallation = newDoc("placeOfInstallation");
+
               return oldDoc.merge(newDoc).merge({
-                history: newDoc("history").setInsert({
-                  placeOfInstallation: newDoc("placeOfInstallation"),
-                  turnedOnAt: null,
-                  turnedOffAt: null,
-                  workedMs: null,
-                }),
+                history: oldDoc("history").setInsert(
+                  r.branch(
+                    historyIsEmpty,
+                    {
+                      placeOfInstallation,
+                      turnedOnAt: null,
+                      turnedOffAt: null,
+                      workedMs: null,
+                    },
+                    lastHistoryItem.merge({
+                      placeOfInstallation,
+                    }),
+                  ),
+                ),
               });
             }
 
@@ -181,7 +201,6 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
     const result: LightingDeviceTable[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -210,11 +229,7 @@ export class LightingRepository implements ILightingRepository {
         })),
         {
           returnChanges: "always",
-          conflict(
-            id,
-            oldDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
-            newDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
-          ) {
+          conflict(id, oldDoc: RDatum<LightingDevice>, newDoc: RDatum<UpdateSateLightingDevice>) {
             if (
               newDoc("state")
                 .eq(LightingDeviceState.IN_STOCK)
@@ -231,14 +246,17 @@ export class LightingRepository implements ILightingRepository {
                     .eq(LightingDeviceState.OFF)
                     .or(oldDoc("state").eq(LightingDeviceState.IN_STOCK)),
                 )
+                .and(oldDoc("history").count().gt(0))
             ) {
+              const lastHistoryIndex = oldDoc("history").count().sub(1);
+              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+
               return oldDoc.merge(newDoc).merge({
-                history: newDoc("history").setInsert({
-                  placeOfInstallation: null,
-                  turnedOnAt: r.now(),
-                  turnedOffAt: null,
-                  workedMs: null,
-                }),
+                history: oldDoc("history").setInsert(
+                  lastHistoryItem.merge({
+                    turnedOnAt: r.now(),
+                  }),
+                ),
               });
             }
 
@@ -246,22 +264,25 @@ export class LightingRepository implements ILightingRepository {
               newDoc("state")
                 .eq(LightingDeviceState.OFF)
                 .and(oldDoc("state").eq(LightingDeviceState.ON))
+                .and(oldDoc("history").count().gt(0))
             ) {
-              const lastHistoryIndex = newDoc("history").count().sub(1);
-              const lastHistoryItem = newDoc("history")(lastHistoryIndex);
+              const lastHistoryIndex = oldDoc("history").count().sub(1);
+              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
               const turnedOnAt = lastHistoryItem("turnedOnAt");
               const turnedOffAt = r.now();
-              const workedMs = turnedOffAt.sub(turnedOnAt).seconds().mul(1_000);
+
+              const workedMs = turnedOffAt
+                .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
+                .seconds()
+                .mul(1_000);
 
               return oldDoc.merge(newDoc).merge({
-                history: newDoc("history")(lastHistoryIndex).merge({
-                  placeOfInstallation: null,
-                  turnedOnAt,
+                history: lastHistoryItem.merge({
                   turnedOffAt,
                   workedMs,
                 }),
-                totalWorkedMs: newDoc("totalWorkedMs").add(workedMs),
+                totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
               });
             }
 
@@ -277,7 +298,6 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
     const result: LightingDeviceTable[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -297,6 +317,13 @@ export class LightingRepository implements ILightingRepository {
   async decommissioningLightingDevices(
     deviceIds: string[],
   ): Promise<Either<Error, LightingDevice[]>> {
+    await this.updateStateLightingDevices(
+      deviceIds.map((deviceId) => ({ id: deviceId, state: LightingDeviceState.OFF })),
+    );
+
+    // TODO Удалить устройства из групп, по placeOfInstallation, перед тем как менять состояние на DECOMMISSIONED
+    // TODO Используя this.removeLightingDevicesFromGroup(location: string, deviceIds: string[])
+
     const writeResult = await lightingDeviceTable
       .getAll(...deviceIds)
       .update(
@@ -323,7 +350,6 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
     const result: LightingDeviceTable[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -332,7 +358,10 @@ export class LightingRepository implements ILightingRepository {
       }
     });
 
-    this.logger.debug({ deviceIds, writeResult }, "Lighting devices was updated successful ✅");
+    this.logger.debug(
+      { deviceIds, writeResult },
+      "Lighting devices was decommissioned successful ✅",
+    );
 
     return right(result);
   }
@@ -364,12 +393,11 @@ export class LightingRepository implements ILightingRepository {
       .run(this.rethinkdbConnection);
 
     if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ locations, writeResult }, "Lighting groups wasn't init 🚨");
+      this.logger.error({ locations, writeResult }, "Lighting groups wasn't initialized 🚨");
 
       return left(new Error("INSERT_FAILED"));
     }
 
-    // ! LightingGroupTable совпадает с LightingGroup, по этому адаптер не нужен
     const result: LightingGroup[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -378,26 +406,29 @@ export class LightingRepository implements ILightingRepository {
       }
     });
 
-    this.logger.debug({ locations, writeResult }, "Lighting devices was updated successful ✅");
+    this.logger.debug({ locations, writeResult }, "Lighting groups was initialized successful ✅");
 
     return right(result);
   }
 
+  // TODO Добавить перемещение группы
+  // TODO Добавить удаление группы
+
   async addLightingDevicesIntoGroup(
     location: string,
-    deviceIds: string[],
+    devices: string[],
   ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
     const writeResult = await lightingGroupTable
       .getAll(location)
       .update(
-        (row: RDatum<LightingGroupTable>) => {
-          const unionDeviceIds = row("deviceIds").setUnion(deviceIds);
+        (lightingGroup: RDatum<LightingGroupTable>) => {
+          const unionDeviceIds = lightingGroup("devices").setUnion(devices);
 
           return r.branch(
-            row("deviceIds").count().eq(unionDeviceIds.count()),
-            row,
-            row.merge({
-              deviceIds: unionDeviceIds,
+            lightingGroup("devices").count().eq(unionDeviceIds.count()),
+            lightingGroup,
+            lightingGroup.merge({
+              devices: unionDeviceIds,
               updatedAt: new Date().toJSON(),
             }),
           );
@@ -410,14 +441,13 @@ export class LightingRepository implements ILightingRepository {
 
     if (!writeResult.changes || writeResult.first_error) {
       this.logger.error(
-        { location, deviceIds, writeResult },
-        "Device ids wasn't added to lighting group 🚨",
+        { location, devices, writeResult },
+        "Devices wasn't added to lighting group 🚨",
       );
 
       return left(new Error("UPDATE_FAILED"));
     }
 
-    // ! LightingGroupTable совпадает с LightingGroup, по этому адаптер не нужен
     const result: LightingGroup[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
@@ -428,22 +458,30 @@ export class LightingRepository implements ILightingRepository {
 
     if (result.length === 0) {
       this.logger.error(
-        { location, deviceIds, writeResult },
-        "Device ids wasn't added to lighting group 🚨",
+        { location, devices, writeResult },
+        "Devices wasn't added to lighting group 🚨",
       );
 
       return left(new Error("UPDATE_FAILED"));
     }
 
     this.logger.debug(
-      { location, deviceIds, writeResult },
-      "Lighting devices was updated successful ✅",
+      { location, devices, writeResult },
+      "Lighting devices was add in lighting group successful ✅",
     );
+
+    const lightingGroup = result[0];
 
     const updatePlaceOfInstallationLightingDevicesResult =
       await this.updatePlaceOfInstallationLightingDevices(
-        deviceIds.map((deviceId) => {
-          return { id: deviceId, placeOfInstallation: location };
+        devices.map((device) => {
+          let state = LightingDeviceState.OFF;
+
+          if (lightingGroup.state === LightingGroupState.ON) {
+            state = LightingDeviceState.ON;
+          }
+
+          return { id: device, state, placeOfInstallation: location };
         }),
       );
 
@@ -451,7 +489,7 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    return right([result[0], updatePlaceOfInstallationLightingDevicesResult.right]);
+    return right([lightingGroup, updatePlaceOfInstallationLightingDevicesResult.right]);
   }
 
   async removeLightingDevicesFromGroup(
@@ -487,17 +525,15 @@ export class LightingRepository implements ILightingRepository {
 
       return left(new Error("UPDATE_FAILED"));
     }
-
-    // ! LightingGroupTable совпадает с LightingGroup, по этому адаптер не нужен
-    const result: LightingGroup[] = [];
+    const lightingGroups: LightingGroup[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
       if (new_val) {
-        result.push(new_val);
+        lightingGroups.push(new_val);
       }
     });
 
-    if (result.length === 0) {
+    if (lightingGroups.length === 0) {
       this.logger.error(
         { location, deviceIds, writeResult },
         "Device ids wasn't removed to lighting group 🚨",
@@ -508,13 +544,17 @@ export class LightingRepository implements ILightingRepository {
 
     this.logger.debug(
       { location, deviceIds, writeResult },
-      "Lighting devices was updated successful ✅",
+      "Lighting devices was removed from lighting group successful ✅",
     );
 
     const updatePlaceOfInstallationLightingDevicesResult =
       await this.updatePlaceOfInstallationLightingDevices(
         deviceIds.map((deviceId) => {
-          return { id: deviceId, placeOfInstallation: "NOT_INSTALLED" };
+          return {
+            id: deviceId,
+            state: LightingDeviceState.IN_STOCK,
+            placeOfInstallation: "NOT_INSTALLED",
+          };
         }),
       );
 
@@ -522,7 +562,7 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    return right([result[0], updatePlaceOfInstallationLightingDevicesResult.right]);
+    return right([lightingGroups[0], updatePlaceOfInstallationLightingDevicesResult.right]);
   }
 
   async moveLightingDevicesToGroup(
@@ -575,16 +615,15 @@ export class LightingRepository implements ILightingRepository {
       return left(new Error("UPDATE_FAILED"));
     }
 
-    // ! LightingGroupTable совпадает с LightingGroup, по этому адаптер не нужен
-    const result: LightingGroup[] = [];
+    const lightingGroups: LightingGroup[] = [];
 
     writeResult.changes.forEach(({ new_val }) => {
       if (new_val) {
-        result.push(new_val);
+        lightingGroups.push(new_val);
       }
     });
 
-    if (result.length === 0) {
+    if (lightingGroups.length === 0) {
       this.logger.error({ location, state, writeResult }, "Lighting group wasn't turned 🚨");
 
       return left(new Error("UPDATE_FAILED"));
@@ -592,16 +631,12 @@ export class LightingRepository implements ILightingRepository {
 
     this.logger.debug({ location, state, writeResult }, "Lighting group was turned successful ✅");
 
-    const lightingGroup = result[0];
+    const lightingGroup = lightingGroups[0];
 
     const updateStateLightingDevicesResult = await this.updateStateLightingDevices(
       lightingGroup.devices.map((deviceId) => {
         if (state === LightingGroupState.ON) {
           return { id: deviceId, state: LightingDeviceState.ON };
-        }
-
-        if (state === LightingGroupState.OFF) {
-          return { id: deviceId, state: LightingDeviceState.OFF };
         }
 
         return { id: deviceId, state: LightingDeviceState.OFF };

@@ -1,0 +1,126 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Add lighting devices in group 1`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+]
+`;
+
+exports[`Get lighting group 1`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+]
+`;
+
+exports[`Get lighting groups 1`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+]
+`;
+
+exports[`Get lighting groups 2`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+]
+`;
+
+exports[`Initialize lighting groups 1`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+]
+`;
