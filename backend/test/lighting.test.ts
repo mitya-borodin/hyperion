@@ -56,8 +56,8 @@ const compareSourceAndTargetItems = (
   });
 };
 
-const fetchInitializeLightingGroups = async () => {
-  const initializeLightingGroupsResponse = await fetch(`${BASE_URL}/initialize-lighting-groups`, {
+const fetchCreateLightingGroups = async () => {
+  const createLightingGroupsResponse = await fetch(`${BASE_URL}/create-lighting-groups`, {
     method: "PUT",
     headers: {
       "Content-type": "application/json",
@@ -67,7 +67,7 @@ const fetchInitializeLightingGroups = async () => {
     }),
   });
 
-  return initializeLightingGroupsResponse;
+  return createLightingGroupsResponse;
 };
 
 test("Create lightning devices", async () => {
@@ -217,29 +217,29 @@ test("Decommissioning lighting devices", async () => {
   expect(compareSourceAndTargetItems(updatedSourceItems, decommissionedItems)).toEqual(true);
 });
 
-test("Initialize lighting groups", async () => {
+test("Create lighting groups", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 });
 
 test("Get lighting groups", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 
   // ! Read lighting groups
@@ -261,21 +261,21 @@ test("Get lighting groups", async () => {
 
 test("Get lighting group", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 
   // ! Read lighting group
   await Promise.all(
-    initializeLightingGroups.map(async (initializeLightingGroup: any) => {
+    createLightingGroups.map(async (createLightingGroup: any) => {
       const getLightingGroupResponse = await fetch(
-        `${BASE_URL}/get-lighting-group?groupId=${initializeLightingGroup.location}`,
+        `${BASE_URL}/get-lighting-group?groupId=${createLightingGroup.location}`,
         {
           method: "GET",
           headers: {
@@ -288,21 +288,21 @@ test("Get lighting group", async () => {
 
       const lightingGroup = await getLightingGroupResponse.json();
 
-      expect(compareSourceAndTargetItems(initializeLightingGroups, [lightingGroup])).toEqual(true);
+      expect(compareSourceAndTargetItems(createLightingGroups, [lightingGroup])).toEqual(true);
     }),
   );
 });
 
 test("Add lighting devices in group", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 
   // ! Create lighting devices
@@ -348,14 +348,14 @@ test("Add lighting devices in group", async () => {
 
 test("Remove lighting devices from group", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 
   // ! Create lighting devices
@@ -433,14 +433,14 @@ test("Remove lighting devices from group", async () => {
 
 test("Move lighting devices to another group", async () => {
   // ! Create lighting groups
-  const initializeLightingGroupsResponse = await fetchInitializeLightingGroups();
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
-  expect(initializeLightingGroupsResponse.ok).toEqual(true);
+  expect(createLightingGroupsResponse.ok).toEqual(true);
 
-  const initializeLightingGroups = await initializeLightingGroupsResponse.json();
+  const createLightingGroups = await createLightingGroupsResponse.json();
 
   expect(
-    initializeLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 
   // ! Create lighting devices

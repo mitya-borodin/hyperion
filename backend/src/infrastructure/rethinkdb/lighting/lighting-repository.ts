@@ -378,7 +378,7 @@ export class LightingRepository implements ILightingRepository {
     return right(readResult);
   }
 
-  async initializeLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>> {
+  async createLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>> {
     const writeResult = await lightingGroupTable
       .insert(
         locations.map((location) => ({

@@ -37,7 +37,7 @@ export interface ILightingRepository {
 
   getLightingGroup(groupId: string): Promise<Either<Error, LightingGroup | null>>;
 
-  initializeLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
+  createLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>>;
 
   addLightingDevicesIntoGroup(
     location: string,
