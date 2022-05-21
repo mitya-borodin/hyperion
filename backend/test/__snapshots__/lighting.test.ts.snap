@@ -495,3 +495,85 @@ Array [
   },
 ]
 `;
+
+exports[`Turn on and turn off lighting group 1`] = `
+Array [
+  Object {
+    "devices": Array [],
+    "location": "КУХНЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ГОСТИНАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ИГРОВАЯ",
+    "state": "OFF",
+  },
+  Object {
+    "devices": Array [],
+    "location": "ВАННАЯ",
+    "state": "OFF",
+  },
+]
+`;
+
+exports[`Turn on and turn off lighting group 2`] = `
+Array [
+  Object {
+    "brand": "FREON_2",
+    "currency": "RUB",
+    "history": Array [
+      Object {
+        "placeOfInstallation": "КУХНЯ",
+        "turnedOffAt": null,
+        "turnedOnAt": null,
+        "workedMs": null,
+      },
+    ],
+    "images": Array [
+      "image_1",
+      "image_2",
+      "image_3",
+    ],
+    "lightTemperatureKelvin": 4000,
+    "lumens": "2700",
+    "name": "lightning-device-2",
+    "placeOfInstallation": "КУХНЯ",
+    "power": "24",
+    "price": "600",
+    "resourceMs": 30000,
+    "sellersWebsite": "http://feron.ru",
+    "state": "IN_STOCK",
+  },
+  Object {
+    "brand": "FREON_1",
+    "currency": "RUB",
+    "history": Array [
+      Object {
+        "placeOfInstallation": "КУХНЯ",
+        "turnedOffAt": null,
+        "turnedOnAt": null,
+        "workedMs": null,
+      },
+    ],
+    "images": Array [
+      "image_1",
+      "image_2",
+      "image_3",
+    ],
+    "lightTemperatureKelvin": 4000,
+    "lumens": "2700",
+    "name": "lightning-device-1",
+    "placeOfInstallation": "КУХНЯ",
+    "power": "24",
+    "price": "600",
+    "resourceMs": 30000,
+    "sellersWebsite": "http://feron.ru",
+    "state": "IN_STOCK",
+  },
+]
+`;

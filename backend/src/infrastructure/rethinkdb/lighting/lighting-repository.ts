@@ -102,7 +102,7 @@ export class LightingRepository implements ILightingRepository {
           currency: device.currency,
           sellersWebsite: device.sellersWebsite,
           images: device.images,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",
@@ -151,7 +151,7 @@ export class LightingRepository implements ILightingRepository {
         devices.map((device) => ({
           id: device.id,
           placeOfInstallation: device.placeOfInstallation,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",
@@ -225,7 +225,7 @@ export class LightingRepository implements ILightingRepository {
         devices.map((device) => ({
           id: device.id,
           state: device.state,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",

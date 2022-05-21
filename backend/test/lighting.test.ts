@@ -518,3 +518,69 @@ test("Move lighting devices to another group", async () => {
     movedLightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
   ).toMatchSnapshot();
 });
+
+test("Turn on and turn off lighting group", async () => {
+  // ! Create lighting groups
+  const createLightingGroupsResponse = await fetchCreateLightingGroups();
+
+  expect(createLightingGroupsResponse.ok).toEqual(true);
+
+  const createLightingGroups = await createLightingGroupsResponse.json();
+
+  expect(
+    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+
+  // ! Create lighting devices
+  const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
+
+  expect(createLightningDeviceResponse.ok).toEqual(true);
+
+  const createdItems = await createLightningDeviceResponse.json();
+
+  expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
+
+  // ! Add lighting devices in lighting group
+  const addLightingDevicesInGroupResponse = await fetch(
+    `${BASE_URL}/add-lighting-devices-in-group`,
+    {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        lightingGroupLocation: "КУХНЯ",
+        deviceIds: createdItems.map(({ id }: any) => id),
+      }),
+    },
+  );
+
+  expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
+
+  const { lightingGroup, lightingDevices } = await addLightingDevicesInGroupResponse.json();
+
+  expect(lightingGroup.location).toBe("КУХНЯ");
+  expect(lightingGroup.state).toBe("OFF");
+  expect(
+    lightingGroup.devices.every(
+      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
+    ),
+  ).toBe(true);
+
+  expect(
+    lightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
+  ).toMatchSnapshot();
+
+  // ! Turn on lighting group
+  const turnOnLightingGroupResponse = await fetch(`${BASE_URL}/turn-on-group`, {
+    method: "POST",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      lightingGroupLocation: "КУХНЯ",
+    }),
+  });
+
+  expect(turnOnLightingGroupResponse.ok).toEqual(true);
+});
