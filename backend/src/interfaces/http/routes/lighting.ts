@@ -298,7 +298,7 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
       if (isLeft(lightingGroups)) {
         logger.error(
           { lightingGroupLocations, error: lightingGroups.left },
-          "Lighting group wasn't initialized",
+          "Lighting group wasn't created",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
