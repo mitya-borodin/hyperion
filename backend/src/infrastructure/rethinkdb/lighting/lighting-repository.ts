@@ -230,15 +230,11 @@ export class LightingRepository implements ILightingRepository {
         {
           returnChanges: "always",
           conflict(id, oldDoc: RDatum<LightingDevice>, newDoc: RDatum<UpdateSateLightingDevice>) {
-            if (
+            return r.branch(
               newDoc("state")
                 .eq(LightingDeviceState.IN_STOCK)
-                .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED))
-            ) {
-              return oldDoc;
-            }
-
-            if (
+                .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED)),
+              oldDoc,
               newDoc("state")
                 .eq(LightingDeviceState.ON)
                 .and(
@@ -246,47 +242,45 @@ export class LightingRepository implements ILightingRepository {
                     .eq(LightingDeviceState.OFF)
                     .or(oldDoc("state").eq(LightingDeviceState.IN_STOCK)),
                 )
-                .and(oldDoc("history").count().gt(0))
-            ) {
-              const lastHistoryIndex = oldDoc("history").count().sub(1);
-              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+                .and(oldDoc("history").count().gt(0)),
+              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                const lastHistoryIndex = oldDoc("history").count().sub(1);
+                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-              return oldDoc.merge(newDoc).merge({
-                history: oldDoc("history").setInsert(
-                  lastHistoryItem.merge({
-                    turnedOnAt: r.now(),
-                  }),
-                ),
-              });
-            }
-
-            if (
+                return oldDoc.merge(newDoc).merge({
+                  history: oldDoc("history").setInsert(
+                    lastHistoryItem.merge({
+                      turnedOnAt: r.now(),
+                    }),
+                  ),
+                });
+              }),
               newDoc("state")
                 .eq(LightingDeviceState.OFF)
                 .and(oldDoc("state").eq(LightingDeviceState.ON))
-                .and(oldDoc("history").count().gt(0))
-            ) {
-              const lastHistoryIndex = oldDoc("history").count().sub(1);
-              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+                .and(oldDoc("history").count().gt(0)),
+              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                const lastHistoryIndex = oldDoc("history").count().sub(1);
+                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-              const turnedOnAt = lastHistoryItem("turnedOnAt");
-              const turnedOffAt = r.now();
+                const turnedOnAt = lastHistoryItem("turnedOnAt");
+                const turnedOffAt = r.now();
 
-              const workedMs = turnedOffAt
-                .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
-                .seconds()
-                .mul(1_000);
+                const workedMs = turnedOffAt
+                  .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
+                  .seconds()
+                  .mul(1_000);
 
-              return oldDoc.merge(newDoc).merge({
-                history: lastHistoryItem.merge({
-                  turnedOffAt,
-                  workedMs,
-                }),
-                totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
-              });
-            }
-
-            return oldDoc;
+                return oldDoc.merge(newDoc).merge({
+                  history: lastHistoryItem.merge({
+                    turnedOffAt,
+                    workedMs,
+                  }),
+                  totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
+                });
+              }),
+              oldDoc,
+            );
           },
         },
       )
