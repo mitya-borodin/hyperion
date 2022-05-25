@@ -102,7 +102,7 @@ export class LightingRepository implements ILightingRepository {
           currency: device.currency,
           sellersWebsite: device.sellersWebsite,
           images: device.images,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",
@@ -151,7 +151,7 @@ export class LightingRepository implements ILightingRepository {
         devices.map((device) => ({
           id: device.id,
           placeOfInstallation: device.placeOfInstallation,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",
@@ -225,20 +225,16 @@ export class LightingRepository implements ILightingRepository {
         devices.map((device) => ({
           id: device.id,
           state: device.state,
-          updateAt: r.now(),
+          updatedAt: r.now(),
         })),
         {
           returnChanges: "always",
           conflict(id, oldDoc: RDatum<LightingDevice>, newDoc: RDatum<UpdateSateLightingDevice>) {
-            if (
+            return r.branch(
               newDoc("state")
                 .eq(LightingDeviceState.IN_STOCK)
-                .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED))
-            ) {
-              return oldDoc;
-            }
-
-            if (
+                .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED)),
+              oldDoc,
               newDoc("state")
                 .eq(LightingDeviceState.ON)
                 .and(
@@ -246,47 +242,45 @@ export class LightingRepository implements ILightingRepository {
                     .eq(LightingDeviceState.OFF)
                     .or(oldDoc("state").eq(LightingDeviceState.IN_STOCK)),
                 )
-                .and(oldDoc("history").count().gt(0))
-            ) {
-              const lastHistoryIndex = oldDoc("history").count().sub(1);
-              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+                .and(oldDoc("history").count().gt(0)),
+              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                const lastHistoryIndex = oldDoc("history").count().sub(1);
+                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-              return oldDoc.merge(newDoc).merge({
-                history: oldDoc("history").setInsert(
-                  lastHistoryItem.merge({
-                    turnedOnAt: r.now(),
-                  }),
-                ),
-              });
-            }
-
-            if (
+                return oldDoc.merge(newDoc).merge({
+                  history: oldDoc("history").setInsert(
+                    lastHistoryItem.merge({
+                      turnedOnAt: r.now(),
+                    }),
+                  ),
+                });
+              }),
               newDoc("state")
                 .eq(LightingDeviceState.OFF)
                 .and(oldDoc("state").eq(LightingDeviceState.ON))
-                .and(oldDoc("history").count().gt(0))
-            ) {
-              const lastHistoryIndex = oldDoc("history").count().sub(1);
-              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+                .and(oldDoc("history").count().gt(0)),
+              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                const lastHistoryIndex = oldDoc("history").count().sub(1);
+                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-              const turnedOnAt = lastHistoryItem("turnedOnAt");
-              const turnedOffAt = r.now();
+                const turnedOnAt = lastHistoryItem("turnedOnAt");
+                const turnedOffAt = r.now();
 
-              const workedMs = turnedOffAt
-                .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
-                .seconds()
-                .mul(1_000);
+                const workedMs = turnedOffAt
+                  .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
+                  .seconds()
+                  .mul(1_000);
 
-              return oldDoc.merge(newDoc).merge({
-                history: lastHistoryItem.merge({
-                  turnedOffAt,
-                  workedMs,
-                }),
-                totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
-              });
-            }
-
-            return oldDoc;
+                return oldDoc.merge(newDoc).merge({
+                  history: lastHistoryItem.merge({
+                    turnedOffAt,
+                    workedMs,
+                  }),
+                  totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
+                });
+              }),
+              oldDoc,
+            );
           },
         },
       )
@@ -378,7 +372,7 @@ export class LightingRepository implements ILightingRepository {
     return right(readResult);
   }
 
-  async initializeLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>> {
+  async createLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>> {
     const writeResult = await lightingGroupTable
       .insert(
         locations.map((location) => ({
@@ -393,7 +387,7 @@ export class LightingRepository implements ILightingRepository {
       .run(this.rethinkdbConnection);
 
     if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ locations, writeResult }, "Lighting groups wasn't initialized 🚨");
+      this.logger.error({ locations, writeResult }, "Lighting groups wasn't created 🚨");
 
       return left(new Error("INSERT_FAILED"));
     }
@@ -406,7 +400,7 @@ export class LightingRepository implements ILightingRepository {
       }
     });
 
-    this.logger.debug({ locations, writeResult }, "Lighting groups was initialized successful ✅");
+    this.logger.debug({ locations, writeResult }, "Lighting groups was created successful ✅");
 
     return right(result);
   }
@@ -494,16 +488,16 @@ export class LightingRepository implements ILightingRepository {
 
   async removeLightingDevicesFromGroup(
     location: string,
-    deviceIds: string[],
+    devices: string[],
   ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
     const writeResult = await lightingGroupTable
       .getAll(location)
       .update(
         (row: RDatum<LightingGroupTable>) => {
-          const differenceDeviceIds = row("deviceIds").setDifference(deviceIds);
+          const differenceDeviceIds = row("devices").setDifference(devices);
 
           return r.branch(
-            row("deviceIds").count().eq(differenceDeviceIds.count()),
+            row("devices").count().eq(differenceDeviceIds.count()),
             row,
             row.merge({
               deviceIds: differenceDeviceIds,
@@ -519,7 +513,7 @@ export class LightingRepository implements ILightingRepository {
 
     if (!writeResult.changes || writeResult.first_error) {
       this.logger.error(
-        { location, deviceIds, writeResult },
+        { location, devices, writeResult },
         "Device ids wasn't removed to lighting group 🚨",
       );
 
@@ -535,7 +529,7 @@ export class LightingRepository implements ILightingRepository {
 
     if (lightingGroups.length === 0) {
       this.logger.error(
-        { location, deviceIds, writeResult },
+        { location, devices, writeResult },
         "Device ids wasn't removed to lighting group 🚨",
       );
 
@@ -543,15 +537,15 @@ export class LightingRepository implements ILightingRepository {
     }
 
     this.logger.debug(
-      { location, deviceIds, writeResult },
+      { location, devices, writeResult },
       "Lighting devices was removed from lighting group successful ✅",
     );
 
     const updatePlaceOfInstallationLightingDevicesResult =
       await this.updatePlaceOfInstallationLightingDevices(
-        deviceIds.map((deviceId) => {
+        devices.map((device) => {
           return {
-            id: deviceId,
+            id: device,
             state: LightingDeviceState.IN_STOCK,
             placeOfInstallation: "NOT_INSTALLED",
           };
@@ -568,21 +562,21 @@ export class LightingRepository implements ILightingRepository {
   async moveLightingDevicesToGroup(
     locationFrom: string,
     locationTo: string,
-    deviceIds: string[],
+    devices: string[],
   ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
-    const lightingGroupFrom = await this.removeLightingDevicesFromGroup(locationFrom, deviceIds);
-    const lightingGroupTo = await this.addLightingDevicesIntoGroup(locationTo, deviceIds);
+    const lightingGroupFrom = await this.removeLightingDevicesFromGroup(locationFrom, devices);
+    const lightingGroupTo = await this.addLightingDevicesIntoGroup(locationTo, devices);
 
     if (isRight(lightingGroupFrom) && isRight(lightingGroupTo)) {
       this.logger.debug(
-        { locationFrom, locationTo, deviceIds },
+        { locationFrom, locationTo, devices },
         "Lighting devices was moved successful ✅",
       );
 
       return right(lightingGroupTo.right);
     }
 
-    this.logger.error({ locationFrom, locationTo, deviceIds }, "Lighting devices wasn't moved 🚨");
+    this.logger.error({ locationFrom, locationTo, devices }, "Lighting devices wasn't moved 🚨");
 
     return left(new Error("MOVE_FAILED"));
   }

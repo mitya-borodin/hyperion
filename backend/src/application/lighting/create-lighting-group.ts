@@ -10,10 +10,10 @@ type Params = {
 
 type Output = Either<Error, LightingGroup[]>;
 
-export const getInitializeLightingGroupCommand = (
+export const getCreateLightingGroupCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.initializeLightingGroups(params.lightingGroupLocations);
+    return lightingRepository.createLightingGroups(params.lightingGroupLocations);
   };
 };

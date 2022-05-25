@@ -1,5 +1,5 @@
 {
-  "title": "Initialize lighting groups body schema",
+  "title": "Create lighting groups body schema",
   "type": "object",
   "properties": {
     "lightingGroupLocations": { "type": "array", "items": { "type": "string" } }

@@ -5,13 +5,6 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type InitializeLightingGroupReplySchema = {
-  location: string;
-  state: "ON" | "OFF";
-  /**
-   * Devices is device ids
-   */
-  devices: string[];
-  createdAt: string;
-  updatedAt: string;
-}[];
+export interface CreateLightingGroupsBodySchema {
+  lightingGroupLocations: string[];
+}

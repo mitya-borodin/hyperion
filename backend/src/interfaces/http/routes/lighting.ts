@@ -7,12 +7,12 @@ import { Connection } from "rethinkdb-ts";
 
 import { getAddLightingDevicesIntoGroupCommand } from "../../../application/lighting/add-lighting-devices-into-group";
 import { getCreateLightingDevicesCommand } from "../../../application/lighting/create-lighting-devices";
+import { getCreateLightingGroupCommand } from "../../../application/lighting/create-lighting-group";
 import { getDecommissioningLightingDevicesCommand } from "../../../application/lighting/decommissioning-lighting-devices";
 import { getGetLightingDeviceCommand } from "../../../application/lighting/get-lighting-device";
 import { getGetLightingDevicesCommand } from "../../../application/lighting/get-lighting-devices";
 import { getGetLightingGroupCommand } from "../../../application/lighting/get-lighting-group";
 import { getGetLightingGroupsCommand } from "../../../application/lighting/get-lighting-groups";
-import { getInitializeLightingGroupCommand } from "../../../application/lighting/initialize-lighting-group";
 import { getMoveLightingDevicesToAnotherGroupCommand } from "../../../application/lighting/move-lighting-devices-to-another-group";
 import { getRemoveLightingDeviceFromGroupCommand } from "../../../application/lighting/remove-lighting-device-from-group";
 import { getTurnOffGroupCommand } from "../../../application/lighting/turn-off-group";
@@ -27,10 +27,10 @@ import {
   mapCreateLightingDevicesToApp,
   mapCreateLightingDevicesToHttp,
 } from "../mappers/create-lighting-devices-mapper";
+import { mapCreateLightingGroupsToHttp } from "../mappers/create-lighting-groups-mapper";
 import { mapDecommissioningLightingDevicesToHttp } from "../mappers/decommissioning-lighting-devices-mapper";
 import { mapGetLightingDeviceToHttp } from "../mappers/get-lighting-device-mapper";
 import { mapGetLightingGroupToHttp } from "../mappers/get-lighting-group-mapper";
-import { mapInitializeLightingGroupsToHttp } from "../mappers/initialize-lighting-groups-mapper";
 import { mapMoveLightingDevicesToGroupToHttp } from "../mappers/move-lighting-devices-to-group-mapper";
 import { mapRemoveLightingDevicesFromGroupToHttp } from "../mappers/remove-lighting-devices-from-group-mapper";
 import { mapTurnOffGroupToHttp } from "../mappers/turn-off-group-mapper";
@@ -43,6 +43,8 @@ import addLightingDevicesInGroupBodySchema from "../schemas/lighting/add-lightin
 import addLightingDevicesInGroupReplySchema from "../schemas/lighting/add-lighting-devices-in-group.reply.json";
 import createLightingDevicesBodySchema from "../schemas/lighting/create-lighting-devices.body.json";
 import createLightingDevicesReplaySchema from "../schemas/lighting/create-lighting-devices.reply.json";
+import createLightingGroupsBodySchema from "../schemas/lighting/create-lighting-groups.body.json";
+import createLightingGroupsReplySchema from "../schemas/lighting/create-lighting-groups.reply.json";
 import decommissioningLightingDevicesBodySchema from "../schemas/lighting/decommissioning-lighting-devices.body.json";
 import decommissioningLightingDevicesReplaySchema from "../schemas/lighting/decommissioning-lighting-devices.reply.json";
 import getLightingDeviceQuerystringSchema from "../schemas/lighting/get-lighting-device.querystring.json";
@@ -51,8 +53,6 @@ import getLightingDevicesReplySchema from "../schemas/lighting/get-lighting-devi
 import getLightingGroupQuerystringSchema from "../schemas/lighting/get-lighting-group.querystring.json";
 import getLightingGroupReplySchema from "../schemas/lighting/get-lighting-group.reply.json";
 import getLightingGroupsReplySchema from "../schemas/lighting/get-lighting-groups.reply.json";
-import initializeLightingGroupsBodySchema from "../schemas/lighting/initialize-lighting-groups.body.json";
-import initializeLightingGroupsReplySchema from "../schemas/lighting/initialize-lighting-groups.reply.json";
 import lightingDeviceSchema from "../schemas/lighting/lighting-device.json";
 import lightingGroupSchema from "../schemas/lighting/lighting-group.json";
 import moveLightingDevicesToAnotherGroupBodySchema from "../schemas/lighting/move-lighting-devices-to-another-group.body.json";
@@ -69,6 +69,8 @@ import { AddLightingDevicesInGroupBodySchema } from "../types/lighting/add-light
 import { AddLightingDevicesInGroupReplySchema } from "../types/lighting/add-lighting-devices-in-group.reply";
 import { CreateLightingDevicesBodySchema } from "../types/lighting/create-lighting-devices.body";
 import { CreateLightingDevicesReplySchema } from "../types/lighting/create-lighting-devices.reply";
+import { CreateLightingGroupsBodySchema } from "../types/lighting/create-lighting-groups.body";
+import { CreateLightingGroupReplySchema } from "../types/lighting/create-lighting-groups.reply";
 import { DecommissioningLightingDevicesBodySchema } from "../types/lighting/decommissioning-lighting-devices.body";
 import { DecommissioningLightingDeviceReplySchema } from "../types/lighting/decommissioning-lighting-devices.reply";
 import { GetLightingDeviceQuerystringSchema } from "../types/lighting/get-lighting-device.querystring";
@@ -77,8 +79,6 @@ import { GetLightingDevicesReplySchema } from "../types/lighting/get-lighting-de
 import { GetLightingGroupQuerystringSchema } from "../types/lighting/get-lighting-group.querystring";
 import { GetLightingGroupReplySchema } from "../types/lighting/get-lighting-group.reply";
 import { GetLightingGroupsReplySchema } from "../types/lighting/get-lighting-groups.reply";
-import { InitializeLightingGroupsBodySchema } from "../types/lighting/initialize-lighting-groups.body";
-import { InitializeLightingGroupReplySchema } from "../types/lighting/initialize-lighting-groups.reply";
 import { MoveLightingDevicesToAnotherGroupBodySchema } from "../types/lighting/move-lighting-devices-to-another-group.body";
 import { MoveLightingDevicesToAnotherGroupReplySchema } from "../types/lighting/move-lighting-devices-to-another-group.reply";
 import { RemoveLightingDevicesFromGroupBodySchema } from "../types/lighting/remove-lighting-devices-from-group.body";
@@ -276,35 +276,35 @@ const lighting: FastifyPluginAsync<lightingFastifyPluginOptions> = async (
   });
 
   fastify.route<{
-    Body: InitializeLightingGroupsBodySchema;
-    Reply: InitializeLightingGroupReplySchema;
+    Body: CreateLightingGroupsBodySchema;
+    Reply: CreateLightingGroupReplySchema;
   }>({
     method: "PUT",
-    url: "/initialize-lighting-groups",
+    url: "/create-lighting-groups",
     schema: {
-      body: initializeLightingGroupsBodySchema,
+      body: createLightingGroupsBodySchema,
       response: {
-        [HttpStatusCodes.OK]: initializeLightingGroupsReplySchema,
+        [HttpStatusCodes.OK]: createLightingGroupsReplySchema,
       },
       tags: ["lighting"],
     },
     handler: async (request, reply) => {
       const { lightingGroupLocations } = request.body;
 
-      const initializeLightingGroupsCommand = getInitializeLightingGroupCommand(lightingRepository);
+      const createLightingGroupsCommand = getCreateLightingGroupCommand(lightingRepository);
 
-      const lightingGroups = await initializeLightingGroupsCommand({ lightingGroupLocations });
+      const lightingGroups = await createLightingGroupsCommand({ lightingGroupLocations });
 
       if (isLeft(lightingGroups)) {
         logger.error(
           { lightingGroupLocations, error: lightingGroups.left },
-          "Lighting group wasn't initialized",
+          "Lighting group wasn't created",
         );
 
         return reply.code(HttpStatusCodes.UNPROCESSABLE_ENTITY).send();
       }
 
-      reply.code(HttpStatusCodes.OK).send(mapInitializeLightingGroupsToHttp(lightingGroups.right));
+      reply.code(HttpStatusCodes.OK).send(mapCreateLightingGroupsToHttp(lightingGroups.right));
     },
   });
 
