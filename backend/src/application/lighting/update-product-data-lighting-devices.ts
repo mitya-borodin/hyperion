@@ -1,5 +1,3 @@
-import { Either } from "fp-ts/Either";
-
 import { LightingDevice } from "../../domain/lighting/lighting-device";
 import {
   ILightingRepository,
@@ -11,7 +9,7 @@ type Params = {
   devices: UpdateProductDataLightingDevice[];
 };
 
-type Output = Either<Error, LightingDevice[]>;
+type Output = LightingDevice[] | Error;
 
 export const getUpdateProductDataLightingDevicesCommand = (
   lightingRepository: ILightingRepository,

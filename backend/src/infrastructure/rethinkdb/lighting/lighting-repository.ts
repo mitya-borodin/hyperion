@@ -1,7 +1,7 @@
-import { Either, isLeft, isRight, left, right } from "fp-ts/Either";
 import { Logger } from "pino";
 import { Connection, r, RDatum } from "rethinkdb-ts";
 
+import { Errors } from "../../../domain/errors";
 import {
   LightingDevice,
   LightingDeviceState,
@@ -11,8 +11,8 @@ import { LightingGroup, LightingGroupState } from "../../../domain/lighting/ligh
 import {
   CreateLightingDevice,
   ILightingRepository,
-  UpdateProductDataLightingDevice,
   UpdatePlaceOfInstallationLightingDevice,
+  UpdateProductDataLightingDevice,
   UpdateSateLightingDevice,
 } from "../../../domain/lighting/lighting-repository";
 import { LightingDeviceTable, lightingDeviceTable } from "../tables/lighting-device";
@@ -26,383 +26,452 @@ export class LightingRepository implements ILightingRepository {
     this.rethinkdbConnection = rethinkdbConnection;
     this.logger = logger.child({ name: "lighting-repository" });
   }
-  async getLightingDevices(): Promise<Either<Error, LightingDevice[]>> {
-    const readResult = await lightingDeviceTable.run(this.rethinkdbConnection);
 
-    return right(readResult);
-  }
+  async getLightingDevices(): Promise<LightingDevice[] | Error> {
+    try {
+      return lightingDeviceTable.run(this.rethinkdbConnection);
+    } catch (error) {
+      this.logger.error(error);
 
-  async getLightingDevice(deviceId: string): Promise<Either<Error, LightingDevice | null>> {
-    const readResult = await lightingDeviceTable.get(deviceId).run(this.rethinkdbConnection);
-
-    return right(readResult);
-  }
-
-  async createLightingDevices(
-    devices: CreateLightingDevice[],
-  ): Promise<Either<Error, LightingDevice[]>> {
-    const writeResult = await lightingDeviceTable
-      .insert(
-        devices.map((device) => ({
-          id: r.uuid(),
-          name: device.name,
-          brand: device.brand,
-          power: device.power,
-          lumens: device.lumens,
-          lightTemperatureKelvin: device.lightTemperatureKelvin,
-          resourceMs: device.resourceMs,
-          price: device.price,
-          currency: device.currency,
-          sellersWebsite: device.sellersWebsite,
-          images: device.images,
-          placeOfInstallation: PlaceOfInstallationOfTheLightingDevice.NOT_INSTALLED,
-          state: LightingDeviceState.IN_STOCK,
-          history: [],
-          totalWorkedMs: 0,
-          createdAt: r.now(),
-          updatedAt: r.now(),
-        })),
-        { returnChanges: "always" },
-      )
-      .run(this.rethinkdbConnection);
-
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ devices, writeResult }, "Lighting devices wasn't created 🚨");
-
-      return left(new Error("INSERT_FAILED"));
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
+  }
 
-    const result: LightingDeviceTable[] = [];
+  async getLightingDevice(deviceId: string): Promise<LightingDevice | Error> {
+    try {
+      const readResult = await lightingDeviceTable.get(deviceId).run(this.rethinkdbConnection);
 
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
+      if (readResult === null) {
+        this.logger.error({ deviceId }, "Lighting device not found");
+
+        return new Error(Errors.INVALID_ARGUMENTS);
       }
-    });
 
-    this.logger.debug({ devices, writeResult }, "Lighting devices was created successful ✅");
+      return readResult;
+    } catch (error) {
+      this.logger.error(error);
 
-    return right(result);
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async createLightingDevices(devices: CreateLightingDevice[]): Promise<LightingDevice[] | Error> {
+    try {
+      const writeResult = await lightingDeviceTable
+        .insert(
+          devices.map((device) => ({
+            id: r.uuid(),
+            name: device.name,
+            brand: device.brand,
+            power: device.power,
+            lumens: device.lumens,
+            lightTemperatureKelvin: device.lightTemperatureKelvin,
+            resourceMs: device.resourceMs,
+            price: device.price,
+            currency: device.currency,
+            sellersWebsite: device.sellersWebsite,
+            images: device.images,
+            placeOfInstallation: PlaceOfInstallationOfTheLightingDevice.NOT_INSTALLED,
+            state: LightingDeviceState.IN_STOCK,
+            history: [],
+            totalWorkedMs: 0,
+            createdAt: r.now(),
+            updatedAt: r.now(),
+          })),
+          { returnChanges: "always" },
+        )
+        .run(this.rethinkdbConnection);
+
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error({ devices, writeResult }, "Lighting devices wasn't created 🚨");
+
+        return new Error(Errors.INSERT_FAILED);
+      }
+
+      const result: LightingDeviceTable[] = [];
+
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      this.logger.debug({ devices, writeResult }, "Lighting devices was created successful ✅");
+
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 
   async updateProductDataLightingDevices(
     devices: UpdateProductDataLightingDevice[],
-  ): Promise<Either<Error, LightingDevice[]>> {
-    const writeResult = await lightingDeviceTable
-      .insert(
-        devices.map((device) => ({
-          id: device.id,
-          name: device.name,
-          brand: device.brand,
-          power: device.power,
-          lumens: device.lumens,
-          lightTemperatureKelvin: device.lightTemperatureKelvin,
-          resourceMs: device.resourceMs,
-          price: device.price,
-          currency: device.currency,
-          sellersWebsite: device.sellersWebsite,
-          images: device.images,
-          updatedAt: r.now(),
-        })),
-        {
-          returnChanges: "always",
-          conflict(
-            id,
-            oldDoc: RDatum<LightingDevice>,
-            newDoc: RDatum<UpdateProductDataLightingDevice>,
-          ) {
-            return oldDoc.merge(newDoc);
+  ): Promise<LightingDevice[] | Error> {
+    try {
+      const writeResult = await lightingDeviceTable
+        .insert(
+          devices.map((device) => ({
+            id: device.id,
+            name: device.name,
+            brand: device.brand,
+            power: device.power,
+            lumens: device.lumens,
+            lightTemperatureKelvin: device.lightTemperatureKelvin,
+            resourceMs: device.resourceMs,
+            price: device.price,
+            currency: device.currency,
+            sellersWebsite: device.sellersWebsite,
+            images: device.images,
+            updatedAt: r.now(),
+          })),
+          {
+            returnChanges: "always",
+            conflict(
+              id,
+              oldDoc: RDatum<LightingDevice>,
+              newDoc: RDatum<UpdateProductDataLightingDevice>,
+            ) {
+              return oldDoc.merge(newDoc);
+            },
           },
-        },
-      )
-      .run(this.rethinkdbConnection);
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error(
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error(
+          { devices, writeResult },
+          "Lighting devices product data wasn't updated 🚨",
+        );
+
+        return new Error(Errors.UPDATE_FAILED);
+      }
+
+      // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
+      const result: LightingDeviceTable[] = [];
+
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      this.logger.debug(
         { devices, writeResult },
-        "Lighting devices product data wasn't updated 🚨",
+        "Lighting devices product data was updated successful ✅",
       );
 
-      return left(new Error("UPDATE_FAILED"));
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    // ! LightingDeviceTable совпадает с LightingDevice, по этому адаптер не нужен
-    const result: LightingDeviceTable[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
-      }
-    });
-
-    this.logger.debug(
-      { devices, writeResult },
-      "Lighting devices product data was updated successful ✅",
-    );
-
-    return right(result);
   }
 
   private async updatePlaceOfInstallationLightingDevices(
     devices: UpdatePlaceOfInstallationLightingDevice[],
-  ): Promise<Either<Error, LightingDevice[]>> {
-    const writeResult = await lightingDeviceTable
-      .insert(
-        devices.map((device) => ({
-          id: device.id,
-          placeOfInstallation: device.placeOfInstallation,
-          updatedAt: r.now(),
-        })),
-        {
-          returnChanges: "always",
-          conflict(
-            id,
-            oldDoc: RDatum<LightingDevice>,
-            newDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
-          ) {
-            if (oldDoc("placeOfInstallation").eq(newDoc("placeOfInstallation")).not()) {
-              const historyIsEmpty = oldDoc("history").count().eq(0);
+  ): Promise<LightingDevice[] | Error> {
+    try {
+      const writeResult = await lightingDeviceTable
+        .insert(
+          devices.map((device) => ({
+            id: device.id,
+            placeOfInstallation: device.placeOfInstallation,
+            updatedAt: r.now(),
+          })),
+          {
+            returnChanges: "always",
+            conflict(
+              id,
+              oldDoc: RDatum<LightingDevice>,
+              newDoc: RDatum<UpdatePlaceOfInstallationLightingDevice>,
+            ) {
+              if (oldDoc("placeOfInstallation").eq(newDoc("placeOfInstallation")).not()) {
+                const historyIsEmpty = oldDoc("history").count().eq(0);
 
-              const lastHistoryIndex = oldDoc("history").count().sub(1);
-              const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+                const lastHistoryIndex = oldDoc("history").count().sub(1);
+                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-              const placeOfInstallation = newDoc("placeOfInstallation");
+                const placeOfInstallation = newDoc("placeOfInstallation");
 
-              return oldDoc.merge(newDoc).merge({
-                history: oldDoc("history").setInsert(
-                  r.branch(
-                    historyIsEmpty,
-                    {
-                      placeOfInstallation,
-                      turnedOnAt: null,
-                      turnedOffAt: null,
-                      workedMs: null,
-                    },
-                    lastHistoryItem.merge({
-                      placeOfInstallation,
-                    }),
+                return oldDoc.merge(newDoc).merge({
+                  history: oldDoc("history").setInsert(
+                    r.branch(
+                      historyIsEmpty,
+                      {
+                        placeOfInstallation,
+                        turnedOnAt: null,
+                        turnedOffAt: null,
+                        workedMs: null,
+                      },
+                      lastHistoryItem.merge({
+                        placeOfInstallation,
+                      }),
+                    ),
                   ),
-                ),
-              });
-            }
+                });
+              }
 
-            return oldDoc.merge(newDoc);
+              return oldDoc.merge(newDoc);
+            },
           },
-        },
-      )
-      .run(this.rethinkdbConnection);
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error(
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error(
+          { devices, writeResult },
+          "Place of installation lighting devices wasn't updated 🚨",
+        );
+
+        return new Error(Errors.UPDATE_FAILED);
+      }
+
+      const result: LightingDeviceTable[] = [];
+
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      this.logger.debug(
         { devices, writeResult },
-        "Place of installation lighting devices wasn't updated 🚨",
+        "Place of installation lighting devices was updated successful ✅",
       );
 
-      return left(new Error("UPDATE_FAILED"));
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    const result: LightingDeviceTable[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
-      }
-    });
-
-    this.logger.debug(
-      { devices, writeResult },
-      "Place of installation lighting devices was updated successful ✅",
-    );
-
-    return right(result);
   }
 
   private async updateStateLightingDevices(
     devices: UpdateSateLightingDevice[],
-  ): Promise<Either<Error, LightingDevice[]>> {
-    const writeResult = await lightingDeviceTable
-      .insert(
-        devices.map((device) => ({
-          id: device.id,
-          state: device.state,
-          updatedAt: r.now(),
-        })),
-        {
-          returnChanges: "always",
-          conflict(id, oldDoc: RDatum<LightingDevice>, newDoc: RDatum<UpdateSateLightingDevice>) {
-            return r.branch(
-              newDoc("state")
-                .eq(LightingDeviceState.IN_STOCK)
-                .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED)),
-              oldDoc,
-              newDoc("state")
-                .eq(LightingDeviceState.ON)
-                .and(
-                  oldDoc("state")
-                    .eq(LightingDeviceState.OFF)
-                    .or(oldDoc("state").eq(LightingDeviceState.IN_STOCK)),
-                )
-                .and(oldDoc("history").count().gt(0)),
-              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
-                const lastHistoryIndex = oldDoc("history").count().sub(1);
-                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+  ): Promise<LightingDevice[] | Error> {
+    try {
+      const writeResult = await lightingDeviceTable
+        .insert(
+          devices.map((device) => ({
+            id: device.id,
+            state: device.state,
+            updatedAt: r.now(),
+          })),
+          {
+            returnChanges: "always",
+            conflict(id, oldDoc: RDatum<LightingDevice>, newDoc: RDatum<UpdateSateLightingDevice>) {
+              return r.branch(
+                newDoc("state")
+                  .eq(LightingDeviceState.IN_STOCK)
+                  .or(newDoc("state").eq(LightingDeviceState.DECOMMISSIONED)),
+                oldDoc,
+                newDoc("state")
+                  .eq(LightingDeviceState.ON)
+                  .and(
+                    oldDoc("state")
+                      .eq(LightingDeviceState.OFF)
+                      .or(oldDoc("state").eq(LightingDeviceState.IN_STOCK)),
+                  )
+                  .and(oldDoc("history").count().gt(0)),
+                r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                  const lastHistoryIndex = oldDoc("history").count().sub(1);
+                  const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
 
-                return oldDoc.merge(newDoc).merge({
-                  history: oldDoc("history").setInsert(
-                    lastHistoryItem.merge({
-                      turnedOnAt: r.now(),
+                  return oldDoc.merge(newDoc).merge({
+                    history: oldDoc("history").setInsert(
+                      lastHistoryItem.merge({
+                        turnedOnAt: r.now(),
+                      }),
+                    ),
+                  });
+                }),
+                newDoc("state")
+                  .eq(LightingDeviceState.OFF)
+                  .and(oldDoc("state").eq(LightingDeviceState.ON))
+                  .and(oldDoc("history").count().gt(0)),
+                r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
+                  const lastHistoryIndex = oldDoc("history").count().sub(1);
+                  const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
+
+                  const turnedOnAt = lastHistoryItem("turnedOnAt");
+                  const turnedOffAt = r.now();
+
+                  const workedMs = turnedOffAt
+                    .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
+                    .seconds()
+                    .mul(1_000);
+
+                  return oldDoc.merge(newDoc).merge({
+                    history: lastHistoryItem.merge({
+                      turnedOffAt,
+                      workedMs,
                     }),
-                  ),
-                });
-              }),
-              newDoc("state")
-                .eq(LightingDeviceState.OFF)
-                .and(oldDoc("state").eq(LightingDeviceState.ON))
-                .and(oldDoc("history").count().gt(0)),
-              r.do(oldDoc, newDoc, (oldDoc, newDoc) => {
-                const lastHistoryIndex = oldDoc("history").count().sub(1);
-                const lastHistoryItem = oldDoc("history")(lastHistoryIndex);
-
-                const turnedOnAt = lastHistoryItem("turnedOnAt");
-                const turnedOffAt = r.now();
-
-                const workedMs = turnedOffAt
-                  .sub(r.branch(turnedOnAt.eq(null), r.now(), r.expr(turnedOnAt)))
-                  .seconds()
-                  .mul(1_000);
-
-                return oldDoc.merge(newDoc).merge({
-                  history: lastHistoryItem.merge({
-                    turnedOffAt,
-                    workedMs,
-                  }),
-                  totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
-                });
-              }),
-              oldDoc,
-            );
+                    totalWorkedMs: oldDoc("totalWorkedMs").add(workedMs),
+                  });
+                }),
+                oldDoc,
+              );
+            },
           },
-        },
-      )
-      .run(this.rethinkdbConnection);
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ devices, writeResult }, "State of lighting devices wasn't updated 🚨");
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error({ devices, writeResult }, "State of lighting devices wasn't updated 🚨");
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    const result: LightingDeviceTable[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
+        return new Error(Errors.UPDATE_FAILED);
       }
-    });
 
-    this.logger.debug(
-      { devices, writeResult },
-      "State of lighting devices was updated successful ✅",
-    );
+      const result: LightingDeviceTable[] = [];
 
-    return right(result);
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      this.logger.debug(
+        { devices, writeResult },
+        "State of lighting devices was updated successful ✅",
+      );
+
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 
-  async decommissioningLightingDevices(
-    deviceIds: string[],
-  ): Promise<Either<Error, LightingDevice[]>> {
-    await this.updateStateLightingDevices(
-      deviceIds.map((deviceId) => ({ id: deviceId, state: LightingDeviceState.OFF })),
-    );
+  async decommissioningLightingDevices(deviceIds: string[]): Promise<LightingDevice[] | Error> {
+    try {
+      const updateStateLightingDevicesResult = await this.updateStateLightingDevices(
+        deviceIds.map((deviceId) => ({ id: deviceId, state: LightingDeviceState.OFF })),
+      );
 
-    // TODO Удалить устройства из групп, по placeOfInstallation, перед тем как менять состояние на DECOMMISSIONED
-    // TODO Используя this.removeLightingDevicesFromGroup(location: string, deviceIds: string[])
+      if (updateStateLightingDevicesResult instanceof Error) {
+        return updateStateLightingDevicesResult;
+      }
 
-    const writeResult = await lightingDeviceTable
-      .getAll(...deviceIds)
-      .update(
-        (lightingDevice: RDatum<LightingDevice>) => {
-          return lightingDevice.merge({
-            placeOfInstallation: PlaceOfInstallationOfTheLightingDevice.NOT_INSTALLED,
-            state: LightingDeviceState.DECOMMISSIONED,
-            history: lightingDevice("history").setInsert({
+      // TODO Удалить устройства из групп, по placeOfInstallation, перед тем как менять состояние на DECOMMISSIONED
+      // TODO Используя this.removeLightingDevicesFromGroup(location: string, deviceIds: string[])
+
+      const writeResult = await lightingDeviceTable
+        .getAll(...deviceIds)
+        .update(
+          (lightingDevice: RDatum<LightingDevice>) => {
+            return lightingDevice.merge({
               placeOfInstallation: PlaceOfInstallationOfTheLightingDevice.NOT_INSTALLED,
-              turnedOnAt: null,
-              turnedOffAt: null,
-              workedMs: null,
-            }),
-            updatedAt: new Date().toJSON(),
-          });
-        },
-        { returnChanges: "always" },
-      )
-      .run(this.rethinkdbConnection);
+              state: LightingDeviceState.DECOMMISSIONED,
+              history: lightingDevice("history").setInsert({
+                placeOfInstallation: PlaceOfInstallationOfTheLightingDevice.NOT_INSTALLED,
+                turnedOnAt: null,
+                turnedOffAt: null,
+                workedMs: null,
+              }),
+              updatedAt: new Date().toJSON(),
+            });
+          },
+          { returnChanges: "always" },
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ deviceIds, writeResult }, "Lighting devices wasn't decommissioned 🚨");
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error({ deviceIds, writeResult }, "Lighting devices wasn't decommissioned 🚨");
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    const result: LightingDeviceTable[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
+        return new Error(Errors.UPDATE_FAILED);
       }
-    });
 
-    this.logger.debug(
-      { deviceIds, writeResult },
-      "Lighting devices was decommissioned successful ✅",
-    );
+      const result: LightingDeviceTable[] = [];
 
-    return right(result);
-  }
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
 
-  async getLightingGroups(): Promise<Either<Error, LightingGroup[]>> {
-    const readResult = await lightingGroupTable.run(this.rethinkdbConnection);
+      this.logger.debug(
+        { deviceIds, writeResult },
+        "Lighting devices was decommissioned successful ✅",
+      );
 
-    return right(readResult);
-  }
+      return result;
+    } catch (error) {
+      this.logger.error(error);
 
-  async getLightingGroup(groupId: string): Promise<Either<Error, LightingGroup | null>> {
-    const readResult = await lightingGroupTable.get(groupId).run(this.rethinkdbConnection);
-
-    return right(readResult);
-  }
-
-  async createLightingGroups(locations: string[]): Promise<Either<Error, LightingGroup[]>> {
-    const writeResult = await lightingGroupTable
-      .insert(
-        locations.map((location) => ({
-          location,
-          state: LightingGroupState.OFF,
-          devices: [],
-          createdAt: r.now(),
-          updatedAt: r.now(),
-        })),
-        { returnChanges: "always" },
-      )
-      .run(this.rethinkdbConnection);
-
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ locations, writeResult }, "Lighting groups wasn't created 🚨");
-
-      return left(new Error("INSERT_FAILED"));
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
+  }
 
-    const result: LightingGroup[] = [];
+  async getLightingGroups(): Promise<LightingGroup[] | Error> {
+    try {
+      return await lightingGroupTable.run(this.rethinkdbConnection);
+    } catch (error) {
+      this.logger.error(error);
 
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async getLightingGroup(groupId: string): Promise<LightingGroup | Error> {
+    try {
+      const readResult = await lightingGroupTable.get(groupId).run(this.rethinkdbConnection);
+
+      if (readResult === null) {
+        this.logger.error({ groupId }, "Lighting group not found");
+
+        return new Error(Errors.INVALID_ARGUMENTS);
       }
-    });
 
-    this.logger.debug({ locations, writeResult }, "Lighting groups was created successful ✅");
+      return readResult;
+    } catch (error) {
+      this.logger.error(error);
 
-    return right(result);
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async createLightingGroups(locations: string[]): Promise<LightingGroup[] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .insert(
+          locations.map((location) => ({
+            location,
+            state: LightingGroupState.OFF,
+            devices: [],
+            createdAt: r.now(),
+            updatedAt: r.now(),
+          })),
+          { returnChanges: "always" },
+        )
+        .run(this.rethinkdbConnection);
+
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error({ locations, writeResult }, "Lighting groups wasn't created 🚨");
+
+        return new Error(Errors.INSERT_FAILED);
+      }
+
+      const result: LightingGroup[] = [];
+
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      this.logger.debug({ locations, writeResult }, "Lighting groups was created successful ✅");
+
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 
   // TODO Добавить перемещение группы
@@ -411,236 +480,261 @@ export class LightingRepository implements ILightingRepository {
   async addLightingDevicesIntoGroup(
     location: string,
     devices: string[],
-  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
-    const writeResult = await lightingGroupTable
-      .getAll(location)
-      .update(
-        (lightingGroup: RDatum<LightingGroupTable>) => {
-          const unionDeviceIds = lightingGroup("devices").setUnion(devices);
+  ): Promise<[LightingGroup, LightingDevice[]] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .getAll(location)
+        .update(
+          (lightingGroup: RDatum<LightingGroupTable>) => {
+            const unionDeviceIds = lightingGroup("devices").setUnion(devices);
 
-          return r.branch(
-            lightingGroup("devices").count().eq(unionDeviceIds.count()),
-            lightingGroup,
-            lightingGroup.merge({
-              devices: unionDeviceIds,
-              updatedAt: new Date().toJSON(),
-            }),
-          );
-        },
-        {
-          returnChanges: "always",
-        },
-      )
-      .run(this.rethinkdbConnection);
+            return r.branch(
+              lightingGroup("devices").count().eq(unionDeviceIds.count()),
+              lightingGroup,
+              lightingGroup.merge({
+                devices: unionDeviceIds,
+                updatedAt: new Date().toJSON(),
+              }),
+            );
+          },
+          {
+            returnChanges: "always",
+          },
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error(
-        { location, devices, writeResult },
-        "Devices wasn't added to lighting group 🚨",
-      );
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error(
+          { location, devices, writeResult },
+          "Devices wasn't added to lighting group 🚨",
+        );
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    const result: LightingGroup[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        result.push(new_val);
+        return new Error(Errors.UPDATE_FAILED);
       }
-    });
 
-    if (result.length === 0) {
-      this.logger.error(
+      const result: LightingGroup[] = [];
+
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          result.push(new_val);
+        }
+      });
+
+      if (result.length === 0) {
+        this.logger.error(
+          { location, devices, writeResult },
+          "Devices wasn't added to lighting group 🚨",
+        );
+
+        return new Error(Errors.UPDATE_FAILED);
+      }
+
+      this.logger.debug(
         { location, devices, writeResult },
-        "Devices wasn't added to lighting group 🚨",
+        "Lighting devices was add in lighting group successful ✅",
       );
 
-      return left(new Error("UPDATE_FAILED"));
+      const lightingGroup = result[0];
+
+      const updatePlaceOfInstallationLightingDevicesResult =
+        await this.updatePlaceOfInstallationLightingDevices(
+          devices.map((device) => {
+            let state = LightingDeviceState.OFF;
+
+            if (lightingGroup.state === LightingGroupState.ON) {
+              state = LightingDeviceState.ON;
+            }
+
+            return { id: device, state, placeOfInstallation: location };
+          }),
+        );
+
+      if (updatePlaceOfInstallationLightingDevicesResult instanceof Error) {
+        return updatePlaceOfInstallationLightingDevicesResult;
+      }
+
+      return [lightingGroup, updatePlaceOfInstallationLightingDevicesResult];
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    this.logger.debug(
-      { location, devices, writeResult },
-      "Lighting devices was add in lighting group successful ✅",
-    );
-
-    const lightingGroup = result[0];
-
-    const updatePlaceOfInstallationLightingDevicesResult =
-      await this.updatePlaceOfInstallationLightingDevices(
-        devices.map((device) => {
-          let state = LightingDeviceState.OFF;
-
-          if (lightingGroup.state === LightingGroupState.ON) {
-            state = LightingDeviceState.ON;
-          }
-
-          return { id: device, state, placeOfInstallation: location };
-        }),
-      );
-
-    if (isLeft(updatePlaceOfInstallationLightingDevicesResult)) {
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    return right([lightingGroup, updatePlaceOfInstallationLightingDevicesResult.right]);
   }
 
   async removeLightingDevicesFromGroup(
     location: string,
     devices: string[],
-  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
-    const writeResult = await lightingGroupTable
-      .getAll(location)
-      .update(
-        (row: RDatum<LightingGroupTable>) => {
-          const differenceDeviceIds = row("devices").setDifference(devices);
+  ): Promise<[LightingGroup, LightingDevice[]] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .getAll(location)
+        .update(
+          (row: RDatum<LightingGroupTable>) => {
+            const differenceDeviceIds = row("devices").setDifference(devices);
 
-          return r.branch(
-            row("devices").count().eq(differenceDeviceIds.count()),
-            row,
-            row.merge({
-              deviceIds: differenceDeviceIds,
-              updatedAt: new Date().toJSON(),
-            }),
-          );
-        },
-        {
-          returnChanges: "always",
-        },
-      )
-      .run(this.rethinkdbConnection);
+            return r.branch(
+              row("devices").count().eq(differenceDeviceIds.count()),
+              row,
+              row.merge({
+                deviceIds: differenceDeviceIds,
+                updatedAt: new Date().toJSON(),
+              }),
+            );
+          },
+          {
+            returnChanges: "always",
+          },
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error(
-        { location, devices, writeResult },
-        "Device ids wasn't removed to lighting group 🚨",
-      );
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error(
+          { location, devices, writeResult },
+          "Device ids wasn't removed to lighting group 🚨",
+        );
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-    const lightingGroups: LightingGroup[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        lightingGroups.push(new_val);
+        return new Error(Errors.UPDATE_FAILED);
       }
-    });
+      const lightingGroups: LightingGroup[] = [];
 
-    if (lightingGroups.length === 0) {
-      this.logger.error(
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          lightingGroups.push(new_val);
+        }
+      });
+
+      if (lightingGroups.length === 0) {
+        this.logger.error(
+          { location, devices, writeResult },
+          "Device ids wasn't removed to lighting group 🚨",
+        );
+
+        return new Error(Errors.UPDATE_FAILED);
+      }
+
+      this.logger.debug(
         { location, devices, writeResult },
-        "Device ids wasn't removed to lighting group 🚨",
+        "Lighting devices was removed from lighting group successful ✅",
       );
 
-      return left(new Error("UPDATE_FAILED"));
+      const updatePlaceOfInstallationLightingDevicesResult =
+        await this.updatePlaceOfInstallationLightingDevices(
+          devices.map((device) => {
+            return {
+              id: device,
+              state: LightingDeviceState.IN_STOCK,
+              placeOfInstallation: "NOT_INSTALLED",
+            };
+          }),
+        );
+
+      if (updatePlaceOfInstallationLightingDevicesResult instanceof Error) {
+        return updatePlaceOfInstallationLightingDevicesResult;
+      }
+
+      return [lightingGroups[0], updatePlaceOfInstallationLightingDevicesResult];
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    this.logger.debug(
-      { location, devices, writeResult },
-      "Lighting devices was removed from lighting group successful ✅",
-    );
-
-    const updatePlaceOfInstallationLightingDevicesResult =
-      await this.updatePlaceOfInstallationLightingDevices(
-        devices.map((device) => {
-          return {
-            id: device,
-            state: LightingDeviceState.IN_STOCK,
-            placeOfInstallation: "NOT_INSTALLED",
-          };
-        }),
-      );
-
-    if (isLeft(updatePlaceOfInstallationLightingDevicesResult)) {
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    return right([lightingGroups[0], updatePlaceOfInstallationLightingDevicesResult.right]);
   }
 
   async moveLightingDevicesToGroup(
     locationFrom: string,
     locationTo: string,
     devices: string[],
-  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
-    const lightingGroupFrom = await this.removeLightingDevicesFromGroup(locationFrom, devices);
-    const lightingGroupTo = await this.addLightingDevicesIntoGroup(locationTo, devices);
+  ): Promise<[LightingGroup, LightingDevice[]] | Error> {
+    try {
+      const lightingGroupFrom = await this.removeLightingDevicesFromGroup(locationFrom, devices);
+      const lightingGroupTo = await this.addLightingDevicesIntoGroup(locationTo, devices);
 
-    if (isRight(lightingGroupFrom) && isRight(lightingGroupTo)) {
+      if (lightingGroupFrom instanceof Error || lightingGroupTo instanceof Error) {
+        return new Error(Errors.MOVE_FAILED);
+      }
+
       this.logger.debug(
         { locationFrom, locationTo, devices },
         "Lighting devices was moved successful ✅",
       );
 
-      return right(lightingGroupTo.right);
+      return lightingGroupTo;
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    this.logger.error({ locationFrom, locationTo, devices }, "Lighting devices wasn't moved 🚨");
-
-    return left(new Error("MOVE_FAILED"));
   }
 
-  async turnOnGroup(location: string): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
+  async turnOnGroup(location: string): Promise<[LightingGroup, LightingDevice[]] | Error> {
     return this.toggleGroup(location, LightingGroupState.ON);
   }
 
-  async turnOffGroup(location: string): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
+  async turnOffGroup(location: string): Promise<[LightingGroup, LightingDevice[]] | Error> {
     return this.toggleGroup(location, LightingGroupState.OFF);
   }
 
   private async toggleGroup(
     location: string,
     state: LightingGroupState,
-  ): Promise<Either<Error, [LightingGroup, LightingDevice[]]>> {
-    const writeResult = await lightingGroupTable
-      .getAll(location)
-      .update(
-        { state },
-        {
-          returnChanges: "always",
-        },
-      )
-      .run(this.rethinkdbConnection);
+  ): Promise<[LightingGroup, LightingDevice[]] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .getAll(location)
+        .update(
+          { state },
+          {
+            returnChanges: "always",
+          },
+        )
+        .run(this.rethinkdbConnection);
 
-    if (!writeResult.changes || writeResult.first_error) {
-      this.logger.error({ location, state, writeResult }, "Lighting group wasn't turned 🚨");
+      if (!writeResult.changes || writeResult.first_error) {
+        this.logger.error({ location, state, writeResult }, "Lighting group wasn't turned 🚨");
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    const lightingGroups: LightingGroup[] = [];
-
-    writeResult.changes.forEach(({ new_val }) => {
-      if (new_val) {
-        lightingGroups.push(new_val);
+        return new Error(Errors.UPDATE_FAILED);
       }
-    });
 
-    if (lightingGroups.length === 0) {
-      this.logger.error({ location, state, writeResult }, "Lighting group wasn't turned 🚨");
+      const lightingGroups: LightingGroup[] = [];
 
-      return left(new Error("UPDATE_FAILED"));
-    }
-
-    this.logger.debug({ location, state, writeResult }, "Lighting group was turned successful ✅");
-
-    const lightingGroup = lightingGroups[0];
-
-    const updateStateLightingDevicesResult = await this.updateStateLightingDevices(
-      lightingGroup.devices.map((deviceId) => {
-        if (state === LightingGroupState.ON) {
-          return { id: deviceId, state: LightingDeviceState.ON };
+      writeResult.changes.forEach(({ new_val }) => {
+        if (new_val) {
+          lightingGroups.push(new_val);
         }
+      });
 
-        return { id: deviceId, state: LightingDeviceState.OFF };
-      }),
-    );
+      if (lightingGroups.length === 0) {
+        this.logger.error({ location, state, writeResult }, "Lighting group wasn't turned 🚨");
 
-    if (isLeft(updateStateLightingDevicesResult)) {
-      return left(new Error("UPDATE_FAILED"));
+        return new Error(Errors.UPDATE_FAILED);
+      }
+
+      this.logger.debug(
+        { location, state, writeResult },
+        "Lighting group was turned successful ✅",
+      );
+
+      const lightingGroup = lightingGroups[0];
+
+      const updateStateLightingDevicesResult = await this.updateStateLightingDevices(
+        lightingGroup.devices.map((deviceId) => {
+          if (state === LightingGroupState.ON) {
+            return { id: deviceId, state: LightingDeviceState.ON };
+          }
+
+          return { id: deviceId, state: LightingDeviceState.OFF };
+        }),
+      );
+
+      if (updateStateLightingDevicesResult instanceof Error) {
+        return updateStateLightingDevicesResult;
+      }
+
+      return [lightingGroup, updateStateLightingDevicesResult];
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
     }
-
-    return right([lightingGroup, updateStateLightingDevicesResult.right]);
   }
 }

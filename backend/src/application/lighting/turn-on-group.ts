@@ -1,5 +1,3 @@
-import { Either } from "fp-ts/Either";
-
 import { LightingDevice } from "../../domain/lighting/lighting-device";
 import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
@@ -9,7 +7,7 @@ type Params = {
   lightingGroupLocation: string;
 };
 
-type Output = Either<Error, [LightingGroup, LightingDevice[]]>;
+type Output = [LightingGroup, LightingDevice[]] | Error;
 
 export const getTurnOnGroupCommand = (
   lightingRepository: ILightingRepository,

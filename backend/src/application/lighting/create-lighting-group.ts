@@ -1,5 +1,3 @@
-import { Either } from "fp-ts/Either";
-
 import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
 import type { Command } from "../Command";
@@ -8,7 +6,7 @@ type Params = {
   lightingGroupLocations: string[];
 };
 
-type Output = Either<Error, LightingGroup[]>;
+type Output = LightingGroup[] | Error;
 
 export const getCreateLightingGroupCommand = (
   lightingRepository: ILightingRepository,

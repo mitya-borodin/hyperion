@@ -519,7 +519,7 @@ test("Move lighting devices to another group", async () => {
   ).toMatchSnapshot();
 });
 
-test.only("Turn on and turn off lighting group", async () => {
+test("Turn on and turn off lighting group", async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 

@@ -1,5 +1,3 @@
-import { Either } from "fp-ts/Either";
-
 import { LightingDevice } from "../../domain/lighting/lighting-device";
 import {
   CreateLightingDevice,
@@ -11,7 +9,7 @@ type Params = {
   devices: CreateLightingDevice[];
 };
 
-type Output = Either<Error, LightingDevice[]>;
+type Output = LightingDevice[] | Error;
 
 export const getCreateLightingDevicesCommand = (
   lightingRepository: ILightingRepository,
