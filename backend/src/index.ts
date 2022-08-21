@@ -2,6 +2,7 @@ import { forever, waitForEvent } from "abort-controller-x";
 
 import { config } from "./infrastructure/config";
 import { entrypoint } from "./infrastructure/entrypoint";
+import { runWirenboard } from "./infrastructure/external-resource-adapters/wirenboard";
 import { initRethinkdbSchema } from "./infrastructure/rethinkdb";
 import { connectToRethinkDb, reconnectToRethinkDb } from "./infrastructure/rethinkdb/common";
 import { LightingRepository } from "./infrastructure/rethinkdb/lighting/lighting-repository";
@@ -41,8 +42,10 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
 
   await fastify.listen(config.fastify.port, config.fastify.host);
 
-  // ! First of all, you need to turn off the web server to avoid errors when accessing a closed rethinkdb connection
+  const stopWirenboard = runWirenboard({ config });
+
   defer(() => fastify.close());
+  defer(() => stopWirenboard());
   defer(() => rethinkdbConnection.close());
 
   await forever(signal);

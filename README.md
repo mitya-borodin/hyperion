@@ -23,6 +23,7 @@ Butler is software which control all electronic system which powered by [wirenbo
 - [Mobx](https://mobx.js.org/README.html)
 - [Nodemon](https://nodemon.io)
 - [RethinkDB](https://rethinkdb.com)
+- [MQTT](https://www.npmjs.com/package/mqtt)
 - [Docker only for development in OS which will install on wirenboard](https://www.docker.com/)
 
 ## Environment

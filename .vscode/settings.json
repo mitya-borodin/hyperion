@@ -163,7 +163,7 @@
       "backgroundColor": "transparent"
     }
   ],
-  "cSpell.words": ["objectd", "Pino", "rethinkdb", "sharedb", "wirenboard"],
+  "cSpell.words": ["MOSQUITTO", "objectd", "Pino", "rethinkdb", "sharedb", "wirenboard"],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   }
