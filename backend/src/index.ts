@@ -42,7 +42,7 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
 
   await fastify.listen(config.fastify.port, config.fastify.host);
 
-  const stopWirenboard = runWirenboard({ config });
+  const stopWirenboard = runWirenboard({ config, logger });
 
   defer(() => fastify.close());
   defer(() => stopWirenboard());
