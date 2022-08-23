@@ -1,4 +1,4 @@
-import mqtt from "mqtt";
+import mqtt, { MqttClient } from "mqtt";
 import { Logger } from "pino";
 
 import { Config } from "../../config";
@@ -114,183 +114,13 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     );
   });
 
-  const publishWirenboardMessage = async (
-    topic: string,
-    message: string | Buffer,
-  ): Promise<undefined | Error> => {
-    return new Promise((resolve) => {
-      client.publish(topic, message, (error) => {
-        if (error) {
-          logger.error(
-            {
-              err: error,
-            },
-            "An error occurred in the MQTT connection to the WB 🚨",
-          );
-
-          resolve(error);
-
-          return;
-        }
-
-        resolve(undefined);
-      });
-    });
-  };
-
-  const isNeedToSkip = (topic: string) => {
-    return (
-      topic.includes("/devices/battery") ||
-      topic.includes("/devices/power_status") ||
-      topic.includes("/devices/wb-adc") ||
-      topic.includes("/devices/metrics") ||
-      topic.includes("/devices/hwmon") ||
-      topic.includes("meta") ||
-      topic.includes("/devices/network") ||
-      topic.includes("/devices/system") ||
-      topic.includes("/on")
-    );
-  };
-
-  const booleanProperty = (topic: string, message: Buffer, targetTopic: string) => {
-    if (isNeedToSkip(topic)) {
-      return new Error("NEED_TO_SKIP_TOPIC");
-    }
-
-    const pin = parseInt(topic.replace(targetTopic, ""));
-    let value = false;
-
-    if (message.toString() === TRUE) {
-      value = true;
-    }
-
-    if (message.toString() === FALSE) {
-      value = false;
-    }
-
-    if (
-      !Number.isSafeInteger(pin) ||
-      (message.toString() !== TRUE && message.toString() !== FALSE)
-    ) {
-      logger.error(
-        { topic, pin, message: message.toString() },
-        "Pin is not a integer, and value is nor '1' or '0' 🚨",
-      );
-
-      return new Error("INVALID_MESSAGE");
-    }
-
-    return { topic, message: message.toString(), pin, value };
-  };
-
-  const numberProperty = (topic: string, message: Buffer, targetTopic: string) => {
-    if (isNeedToSkip(topic)) {
-      return new Error("NEED_TO_SKIP_TOPIC");
-    }
-
-    const pin = parseInt(topic.replace(targetTopic, ""));
-    const value = parseInt(message.toString());
-
-    if (!Number.isSafeInteger(pin) || !Number.isSafeInteger(value)) {
-      logger.error({ topic, pin, message: message.toString() }, "Pin or value is not a integer 🚨");
-
-      return new Error("INVALID_MESSAGE");
-    }
-
-    return { topic, message: message.toString(), pin, value };
-  };
-
-  const directionRelayProperty = (topic: string, message: Buffer, targetTopic: string) => {
-    if (isNeedToSkip(topic)) {
-      return new Error("NEED_TO_SKIP_TOPIC");
-    }
-
-    let value = false;
-
-    if (message.toString() === TRUE) {
-      value = true;
-    }
-
-    if (message.toString() === FALSE) {
-      value = false;
-    }
-
-    const subTopic = topic.replace(targetTopic, "");
-
-    if (subTopic.includes("ON")) {
-      const pin = parseInt(subTopic.replace("ON", ""));
-
-      return { topic, message: message.toString(), pin, value, type: "ON" };
-    }
-
-    if (subTopic.includes("DIR")) {
-      const pin = parseInt(subTopic.replace("DIR", ""));
-
-      return { topic, message: message.toString(), pin, value, type: "DIR" };
-    }
-  };
-
-  const boilerProperty = (topic: string, message: Buffer, targetTopic: string) => {
-    if (isNeedToSkip(topic)) {
-      return new Error("NEED_TO_SKIP_TOPIC");
-    }
-
-    const result: { [key: string]: string | number | undefined } = {
-      fwVersion: undefined,
-      heatingSetpoint: undefined,
-      hotWaterSetpoint: undefined,
-      waterPressure: undefined,
-      boilerStatus: undefined,
-      errorCode: undefined,
-      heatingTemperature: undefined,
-      hotWaterTemperature: undefined,
-    };
-
-    const property = topic.replace(targetTopic, "");
-    const value = message.toString();
-
-    if (property === "FW Version") {
-      result.fwVersion = parseFloat(value);
-    }
-
-    if (property === "Heating Setpoint") {
-      result.heatingSetpoint = parseFloat(value);
-    }
-
-    if (property === "Hot Water Setpoint") {
-      result.hotWaterSetpoint = parseFloat(value);
-    }
-
-    if (property === "Water Pressure") {
-      result.waterPressure = parseFloat(value);
-    }
-
-    if (property === "Boiler Status") {
-      result.boilerStatus = parseFloat(value);
-    }
-
-    if (property === "Error Code") {
-      result.errorCode = parseFloat(value);
-    }
-
-    if (property === "Heating Temperature") {
-      result.heatingTemperature = parseFloat(value);
-    }
-
-    if (property === "Hot Water Temperature") {
-      result.hotWaterTemperature = parseFloat(value);
-    }
-
-    return result;
-  };
-
   client.on("message", (topic: string, message: Buffer) => {
     if (isNeedToSkip(topic)) {
       return;
     }
 
     if (topic.includes(WBIO_1_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_1_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_1_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -300,7 +130,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_2_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_2_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_2_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -310,7 +140,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_3_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_3_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_3_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -320,7 +150,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_4_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_4_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_4_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -330,7 +160,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_5_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_5_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_5_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -340,7 +170,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_6_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_6_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_6_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -350,7 +180,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_7_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_7_GPIO_TOPIC);
+      const result = booleanProperty(topic, message, WBIO_7_GPIO_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -360,7 +190,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_8_DAC_TOPIC)) {
-      const result = numberProperty(topic, message, WBIO_8_DAC_TOPIC);
+      const result = numberProperty(topic, message, WBIO_8_DAC_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -369,7 +199,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_1_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_1_R10R_4_TOPIC);
+      const result = directionRelayProperty(topic, message, WBIO_1_R10R_4_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -379,7 +209,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_2_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_2_R10R_4_TOPIC);
+      const result = directionRelayProperty(topic, message, WBIO_2_R10R_4_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -389,7 +219,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_3_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_3_R10R_4_TOPIC);
+      const result = directionRelayProperty(topic, message, WBIO_3_R10R_4_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -399,7 +229,7 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_4_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_4_R10R_4_TOPIC);
+      const result = directionRelayProperty(topic, message, WBIO_4_R10R_4_TOPIC, logger);
 
       if (result instanceof Error) {
         return;
@@ -427,10 +257,317 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
 
       logger.debug(result, "WBE2-I-EBUS Message was parsed ✅");
     }
+
+    if (topic.includes(WB_MRPS6_21_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_21_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_21 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_33_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_33_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_33 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_37_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_37_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_37 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_49_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_49_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_49 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_50_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_50_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_50 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_69_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_69_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_69 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_77_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_77_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_77 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_81_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_81_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_81 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_85_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_85_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_85 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_97_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_97_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_97 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_117_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_117_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_117 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRPS6_16_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRPS6_16_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mr6cu_16 Message was parsed ✅");
+    }
+
+    if (topic.includes(WB_MRWL3_123_TOPIC)) {
+      const result = booleanProperty(topic, message, WB_MRWL3_123_TOPIC, logger);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger.debug(result, "wb-mrwl_123 Message was parsed ✅");
+    }
   });
 
-  return () => {
-    client.unsubscribe("/devices/#");
-    client.end();
+  return {
+    client,
+    stopWirenboard: () => {
+      client.unsubscribe("/devices/#");
+      client.end();
+    },
   };
+};
+
+export const publishWirenboardMessage = async (
+  client: MqttClient,
+  topic: string,
+  message: Buffer,
+  logger: Logger,
+): Promise<undefined | Error> => {
+  return new Promise((resolve) => {
+    client.publish(topic, message, (error) => {
+      if (error) {
+        logger.error(
+          {
+            err: error,
+          },
+          "An error occurred in the MQTT connection to the WB 🚨",
+        );
+
+        resolve(error);
+
+        return;
+      }
+
+      resolve(undefined);
+    });
+  });
+};
+
+const isNeedToSkip = (topic: string) => {
+  return (
+    topic.includes("/devices/battery") ||
+    topic.includes("/devices/power_status") ||
+    topic.includes("/devices/wb-adc") ||
+    topic.includes("/devices/metrics") ||
+    topic.includes("/devices/hwmon") ||
+    topic.includes("meta") ||
+    topic.includes("/devices/network") ||
+    topic.includes("/devices/system") ||
+    topic.includes("/on")
+  );
+};
+
+const booleanProperty = (topic: string, message: Buffer, targetTopic: string, logger: Logger) => {
+  if (isNeedToSkip(topic)) {
+    return new Error("NEED_TO_SKIP_TOPIC");
+  }
+
+  const pin = parseInt(topic.replace(targetTopic, ""));
+  let value = false;
+
+  if (message.toString() === TRUE) {
+    value = true;
+  }
+
+  if (message.toString() === FALSE) {
+    value = false;
+  }
+
+  if (!Number.isSafeInteger(pin) || (message.toString() !== TRUE && message.toString() !== FALSE)) {
+    logger.error(
+      { topic, pin, message: message.toString() },
+      "Pin is not a integer, and value is nor '1' or '0' 🚨",
+    );
+
+    return new Error("INVALID_MESSAGE");
+  }
+
+  return { topic, message: message.toString(), pin, value };
+};
+
+const numberProperty = (topic: string, message: Buffer, targetTopic: string, logger: Logger) => {
+  if (isNeedToSkip(topic)) {
+    return new Error("NEED_TO_SKIP_TOPIC");
+  }
+
+  const pin = parseInt(topic.replace(targetTopic, ""));
+  const value = parseInt(message.toString());
+
+  if (!Number.isSafeInteger(pin) || !Number.isSafeInteger(value)) {
+    logger.error({ topic, pin, message: message.toString() }, "Pin or value is not a integer 🚨");
+
+    return new Error("INVALID_MESSAGE");
+  }
+
+  return { topic, message: message.toString(), pin, value };
+};
+
+const directionRelayProperty = (
+  topic: string,
+  message: Buffer,
+  targetTopic: string,
+  logger: Logger,
+) => {
+  if (isNeedToSkip(topic)) {
+    return new Error("NEED_TO_SKIP_TOPIC");
+  }
+
+  let value = false;
+
+  if (message.toString() === TRUE) {
+    value = true;
+  }
+
+  if (message.toString() === FALSE) {
+    value = false;
+  }
+
+  const subTopic = topic.replace(targetTopic, "");
+
+  if (subTopic.includes("ON")) {
+    const pin = parseInt(subTopic.replace("ON", ""));
+
+    return { topic, message: message.toString(), pin, value, type: "ON" };
+  }
+
+  if (subTopic.includes("DIR")) {
+    const pin = parseInt(subTopic.replace("DIR", ""));
+
+    return { topic, message: message.toString(), pin, value, type: "DIR" };
+  }
+};
+
+const boilerProperty = (topic: string, message: Buffer, targetTopic: string) => {
+  if (isNeedToSkip(topic)) {
+    return new Error("NEED_TO_SKIP_TOPIC");
+  }
+
+  const result: { [key: string]: string | number | undefined } = {
+    fwVersion: undefined,
+    heatingSetpoint: undefined,
+    hotWaterSetpoint: undefined,
+    waterPressure: undefined,
+    boilerStatus: undefined,
+    errorCode: undefined,
+    heatingTemperature: undefined,
+    hotWaterTemperature: undefined,
+  };
+
+  const property = topic.replace(targetTopic, "");
+  const value = message.toString();
+
+  if (property === "FW Version") {
+    result.fwVersion = parseFloat(value);
+  }
+
+  if (property === "Heating Setpoint") {
+    result.heatingSetpoint = parseFloat(value);
+  }
+
+  if (property === "Hot Water Setpoint") {
+    result.hotWaterSetpoint = parseFloat(value);
+  }
+
+  if (property === "Water Pressure") {
+    result.waterPressure = parseFloat(value);
+  }
+
+  if (property === "Boiler Status") {
+    result.boilerStatus = parseFloat(value);
+  }
+
+  if (property === "Error Code") {
+    result.errorCode = parseFloat(value);
+  }
+
+  if (property === "Heating Temperature") {
+    result.heatingTemperature = parseFloat(value);
+  }
+
+  if (property === "Hot Water Temperature") {
+    result.hotWaterTemperature = parseFloat(value);
+  }
+
+  return result;
 };

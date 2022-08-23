@@ -33,6 +33,8 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
 
   const lightingRepository = new LightingRepository(rethinkdbConnection, logger);
 
+  const { stopWirenboard } = runWirenboard({ config, logger });
+
   const fastify = createHttpInterface({
     config,
     rethinkdbConnection,
@@ -41,8 +43,6 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
   });
 
   await fastify.listen(config.fastify.port, config.fastify.host);
-
-  const stopWirenboard = runWirenboard({ config, logger });
 
   defer(() => fastify.close());
   defer(() => stopWirenboard());
