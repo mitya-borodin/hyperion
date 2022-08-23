@@ -163,7 +163,21 @@
       "backgroundColor": "transparent"
     }
   ],
-  "cSpell.words": ["MOSQUITTO", "objectd", "Pino", "rethinkdb", "sharedb", "WBIO", "wirenboard"],
+  "cSpell.words": [
+    "EBUS",
+    "GPIO",
+    "MOSQUITTO",
+    "MRPS",
+    "MRWL",
+    "objectd",
+    "OPENTHERM",
+    "Pino",
+    "rethinkdb",
+    "Setpoint",
+    "sharedb",
+    "WBIO",
+    "wirenboard"
+  ],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   }
