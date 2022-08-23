@@ -24,7 +24,20 @@ Butler is software which control all electronic system which powered by [wirenbo
 - [Nodemon](https://nodemon.io)
 - [RethinkDB](https://rethinkdb.com)
 - [MQTT](https://www.npmjs.com/package/mqtt)
+- [Mosquitto](https://mosquitto.org)
 - [Docker only for development in OS which will install on wirenboard](https://www.docker.com/)
+
+### Wirenboard
+
+- [WB 6](https://wirenboard.com/ru/product/wiren-board-6/)
+- [WB MQTT](https://wirenboard.com/wiki/index.php/MQTT)
+- [WB MQTT Convention](https://github.com/wirenboard/conventions/blob/main/README.md)
+- [WB WEB GUI IN ETH0](http://192.168.1.75)
+- [WB WEB GUI IN WLAN0](http://192.168.2.75)
+- [WB MQTT Channels in ETH0](http://192.168.1.75/#!/MQTTChannels)
+- [WB MQTT Channels in WLAN0](http://192.168.2.75/#!/MQTTChannels)
+- [Mosquitto](https://mosquitto.org)
+- [MQTT](https://www.npmjs.com/package/mqtt)
 
 ## Environment
 
