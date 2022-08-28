@@ -1,3 +1,4 @@
+import os from "os";
 import { resolve } from "path";
 
 import { abortable, race, spawn, SpawnEffects } from "abort-controller-x";
@@ -23,12 +24,22 @@ export const entrypoint = async (executor: Executor) => {
   const config = new Config();
   const logFilePath = resolve(__dirname, "../../log.txt");
 
-  const transport = pino.transport({
+  /*   const transport = pino.transport({
     target: "pino/file",
     options: { destination: logFilePath, level: config.log.level },
   });
 
   const logger = pino(transport);
+ */
+
+  const logger = pino({
+    name: "entrypoint",
+    base: {
+      appName: config.appName,
+      hostname: os.hostname(),
+    },
+    level: config.log.level,
+  });
 
   let shutdownReason: "TERMINATION_BY_PROCESS_SIGNAL" | "UNEXPECTED_ERROR" | null = null;
 
