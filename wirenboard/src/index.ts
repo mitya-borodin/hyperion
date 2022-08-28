@@ -10,11 +10,11 @@ import { removeEthRoute, setRoutes } from "./infrastructure/external-resource-ad
 const DELAY_MS = 5000;
 
 entrypoint(async ({ signal, logger, logFilePath }) => {
-  /*   const ifupResult = await ifup({ logger });
+  const ifupResult = await ifup({ logger });
 
   if (ifupResult instanceof Error) {
     return;
-  } */
+  }
 
   const setRoutesResult = await setRoutes({ logger });
 

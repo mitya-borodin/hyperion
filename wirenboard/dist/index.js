@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const entrypoint_1 = require("./infrastructure/entrypoint");
+const ifup_1 = require("./infrastructure/external-resource-adapters/ifup");
 const routes_1 = require("./infrastructure/external-resource-adapters/routes");
 const DELAY_MS = 5000;
 (0, entrypoint_1.entrypoint)(async ({ signal, logger, logFilePath }) => {
-    /*   const ifupResult = await ifup({ logger });
-    
-      if (ifupResult instanceof Error) {
+    const ifupResult = await (0, ifup_1.ifup)({ logger });
+    if (ifupResult instanceof Error) {
         return;
-      } */
+    }
     const setRoutesResult = await (0, routes_1.setRoutes)({ logger });
     if (setRoutesResult instanceof Error) {
         return;
