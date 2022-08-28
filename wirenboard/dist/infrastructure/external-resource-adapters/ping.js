@@ -9,6 +9,8 @@ const ping = async ({ logger, inet = "eth0" }) => {
             (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "ya.ru"]),
             (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "77.88.8.8"]),
             (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "77.88.8.1"]),
+            (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "208.67.222.222"]),
+            (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "208.67.220.220"]),
         ]);
         logger.debug({ inet }, "The ping was successful ✅");
     }
