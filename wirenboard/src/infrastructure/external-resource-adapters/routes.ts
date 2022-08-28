@@ -61,9 +61,11 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
     const currentRoutes = await execa("ip", ["route"]);
 
     if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-      const result = await execa("ip", [
+      const delEth = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
+
+      const addEth = await execa("ip", [
         "route",
-        "change",
+        "add",
         "default",
         "via",
         "192.168.1.1",
@@ -71,7 +73,7 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
         "1000",
       ]);
 
-      logger.debug({ result }, "The eth0 route was updated ✅");
+      logger.debug({ delEth, addEth }, "The eth0 route was updated ✅");
     }
   } catch (error) {
     logger.error({ err: error }, "The eth0 route was not updated 🚨");
@@ -86,10 +88,12 @@ export const addEthRoute = async ({ logger }: PingParams) => {
 
     const currentRoutes = await execa("ip", ["route"]);
 
-    if (!currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-      const result = await execa("ip", [
+    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
+      const delEth = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
+
+      const addEth = await execa("ip", [
         "route",
-        "change",
+        "add",
         "default",
         "via",
         "192.168.1.1",
@@ -97,7 +101,7 @@ export const addEthRoute = async ({ logger }: PingParams) => {
         "0",
       ]);
 
-      logger.debug({ result }, "The router eth0 was updated ✅");
+      logger.debug({ delEth, addEth }, "The router eth0 was updated ✅");
     }
   } catch (error) {
     logger.error({ err: error }, "The eth0 route was not updated 🚨");

@@ -47,16 +47,17 @@ const removeEthRoute = async ({ logger }) => {
         logger.debug("Try change metric to 1000 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-            const result = await (0, execa_1.default)("ip", [
+            const delEth = await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]);
+            const addEth = await (0, execa_1.default)("ip", [
                 "route",
-                "change",
+                "add",
                 "default",
                 "via",
                 "192.168.1.1",
                 "metric",
                 "1000",
             ]);
-            logger.debug({ result }, "The eth0 route was updated ✅");
+            logger.debug({ delEth, addEth }, "The eth0 route was updated ✅");
         }
     }
     catch (error) {
@@ -69,17 +70,18 @@ const addEthRoute = async ({ logger }) => {
     try {
         logger.debug("Try change metric to 0 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
-        if (!currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-            const result = await (0, execa_1.default)("ip", [
+        if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
+            const delEth = await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]);
+            const addEth = await (0, execa_1.default)("ip", [
                 "route",
-                "change",
+                "add",
                 "default",
                 "via",
                 "192.168.1.1",
                 "metric",
                 "0",
             ]);
-            logger.debug({ result }, "The router eth0 was updated ✅");
+            logger.debug({ delEth, addEth }, "The router eth0 was updated ✅");
         }
     }
     catch (error) {
