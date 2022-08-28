@@ -30,7 +30,7 @@ const resetRoutes = async ({ logger }) => {
             "via",
             "192.168.0.100",
             "metric",
-            "100",
+            "2",
         ]);
         logger.debug({
             results: [...result, addEth, addUsb],
@@ -44,7 +44,7 @@ const resetRoutes = async ({ logger }) => {
 exports.resetRoutes = resetRoutes;
 const removeEthRoute = async ({ logger }) => {
     try {
-        logger.debug("Try change metric to 1000 of eth0 ℹ️");
+        logger.debug("Try change metric to 3 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1")) {
             const delEth = await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]);
@@ -55,22 +55,22 @@ const removeEthRoute = async ({ logger }) => {
                 "via",
                 "192.168.1.1",
                 "metric",
-                "1000",
+                "3",
             ]);
-            logger.debug({ delEth, addEth }, "The eth0 route was updated ✅");
+            logger.debug({ delEth, addEth }, "The eth0 route was downgraded ✅");
         }
     }
     catch (error) {
-        logger.error({ err: error }, "The eth0 route was not updated 🚨");
+        logger.error({ err: error }, "The eth0 route was not downgraded 🚨");
         return new Error("CHANGE_ETH0_ROUTE_FAILED");
     }
 };
 exports.removeEthRoute = removeEthRoute;
 const addEthRoute = async ({ logger }) => {
     try {
-        logger.debug("Try change metric to 0 of eth0 ℹ️");
+        logger.debug("Try change metric to 1 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
-        if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1000")) {
+        if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 3")) {
             const delEth = await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]);
             const addEth = await (0, execa_1.default)("ip", [
                 "route",
@@ -81,11 +81,11 @@ const addEthRoute = async ({ logger }) => {
                 "metric",
                 "1",
             ]);
-            logger.debug({ delEth, addEth }, "The router eth0 was updated ✅");
+            logger.debug({ delEth, addEth }, "The router eth0 was upgraded ✅");
         }
     }
     catch (error) {
-        logger.error({ err: error }, "The eth0 route was not updated 🚨");
+        logger.error({ err: error }, "The eth0 route was not upgraded 🚨");
         return new Error("CHANGE_ETH0_ROUTE_FAILED");
     }
 };

@@ -38,7 +38,7 @@ export const resetRoutes = async ({ logger }: PingParams) => {
       "via",
       "192.168.0.100",
       "metric",
-      "100",
+      "2",
     ]);
 
     logger.debug(
@@ -56,7 +56,7 @@ export const resetRoutes = async ({ logger }: PingParams) => {
 
 export const removeEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("Try change metric to 1000 of eth0 ℹ️");
+    logger.debug("Try change metric to 3 of eth0 ℹ️");
 
     const currentRoutes = await execa("ip", ["route"]);
 
@@ -70,13 +70,13 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
         "via",
         "192.168.1.1",
         "metric",
-        "1000",
+        "3",
       ]);
 
-      logger.debug({ delEth, addEth }, "The eth0 route was updated ✅");
+      logger.debug({ delEth, addEth }, "The eth0 route was downgraded ✅");
     }
   } catch (error) {
-    logger.error({ err: error }, "The eth0 route was not updated 🚨");
+    logger.error({ err: error }, "The eth0 route was not downgraded 🚨");
 
     return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }
@@ -84,11 +84,11 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
 
 export const addEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("Try change metric to 0 of eth0 ℹ️");
+    logger.debug("Try change metric to 1 of eth0 ℹ️");
 
     const currentRoutes = await execa("ip", ["route"]);
 
-    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1000")) {
+    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 3")) {
       const delEth = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
 
       const addEth = await execa("ip", [
@@ -101,10 +101,10 @@ export const addEthRoute = async ({ logger }: PingParams) => {
         "1",
       ]);
 
-      logger.debug({ delEth, addEth }, "The router eth0 was updated ✅");
+      logger.debug({ delEth, addEth }, "The router eth0 was upgraded ✅");
     }
   } catch (error) {
-    logger.error({ err: error }, "The eth0 route was not updated 🚨");
+    logger.error({ err: error }, "The eth0 route was not upgraded 🚨");
 
     return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }
