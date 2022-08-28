@@ -15,11 +15,7 @@ export const ifup = async ({ logger }: PingParams) => {
 
     const subprocess = execa("ifup", ["usb0"]);
 
-    if (subprocess.stdout === null) {
-      throw new Error("BAG_STDOUT");
-    }
-
-    subprocess.stdout.pipe(process.stdout);
+    subprocess.stdout?.pipe(process.stdout);
 
     logger.debug("The ifup was successful ✅");
   } catch (error) {

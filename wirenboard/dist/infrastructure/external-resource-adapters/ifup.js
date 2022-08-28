@@ -9,10 +9,7 @@ const ifup = async ({ logger }) => {
     try {
         logger.debug("The `ifup usb0` command is running ℹ️");
         const subprocess = (0, execa_1.default)("ifup", ["usb0"]);
-        if (subprocess.stdout === null) {
-            throw new Error("BAG_STDOUT");
-        }
-        subprocess.stdout.pipe(process.stdout);
+        subprocess.stdout?.pipe(process.stdout);
         logger.debug("The ifup was successful ✅");
     }
     catch (error) {
