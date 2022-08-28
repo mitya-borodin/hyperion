@@ -60,7 +60,7 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
 
     const currentRoutes = await execa("ip", ["route"]);
 
-    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
+    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1")) {
       const delEth = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
 
       const addEth = await execa("ip", [
@@ -88,7 +88,7 @@ export const addEthRoute = async ({ logger }: PingParams) => {
 
     const currentRoutes = await execa("ip", ["route"]);
 
-    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
+    if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1000")) {
       const delEth = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
 
       const addEth = await execa("ip", [
@@ -98,7 +98,7 @@ export const addEthRoute = async ({ logger }: PingParams) => {
         "via",
         "192.168.1.1",
         "metric",
-        "0",
+        "1",
       ]);
 
       logger.debug({ delEth, addEth }, "The router eth0 was updated ✅");
