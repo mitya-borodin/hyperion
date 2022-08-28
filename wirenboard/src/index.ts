@@ -1,3 +1,5 @@
+import { statSync, writeFileSync } from "fs";
+
 import { delay } from "abort-controller-x";
 
 import { entrypoint } from "./infrastructure/entrypoint";
@@ -11,7 +13,7 @@ import {
 
 const DELAY_MS = 5000;
 
-entrypoint(async ({ signal, logger }) => {
+entrypoint(async ({ signal, logger, logFilePath }) => {
   const ifupResult = await ifup({ logger });
 
   if (ifupResult instanceof Error) {
@@ -25,6 +27,13 @@ entrypoint(async ({ signal, logger }) => {
   }
 
   while (true) {
+    const logInBytes = statSync(logFilePath).size;
+    const logInMegaBytes = logInBytes / (1024 * 1024);
+
+    if (logInMegaBytes > 5) {
+      writeFileSync(logFilePath, "", "utf8");
+    }
+
     const ethPing = await ping({ logger, inet: "eth0" });
 
     if (ethPing instanceof Error) {

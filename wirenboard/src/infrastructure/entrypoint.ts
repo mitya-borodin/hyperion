@@ -24,14 +24,21 @@ export const entrypoint = async (executor: Executor) => {
   const config = new Config();
   const logFilePath = resolve(__dirname, "../../log.txt");
 
-  const logger = pino({
-    name: "entrypoint",
-    base: {
-      appName: config.appName,
-      hostname: os.hostname(),
-    },
-    level: config.log.level,
+  // const logger = pino({
+  //   name: "entrypoint",
+  //   base: {
+  //     appName: config.appName,
+  //     hostname: os.hostname(),
+  //   },
+  //   level: config.log.level,
+  // });
+
+  const transport = pino.transport({
+    target: "pino/file",
+    options: { destination: logFilePath, level: config.log.level },
   });
+
+  const logger = pino(transport);
 
   let shutdownReason: "TERMINATION_BY_PROCESS_SIGNAL" | "UNEXPECTED_ERROR" | null = null;
 

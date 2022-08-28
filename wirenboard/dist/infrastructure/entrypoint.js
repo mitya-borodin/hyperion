@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.entrypoint = void 0;
 const tslib_1 = require("tslib");
-const os_1 = tslib_1.__importDefault(require("os"));
 const path_1 = require("path");
 const abort_controller_x_1 = require("abort-controller-x");
 const defer_promise_1 = tslib_1.__importDefault(require("defer-promise"));
@@ -14,14 +13,19 @@ const entrypoint = async (executor) => {
     const shutdownDeferred = (0, defer_promise_1.default)();
     const config = new config_1.Config();
     const logFilePath = (0, path_1.resolve)(__dirname, "../../log.txt");
-    const logger = (0, pino_1.default)({
-        name: "entrypoint",
-        base: {
-            appName: config.appName,
-            hostname: os_1.default.hostname(),
-        },
-        level: config.log.level,
+    // const logger = pino({
+    //   name: "entrypoint",
+    //   base: {
+    //     appName: config.appName,
+    //     hostname: os.hostname(),
+    //   },
+    //   level: config.log.level,
+    // });
+    const transport = pino_1.default.transport({
+        target: "pino/file",
+        options: { destination: logFilePath, level: config.log.level },
     });
+    const logger = (0, pino_1.default)(transport);
     let shutdownReason = null;
     const abortProcessOnSignal = (signal) => {
         if (shutdownReason !== null) {
