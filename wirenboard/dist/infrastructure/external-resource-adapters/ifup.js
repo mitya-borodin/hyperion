@@ -13,7 +13,7 @@ const ifup = async ({ logger }) => {
     }
     catch (error) {
         logger.error({ err: error }, "Ifup failed 🚨");
-        return new Error("PING_FAILED");
+        return new Error("IFUP_FAILED");
     }
 };
 exports.ifup = ifup;

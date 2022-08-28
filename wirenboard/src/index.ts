@@ -5,9 +5,22 @@ import { delay } from "abort-controller-x";
 import { entrypoint } from "./infrastructure/entrypoint";
 import { ifup } from "./infrastructure/external-resource-adapters/ifup";
 import { ping } from "./infrastructure/external-resource-adapters/ping";
+import { removeEthRoute, setRoutes } from "./infrastructure/external-resource-adapters/routes";
+
+const DELAY_MS = 5000;
 
 entrypoint(async ({ signal, logger, logFilePath }) => {
-  await ifup({ logger });
+  const ifupResult = await ifup({ logger });
+
+  if (ifupResult instanceof Error) {
+    return;
+  }
+
+  const setRoutesResult = await setRoutes({ logger });
+
+  if (setRoutesResult instanceof Error) {
+    return;
+  }
 
   while (true) {
     const logInBytes = statSync(logFilePath).size;
@@ -17,20 +30,39 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
       writeFileSync(logFilePath, "", "utf8");
     }
 
-    const ethPing = await ping({ logger, inet: "eth0" });
+    const [ethPing, usbPing] = await Promise.all([
+      ping({ logger, inet: "eth0" }),
+      ping({ logger, inet: "usb0" }),
+    ]);
 
-    if (ethPing instanceof Error) {
-      const usbPing = await ping({ logger, inet: "usb0" });
+    /**
+     * ! Оба канала связи НЕ работают
+     */
+    if (ethPing instanceof Error && usbPing instanceof Error) {
+      logger.error("None of the internet access options work 🚨");
 
-      if (usbPing instanceof Error) {
-        logger.error("Unable to connect to the Internet 🚨");
-      } else {
-        // ! Переключиться на USB_0
-      }
-    } else {
-      // ! Переключиться на ETH_0
+      await delay(signal, DELAY_MS);
+
+      continue;
     }
 
-    await delay(signal, 5_000);
+    if (ethPing instanceof Error) {
+      /**
+       * ! Не работает канал связи ETH0
+       */
+
+      await removeEthRoute({ logger });
+
+      await delay(signal, DELAY_MS);
+
+      continue;
+    } else {
+      /**
+       * * Работает канал связи ETH0
+       */
+      await setRoutes({ logger });
+    }
+
+    await delay(signal, DELAY_MS);
   }
 });

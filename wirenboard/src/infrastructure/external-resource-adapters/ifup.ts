@@ -19,6 +19,6 @@ export const ifup = async ({ logger }: PingParams) => {
   } catch (error) {
     logger.error({ err: error }, "Ifup failed 🚨");
 
-    return new Error("PING_FAILED");
+    return new Error("IFUP_FAILED");
   }
 };
