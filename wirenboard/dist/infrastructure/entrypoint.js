@@ -12,9 +12,10 @@ const entrypoint = async (executor) => {
     const abortController = new node_abort_controller_1.AbortController();
     const shutdownDeferred = (0, defer_promise_1.default)();
     const config = new config_1.Config();
+    const logFilePath = (0, path_1.resolve)(__dirname, "../../log.txt");
     const transport = pino_1.default.transport({
         target: "pino/file",
-        options: { destination: (0, path_1.resolve)(__dirname, "../../log.txt") },
+        options: { destination: logFilePath, level: "trace" },
     });
     const logger = (0, pino_1.default)(transport);
     let shutdownReason = null;
@@ -108,7 +109,7 @@ const entrypoint = async (executor) => {
     try {
         await (0, abort_controller_x_1.race)(abortController.signal, (signal) => [
             (0, abort_controller_x_1.abortable)(signal, shutdownDeferred.promise),
-            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
+            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, logFilePath, fork, defer })),
         ]);
         logger.info("The application was interrupted by a signal from 'AbortController'");
     }
