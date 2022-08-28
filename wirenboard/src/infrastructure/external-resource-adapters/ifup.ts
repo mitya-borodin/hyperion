@@ -8,7 +8,7 @@ type PingParams = {
 export const ifup = async ({ logger }: PingParams) => {
   logger.debug("Waiting for the `ifup usb0` command to run has started ℹ️");
 
-  await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
+  await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
 
   try {
     logger.debug("The `ifup usb0` command is running ℹ️");

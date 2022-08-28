@@ -5,7 +5,7 @@ const tslib_1 = require("tslib");
 const execa_1 = tslib_1.__importDefault(require("execa"));
 const ifup = async ({ logger }) => {
     logger.debug("Waiting for the `ifup usb0` command to run has started ℹ️");
-    await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
     try {
         logger.debug("The `ifup usb0` command is running ℹ️");
         const result = await (0, execa_1.default)("ifup", ["usb0"]);
