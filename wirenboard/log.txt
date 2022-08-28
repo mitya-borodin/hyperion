@@ -1,0 +1,42 @@
+{"level":30,"time":1661695886626,"pid":39720,"hostname":"iMac-Dmitrij.local","config":{"appName":"iMac-Dmitrij.local","production":false,"log":{"level":"trace"},"gracefullyShutdownMs":5000,"mosquitto":{"host":"borodin.site","port":18883,"protocol":"mqtt","username":"wirenboard","password":"h6h6siKRnx.rN6tC7JB7@zbgMGun*m_2xNB2Auk8AsQYRAsLFZ"}},"msg":"The application is being launched"}
+{"level":30,"time":1661695886627,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695891628,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695896628,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695901628,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":40,"time":1661695906009,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"The process will be completed on the signal SIGUSR2"}
+{"level":40,"time":1661695906009,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"The process will be forcibly terminated after 5000 ms.\nCheck for timers or connections preventing Node from exiting."}
+{"level":30,"time":1661695906010,"pid":39720,"hostname":"iMac-Dmitrij.local","msg":"The application was interrupted by a signal from 'AbortController'"}
+{"level":30,"time":1661695909511,"pid":39778,"hostname":"iMac-Dmitrij.local","config":{"appName":"iMac-Dmitrij.local","production":false,"log":{"level":"trace"},"gracefullyShutdownMs":5000,"mosquitto":{"host":"borodin.site","port":18883,"protocol":"mqtt","username":"wirenboard","password":"h6h6siKRnx.rN6tC7JB7@zbgMGun*m_2xNB2Auk8AsQYRAsLFZ"}},"msg":"The application is being launched"}
+{"level":30,"time":1661695909512,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695914513,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695919513,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695924514,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695929514,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695934515,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695939515,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695944516,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695949518,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695954519,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695959520,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695964520,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695969521,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695974523,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695979524,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695984524,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695989525,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695994526,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661695999528,"pid":39778,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696005015,"pid":40413,"hostname":"iMac-Dmitrij.local","config":{"appName":"iMac-Dmitrij.local","production":false,"log":{"level":"trace"},"gracefullyShutdownMs":5000,"mosquitto":{"host":"borodin.site","port":18883,"protocol":"mqtt","username":"wirenboard","password":"h6h6siKRnx.rN6tC7JB7@zbgMGun*m_2xNB2Auk8AsQYRAsLFZ"}},"msg":"The application is being launched"}
+{"level":30,"time":1661696005016,"pid":40413,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696008659,"pid":40442,"hostname":"iMac-Dmitrij.local","config":{"appName":"iMac-Dmitrij.local","production":false,"log":{"level":"trace"},"gracefullyShutdownMs":5000,"mosquitto":{"host":"borodin.site","port":18883,"protocol":"mqtt","username":"wirenboard","password":"h6h6siKRnx.rN6tC7JB7@zbgMGun*m_2xNB2Auk8AsQYRAsLFZ"}},"msg":"The application is being launched"}
+{"level":30,"time":1661696008660,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696013661,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696018663,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696023663,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696028664,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696033665,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696038666,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696043667,"pid":40442,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696047936,"pid":40514,"hostname":"iMac-Dmitrij.local","config":{"appName":"iMac-Dmitrij.local","production":false,"log":{"level":"trace"},"gracefullyShutdownMs":5000,"mosquitto":{"host":"borodin.site","port":18883,"protocol":"mqtt","username":"wirenboard","password":"h6h6siKRnx.rN6tC7JB7@zbgMGun*m_2xNB2Auk8AsQYRAsLFZ"}},"msg":"The application is being launched"}
+{"level":30,"time":1661696047938,"pid":40514,"hostname":"iMac-Dmitrij.local","msg":"PING"}
+{"level":30,"time":1661696052939,"pid":40514,"hostname":"iMac-Dmitrij.local","msg":"PING"}

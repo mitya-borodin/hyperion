@@ -1,4 +1,4 @@
-import os from "os";
+import { resolve } from "path";
 
 import { abortable, race, spawn, SpawnEffects } from "abort-controller-x";
 import defer from "defer-promise";
@@ -11,6 +11,7 @@ type ExecutorParams = {
   signal: AbortSignal;
   config: Config;
   logger: Logger;
+  logFilePath: string;
 } & SpawnEffects;
 
 type Executor = (params: ExecutorParams) => Promise<void>;
@@ -20,15 +21,14 @@ export const entrypoint = async (executor: Executor) => {
   const shutdownDeferred = defer<unknown | undefined>();
 
   const config = new Config();
+  const logFilePath = resolve(__dirname, "../../log.txt");
 
-  const logger = pino({
-    name: "entrypoint",
-    base: {
-      appName: config.appName,
-      hostname: os.hostname(),
-    },
-    level: config.log.level,
+  const transport = pino.transport({
+    target: "pino/file",
+    options: { destination: logFilePath, level: "trace" },
   });
+
+  const logger = pino(transport);
 
   let shutdownReason: "TERMINATION_BY_PROCESS_SIGNAL" | "UNEXPECTED_ERROR" | null = null;
 
@@ -148,7 +148,9 @@ export const entrypoint = async (executor: Executor) => {
   try {
     await race(abortController.signal, (signal) => [
       abortable(signal, shutdownDeferred.promise),
-      spawn(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
+      spawn(signal, (signal, { fork, defer }) =>
+        executor({ signal, config, logger, logFilePath, fork, defer }),
+      ),
     ]);
 
     logger.info("The application was interrupted by a signal from 'AbortController'");
