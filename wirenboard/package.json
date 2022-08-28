@@ -1,0 +1,32 @@
+{
+  "name": "butler-wirenboard",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "nodemon --config nodemon.json src/index.ts | pino-pretty -c",
+    "build": "del dist && tsc --project ./tsconfig.build.json"
+  },
+  "engines": {
+    "node": ">=16.4.0",
+    "npm": ">=8.3.1"
+  },
+  "dependencies": {
+    "abort-controller-x": "^0.2.6",
+    "defer-promise": "^3.0.0",
+    "node-abort-controller": "^3.0.1",
+    "pino": "^7.8.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.2",
+    "@types/defer-promise": "^1.0.0",
+    "@types/node": "^16.11.26",
+    "del-cli": "^4.0.1",
+    "dotenv": "^16.0.1",
+    "nodemon": "^2.0.15",
+    "pino-pretty": "^7.5.1",
+    "ts-node": "^10.4.0",
+    "tsc-watch": "^4.6.0",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.2"
+  }
+}

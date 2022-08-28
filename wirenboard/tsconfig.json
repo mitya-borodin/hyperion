@@ -1,0 +1,18 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
+  "include": ["**/src/**/*.ts", "**/test/**/*.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "declaration": true,
+    "sourceMap": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "noPropertyAccessFromIndexSignature": false
+  }
+}
