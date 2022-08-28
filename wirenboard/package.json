@@ -13,6 +13,8 @@
   "dependencies": {
     "abort-controller-x": "^0.2.6",
     "defer-promise": "^3.0.0",
+    "execa": "^5.1.1",
+    "dotenv": "^16.0.1",
     "node-abort-controller": "^3.0.1",
     "pino": "^7.8.0"
   },
@@ -21,7 +23,6 @@
     "@types/defer-promise": "^1.0.0",
     "@types/node": "^16.11.26",
     "del-cli": "^4.0.1",
-    "dotenv": "^16.0.1",
     "nodemon": "^2.0.15",
     "pino-pretty": "^7.5.1",
     "ts-node": "^10.4.0",

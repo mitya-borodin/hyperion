@@ -15,7 +15,7 @@ const entrypoint = async (executor) => {
     const logFilePath = (0, path_1.resolve)(__dirname, "../../log.txt");
     const transport = pino_1.default.transport({
         target: "pino/file",
-        options: { destination: logFilePath, level: "trace" },
+        options: { destination: logFilePath, level: config.log.level },
     });
     const logger = (0, pino_1.default)(transport);
     let shutdownReason = null;

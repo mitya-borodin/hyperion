@@ -25,7 +25,7 @@ export const entrypoint = async (executor: Executor) => {
 
   const transport = pino.transport({
     target: "pino/file",
-    options: { destination: logFilePath, level: "trace" },
+    options: { destination: logFilePath, level: config.log.level },
   });
 
   const logger = pino(transport);
