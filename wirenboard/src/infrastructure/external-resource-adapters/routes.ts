@@ -28,7 +28,7 @@ export const resetRoutes = async ({ logger }: PingParams) => {
       "via",
       "192.168.1.1",
       "metric",
-      "0",
+      "1",
     ]);
 
     const addUsb = await execa("ip", [

@@ -21,7 +21,7 @@ const resetRoutes = async ({ logger }) => {
             "via",
             "192.168.1.1",
             "metric",
-            "0",
+            "1",
         ]);
         const addUsb = await (0, execa_1.default)("ip", [
             "route",
