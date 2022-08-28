@@ -44,39 +44,47 @@ const resetRoutes = async ({ logger }) => {
 exports.resetRoutes = resetRoutes;
 const removeEthRoute = async ({ logger }) => {
     try {
-        logger.debug("The remove eth0 route ℹ️");
+        logger.debug("Try change metric to 1000 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-            const result = await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]);
-            logger.debug({ result }, "The eth0 route was removed ✅");
+            const result = await (0, execa_1.default)("ip", [
+                "route",
+                "change",
+                "default",
+                "via",
+                "192.168.1.1",
+                "metric",
+                "1000",
+            ]);
+            logger.debug({ result }, "The eth0 route was updated ✅");
         }
     }
     catch (error) {
-        logger.error({ err: error }, "The remove eth0 route was failed 🚨");
-        return new Error("REMOVE_ETH0_ROUTE_FAILED");
+        logger.error({ err: error }, "The eth0 route was not updated 🚨");
+        return new Error("CHANGE_ETH0_ROUTE_FAILED");
     }
 };
 exports.removeEthRoute = removeEthRoute;
 const addEthRoute = async ({ logger }) => {
     try {
-        logger.debug("The add eth0 route ℹ️");
+        logger.debug("Try change metric to 0 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (!currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
             const result = await (0, execa_1.default)("ip", [
                 "route",
-                "add",
+                "change",
                 "default",
                 "via",
                 "192.168.1.1",
                 "metric",
                 "0",
             ]);
-            logger.debug({ result }, "The router eth0 was added ✅");
+            logger.debug({ result }, "The router eth0 was updated ✅");
         }
     }
     catch (error) {
-        logger.error({ err: error }, "The add eth0 route was failed 🚨");
-        return new Error("ADD_ETH0_ROUTE_FAILED");
+        logger.error({ err: error }, "The eth0 route was not updated 🚨");
+        return new Error("CHANGE_ETH0_ROUTE_FAILED");
     }
 };
 exports.addEthRoute = addEthRoute;

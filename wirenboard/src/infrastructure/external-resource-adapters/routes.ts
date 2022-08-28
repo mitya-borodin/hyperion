@@ -56,32 +56,40 @@ export const resetRoutes = async ({ logger }: PingParams) => {
 
 export const removeEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("The remove eth0 route ℹ️");
+    logger.debug("Try change metric to 1000 of eth0 ℹ️");
 
     const currentRoutes = await execa("ip", ["route"]);
 
     if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-      const result = await execa("ip", ["route", "del", "default", "via", "192.168.1.1"]);
+      const result = await execa("ip", [
+        "route",
+        "change",
+        "default",
+        "via",
+        "192.168.1.1",
+        "metric",
+        "1000",
+      ]);
 
-      logger.debug({ result }, "The eth0 route was removed ✅");
+      logger.debug({ result }, "The eth0 route was updated ✅");
     }
   } catch (error) {
-    logger.error({ err: error }, "The remove eth0 route was failed 🚨");
+    logger.error({ err: error }, "The eth0 route was not updated 🚨");
 
-    return new Error("REMOVE_ETH0_ROUTE_FAILED");
+    return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }
 };
 
 export const addEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("The add eth0 route ℹ️");
+    logger.debug("Try change metric to 0 of eth0 ℹ️");
 
     const currentRoutes = await execa("ip", ["route"]);
 
     if (!currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
       const result = await execa("ip", [
         "route",
-        "add",
+        "change",
         "default",
         "via",
         "192.168.1.1",
@@ -89,11 +97,11 @@ export const addEthRoute = async ({ logger }: PingParams) => {
         "0",
       ]);
 
-      logger.debug({ result }, "The router eth0 was added ✅");
+      logger.debug({ result }, "The router eth0 was updated ✅");
     }
   } catch (error) {
-    logger.error({ err: error }, "The add eth0 route was failed 🚨");
+    logger.error({ err: error }, "The eth0 route was not updated 🚨");
 
-    return new Error("ADD_ETH0_ROUTE_FAILED");
+    return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }
 };
