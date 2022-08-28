@@ -4,7 +4,7 @@ exports.ifup = void 0;
 const tslib_1 = require("tslib");
 const execa_1 = tslib_1.__importDefault(require("execa"));
 const ifup = async ({ logger }) => {
-    await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
     try {
         logger.debug("Try lunch `wb-gsm restart_if_broken` ℹ️");
         const gsmResult = await (0, execa_1.default)("wb-gsm", ["restart_if_broken"]);
