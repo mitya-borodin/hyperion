@@ -13,9 +13,15 @@ export const ifup = async ({ logger }: PingParams) => {
   try {
     logger.debug("The `ifup usb0` command is running ℹ️");
 
-    const result = await execa("ifup", ["usb0"]);
+    const subprocess = execa("ifup", ["usb0"]);
 
-    logger.debug(result, "The ifup was successful ✅");
+    if (subprocess.stdout === null) {
+      throw new Error("BAG_STDOUT");
+    }
+
+    subprocess.stdout.pipe(process.stdout);
+
+    logger.debug("The ifup was successful ✅");
   } catch (error) {
     logger.error({ err: error }, "Ifup failed 🚨");
 

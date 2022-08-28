@@ -8,8 +8,12 @@ const ifup = async ({ logger }) => {
     await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
     try {
         logger.debug("The `ifup usb0` command is running ℹ️");
-        const result = await (0, execa_1.default)("ifup", ["usb0"]);
-        logger.debug(result, "The ifup was successful ✅");
+        const subprocess = (0, execa_1.default)("ifup", ["usb0"]);
+        if (subprocess.stdout === null) {
+            throw new Error("BAG_STDOUT");
+        }
+        subprocess.stdout.pipe(process.stdout);
+        logger.debug("The ifup was successful ✅");
     }
     catch (error) {
         logger.error({ err: error }, "Ifup failed 🚨");
