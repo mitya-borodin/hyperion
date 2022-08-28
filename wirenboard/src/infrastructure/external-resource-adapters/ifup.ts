@@ -6,12 +6,16 @@ type PingParams = {
 };
 
 export const ifup = async ({ logger }: PingParams) => {
+  logger.debug("Waiting for the `ifup usb0` command to run has started ℹ️");
+
   await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
 
   try {
-    await execa("ifup", ["usb0"]);
+    logger.debug("The `ifup usb0` command is running ℹ️");
 
-    logger.debug("The ifup was successful ✅");
+    const result = await execa("ifup", ["usb0"]);
+
+    logger.debug(result, "The ifup was successful ✅");
   } catch (error) {
     logger.error({ err: error }, "Ifup failed 🚨");
 
