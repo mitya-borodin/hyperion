@@ -14,13 +14,6 @@ const entrypoint = async (executor) => {
     const shutdownDeferred = (0, defer_promise_1.default)();
     const config = new config_1.Config();
     const logFilePath = (0, path_1.resolve)(__dirname, "../../log.txt");
-    /*   const transport = pino.transport({
-      target: "pino/file",
-      options: { destination: logFilePath, level: config.log.level },
-    });
-  
-    const logger = pino(transport);
-   */
     const logger = (0, pino_1.default)({
         name: "entrypoint",
         base: {

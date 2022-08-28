@@ -24,14 +24,6 @@ export const entrypoint = async (executor: Executor) => {
   const config = new Config();
   const logFilePath = resolve(__dirname, "../../log.txt");
 
-  /*   const transport = pino.transport({
-    target: "pino/file",
-    options: { destination: logFilePath, level: config.log.level },
-  });
-
-  const logger = pino(transport);
- */
-
   const logger = pino({
     name: "entrypoint",
     base: {

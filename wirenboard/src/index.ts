@@ -1,19 +1,17 @@
-import { statSync, writeFileSync } from "fs";
-
 import { delay } from "abort-controller-x";
 
 import { entrypoint } from "./infrastructure/entrypoint";
 import { ifup } from "./infrastructure/external-resource-adapters/ifup";
 import { ping } from "./infrastructure/external-resource-adapters/ping";
 import {
+  addEthRoute,
   removeEthRoute,
   resetRoutes,
-  addEthRoute,
 } from "./infrastructure/external-resource-adapters/routes";
 
 const DELAY_MS = 5000;
 
-entrypoint(async ({ signal, logger, logFilePath }) => {
+entrypoint(async ({ signal, logger }) => {
   const ifupResult = await ifup({ logger });
 
   if (ifupResult instanceof Error) {
@@ -27,13 +25,6 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
   }
 
   while (true) {
-    const logInBytes = statSync(logFilePath).size;
-    const logInMegaBytes = logInBytes / (1024 * 1024);
-
-    if (logInMegaBytes > 5) {
-      writeFileSync(logFilePath, "", "utf8");
-    }
-
     const ethPing = await ping({ logger, inet: "eth0" });
 
     if (ethPing instanceof Error) {
