@@ -17,7 +17,7 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
       writeFileSync(logFilePath, "", "utf8");
     }
 
-    const ethPing = await ping({ logger, inet: "etc0" });
+    const ethPing = await ping({ logger, inet: "eth0" });
 
     if (ethPing instanceof Error) {
       const usbPing = await ping({ logger, inet: "usb0" });

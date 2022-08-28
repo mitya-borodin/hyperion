@@ -13,7 +13,7 @@ const ping_1 = require("./infrastructure/external-resource-adapters/ping");
         if (logInMegaBytes > 5) {
             (0, fs_1.writeFileSync)(logFilePath, "", "utf8");
         }
-        const ethPing = await (0, ping_1.ping)({ logger, inet: "etc0" });
+        const ethPing = await (0, ping_1.ping)({ logger, inet: "eth0" });
         if (ethPing instanceof Error) {
             const usbPing = await (0, ping_1.ping)({ logger, inet: "usb0" });
             if (usbPing instanceof Error) {

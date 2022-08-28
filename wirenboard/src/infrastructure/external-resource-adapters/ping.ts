@@ -2,11 +2,11 @@ import execa from "execa";
 import { Logger } from "pino";
 
 type PingParams = {
-  inet: "etc0" | "usb0";
+  inet: "eth0" | "usb0";
   logger: Logger;
 };
 
-export const ping = async ({ logger, inet = "etc0" }: PingParams) => {
+export const ping = async ({ logger, inet = "eth0" }: PingParams) => {
   try {
     await Promise.all([
       execa("ping", ["-c", "5", "-I", inet, "ya.ru"]),

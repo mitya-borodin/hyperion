@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ping = void 0;
 const tslib_1 = require("tslib");
 const execa_1 = tslib_1.__importDefault(require("execa"));
-const ping = async ({ logger, inet = "etc0" }) => {
+const ping = async ({ logger, inet = "eth0" }) => {
     try {
         await Promise.all([
             (0, execa_1.default)("ping", ["-c", "5", "-I", inet, "ya.ru"]),
