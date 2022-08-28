@@ -6,7 +6,7 @@ type PingParams = {
 };
 
 export const ifup = async ({ logger }: PingParams) => {
-  await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+  await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
 
   try {
     logger.debug("Try lunch `wb-gsm restart_if_broken` ℹ️");
