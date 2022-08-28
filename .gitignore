@@ -36,9 +36,12 @@ Temporary Items
 # Logs
 logs
 *.log
+log.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
 
 # Runtime data
 pids
