@@ -5,9 +5,6 @@ const node_child_process_1 = require("node:child_process");
 const abort_controller_x_1 = require("abort-controller-x");
 const __1 = require("../..");
 const wbGsm = async ({ logger, signal }) => {
-    const message = "Start `wb-gsm restart_if_broken` ℹ️";
-    logger.info(message);
-    console.log(message);
     try {
         while (true) {
             const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";

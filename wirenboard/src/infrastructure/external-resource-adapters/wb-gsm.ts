@@ -12,11 +12,6 @@ type WbGsmParams = {
 };
 
 export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
-  const message = "Start `wb-gsm restart_if_broken` ℹ️";
-
-  logger.info(message);
-  console.log(message);
-
   try {
     while (true) {
       const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";
