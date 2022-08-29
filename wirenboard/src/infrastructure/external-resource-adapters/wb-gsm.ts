@@ -49,8 +49,8 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
         childProcess.once("exit", (code) => {
           const message = `wb-gsm restart_if_broken process exited with code ${code}`;
 
-          console.log(message);
           logger.info(message);
+          console.log(message);
 
           if (code === 0) {
             clearTimeout(timer);
@@ -58,8 +58,8 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
           } else {
             const message = "The GSM launch failed 🚨";
 
-            console.log(message);
             logger.info(message);
+            console.log(message);
 
             resolve(false);
           }
@@ -69,8 +69,8 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
       if (isExit) {
         const message = "The GSM was successful lunched ✅";
 
-        console.log(message);
         logger.info(message);
+        console.log(message);
         return;
       }
 

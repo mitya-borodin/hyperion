@@ -31,24 +31,24 @@ const wbGsm = async ({ logger, signal }) => {
             const isExit = await new Promise((resolve) => {
                 childProcess.once("exit", (code) => {
                     const message = `wb-gsm restart_if_broken process exited with code ${code}`;
-                    console.log(message);
                     logger.info(message);
+                    console.log(message);
                     if (code === 0) {
                         clearTimeout(timer);
                         resolve(true);
                     }
                     else {
                         const message = "The GSM launch failed 🚨";
-                        console.log(message);
                         logger.info(message);
+                        console.log(message);
                         resolve(false);
                     }
                 });
             });
             if (isExit) {
                 const message = "The GSM was successful lunched ✅";
-                console.log(message);
                 logger.info(message);
+                console.log(message);
                 return;
             }
             await (0, abort_controller_x_1.delay)(signal, __1.DELAY_MS);
