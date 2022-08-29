@@ -22,15 +22,15 @@ const wbGsm = async ({ logger, signal }) => {
                 logger.info(stdout);
                 console.log(stdout);
             });
-            childProcess.on("error", (error) => {
-                logger.error({ err: error });
-                console.error(error);
-            });
-            childProcess.on("close", (code) => {
-                const message = `The wb-gsm restart_if_broken process was closed with code: ${code}`;
-                logger.info({ code }, message);
-                console.log(message);
-            });
+            // childProcess.on("error", (error) => {
+            //   logger.error({ err: error });
+            //   console.error(error);
+            // });
+            // childProcess.once("close", (code) => {
+            //   const message = `The wb-gsm restart_if_broken process was closed with code: ${code}`;
+            //   logger.info({ code }, message);
+            //   console.log(message);
+            // });
             const timer = setTimeout(() => {
                 const message = "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
                 logger.info(message);
