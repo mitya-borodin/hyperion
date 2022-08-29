@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DELAY_MS = void 0;
 const fs_1 = require("fs");
 const abort_controller_x_1 = require("abort-controller-x");
 const entrypoint_1 = require("./infrastructure/entrypoint");
@@ -7,9 +8,9 @@ const ifup_1 = require("./infrastructure/external-resource-adapters/ifup");
 const ping_1 = require("./infrastructure/external-resource-adapters/ping");
 const routes_1 = require("./infrastructure/external-resource-adapters/routes");
 const wb_gsm_1 = require("./infrastructure/external-resource-adapters/wb-gsm");
-const DELAY_MS = 5000;
+exports.DELAY_MS = 5000;
 (0, entrypoint_1.entrypoint)(async ({ signal, logger, logFilePath }) => {
-    const wbGsmResult = await (0, wb_gsm_1.wbGsm)({ logger });
+    const wbGsmResult = await (0, wb_gsm_1.wbGsm)({ logger, signal });
     if (wbGsmResult instanceof Error) {
         return;
     }
@@ -42,6 +43,6 @@ const DELAY_MS = 5000;
              */
             await (0, routes_1.addEthRoute)({ logger });
         }
-        await (0, abort_controller_x_1.delay)(signal, DELAY_MS);
+        await (0, abort_controller_x_1.delay)(signal, exports.DELAY_MS);
     }
 });

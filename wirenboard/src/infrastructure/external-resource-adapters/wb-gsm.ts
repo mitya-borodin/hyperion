@@ -1,71 +1,86 @@
 import { exec } from "node:child_process";
 
+import { delay } from "abort-controller-x";
+import { AbortSignal } from "node-abort-controller";
 import { Logger } from "pino";
+
+import { DELAY_MS } from "../..";
 
 type WbGsmParams = {
   logger: Logger;
+  signal: AbortSignal;
 };
 
-export const wbGsm = async ({ logger }: WbGsmParams) => {
-  const message = "Start wb-gsm restart_if_broken, Before the start, you need to wait 2 minutes ℹ️";
+export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
+  const message = "Start `wb-gsm restart_if_broken` ℹ️";
 
   logger.info(message);
   console.log(message);
 
-  await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
-
   try {
-    const message = "Try lunch `wb-gsm restart_if_broken` ℹ️";
-
-    logger.info(message);
-    console.log(message);
-
-    const childProcess = exec("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
-      if (err) {
-        console.error(err);
-
-        return;
-      }
-
-      logger.info(stdout);
-      console.log(stdout);
-      console.error(stderr);
-    });
-
-    const timer = setTimeout(() => {
-      const message =
-        "The wb-gsm restart_if_broken process does not finish for more than 5 minutes, the process will be forcibly stopped and restarted 🚨";
+    while (true) {
+      const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";
 
       logger.info(message);
       console.log(message);
 
-      childProcess.kill("SIGTERM");
+      const childProcess = exec("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
+        if (err) {
+          console.error(err);
 
-      setTimeout(() => wbGsm({ logger }), 10 * 1000);
-    }, 5 * 60 * 1000);
+          return;
+        }
 
-    childProcess.once("exit", (code) => {
-      const message = `wb-gsm restart_if_broken process exited with code ${code}`;
+        if (stderr) {
+          logger.error(stderr);
+          console.error(stderr);
+        }
 
-      console.log(message);
-      logger.info(message);
+        logger.info(stdout);
+        console.log(stdout);
+      });
 
-      if (code === 0) {
-        clearTimeout(timer);
+      const timer = setTimeout(() => {
+        const message =
+          "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
 
+        logger.info(message);
+        console.log(message);
+
+        childProcess.kill("SIGTERM");
+      }, 2 * 60 * 1000);
+
+      const isExit = await new Promise((resolve) => {
+        childProcess.once("exit", (code) => {
+          const message = `wb-gsm restart_if_broken process exited with code ${code}`;
+
+          console.log(message);
+          logger.info(message);
+
+          if (code === 0) {
+            clearTimeout(timer);
+            resolve(true);
+          } else {
+            const message = "The GSM launch failed 🚨";
+
+            console.log(message);
+            logger.info(message);
+
+            resolve(false);
+          }
+        });
+      });
+
+      if (isExit) {
         const message = "The GSM was successful lunched ✅";
 
         console.log(message);
         logger.info(message);
-      } else {
-        const message = "The GSM launch failed 🚨";
-
-        console.log(message);
-        logger.info(message);
-
-        setTimeout(() => wbGsm({ logger }), 10 * 1000);
+        return;
       }
-    });
+
+      await delay(signal, DELAY_MS);
+    }
   } catch (error) {
     const message = "The GSM launch failed 🚨";
 

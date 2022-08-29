@@ -2,48 +2,60 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.wbGsm = void 0;
 const node_child_process_1 = require("node:child_process");
-const wbGsm = async ({ logger }) => {
-    const message = "Start wb-gsm restart_if_broken, Before the start, you need to wait 2 minutes ℹ️";
+const abort_controller_x_1 = require("abort-controller-x");
+const __1 = require("../..");
+const wbGsm = async ({ logger, signal }) => {
+    const message = "Start `wb-gsm restart_if_broken` ℹ️";
     logger.info(message);
     console.log(message);
-    await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
     try {
-        const message = "Try lunch `wb-gsm restart_if_broken` ℹ️";
-        logger.info(message);
-        console.log(message);
-        const childProcess = (0, node_child_process_1.exec)("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            logger.info(stdout);
-            console.log(stdout);
-            console.error(stderr);
-        });
-        const timer = setTimeout(() => {
-            const message = "The wb-gsm restart_if_broken process does not finish for more than 5 minutes, the process will be forcibly stopped and restarted 🚨";
+        while (true) {
+            const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";
             logger.info(message);
             console.log(message);
-            childProcess.kill("SIGTERM");
-            setTimeout(() => (0, exports.wbGsm)({ logger }), 10 * 1000);
-        }, 5 * 60 * 1000);
-        childProcess.once("exit", (code) => {
-            const message = `wb-gsm restart_if_broken process exited with code ${code}`;
-            console.log(message);
-            logger.info(message);
-            if (code === 0) {
-                clearTimeout(timer);
+            const childProcess = (0, node_child_process_1.exec)("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                if (stderr) {
+                    logger.error(stderr);
+                    console.error(stderr);
+                }
+                logger.info(stdout);
+                console.log(stdout);
+            });
+            const timer = setTimeout(() => {
+                const message = "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
+                logger.info(message);
+                console.log(message);
+                childProcess.kill("SIGTERM");
+            }, 2 * 60 * 1000);
+            const isExit = await new Promise((resolve) => {
+                childProcess.once("exit", (code) => {
+                    const message = `wb-gsm restart_if_broken process exited with code ${code}`;
+                    console.log(message);
+                    logger.info(message);
+                    if (code === 0) {
+                        clearTimeout(timer);
+                        resolve(true);
+                    }
+                    else {
+                        const message = "The GSM launch failed 🚨";
+                        console.log(message);
+                        logger.info(message);
+                        resolve(false);
+                    }
+                });
+            });
+            if (isExit) {
                 const message = "The GSM was successful lunched ✅";
                 console.log(message);
                 logger.info(message);
+                return;
             }
-            else {
-                const message = "The GSM launch failed 🚨";
-                console.log(message);
-                logger.info(message);
-                setTimeout(() => (0, exports.wbGsm)({ logger }), 10 * 1000);
-            }
-        });
+            await (0, abort_controller_x_1.delay)(signal, __1.DELAY_MS);
+        }
     }
     catch (error) {
         const message = "The GSM launch failed 🚨";

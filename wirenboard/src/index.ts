@@ -12,10 +12,10 @@ import {
 } from "./infrastructure/external-resource-adapters/routes";
 import { wbGsm } from "./infrastructure/external-resource-adapters/wb-gsm";
 
-const DELAY_MS = 5000;
+export const DELAY_MS = 5000;
 
 entrypoint(async ({ signal, logger, logFilePath }) => {
-  const wbGsmResult = await wbGsm({ logger });
+  const wbGsmResult = await wbGsm({ logger, signal });
 
   if (wbGsmResult instanceof Error) {
     return;
