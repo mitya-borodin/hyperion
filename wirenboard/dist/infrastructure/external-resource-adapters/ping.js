@@ -7,11 +7,8 @@ const ping = async ({ logger, inet = "eth0" }) => {
     try {
         logger.debug({ inet }, "Start ping 🛫");
         await Promise.all([
-            (0, execa_1.default)("ping", ["-c", "2", "-I", inet, "ya.ru"]),
             (0, execa_1.default)("ping", ["-c", "2", "-I", inet, "77.88.8.8"]),
             (0, execa_1.default)("ping", ["-c", "2", "-I", inet, "77.88.8.1"]),
-            (0, execa_1.default)("ping", ["-c", "2", "-I", inet, "208.67.222.222"]),
-            (0, execa_1.default)("ping", ["-c", "2", "-I", inet, "208.67.220.220"]),
         ]);
         logger.info({ inet }, "The ping was successful ✅ 🛬");
     }
