@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const promises_1 = require("fs/promises");
 const node_child_process_1 = require("node:child_process");
 const node_path_1 = require("node:path");
-const logFilePath = (0, node_path_1.resolve)(__dirname, "log.txt");
+const logFilePath = (0, node_path_1.resolve)(__dirname, "../log.txt");
 const run = async () => {
     const ls = (0, node_child_process_1.spawn)("/root/node/bin/node", [(0, node_path_1.resolve)(__dirname, "index.js")]);
     const timer = setInterval(async () => {

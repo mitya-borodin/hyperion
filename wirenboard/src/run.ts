@@ -2,7 +2,7 @@ import { appendFile, stat, writeFile } from "fs/promises";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 
-const logFilePath = resolve(__dirname, "log.txt");
+const logFilePath = resolve(__dirname, "../log.txt");
 
 const run = async () => {
   const ls = spawn("/root/node/bin/node", [resolve(__dirname, "index.js")]);
