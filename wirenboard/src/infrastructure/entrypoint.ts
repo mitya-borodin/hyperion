@@ -47,14 +47,14 @@ export const entrypoint = async (executor: Executor) => {
 
     shutdownReason = "TERMINATION_BY_PROCESS_SIGNAL";
 
-    logger.warn(`The process will be completed on the signal ${signal}`);
+    logger.warn(`The process will be completed on the signal ${signal} 😱`);
 
     shutdownDeferred.resolve(undefined);
 
     logger.warn(
       [
         `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
-        "Check for timers or connections preventing Node from exiting.",
+        "Check for timers or connections preventing Node from exiting. 😱",
       ].join("\n"),
     );
 
@@ -115,7 +115,7 @@ export const entrypoint = async (executor: Executor) => {
     logger.warn(
       [
         "The process will be terminated due to an unexpected exception",
-        `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
+        `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms. 😱`,
       ].join("\n"),
     );
 
@@ -129,9 +129,9 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on("uncaughtException", (error: Error, origin: NodeJS.UncaughtExceptionOrigin) => {
     if (shutdownReason === null) {
-      logger.fatal({ error, origin }, "Uncaught exception");
+      logger.fatal({ error, origin }, "Uncaught exception 🚨");
     } else {
-      logger.error({ error, origin }, `Uncaught exception after ${shutdownReason}`);
+      logger.error({ error, origin }, `Uncaught exception after ${shutdownReason} 🚨`);
     }
 
     shutdownByError(error);
@@ -139,19 +139,19 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on("unhandledRejection", (reason: unknown) => {
     if (shutdownReason === null) {
-      logger.fatal({ reason }, "Unhandled promise rejection");
+      logger.fatal({ reason }, "Unhandled promise rejection 🚨");
     } else {
-      logger.error({ reason }, `Unhandled promise rejection after ${shutdownReason}`);
+      logger.error({ reason }, `Unhandled promise rejection after ${shutdownReason} 🚨`);
     }
 
     shutdownByError(reason as Error);
   });
 
   process.on("warning", (warning: Error) => {
-    logger.warn({ warning }, "Process warning");
+    logger.warn({ warning }, "Process warning 😱");
   });
 
-  logger.info({ config }, "The application is being launched");
+  logger.info({ config }, "The application is being launched 🚀");
 
   try {
     await race(abortController.signal, (signal) => [
@@ -159,11 +159,11 @@ export const entrypoint = async (executor: Executor) => {
       spawn(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
     ]);
 
-    logger.info("The application was interrupted by a signal from 'AbortController'");
+    logger.info("The application was interrupted by a signal from 'AbortController' 🛬 🛑");
   } catch (error: unknown) {
     // TODO Проверить, попадет ли ошибка из executor в uncaughtException и unhandledRejection
     // TODO Или останется в этом обработчике
-    logger.error({ error }, `The application was interrupted with an error`);
+    logger.error({ error }, `The application was interrupted with an error 🚨`);
 
     shutdownByError(error as Error);
   }

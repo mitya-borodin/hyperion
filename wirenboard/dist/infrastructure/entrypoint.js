@@ -30,11 +30,11 @@ const entrypoint = async (executor) => {
             return;
         }
         shutdownReason = "TERMINATION_BY_PROCESS_SIGNAL";
-        logger.warn(`The process will be completed on the signal ${signal}`);
+        logger.warn(`The process will be completed on the signal ${signal} 😱`);
         shutdownDeferred.resolve(undefined);
         logger.warn([
             `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
-            "Check for timers or connections preventing Node from exiting.",
+            "Check for timers or connections preventing Node from exiting. 😱",
         ].join("\n"));
         const gracefullyShutdownTimer = setTimeout(() => {
             process.kill(process.pid, signal);
@@ -82,7 +82,7 @@ const entrypoint = async (executor) => {
         }
         logger.warn([
             "The process will be terminated due to an unexpected exception",
-            `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
+            `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms. 😱`,
         ].join("\n"));
         const gracefullyShutdownTimer = setTimeout(() => {
             process.exit(1);
@@ -92,37 +92,37 @@ const entrypoint = async (executor) => {
     };
     process.on("uncaughtException", (error, origin) => {
         if (shutdownReason === null) {
-            logger.fatal({ error, origin }, "Uncaught exception");
+            logger.fatal({ error, origin }, "Uncaught exception 🚨");
         }
         else {
-            logger.error({ error, origin }, `Uncaught exception after ${shutdownReason}`);
+            logger.error({ error, origin }, `Uncaught exception after ${shutdownReason} 🚨`);
         }
         shutdownByError(error);
     });
     process.on("unhandledRejection", (reason) => {
         if (shutdownReason === null) {
-            logger.fatal({ reason }, "Unhandled promise rejection");
+            logger.fatal({ reason }, "Unhandled promise rejection 🚨");
         }
         else {
-            logger.error({ reason }, `Unhandled promise rejection after ${shutdownReason}`);
+            logger.error({ reason }, `Unhandled promise rejection after ${shutdownReason} 🚨`);
         }
         shutdownByError(reason);
     });
     process.on("warning", (warning) => {
-        logger.warn({ warning }, "Process warning");
+        logger.warn({ warning }, "Process warning 😱");
     });
-    logger.info({ config }, "The application is being launched");
+    logger.info({ config }, "The application is being launched 🚀");
     try {
         await (0, abort_controller_x_1.race)(abortController.signal, (signal) => [
             (0, abort_controller_x_1.abortable)(signal, shutdownDeferred.promise),
             (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
         ]);
-        logger.info("The application was interrupted by a signal from 'AbortController'");
+        logger.info("The application was interrupted by a signal from 'AbortController' 🛬 🛑");
     }
     catch (error) {
         // TODO Проверить, попадет ли ошибка из executor в uncaughtException и unhandledRejection
         // TODO Или останется в этом обработчике
-        logger.error({ error }, `The application was interrupted with an error`);
+        logger.error({ error }, `The application was interrupted with an error 🚨`);
         shutdownByError(error);
     }
 };

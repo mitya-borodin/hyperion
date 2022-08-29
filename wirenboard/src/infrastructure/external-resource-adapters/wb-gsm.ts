@@ -12,9 +12,9 @@ type WbGsmParams = {
 };
 
 export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
-  logger.info("Before try to first lunch `wb-gsm restart_if_broken` need to wait 3 minute ℹ️");
+  logger.info("Before try to first lunch `wb-gsm restart_if_broken` need to wait 1 minute ℹ️");
 
-  await new Promise((resolve) => setTimeout(resolve, 3 * 60 * 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
 
   try {
     while (true) {

@@ -5,8 +5,8 @@ const node_child_process_1 = require("node:child_process");
 const abort_controller_x_1 = require("abort-controller-x");
 const __1 = require("../..");
 const wbGsm = async ({ logger, signal }) => {
-    logger.info("Before try to first lunch `wb-gsm restart_if_broken` need to wait 3 minute ℹ️");
-    await new Promise((resolve) => setTimeout(resolve, 3 * 60 * 1000));
+    logger.info("Before try to first lunch `wb-gsm restart_if_broken` need to wait 1 minute ℹ️");
+    await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
     try {
         while (true) {
             logger.debug("Try to lunch `wb-gsm restart_if_broken` ℹ️");
