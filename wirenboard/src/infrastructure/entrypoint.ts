@@ -1,5 +1,4 @@
 import os from "os";
-import { resolve } from "path";
 
 import { abortable, race, spawn, SpawnEffects } from "abort-controller-x";
 import defer from "defer-promise";
@@ -13,7 +12,6 @@ type ExecutorParams = {
   signal: AbortSignal;
   config: Config;
   logger: Logger;
-  logFilePath: string;
 } & SpawnEffects;
 
 type Executor = (params: ExecutorParams) => Promise<void>;
@@ -23,7 +21,6 @@ export const entrypoint = async (executor: Executor) => {
   const shutdownDeferred = defer<unknown | undefined>();
 
   const config = new Config();
-  const logFilePath = resolve(__dirname, "../../log.txt");
 
   const stream = pretty({
     colorize: true,
@@ -159,9 +156,7 @@ export const entrypoint = async (executor: Executor) => {
   try {
     await race(abortController.signal, (signal) => [
       abortable(signal, shutdownDeferred.promise),
-      spawn(signal, (signal, { fork, defer }) =>
-        executor({ signal, config, logger, logFilePath, fork, defer }),
-      ),
+      spawn(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
     ]);
 
     logger.info("The application was interrupted by a signal from 'AbortController'");

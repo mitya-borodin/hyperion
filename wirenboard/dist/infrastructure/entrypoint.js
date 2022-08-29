@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.entrypoint = void 0;
 const tslib_1 = require("tslib");
 const os_1 = tslib_1.__importDefault(require("os"));
-const path_1 = require("path");
 const abort_controller_x_1 = require("abort-controller-x");
 const defer_promise_1 = tslib_1.__importDefault(require("defer-promise"));
 const node_abort_controller_1 = require("node-abort-controller");
@@ -14,7 +13,6 @@ const entrypoint = async (executor) => {
     const abortController = new node_abort_controller_1.AbortController();
     const shutdownDeferred = (0, defer_promise_1.default)();
     const config = new config_1.Config();
-    const logFilePath = (0, path_1.resolve)(__dirname, "../../log.txt");
     const stream = (0, pino_pretty_1.default)({
         colorize: true,
     });
@@ -117,7 +115,7 @@ const entrypoint = async (executor) => {
     try {
         await (0, abort_controller_x_1.race)(abortController.signal, (signal) => [
             (0, abort_controller_x_1.abortable)(signal, shutdownDeferred.promise),
-            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, logFilePath, fork, defer })),
+            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
         ]);
         logger.info("The application was interrupted by a signal from 'AbortController'");
     }

@@ -1,6 +1,3 @@
-import fs from "fs";
-import util from "util";
-
 import { delay } from "abort-controller-x";
 
 import { entrypoint } from "./infrastructure/entrypoint";
@@ -13,12 +10,9 @@ import {
 } from "./infrastructure/external-resource-adapters/routes";
 import { wbGsm } from "./infrastructure/external-resource-adapters/wb-gsm";
 
-const stat = util.promisify(fs.stat);
-const writeFile = util.promisify(fs.writeFile);
-
 export const DELAY_MS = 5_000;
 
-entrypoint(async ({ signal, logger, logFilePath }) => {
+entrypoint(async ({ signal, logger }) => {
   const wbGsmResult = await wbGsm({ logger: logger.child({ name: "WB_GSM" }), signal });
 
   if (wbGsmResult instanceof Error) {
@@ -39,15 +33,6 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
 
   while (true) {
     logger.debug("Launch new round 🚀");
-
-    const logStat = await stat(logFilePath);
-    const logInMegaBytes = logStat.size / (1024 * 1024);
-
-    if (logInMegaBytes > 5) {
-      logger.info({ logInMegaBytes, logStat }, "Clear log file 🚽");
-
-      await writeFile(logFilePath, "", "utf8");
-    }
 
     const ethPing = await ping({ logger: logger.child({ name: "PING" }), inet: "eth0" });
 
