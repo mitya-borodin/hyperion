@@ -9,6 +9,8 @@ export const resetRoutes = async ({ logger }: PingParams) => {
   try {
     logger.debug("The reset routes ℹ️");
 
+    console.log("The reset routes ℹ️");
+
     const currentRoutes = await execa("ip", ["route"]);
 
     const result = [];
@@ -47,8 +49,12 @@ export const resetRoutes = async ({ logger }: PingParams) => {
       },
       "The routes was reset ✅",
     );
+
+    console.log("The routes was reset ✅");
   } catch (error) {
     logger.error({ err: error }, "Reset routes was failed 🚨");
+
+    console.error(error, "Reset routes was failed 🚨");
 
     return new Error("RESET_ROUTES_FAILED");
   }

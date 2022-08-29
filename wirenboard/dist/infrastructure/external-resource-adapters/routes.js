@@ -6,6 +6,7 @@ const execa_1 = tslib_1.__importDefault(require("execa"));
 const resetRoutes = async ({ logger }) => {
     try {
         logger.debug("The reset routes ℹ️");
+        console.log("The reset routes ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         const result = [];
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
@@ -35,9 +36,11 @@ const resetRoutes = async ({ logger }) => {
         logger.debug({
             results: [...result, addEth, addUsb],
         }, "The routes was reset ✅");
+        console.log("The routes was reset ✅");
     }
     catch (error) {
         logger.error({ err: error }, "Reset routes was failed 🚨");
+        console.error(error, "Reset routes was failed 🚨");
         return new Error("RESET_ROUTES_FAILED");
     }
 };
