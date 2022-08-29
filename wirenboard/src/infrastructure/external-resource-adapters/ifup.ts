@@ -7,16 +7,15 @@ type PingParams = {
 
 export const ifup = async ({ logger }: PingParams) => {
   try {
-    logger.info("Try lunch `ifup usb0`, before the start, you need to wait 10 second ℹ️");
-    console.log("Try lunch `ifup usb0`, before the start, you need to wait 10 second ℹ️");
-
-    await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+    logger.info("Try lunch `ifup usb0` ℹ️");
+    console.log("Try lunch `ifup usb0`ℹ️");
 
     const ifupResult = await execa("ifup", ["usb0"]);
 
+    console.log(ifupResult.stdout);
+
     const message = "The wb-gsm and ifup was successful lunched ✅";
 
-    console.log(ifupResult.stdout);
     logger.info({ ifupResult }, message);
     console.log(message);
   } catch (error) {

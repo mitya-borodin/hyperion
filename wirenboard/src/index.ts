@@ -1,4 +1,5 @@
-import { statSync, writeFileSync } from "fs";
+import fs from "fs";
+import util from "util";
 
 import { delay } from "abort-controller-x";
 
@@ -12,7 +13,10 @@ import {
 } from "./infrastructure/external-resource-adapters/routes";
 import { wbGsm } from "./infrastructure/external-resource-adapters/wb-gsm";
 
-export const DELAY_MS = 5000;
+const stat = util.promisify(fs.stat);
+const writeFile = util.promisify(fs.writeFile);
+
+export const DELAY_MS = 5_000;
 
 entrypoint(async ({ signal, logger, logFilePath }) => {
   const wbGsmResult = await wbGsm({ logger, signal });
@@ -36,29 +40,32 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
   while (true) {
     console.log("Launch new round 🚀");
 
-    const logInBytes = statSync(logFilePath).size;
-    const logInMegaBytes = logInBytes / (1024 * 1024);
+    const logStat = await stat(logFilePath);
+    const logInMegaBytes = logStat.size / (1024 * 1024);
 
     if (logInMegaBytes > 5) {
       console.log("Clear log file 🚽");
 
-      writeFileSync(logFilePath, "", "utf8");
+      await writeFile(logFilePath, "", "utf8");
     }
 
     const ethPing = await ping({ logger, inet: "eth0" });
 
     if (ethPing instanceof Error) {
       /**
-       * ! Не работает канал связи ETH0
+       * ! ETH0 НЕ работает
        */
 
       await removeEthRoute({ logger });
     } else {
       /**
-       * * Работает канал связи ETH0
+       * * ETH0 Работает
        */
+
       await addEthRoute({ logger });
     }
+
+    console.log("Wait next round 🚀", { DELAY_MS });
 
     await delay(signal, DELAY_MS);
   }
