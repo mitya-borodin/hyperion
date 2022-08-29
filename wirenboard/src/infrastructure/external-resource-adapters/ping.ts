@@ -8,6 +8,8 @@ type PingParams = {
 
 export const ping = async ({ logger, inet = "eth0" }: PingParams) => {
   try {
+    console.log("Start ping");
+
     await Promise.all([
       execa("ping", ["-c", "5", "-I", inet, "ya.ru"]),
       execa("ping", ["-c", "5", "-I", inet, "77.88.8.8"]),
@@ -17,8 +19,12 @@ export const ping = async ({ logger, inet = "eth0" }: PingParams) => {
     ]);
 
     logger.debug({ inet }, "The ping was successful ✅");
+
+    console.log("The ping was successful ✅");
   } catch (error) {
     logger.error({ err: error }, "Ping failed 🚨");
+
+    console.error(error, "Ping failed 🚨");
 
     return new Error("PING_FAILED");
   }

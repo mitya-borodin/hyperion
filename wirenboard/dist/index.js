@@ -17,9 +17,11 @@ const DELAY_MS = 5000;
         return;
     }
     while (true) {
+        console.log("Launch new round 🚀");
         const logInBytes = (0, fs_1.statSync)(logFilePath).size;
         const logInMegaBytes = logInBytes / (1024 * 1024);
         if (logInMegaBytes > 5) {
+            console.log("Clear log file 🚽");
             (0, fs_1.writeFileSync)(logFilePath, "", "utf8");
         }
         const ethPing = await (0, ping_1.ping)({ logger, inet: "eth0" });

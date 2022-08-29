@@ -64,6 +64,8 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
   try {
     logger.debug("Try change metric to 3 of eth0 ℹ️");
 
+    console.log("Try change metric to 3 of eth0 ℹ️");
+
     const currentRoutes = await execa("ip", ["route"]);
 
     if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1")) {
@@ -80,9 +82,13 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
       ]);
 
       logger.debug({ delEth, addEth }, "The eth0 route was downgraded ✅");
+
+      console.log("The eth0 route was downgraded ✅");
     }
   } catch (error) {
     logger.error({ err: error }, "The eth0 route was not downgraded 🚨");
+
+    console.error(error, "The eth0 route was not downgraded 🚨");
 
     return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }
@@ -91,6 +97,8 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
 export const addEthRoute = async ({ logger }: PingParams) => {
   try {
     logger.debug("Try change metric to 1 of eth0 ℹ️");
+
+    console.log("Try change metric to 1 of eth0 ℹ️");
 
     const currentRoutes = await execa("ip", ["route"]);
 
@@ -108,9 +116,13 @@ export const addEthRoute = async ({ logger }: PingParams) => {
       ]);
 
       logger.debug({ delEth, addEth }, "The router eth0 was upgraded ✅");
+
+      console.log("The router eth0 was upgraded ✅");
     }
   } catch (error) {
     logger.error({ err: error }, "The eth0 route was not upgraded 🚨");
+
+    console.error(error, "The eth0 route was not upgraded 🚨");
 
     return new Error("CHANGE_ETH0_ROUTE_FAILED");
   }

@@ -27,10 +27,14 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
   }
 
   while (true) {
+    console.log("Launch new round 🚀");
+
     const logInBytes = statSync(logFilePath).size;
     const logInMegaBytes = logInBytes / (1024 * 1024);
 
     if (logInMegaBytes > 5) {
+      console.log("Clear log file 🚽");
+
       writeFileSync(logFilePath, "", "utf8");
     }
 
