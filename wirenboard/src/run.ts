@@ -1,18 +1,19 @@
 import { spawn } from "node:child_process";
+import { resolve } from "node:path";
 
 const run = async () => {
-  const ls = spawn("/root/node/bin/node", ["/root/butler/wirenboard/dist/index.js"]);
+  const ls = spawn("/root/node/bin/node", [resolve(__dirname, "index.js")]);
 
-  ls.stdout.on("data", (data) => {
+  ls.stdout.on("data", (data: Buffer) => {
     console.log(data.toString());
   });
 
-  ls.stderr.on("data", (data) => {
+  ls.stderr.on("data", (data: Buffer) => {
     console.error(data.toString());
   });
 
-  ls.on("close", (code) => {
-    console.log(`Cyhild process exited with code ${code}`);
+  ls.on("close", (code: number | null) => {
+    console.log(`Child process exited with code ${code} 🛑`);
   });
 };
 
