@@ -7,7 +7,7 @@ type PingParams = {
 
 export const resetRoutes = async ({ logger }: PingParams) => {
   try {
-    logger.debug("The reset routes ℹ️");
+    logger.info("The reset routes ℹ️");
 
     console.log("The reset routes ℹ️");
 
@@ -43,7 +43,7 @@ export const resetRoutes = async ({ logger }: PingParams) => {
       "2",
     ]);
 
-    logger.debug(
+    logger.info(
       {
         results: [...result, addEth, addUsb],
       },
@@ -62,7 +62,7 @@ export const resetRoutes = async ({ logger }: PingParams) => {
 
 export const removeEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("Try change metric to 3 of eth0 ℹ️");
+    logger.info("Try change metric to 3 of eth0 ℹ️");
 
     console.log("Try change metric to 3 of eth0 ℹ️");
 
@@ -81,7 +81,7 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
         "3",
       ]);
 
-      logger.debug({ delEth, addEth }, "The eth0 route was downgraded ✅");
+      logger.info({ delEth, addEth }, "The eth0 route was downgraded ✅");
 
       console.log("The eth0 route was downgraded ✅");
     }
@@ -96,7 +96,7 @@ export const removeEthRoute = async ({ logger }: PingParams) => {
 
 export const addEthRoute = async ({ logger }: PingParams) => {
   try {
-    logger.debug("Try change metric to 1 of eth0 ℹ️");
+    logger.info("Try change metric to 1 of eth0 ℹ️");
 
     console.log("Try change metric to 1 of eth0 ℹ️");
 
@@ -115,7 +115,7 @@ export const addEthRoute = async ({ logger }: PingParams) => {
         "1",
       ]);
 
-      logger.debug({ delEth, addEth }, "The router eth0 was upgraded ✅");
+      logger.info({ delEth, addEth }, "The router eth0 was upgraded ✅");
 
       console.log("The router eth0 was upgraded ✅");
     }

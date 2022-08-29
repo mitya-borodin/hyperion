@@ -5,7 +5,7 @@ const tslib_1 = require("tslib");
 const execa_1 = tslib_1.__importDefault(require("execa"));
 const resetRoutes = async ({ logger }) => {
     try {
-        logger.debug("The reset routes ℹ️");
+        logger.info("The reset routes ℹ️");
         console.log("The reset routes ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         const result = [];
@@ -33,7 +33,7 @@ const resetRoutes = async ({ logger }) => {
             "metric",
             "2",
         ]);
-        logger.debug({
+        logger.info({
             results: [...result, addEth, addUsb],
         }, "The routes was reset ✅");
         console.log("The routes was reset ✅");
@@ -47,7 +47,7 @@ const resetRoutes = async ({ logger }) => {
 exports.resetRoutes = resetRoutes;
 const removeEthRoute = async ({ logger }) => {
     try {
-        logger.debug("Try change metric to 3 of eth0 ℹ️");
+        logger.info("Try change metric to 3 of eth0 ℹ️");
         console.log("Try change metric to 3 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 1")) {
@@ -61,7 +61,7 @@ const removeEthRoute = async ({ logger }) => {
                 "metric",
                 "3",
             ]);
-            logger.debug({ delEth, addEth }, "The eth0 route was downgraded ✅");
+            logger.info({ delEth, addEth }, "The eth0 route was downgraded ✅");
             console.log("The eth0 route was downgraded ✅");
         }
     }
@@ -74,7 +74,7 @@ const removeEthRoute = async ({ logger }) => {
 exports.removeEthRoute = removeEthRoute;
 const addEthRoute = async ({ logger }) => {
     try {
-        logger.debug("Try change metric to 1 of eth0 ℹ️");
+        logger.info("Try change metric to 1 of eth0 ℹ️");
         console.log("Try change metric to 1 of eth0 ℹ️");
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0 metric 3")) {
@@ -88,7 +88,7 @@ const addEthRoute = async ({ logger }) => {
                 "metric",
                 "1",
             ]);
-            logger.debug({ delEth, addEth }, "The router eth0 was upgraded ✅");
+            logger.info({ delEth, addEth }, "The router eth0 was upgraded ✅");
             console.log("The router eth0 was upgraded ✅");
         }
     }

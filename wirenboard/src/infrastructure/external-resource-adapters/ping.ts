@@ -18,7 +18,7 @@ export const ping = async ({ logger, inet = "eth0" }: PingParams) => {
       execa("ping", ["-c", "5", "-I", inet, "208.67.220.220"]),
     ]);
 
-    logger.debug({ inet }, "The ping was successful ✅");
+    logger.info({ inet }, "The ping was successful ✅");
 
     console.log("The ping was successful ✅");
   } catch (error) {

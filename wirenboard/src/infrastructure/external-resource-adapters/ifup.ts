@@ -12,7 +12,7 @@ export const ifup = async ({ logger }: PingParams) => {
   await new Promise((resolve) => setTimeout(resolve, 2 * 60 * 1000));
 
   try {
-    logger.debug("Try lunch `wb-gsm restart_if_broken` ℹ️");
+    logger.info("Try lunch `wb-gsm restart_if_broken` ℹ️");
 
     console.log("Try lunch `wb-gsm restart_if_broken` ℹ️");
 
@@ -20,7 +20,7 @@ export const ifup = async ({ logger }: PingParams) => {
 
     console.log(gsmResult.stdout);
 
-    logger.debug("Try lunch `ifup usb0` ℹ️");
+    logger.info("Try lunch `ifup usb0` ℹ️");
 
     console.log("Try lunch `ifup usb0` ℹ️");
 
@@ -32,7 +32,7 @@ export const ifup = async ({ logger }: PingParams) => {
 
     console.log(ifupResult.stdout);
 
-    logger.debug({ gsmResult, ifupResult }, "The wb-gsm and ifup was successful lunched ✅");
+    logger.info({ gsmResult, ifupResult }, "The wb-gsm and ifup was successful lunched ✅");
 
     console.log("The wb-gsm and ifup was successful lunched ✅");
   } catch (error) {
