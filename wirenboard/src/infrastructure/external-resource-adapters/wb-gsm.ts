@@ -29,11 +29,7 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
           return;
         }
 
-        if (stderr) {
-          logger.error({ stderr }, command);
-        }
-
-        logger.debug({ stdout }, command);
+        logger.debug({ stdout, stderr }, command);
       });
 
       childProcess.on("error", (error) => {

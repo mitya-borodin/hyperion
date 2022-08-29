@@ -16,10 +16,7 @@ const wbGsm = async ({ logger, signal }) => {
                     logger.error({ err }, command);
                     return;
                 }
-                if (stderr) {
-                    logger.error({ stderr }, command);
-                }
-                logger.debug({ stdout }, command);
+                logger.debug({ stdout, stderr }, command);
             });
             childProcess.on("error", (error) => {
                 logger.error({ err: error });
