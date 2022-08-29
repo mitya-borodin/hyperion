@@ -35,6 +35,18 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
         console.log(stdout);
       });
 
+      childProcess.on("error", (error) => {
+        logger.error({ err: error });
+        console.error(error);
+      });
+
+      childProcess.on("close", (code) => {
+        const message = `The wb-gsm restart_if_broken process was closed with code: ${code}`;
+
+        logger.info({ code }, message);
+        console.log(message);
+      });
+
       const timer = setTimeout(() => {
         const message =
           "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
@@ -42,7 +54,7 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
         logger.info(message);
         console.log(message);
 
-        childProcess.kill("SIGTERM");
+        childProcess.kill("SIGINT");
       }, 2 * 60 * 1000);
 
       const isExit = await new Promise((resolve) => {
