@@ -36,7 +36,7 @@ const wbGsm = async ({ logger, signal }) => {
                 logger.info(message);
                 console.log(message);
                 childProcess.kill("SIGTERM");
-            }, 2 * 60 * 1000);
+            }, 30 * 1000);
             const isExit = await new Promise((resolve) => {
                 childProcess.once("exit", (code) => {
                     const message = `wb-gsm restart_if_broken process exited with code ${code}`;
