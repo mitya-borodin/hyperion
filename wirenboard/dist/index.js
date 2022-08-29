@@ -47,7 +47,7 @@ exports.DELAY_MS = 5000;
              */
             await (0, routes_1.addEthRoute)({ logger });
         }
-        console.log("Wait next round 🚀", { DELAY_MS: exports.DELAY_MS });
+        console.log("Wait next round 🌴", { DELAY_MS: exports.DELAY_MS });
         await (0, abort_controller_x_1.delay)(signal, exports.DELAY_MS);
     }
 });

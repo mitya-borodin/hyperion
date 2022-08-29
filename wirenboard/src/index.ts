@@ -65,7 +65,7 @@ entrypoint(async ({ signal, logger, logFilePath }) => {
       await addEthRoute({ logger });
     }
 
-    console.log("Wait next round 🚀", { DELAY_MS });
+    console.log("Wait next round 🌴", { DELAY_MS });
 
     await delay(signal, DELAY_MS);
   }
