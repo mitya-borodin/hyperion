@@ -6,8 +6,13 @@ const entrypoint_1 = require("./infrastructure/entrypoint");
 const ifup_1 = require("./infrastructure/external-resource-adapters/ifup");
 const ping_1 = require("./infrastructure/external-resource-adapters/ping");
 const routes_1 = require("./infrastructure/external-resource-adapters/routes");
+const wb_gsm_1 = require("./infrastructure/external-resource-adapters/wb-gsm");
 const DELAY_MS = 5000;
 (0, entrypoint_1.entrypoint)(async ({ signal, logger, logFilePath }) => {
+    const wbGsmResult = await (0, wb_gsm_1.wbGsm)({ logger });
+    if (wbGsmResult instanceof Error) {
+        return;
+    }
     const ifupResult = await (0, ifup_1.ifup)({ logger });
     if (ifupResult instanceof Error) {
         return;

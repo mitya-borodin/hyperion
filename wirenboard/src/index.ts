@@ -10,10 +10,17 @@ import {
   removeEthRoute,
   resetRoutes,
 } from "./infrastructure/external-resource-adapters/routes";
+import { wbGsm } from "./infrastructure/external-resource-adapters/wb-gsm";
 
 const DELAY_MS = 5000;
 
 entrypoint(async ({ signal, logger, logFilePath }) => {
+  const wbGsmResult = await wbGsm({ logger });
+
+  if (wbGsmResult instanceof Error) {
+    return;
+  }
+
   const ifupResult = await ifup({ logger });
 
   if (ifupResult instanceof Error) {
