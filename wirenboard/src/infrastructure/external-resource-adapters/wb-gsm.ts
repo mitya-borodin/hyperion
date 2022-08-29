@@ -12,6 +12,13 @@ type WbGsmParams = {
 };
 
 export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
+  const message = "Before try to lunch `wb-gsm restart_if_broken` need to wait 3 minute ℹ️";
+
+  logger.info(message);
+  console.log(message);
+
+  await new Promise((resolve) => setTimeout(resolve, 3 * 60 * 1000));
+
   try {
     while (true) {
       const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";
@@ -19,21 +26,25 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
       logger.info(message);
       console.log(message);
 
-      const childProcess = exec("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
-        if (err) {
-          console.error(err);
+      const childProcess = exec(
+        "DEBUG=true wb-gsm restart_if_broken",
+        { signal },
+        (err, stdout, stderr) => {
+          if (err) {
+            console.error(err);
 
-          return;
-        }
+            return;
+          }
 
-        if (stderr) {
-          logger.error(stderr);
-          console.error(stderr);
-        }
+          if (stderr) {
+            logger.error(stderr);
+            console.error(stderr);
+          }
 
-        logger.info(stdout);
-        console.log(stdout);
-      });
+          logger.info(stdout);
+          console.log(stdout);
+        },
+      );
 
       childProcess.on("error", (error) => {
         logger.error({ err: error });
@@ -49,12 +60,12 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
 
       const timer = setTimeout(() => {
         const message =
-          "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
+          "The wb-gsm restart_if_broken process does not finish for more than 30 seconds, the process will be forcibly stopped and restarted 🚨";
 
         logger.info(message);
         console.log(message);
 
-        childProcess.kill("SIGTERM");
+        childProcess.kill();
       }, 30 * 1000);
 
       const isExit = await new Promise((resolve) => {

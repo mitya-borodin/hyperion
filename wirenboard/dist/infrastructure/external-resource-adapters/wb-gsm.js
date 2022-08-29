@@ -5,12 +5,16 @@ const node_child_process_1 = require("node:child_process");
 const abort_controller_x_1 = require("abort-controller-x");
 const __1 = require("../..");
 const wbGsm = async ({ logger, signal }) => {
+    const message = "Before try to lunch `wb-gsm restart_if_broken` need to wait 3 minute ℹ️";
+    logger.info(message);
+    console.log(message);
+    await new Promise((resolve) => setTimeout(resolve, 3 * 60 * 1000));
     try {
         while (true) {
             const message = "Try to lunch `wb-gsm restart_if_broken` ℹ️";
             logger.info(message);
             console.log(message);
-            const childProcess = (0, node_child_process_1.exec)("DEBUG=true wb-gsm restart_if_broken", (err, stdout, stderr) => {
+            const childProcess = (0, node_child_process_1.exec)("DEBUG=true wb-gsm restart_if_broken", { signal }, (err, stdout, stderr) => {
                 if (err) {
                     console.error(err);
                     return;
@@ -32,10 +36,10 @@ const wbGsm = async ({ logger, signal }) => {
                 console.log(message);
             });
             const timer = setTimeout(() => {
-                const message = "The wb-gsm restart_if_broken process does not finish for more than 2 minutes, the process will be forcibly stopped and restarted 🚨";
+                const message = "The wb-gsm restart_if_broken process does not finish for more than 30 seconds, the process will be forcibly stopped and restarted 🚨";
                 logger.info(message);
                 console.log(message);
-                childProcess.kill("SIGTERM");
+                childProcess.kill();
             }, 30 * 1000);
             const isExit = await new Promise((resolve) => {
                 childProcess.once("exit", (code) => {
