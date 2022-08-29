@@ -35,17 +35,17 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
         console.log(stdout);
       });
 
-      // childProcess.on("error", (error) => {
-      //   logger.error({ err: error });
-      //   console.error(error);
-      // });
+      childProcess.on("error", (error) => {
+        logger.error({ err: error });
+        console.error(error);
+      });
 
-      // childProcess.once("close", (code) => {
-      //   const message = `The wb-gsm restart_if_broken process was closed with code: ${code}`;
+      childProcess.once("close", (code) => {
+        const message = `The wb-gsm restart_if_broken process was closed with code: ${code}`;
 
-      //   logger.info({ code }, message);
-      //   console.log(message);
-      // });
+        logger.info({ code }, message);
+        console.log(message);
+      });
 
       const timer = setTimeout(() => {
         const message =
@@ -54,7 +54,7 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
         logger.info(message);
         console.log(message);
 
-        childProcess.kill("SIGINT");
+        childProcess.kill("SIGTERM");
       }, 2 * 60 * 1000);
 
       const isExit = await new Promise((resolve) => {
