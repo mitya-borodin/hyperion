@@ -5,13 +5,14 @@ const tslib_1 = require("tslib");
 const execa_1 = tslib_1.__importDefault(require("execa"));
 const ifup = async ({ logger }) => {
     try {
-        logger.info("Try lunch `ifup usb0` ℹ️");
-        console.log("Try lunch `ifup usb0`ℹ️");
+        const message_0 = "Try lunch `ifup usb0` ℹ️";
+        logger.info(message_0);
+        console.log(message_0);
         const ifupResult = await (0, execa_1.default)("ifup", ["usb0"]);
         console.log(ifupResult.stdout);
-        const message = "The wb-gsm and ifup was successful lunched ✅";
-        logger.info({ ifupResult }, message);
-        console.log(message);
+        const message_1 = "The ifup was successful lunched ✅";
+        logger.info({ ifupResult }, message_1);
+        console.log(message_1);
     }
     catch (error) {
         const message = "Ifup failed 🚨";
