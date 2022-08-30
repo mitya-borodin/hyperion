@@ -1,47 +1,52 @@
 import { exec } from "node:child_process";
 
 import { delay } from "abort-controller-x";
+import debug from "debug";
 import { AbortSignal } from "node-abort-controller";
-import { Logger } from "pino";
 
 import { DELAY_MS } from "../..";
 
+const logger = debug("BUTLER-WB-GSM");
+
 type WbGsmParams = {
-  logger: Logger;
   signal: AbortSignal;
 };
 
-export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
-  logger.info("Before try to first lunch `wb-gsm restart_if_broken` need to wait 1 minute ℹ️");
+export const wbGsm = async ({ signal }: WbGsmParams) => {
+  logger("Before try to first lunch `wb-gsm restart_if_broken` need to wait 1 minute ℹ️");
 
   await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000));
 
   try {
     while (true) {
-      logger.debug("Try to lunch `wb-gsm restart_if_broken` ℹ️");
+      logger("Try to lunch `wb-gsm restart_if_broken` ℹ️");
 
       const command = "DEBUG=true wb-gsm restart_if_broken";
 
       const childProcess = exec(command, { signal }, (err, stdout, stderr) => {
         if (err) {
-          logger.error({ err }, command);
+          logger(command);
+          logger(err.message);
 
           return;
         }
 
-        logger.debug({ stdout, stderr }, command);
+        logger(command);
+        logger(stdout);
+        logger(stderr);
       });
 
       childProcess.on("error", (error) => {
-        logger.error({ err: error });
+        logger(error.message);
       });
 
       childProcess.once("close", (code) => {
-        logger.debug({ code }, `The wb-gsm restart_if_broken process was closed`);
+        logger(`The wb-gsm restart_if_broken process was closed`);
+        logger(JSON.stringify({ code }, null, 2));
       });
 
       const timer = setTimeout(() => {
-        logger.debug(
+        logger(
           "The wb-gsm restart_if_broken process does not finish for more than 30 seconds," +
             " the process will be forcibly stopped and restarted 🚨",
         );
@@ -51,13 +56,13 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
 
       const isExit = await new Promise((resolve) => {
         childProcess.once("exit", (code) => {
-          logger.debug(`wb-gsm restart_if_broken process exited with code ${code}`);
+          logger(`wb-gsm restart_if_broken process exited with code ${code}`);
 
           if (code === 0) {
             clearTimeout(timer);
             resolve(true);
           } else {
-            logger.info("The GSM launch failed 🚨");
+            logger("The GSM launch failed 🚨");
 
             resolve(false);
           }
@@ -65,14 +70,18 @@ export const wbGsm = async ({ logger, signal }: WbGsmParams) => {
       });
 
       if (isExit) {
-        logger.info("The GSM was successful lunched ✅");
+        logger("The GSM was successful lunched ✅");
         return;
       }
 
       await delay(signal, DELAY_MS);
     }
-  } catch (error) {
-    logger.error({ err: error }, "The GSM launch failed 🚨");
+  } catch (error: unknown) {
+    logger("The GSM launch failed 🚨");
+
+    if (error instanceof Error) {
+      logger(error.message);
+    }
 
     return new Error("WB_GSM_FAILED");
   }

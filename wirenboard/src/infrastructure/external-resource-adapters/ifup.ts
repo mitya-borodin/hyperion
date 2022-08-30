@@ -1,19 +1,22 @@
+import debug from "debug";
 import execa from "execa";
-import { Logger } from "pino";
 
-type PingParams = {
-  logger: Logger;
-};
+const logger = debug("BUTLER-WB-IFUP");
 
-export const ifup = async ({ logger }: PingParams) => {
+export const ifup = async () => {
   try {
-    logger.debug("Try lunch `ifup usb0` ℹ️");
+    logger("Try lunch `ifup usb0` ℹ️");
 
     const ifupResult = await execa("ifup", ["usb0"]);
 
-    logger.info({ ifupResult }, "The ifup was successful lunched ✅");
+    logger("The ifup was successful lunched ✅");
+    logger(JSON.stringify({ ifupResult }, null, 2));
   } catch (error) {
-    logger.error({ err: error }, "Ifup failed 🚨");
+    logger("Ifup failed 🚨");
+
+    if (error instanceof Error) {
+      logger(error.message);
+    }
 
     return new Error("IFUP_FAILED");
   }

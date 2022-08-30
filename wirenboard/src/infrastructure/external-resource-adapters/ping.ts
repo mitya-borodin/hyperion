@@ -1,23 +1,28 @@
+import debug from "debug";
 import execa from "execa";
-import { Logger } from "pino";
+
+const logger = debug("BUTLER-WB-PING");
 
 type PingParams = {
   inet: "eth0" | "usb0";
-  logger: Logger;
 };
 
-export const ping = async ({ logger, inet = "eth0" }: PingParams) => {
+export const ping = async ({ inet = "eth0" }: PingParams) => {
   try {
-    logger.debug({ inet }, "Start ping 🛫");
+    logger(`Start ping -I ${inet} 🛫`);
 
     await Promise.all([
       execa("ping", ["-c", "2", "-I", inet, "77.88.8.8"]),
       execa("ping", ["-c", "2", "-I", inet, "77.88.8.1"]),
     ]);
 
-    logger.info({ inet }, "The ping was successful ✅ 🛬");
+    logger(`The ping -I ${inet} was successful ✅ 🛬`);
   } catch (error) {
-    logger.error({ err: error }, "Ping failed 🚨");
+    logger(`Ping -I ${inet} failed 🚨`);
+
+    if (error instanceof Error) {
+      logger(error.message);
+    }
 
     return new Error("PING_FAILED");
   }
