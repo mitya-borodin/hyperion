@@ -1,12 +1,13 @@
+import debug from "debug";
 import mqtt, { MqttClient } from "mqtt";
-import { Logger } from "pino";
 
 import { Config } from "../../config";
 
 type RunWirenboard = {
   config: Config;
-  logger: Logger;
 };
+
+const logger = debug("wirenboard");
 
 /**
  * https://wirenboard.com/ru/product/WBIO-DI-WD-14/
@@ -79,7 +80,12 @@ const WBE2_I_EBUS_TOPIC = "/devices/wbe2-i-ebus_12/controls/";
 const TRUE = "1";
 const FALSE = "0";
 
-export const runWirenboard = ({ config, logger }: RunWirenboard) => {
+export const runWirenboard = async ({ config }: RunWirenboard) => {
+  logger("Try to establish connection with wirenboard ℹ️");
+  logger(
+    `Socket: ${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port} ℹ️`,
+  );
+
   const client = mqtt.connect({
     host: config.mosquitto.host,
     port: config.mosquitto.port,
@@ -88,30 +94,25 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     password: config.mosquitto.password,
   });
 
-  client.on("connect", function () {
-    client.subscribe("/devices/#", (error) => {
-      if (error) {
-        logger.error(
-          {
-            err: error,
-          },
-          "Unable to establish connection with wirenboard 🚨",
-        );
+  await new Promise((resolve, reject) => {
+    client.on("connect", function () {
+      client.subscribe("/devices/#", (error) => {
+        if (error) {
+          logger("Unable to establish connection with wirenboard 🚨");
+          logger(error.message);
 
-        return;
-      }
+          return reject();
+        }
 
-      logger.info("Connection to the wirenboard is established ✅");
+        logger("Connection to the wirenboard is established ✅");
+        resolve(undefined);
+      });
     });
   });
 
   client.on("error", (error) => {
-    logger.error(
-      {
-        err: error,
-      },
-      "An error occurred in the MQTT connection to the WB 🚨",
-    );
+    logger("An error occurred in the MQTT connection to the WB 🚨");
+    logger(error.message);
   });
 
   client.on("message", (topic: string, message: Buffer) => {
@@ -120,122 +121,135 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
     }
 
     if (topic.includes(WBIO_1_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_1_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_1_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.trace(result, "WBIO-DI-WD-14 EXT1_IN Message was parsed ✅");
+      logger("WBIO-DI-WD-14 EXT1_IN Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_2_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_2_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_2_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DI-WD-14 EXT2_IN Message was parsed ✅");
+      logger("WBIO-DI-WD-14 EXT2_IN Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_3_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_3_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_3_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DI-WD-14 EXT3_IN Message was parsed ✅");
+      logger("WBIO-DI-WD-14 EXT3_IN Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_4_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_4_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_4_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DI-HVD-8 EXT4_IN Message was parsed ✅");
+      logger("WBIO-DI-HVD-8 EXT4_IN Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_5_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_5_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_5_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-SSR-8 EXT5_K Message was parsed ✅");
+      logger("WBIO-DO-SSR-8 EXT5_K Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_6_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_6_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_6_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-SSR-8 EXT6_K Message was parsed ✅");
+      logger("WBIO-DO-SSR-8 EXT6_K Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_7_GPIO_TOPIC)) {
-      const result = booleanProperty(topic, message, WBIO_7_GPIO_TOPIC, logger);
+      const result = booleanProperty(topic, message, WBIO_7_GPIO_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-SSR-8 EXT7_K Message was parsed ✅");
+      logger("WBIO-DO-SSR-8 EXT7_K Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_8_DAC_TOPIC)) {
-      const result = numberProperty(topic, message, WBIO_8_DAC_TOPIC, logger);
+      const result = numberProperty(topic, message, WBIO_8_DAC_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
-      logger.debug(result, "WBIO-AO-10V-8 EXT8_O Message was parsed ✅");
+
+      logger("WBIO-AO-10V-8 EXT8_O Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_1_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_1_R10R_4_TOPIC, logger);
+      const result = directionRelayProperty(topic, message, WBIO_1_R10R_4_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-R10R-4 wb-mio-gpio_52:1 Message was parsed ✅");
+      logger("WBIO-DO-R10R-4 wb-mio-gpio_52:1 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_2_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_2_R10R_4_TOPIC, logger);
+      const result = directionRelayProperty(topic, message, WBIO_2_R10R_4_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-R10R-4 wb-mio-gpio_52:2 Message was parsed ✅");
+      logger("WBIO-DO-R10R-4 wb-mio-gpio_52:2 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_3_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_3_R10R_4_TOPIC, logger);
+      const result = directionRelayProperty(topic, message, WBIO_3_R10R_4_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-R10R-4 wb-mio-gpio_52:3 Message was parsed ✅");
+      logger("WBIO-DO-R10R-4 wb-mio-gpio_52:3 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBIO_4_R10R_4_TOPIC)) {
-      const result = directionRelayProperty(topic, message, WBIO_4_R10R_4_TOPIC, logger);
+      const result = directionRelayProperty(topic, message, WBIO_4_R10R_4_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "WBIO-DO-R10R-4 wb-mio-gpio_52:4 Message was parsed ✅");
+      logger("WBIO-DO-R10R-4 wb-mio-gpio_52:4 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBE2_I_OPENTHERM_TOPIC)) {
@@ -245,7 +259,8 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
         return;
       }
 
-      logger.debug(result, "WBE2-I-OPENTHERM Message was parsed ✅");
+      logger("WBE2-I-OPENTHERM Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WBE2_I_EBUS_TOPIC)) {
@@ -255,137 +270,151 @@ export const runWirenboard = ({ config, logger }: RunWirenboard) => {
         return;
       }
 
-      logger.debug(result, "WBE2-I-EBUS Message was parsed ✅");
+      logger("WBE2-I-EBUS Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_21_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_21_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_21_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_21 Message was parsed ✅");
+      logger("wb-mr6cu_21 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_33_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_33_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_33_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_33 Message was parsed ✅");
+      logger("wb-mr6cu_33 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_37_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_37_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_37_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_37 Message was parsed ✅");
+      logger("wb-mr6cu_37 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_49_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_49_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_49_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_49 Message was parsed ✅");
+      logger("wb-mr6cu_49 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_50_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_50_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_50_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_50 Message was parsed ✅");
+      logger("wb-mr6cu_50 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_69_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_69_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_69_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_69 Message was parsed ✅");
+      logger("wb-mr6cu_69 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_77_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_77_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_77_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_77 Message was parsed ✅");
+      logger("wb-mr6cu_77 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_81_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_81_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_81_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_81 Message was parsed ✅");
+      logger("wb-mr6cu_81 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_85_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_85_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_85_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_85 Message was parsed ✅");
+      logger("wb-mr6cu_85 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_97_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_97_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_97_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_97 Message was parsed ✅");
+      logger("wb-mr6cu_97 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_117_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_117_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_117_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_117 Message was parsed ✅");
+      logger("wb-mr6cu_117 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRPS6_16_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRPS6_16_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRPS6_16_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mr6cu_16 Message was parsed ✅");
+      logger("wb-mr6cu_16 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
 
     if (topic.includes(WB_MRWL3_123_TOPIC)) {
-      const result = booleanProperty(topic, message, WB_MRWL3_123_TOPIC, logger);
+      const result = booleanProperty(topic, message, WB_MRWL3_123_TOPIC);
 
       if (result instanceof Error) {
         return;
       }
 
-      logger.debug(result, "wb-mrwl_123 Message was parsed ✅");
+      logger("wb-mrwl_123 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
     }
   });
 
@@ -402,17 +431,12 @@ export const publishWirenboardMessage = async (
   client: MqttClient,
   topic: string,
   message: Buffer,
-  logger: Logger,
 ): Promise<undefined | Error> => {
   return new Promise((resolve) => {
     client.publish(topic, message, (error) => {
       if (error) {
-        logger.error(
-          {
-            err: error,
-          },
-          "An error occurred in the MQTT connection to the WB 🚨",
-        );
+        logger("An error occurred in the MQTT connection to the WB 🚨");
+        logger(error.message);
 
         resolve(error);
 
@@ -438,7 +462,7 @@ const isNeedToSkip = (topic: string) => {
   );
 };
 
-const booleanProperty = (topic: string, message: Buffer, targetTopic: string, logger: Logger) => {
+const booleanProperty = (topic: string, message: Buffer, targetTopic: string) => {
   if (isNeedToSkip(topic)) {
     return new Error("NEED_TO_SKIP_TOPIC");
   }
@@ -455,10 +479,8 @@ const booleanProperty = (topic: string, message: Buffer, targetTopic: string, lo
   }
 
   if (!Number.isSafeInteger(pin) || (message.toString() !== TRUE && message.toString() !== FALSE)) {
-    logger.error(
-      { topic, pin, message: message.toString() },
-      "Pin is not a integer, and value is nor '1' or '0' 🚨",
-    );
+    logger("Pin is not a integer, and value is nor '1' or '0' 🚨");
+    logger(JSON.stringify({ topic, pin, message: message.toString() }, null, 2));
 
     return new Error("INVALID_MESSAGE");
   }
@@ -466,7 +488,7 @@ const booleanProperty = (topic: string, message: Buffer, targetTopic: string, lo
   return { topic, message: message.toString(), pin, value };
 };
 
-const numberProperty = (topic: string, message: Buffer, targetTopic: string, logger: Logger) => {
+const numberProperty = (topic: string, message: Buffer, targetTopic: string) => {
   if (isNeedToSkip(topic)) {
     return new Error("NEED_TO_SKIP_TOPIC");
   }
@@ -475,7 +497,8 @@ const numberProperty = (topic: string, message: Buffer, targetTopic: string, log
   const value = parseInt(message.toString());
 
   if (!Number.isSafeInteger(pin) || !Number.isSafeInteger(value)) {
-    logger.error({ topic, pin, message: message.toString() }, "Pin or value is not a integer 🚨");
+    logger("Pin or value is not a integer 🚨");
+    logger(JSON.stringify({ topic, pin, message: message.toString() }, null, 2));
 
     return new Error("INVALID_MESSAGE");
   }
@@ -483,12 +506,7 @@ const numberProperty = (topic: string, message: Buffer, targetTopic: string, log
   return { topic, message: message.toString(), pin, value };
 };
 
-const directionRelayProperty = (
-  topic: string,
-  message: Buffer,
-  targetTopic: string,
-  logger: Logger,
-) => {
+const directionRelayProperty = (topic: string, message: Buffer, targetTopic: string) => {
   if (isNeedToSkip(topic)) {
     return new Error("NEED_TO_SKIP_TOPIC");
   }

@@ -29,11 +29,11 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
     }
   });
 
+  defer(() => rethinkdbConnection.close());
+
   await initRethinkdbSchema(rethinkdbConnection);
 
   const lightingRepository = new LightingRepository(rethinkdbConnection, logger);
-
-  const { stopWirenboard } = runWirenboard({ config, logger });
 
   const fastify = createHttpInterface({
     config,
@@ -45,8 +45,10 @@ entrypoint(async ({ signal, logger, defer, fork }) => {
   await fastify.listen(config.fastify.port, config.fastify.host);
 
   defer(() => fastify.close());
+
+  const { stopWirenboard } = await runWirenboard({ config });
+
   defer(() => stopWirenboard());
-  defer(() => rethinkdbConnection.close());
 
   await forever(signal);
 });
