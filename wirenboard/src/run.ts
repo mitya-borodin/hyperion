@@ -5,10 +5,7 @@ import { resolve } from "node:path";
 const logFilePath = resolve(__dirname, "../log.txt");
 
 const run = async () => {
-  const ls = spawn(
-    "DEBUG=BUTLER-WB-NET,BUTLER-WB-GSM,BUTLER-WB-ROUTE,BUTLER-WB-PING,BUTLER-WB-IFUP /root/node/bin/node",
-    [resolve(__dirname, "index.js")],
-  );
+  const ls = spawn("/root/node/bin/node", [resolve(__dirname, "index.js")]);
 
   const timer = setInterval(async () => {
     const logStat = await stat(logFilePath);
