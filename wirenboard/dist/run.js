@@ -9,7 +9,7 @@ const run = async () => {
     const timer = setInterval(async () => {
         const logStat = await (0, promises_1.stat)(logFilePath);
         const logInMegaBytes = logStat.size / (1024 * 1024);
-        if (logInMegaBytes > 0.15) {
+        if (logInMegaBytes > 0.05) {
             await (0, promises_1.writeFile)(logFilePath, "", "utf8");
         }
     }, 1 * 60 * 1000);

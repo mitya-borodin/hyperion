@@ -11,7 +11,7 @@ const run = async () => {
     const logStat = await stat(logFilePath);
     const logInMegaBytes = logStat.size / (1024 * 1024);
 
-    if (logInMegaBytes > 0.15) {
+    if (logInMegaBytes > 0.05) {
       await writeFile(logFilePath, "", "utf8");
     }
   }, 1 * 60 * 1000);
