@@ -2,37 +2,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.entrypoint = void 0;
 const tslib_1 = require("tslib");
-const os_1 = tslib_1.__importDefault(require("os"));
 const abort_controller_x_1 = require("abort-controller-x");
+const debug_1 = tslib_1.__importDefault(require("debug"));
 const defer_promise_1 = tslib_1.__importDefault(require("defer-promise"));
 const node_abort_controller_1 = require("node-abort-controller");
-const pino_1 = tslib_1.__importDefault(require("pino"));
-const pino_pretty_1 = tslib_1.__importDefault(require("pino-pretty"));
 const config_1 = require("./config");
+const logger = (0, debug_1.default)("BUTLER-ENTRYPOINT");
 const entrypoint = async (executor) => {
     const abortController = new node_abort_controller_1.AbortController();
     const shutdownDeferred = (0, defer_promise_1.default)();
     const config = new config_1.Config();
-    const stream = (0, pino_pretty_1.default)({
-        colorize: true,
-    });
-    const logger = (0, pino_1.default)({
-        name: "entrypoint",
-        base: {
-            appName: config.appName,
-            hostname: os_1.default.hostname(),
-        },
-        level: config.log.level,
-    }, stream);
     let shutdownReason = null;
     const abortProcessOnSignal = (signal) => {
         if (shutdownReason !== null) {
             return;
         }
         shutdownReason = "TERMINATION_BY_PROCESS_SIGNAL";
-        logger.warn(`The process will be completed on the signal ${signal} 😱`);
+        logger(`The process will be completed on the signal ${signal} 😱`);
         shutdownDeferred.resolve(undefined);
-        logger.warn([
+        logger([
             `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
             "Check for timers or connections preventing Node from exiting. 😱",
         ].join("\n"));
@@ -80,7 +68,7 @@ const entrypoint = async (executor) => {
         if (!process.exitCode) {
             process.exitCode = 1;
         }
-        logger.warn([
+        logger([
             "The process will be terminated due to an unexpected exception",
             `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms. 😱`,
         ].join("\n"));
@@ -92,37 +80,46 @@ const entrypoint = async (executor) => {
     };
     process.on("uncaughtException", (error, origin) => {
         if (shutdownReason === null) {
-            logger.fatal({ error, origin }, "Uncaught exception 🚨");
+            logger("Uncaught exception 🚨");
+            logger(JSON.stringify({ error, origin }, null, 2));
         }
         else {
-            logger.error({ error, origin }, `Uncaught exception after ${shutdownReason} 🚨`);
+            logger(`Uncaught exception after ${shutdownReason} 🚨`);
+            logger(JSON.stringify({ error, origin }, null, 2));
         }
         shutdownByError(error);
     });
     process.on("unhandledRejection", (reason) => {
         if (shutdownReason === null) {
-            logger.fatal({ reason }, "Unhandled promise rejection 🚨");
+            logger("Unhandled promise rejection 🚨");
+            logger(JSON.stringify({ reason }, null, 2));
         }
         else {
-            logger.error({ reason }, `Unhandled promise rejection after ${shutdownReason} 🚨`);
+            logger(`Unhandled promise rejection after ${shutdownReason} 🚨`);
+            logger(JSON.stringify({ reason }, null, 2));
         }
         shutdownByError(reason);
     });
     process.on("warning", (warning) => {
-        logger.warn({ warning }, "Process warning 😱");
+        logger("Process warning 😱");
+        logger(warning.message);
     });
-    logger.info({ config }, "The application is being launched 🚀");
+    logger("The application is being launched 🚀");
+    logger(JSON.stringify({ config }, null, 2));
     try {
         await (0, abort_controller_x_1.race)(abortController.signal, (signal) => [
             (0, abort_controller_x_1.abortable)(signal, shutdownDeferred.promise),
-            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, logger, fork, defer })),
+            (0, abort_controller_x_1.spawn)(signal, (signal, { fork, defer }) => executor({ signal, config, fork, defer })),
         ]);
-        logger.info("The application was interrupted by a signal from 'AbortController' 🛬 🛑");
+        logger("The application was interrupted by a signal from 'AbortController' 🛬 🛑");
     }
     catch (error) {
         // TODO Проверить, попадет ли ошибка из executor в uncaughtException и unhandledRejection
         // TODO Или останется в этом обработчике
-        logger.error({ error }, `The application was interrupted with an error 🚨`);
+        logger(`The application was interrupted with an error 🚨`);
+        if (error instanceof Error) {
+            logger(error.message);
+        }
         shutdownByError(error);
     }
 };
