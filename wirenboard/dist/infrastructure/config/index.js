@@ -13,9 +13,6 @@ class Config {
     constructor() {
         this.appName = process.env.APP_NAME ?? os_1.default.hostname();
         this.production = process.env.NODE_ENV === "production";
-        this.log = {
-            level: this.toLogLevel(process.env.LOG_LEVEL),
-        };
         this.gracefullyShutdownMs = this.toInt(process.env.GRACEFULLY_SHUTDOWN_MS ?? "", 5000);
         this.mosquitto = {
             host: process.env.MOSQUITTO_HOST ?? "192.168.1.75",
@@ -31,27 +28,6 @@ class Config {
             return number;
         }
         return defaultValue;
-    }
-    toLogLevel(level) {
-        if (level === "fatal") {
-            return "fatal";
-        }
-        if (level === "error") {
-            return "error";
-        }
-        if (level === "warn") {
-            return "warn";
-        }
-        if (level === "info") {
-            return "info";
-        }
-        if (level === "debug") {
-            return "debug";
-        }
-        if (level === "trace") {
-            return "trace";
-        }
-        return "info";
     }
     toMosquittoProtocol(protocol) {
         if (protocol === "wss") {

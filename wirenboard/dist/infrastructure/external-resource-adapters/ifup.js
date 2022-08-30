@@ -8,9 +8,10 @@ const logger = (0, debug_1.default)("BUTLER-WB-IFUP");
 const ifup = async () => {
     try {
         logger("Try lunch `ifup usb0` ℹ️");
-        const ifupResult = await (0, execa_1.default)("ifup", ["usb0"]);
+        const { stdout, stderr } = await (0, execa_1.default)("ifup", ["usb0"]);
         logger("The ifup was successful lunched ✅");
-        logger(JSON.stringify({ ifupResult }, null, 2));
+        logger(stdout);
+        logger(stderr);
     }
     catch (error) {
         logger("Ifup failed 🚨");

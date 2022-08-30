@@ -12,10 +12,26 @@ const resetRoutes = async () => {
         logger(JSON.stringify({ currentRoutes }, null, 2));
         const result = [];
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
-            result.push(await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.1.1"]));
+            const { stdout, stderr } = await (0, execa_1.default)("ip", [
+                "route",
+                "del",
+                "default",
+                "via",
+                "192.168.1.1",
+            ]);
+            result.push(stdout);
+            result.push(stderr);
         }
         if (currentRoutes.stdout.includes("default via 192.168.0.100 dev usb0")) {
-            result.push(await (0, execa_1.default)("ip", ["route", "del", "default", "via", "192.168.0.100"]));
+            const { stdout, stderr } = await (0, execa_1.default)("ip", [
+                "route",
+                "del",
+                "default",
+                "via",
+                "192.168.0.100",
+            ]);
+            result.push(stdout);
+            result.push(stderr);
         }
         const addEth = await (0, execa_1.default)("ip", [
             "route",
@@ -36,7 +52,7 @@ const resetRoutes = async () => {
             "2",
         ]);
         logger("The routes was reset ✅");
-        logger(JSON.stringify([...result, addEth, addUsb], null, 2));
+        logger(JSON.stringify([...result, addEth.stdout, addEth.stderr, addUsb.stdout, addUsb.stderr], null, 2));
     }
     catch (error) {
         logger("Reset routes was failed 🚨");

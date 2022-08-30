@@ -7,10 +7,11 @@ export const ifup = async () => {
   try {
     logger("Try lunch `ifup usb0` ℹ️");
 
-    const ifupResult = await execa("ifup", ["usb0"]);
+    const { stdout, stderr } = await execa("ifup", ["usb0"]);
 
     logger("The ifup was successful lunched ✅");
-    logger(JSON.stringify({ ifupResult }, null, 2));
+    logger(stdout);
+    logger(stderr);
   } catch (error) {
     logger("Ifup failed 🚨");
 
