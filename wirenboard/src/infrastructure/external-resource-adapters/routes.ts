@@ -8,7 +8,8 @@ export const resetRoutes = async () => {
     const currentRoutes = await execa("ip", ["route"]);
 
     logger("The reset routes ℹ️");
-    logger(JSON.stringify({ currentRoutes }, null, 2));
+    logger(currentRoutes.stdout);
+    logger(currentRoutes.stderr);
 
     const result = [];
 

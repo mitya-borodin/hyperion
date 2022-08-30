@@ -9,7 +9,8 @@ const resetRoutes = async () => {
     try {
         const currentRoutes = await (0, execa_1.default)("ip", ["route"]);
         logger("The reset routes ℹ️");
-        logger(JSON.stringify({ currentRoutes }, null, 2));
+        logger(currentRoutes.stdout);
+        logger(currentRoutes.stderr);
         const result = [];
         if (currentRoutes.stdout.includes("default via 192.168.1.1 dev eth0")) {
             const { stdout, stderr } = await (0, execa_1.default)("ip", [
