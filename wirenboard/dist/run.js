@@ -9,10 +9,10 @@ const run = async () => {
     const timer = setInterval(async () => {
         const logStat = await (0, promises_1.stat)(logFilePath);
         const logInMegaBytes = logStat.size / (1024 * 1024);
-        if (logInMegaBytes > 1) {
+        if (logInMegaBytes > 0.5) {
             await (0, promises_1.writeFile)(logFilePath, "", "utf8");
         }
-    }, 10 * 60 * 1000);
+    }, 1 * 60 * 1000);
     ls.stdout.on("data", (data) => {
         console.log(data.toString());
         (0, promises_1.appendFile)(logFilePath, data, { encoding: "utf8" });

@@ -11,10 +11,10 @@ const run = async () => {
     const logStat = await stat(logFilePath);
     const logInMegaBytes = logStat.size / (1024 * 1024);
 
-    if (logInMegaBytes > 1) {
+    if (logInMegaBytes > 0.5) {
       await writeFile(logFilePath, "", "utf8");
     }
-  }, 10 * 60 * 1000);
+  }, 1 * 60 * 1000);
 
   ls.stdout.on("data", (data: Buffer) => {
     console.log(data.toString());
