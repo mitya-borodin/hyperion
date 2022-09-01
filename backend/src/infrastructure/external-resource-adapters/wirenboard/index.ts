@@ -77,6 +77,32 @@ const WBE2_I_OPENTHERM_TOPIC = "/devices/wbe2-i-opentherm_11/controls/";
  */
 const WBE2_I_EBUS_TOPIC = "/devices/wbe2-i-ebus_12/controls/";
 
+/**
+ * https://wirenboard.com/ru/product/WB-M1W2/
+ */
+
+const WB_M1W2_30_TOPIC = "/devices/wb-m1w2_30/controls/External Sensor";
+const WB_M1W2_41_TOPIC = "/devices/wb-m1w2_41/controls/External Sensor";
+const WB_M1W2_56_TOPIC = "/devices/wb-m1w2_56/controls/External Sensor";
+const WB_M1W2_69_TOPIC = "/devices/wb-m1w2_69/controls/External Sensor";
+const WB_M1W2_91_TOPIC = "/devices/wb-m1w2_91/controls/External Sensor";
+const WB_M1W2_97_TOPIC = "/devices/wb-m1w2_97/controls/External Sensor";
+const WB_M1W2_153_TOPIC = "/devices/wb-m1w2_153/controls/External Sensor";
+const WB_M1W2_168_TOPIC = "/devices/wb-m1w2_168/controls/External Sensor";
+const WB_M1W2_170_TOPIC = "/devices/wb-m1w2_170/controls/External Sensor";
+const WB_M1W2_171_TOPIC = "/devices/wb-m1w2_171/controls/External Sensor";
+const WB_M1W2_172_TOPIC = "/devices/wb-m1w2_172/controls/External Sensor";
+const WB_M1W2_173_TOPIC = "/devices/wb-m1w2_173/controls/External Sensor";
+const WB_M1W2_174_TOPIC = "/devices/wb-m1w2_174/controls/External Sensor";
+const WB_M1W2_210_TOPIC = "/devices/wb-m1w2_210/controls/External Sensor";
+
+/**
+ * https://wirenboard.com/wiki/Wiren_Board_6#Каналы_W1-W2
+ */
+
+const WB_W1_UP_TOPIC = "/devices/wb-w1/controls/28-00000d885de4";
+const WB_W1_DOWN_TOPIC = "/devices/wb-w1/controls/28-00000d882feb";
+
 const TRUE = "1";
 const FALSE = "0";
 
@@ -416,6 +442,182 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
       logger("wb-mrwl_123 Message was parsed ✅");
       logger(JSON.stringify(result, null, 2));
     }
+
+    if (topic.includes(WB_M1W2_30_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_30_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-30 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_41_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_41_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-41 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_56_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_56_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-56 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_69_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_69_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-69 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_91_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_91_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-91 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_97_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_97_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-97 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_153_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_153_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-153 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_168_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_168_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-168 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_170_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_170_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-170 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_171_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_171_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-171 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_172_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_172_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-172 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_173_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_173_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-173 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_174_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_174_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-174 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_M1W2_210_TOPIC)) {
+      const result = numberProperty(topic, message, WB_M1W2_210_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-M1W2-210 Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_W1_UP_TOPIC)) {
+      const result = numberProperty(topic, message, WB_W1_UP_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-W1-UP Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
+
+    if (topic.includes(WB_W1_DOWN_TOPIC)) {
+      const result = numberProperty(topic, message, WB_W1_DOWN_TOPIC);
+
+      if (result instanceof Error) {
+        return;
+      }
+
+      logger("WB-W1-DOWN Message was parsed ✅");
+      logger(JSON.stringify(result, null, 2));
+    }
   });
 
   return {
@@ -493,10 +695,14 @@ const numberProperty = (topic: string, message: Buffer, targetTopic: string) => 
     return new Error("NEED_TO_SKIP_TOPIC");
   }
 
-  const pin = parseInt(topic.replace(targetTopic, ""));
+  let pin = parseInt(topic.replace(targetTopic, ""));
   const value = parseInt(message.toString());
 
-  if (!Number.isSafeInteger(pin) || !Number.isSafeInteger(value)) {
+  if (Number.isNaN(pin)) {
+    pin = 0;
+  }
+
+  if (!Number.isSafeInteger(value)) {
     logger("Pin or value is not a integer 🚨");
     logger(JSON.stringify({ topic, pin, message: message.toString() }, null, 2));
 
@@ -542,6 +748,9 @@ const boilerProperty = (topic: string, message: Buffer, targetTopic: string) => 
   }
 
   const result: { [key: string]: string | number | undefined } = {
+    topic,
+    message: message.toString(),
+    targetTopic,
     fwVersion: undefined,
     heatingSetpoint: undefined,
     hotWaterSetpoint: undefined,
