@@ -1,4 +1,3 @@
-import { LightingDevice } from "./lighting-device";
 import { LightingGroup } from "./lighting-group";
 
 export type CreateLightingDevice = Omit<
