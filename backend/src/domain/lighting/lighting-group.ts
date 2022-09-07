@@ -1,4 +1,4 @@
-import { BUTLER_RELAY } from "../../infrastructure/external-resource-adapters/wirenboard";
+import { COMMON_RELAY_NAME } from "../../infrastructure/external-resource-adapters/wirenboard";
 
 export enum LightingGroupState {
   ON = "ON",
@@ -50,7 +50,7 @@ export type LightingGroup = {
   /**
    * The name of the relay in the Butler system
    */
-  readonly relays: BUTLER_RELAY[];
+  readonly relays: COMMON_RELAY_NAME[];
   readonly createdAt: string;
   readonly updatedAt: string;
 };
