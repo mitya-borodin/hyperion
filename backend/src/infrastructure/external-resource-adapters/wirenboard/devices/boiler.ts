@@ -3,16 +3,12 @@ import EventEmitter from "events";
 import debug from "debug";
 import { MqttClient } from "mqtt";
 
+import { BOILER } from "../../../../domain/wirenboard/boiler";
 import { boilerProperty } from "../on-message-utils";
 import { publishWirenboardMessage } from "../publish-message";
 import { WBE2_I_EBUS_GAS_TOPIC, WBE2_I_EBUS_ELECTRO_TOPIC } from "../topics";
 
 const logger = debug("wirenboard:boiler");
-
-export enum BOILER {
-  ELECTRO = "ELECTRO",
-  GAS = "GAS",
-}
 
 export const onBoilerMessage = (eventemitter: EventEmitter, topic: string, message: Buffer) => {
   if (topic.includes(WBE2_I_EBUS_GAS_TOPIC)) {
@@ -25,7 +21,7 @@ export const onBoilerMessage = (eventemitter: EventEmitter, topic: string, messa
     logger("WBE2-I-EBUS_11 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    eventemitter.emit(BOILER.ELECTRO, result);
+    eventemitter.emit(BOILER.GAS, result);
   }
 
   if (topic.includes(WBE2_I_EBUS_ELECTRO_TOPIC)) {
@@ -38,7 +34,7 @@ export const onBoilerMessage = (eventemitter: EventEmitter, topic: string, messa
     logger("WBE2-I-EBUS_12 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    eventemitter.emit(BOILER.GAS, result);
+    eventemitter.emit(BOILER.ELECTRO, result);
   }
 };
 

@@ -3,22 +3,12 @@ import EventEmitter from "events";
 import debug from "debug";
 import { MqttClient } from "mqtt";
 
+import { ANALOG_0_10_VOLT_CONTROLLER } from "../../../../domain/wirenboard/analog-0-10-volt-controller";
 import { numberProperty } from "../on-message-utils";
 import { publishWirenboardMessage } from "../publish-message";
 import { WBIO_8_DAC_TOPIC } from "../topics";
 
 const logger = debug("wirenboard:analog-0-10-volt-controller");
-
-export enum ANALOG_0_10_VOLT_CONTROLLER {
-  ANALOG_0_10_VOLT_CONTROLLER_1 = "ANALOG_0_10_VOLT_CONTROLLER_1",
-  ANALOG_0_10_VOLT_CONTROLLER_2 = "ANALOG_0_10_VOLT_CONTROLLER_2",
-  ANALOG_0_10_VOLT_CONTROLLER_3 = "ANALOG_0_10_VOLT_CONTROLLER_3",
-  ANALOG_0_10_VOLT_CONTROLLER_4 = "ANALOG_0_10_VOLT_CONTROLLER_4",
-  ANALOG_0_10_VOLT_CONTROLLER_5 = "ANALOG_0_10_VOLT_CONTROLLER_5",
-  ANALOG_0_10_VOLT_CONTROLLER_6 = "ANALOG_0_10_VOLT_CONTROLLER_6",
-  ANALOG_0_10_VOLT_CONTROLLER_7 = "ANALOG_0_10_VOLT_CONTROLLER_7",
-  ANALOG_0_10_VOLT_CONTROLLER_8 = "ANALOG_0_10_VOLT_CONTROLLER_8",
-}
 
 /**
  * Позволяет управлять устройствами с интерфейсом 0-10V, смесители, вентиляторы.
