@@ -3,8 +3,8 @@ import EventEmitter from "events";
 import debug from "debug";
 import { MqttClient } from "mqtt";
 
-import { booleanProperty } from "./on-message-utils";
-import { publishWirenboardMessage } from "./publish-message";
+import { booleanProperty } from "../on-message-utils";
+import { publishWirenboardMessage } from "../publish-message";
 import {
   WB_MRPS6_21_TOPIC,
   WB_MRPS6_33_TOPIC,
@@ -19,9 +19,9 @@ import {
   WB_MRPS6_117_TOPIC,
   WB_MRPS6_16_TOPIC,
   WB_MRWL3_123_TOPIC,
-} from "./topics";
+} from "../topics";
 
-const logger = debug("wirenboard:relays");
+const logger = debug("wirenboard:relay");
 
 export enum COMMON_RELAY_NAME {
   /**
@@ -337,29 +337,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_21 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_1, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_2, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_3, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_4, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_5, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_6, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_33_TOPIC)) {
@@ -372,29 +350,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_33 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_7, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_8, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_9, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_10, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_11, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_12, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 6}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_37_TOPIC)) {
@@ -407,29 +363,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_37 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_13, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_14, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_15, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_16, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_17, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_18, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 12}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_49_TOPIC)) {
@@ -442,29 +376,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_49 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_19, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_20, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_21, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_22, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_23, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_24, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 18}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_50_TOPIC)) {
@@ -477,29 +389,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_50 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_25, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_26, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_27, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_28, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_29, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_30, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 24}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_69_TOPIC)) {
@@ -512,29 +402,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_69 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_31, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_32, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_33, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_34, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_35, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_36, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 30}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_77_TOPIC)) {
@@ -547,29 +415,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_77 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_37, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_38, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_39, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_40, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_41, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_42, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 36}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_81_TOPIC)) {
@@ -582,29 +428,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_81 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_43, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_44, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_45, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_46, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_47, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_48, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 42}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_85_TOPIC)) {
@@ -617,29 +441,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_85 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_49, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_50, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_51, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_52, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_53, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_54, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 48}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_97_TOPIC)) {
@@ -652,29 +454,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_97 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_55, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_56, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_57, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_58, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_59, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_60, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 54}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_117_TOPIC)) {
@@ -687,29 +467,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_117 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_61, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_62, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_63, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_64, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_65, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_66, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 60}`, result.value);
   }
 
   if (topic.includes(WB_MRPS6_16_TOPIC)) {
@@ -722,29 +480,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mr6cu_16 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_67, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_68, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_69, result.value);
-    }
-
-    if (result.pin === 4) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_70, result.value);
-    }
-
-    if (result.pin === 5) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_71, result.value);
-    }
-
-    if (result.pin === 6) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_72, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 66}`, result.value);
   }
 
   if (topic.includes(WB_MRWL3_123_TOPIC)) {
@@ -757,17 +493,7 @@ export const onRelayMessage = (eventemitter: EventEmitter, topic: string, messag
     logger("wb-mrwl_123 Message was parsed ✅");
     logger(JSON.stringify(result, null, 2));
 
-    if (result.pin === 1) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_73, result.value);
-    }
-
-    if (result.pin === 2) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_74, result.value);
-    }
-
-    if (result.pin === 3) {
-      eventemitter.emit(COMMON_RELAY_NAME.RELAY_75, result.value);
-    }
+    eventemitter.emit(`RELAY_${result.pin + 72}`, result.value);
   }
 };
 

@@ -1,8 +1,9 @@
 import debug from "debug";
 
 import { TRUE, FALSE } from "./topics";
+import { BoilerProperty, DirectionRelayProperty } from "./types";
 
-const logger = debug("wirenboard:on:message:util");
+const logger = debug("wirenboard:on:message:utils");
 
 export const isNeedToSkip = (topic: string) => {
   return (
@@ -66,15 +67,7 @@ export const numberProperty = (topic: string, message: Buffer, targetTopic: stri
   return { topic, message: message.toString(), pin, value };
 };
 
-type DirectionRelayProperty = {
-  topic: string;
-  message: string;
-  pin: number;
-  type: "DIR" | "ON";
-  value: boolean;
-};
-
-export const directionRelayProperty = (
+export const twoPinRelayProperty = (
   topic: string,
   message: Buffer,
   targetTopic: string,
@@ -108,20 +101,6 @@ export const directionRelayProperty = (
   }
 
   return new Error("UNEXPECTED_TYPE");
-};
-
-export type BoilerProperty = {
-  topic: string;
-  message: string;
-  targetTopic: string;
-  fwVersion: number | undefined;
-  heatingSetpoint: number | undefined;
-  hotWaterSetpoint: number | undefined;
-  waterPressure: number | undefined;
-  boilerStatus: number | undefined;
-  errorCode: number | undefined;
-  heatingTemperature: number | undefined;
-  hotWaterTemperature: number | undefined;
 };
 
 export const boilerProperty = (
