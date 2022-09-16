@@ -9,16 +9,9 @@ export interface ILightingRepository {
 
   createLightingGroups(locations: string[]): Promise<LightingGroup[] | Error>;
 
-  removeLightingGroups(locations: string[]): Promise<undefined | Error>;
+  removeLightingGroups(locations: string[]): Promise<LightingGroup[] | Error>;
 
-  addRelayToGroup(location: string, relays: COMMON_RELAY_NAME[]): Promise<LightingGroup | Error>;
+  setRelayToGroup(location: string, relays: COMMON_RELAY_NAME[]): Promise<LightingGroup[] | Error>;
 
-  removeRelayFromGroup(
-    location: string,
-    relays: COMMON_RELAY_NAME[],
-  ): Promise<LightingGroup | Error>;
-
-  turnOnGroups(location: string[]): Promise<LightingGroup[] | Error>;
-
-  turnOffGroups(location: string[]): Promise<LightingGroup[] | Error>;
+  turnGroups(location: string[], state: "ON" | "OFF"): Promise<LightingGroup[] | Error>;
 }

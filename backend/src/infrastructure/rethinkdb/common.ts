@@ -1,7 +1,17 @@
 import { retry, throwIfAborted } from "abort-controller-x";
 import { AbortSignal } from "node-abort-controller";
 import { Logger } from "pino";
-import { Connection, IndexOptions, r, RConnectionOptions, RDatum, RTable } from "rethinkdb-ts";
+import {
+  Connection,
+  IndexOptions,
+  r,
+  RConnectionOptions,
+  RDatum,
+  RTable,
+  WriteResult,
+} from "rethinkdb-ts";
+
+import { Errors } from "../../domain/errors";
 
 const dbName = "butler";
 
@@ -112,3 +122,33 @@ export function reconnectToRethinkDb(
     },
   );
 }
+
+type CheckWriteResultParams<T> = {
+  logger: Logger;
+  loggerContext?: any;
+  writeResult: WriteResult<T | null>;
+};
+
+export const checkWriteResult = <T>({
+  logger,
+  loggerContext = {},
+  writeResult,
+}: CheckWriteResultParams<T>): T[] | Error => {
+  if (!writeResult.changes || writeResult.first_error) {
+    logger.error({ ...loggerContext, writeResult }, "Lighting groups wasn't created 🚨");
+
+    return new Error(Errors.UNEXPECTED_BEHAVIOR);
+  }
+
+  const result: T[] = [];
+
+  writeResult.changes.forEach(({ new_val }) => {
+    if (new_val) {
+      result.push(new_val);
+    }
+  });
+
+  logger.debug({ ...loggerContext, writeResult }, "Lighting groups was created successful ✅");
+
+  return result;
+};

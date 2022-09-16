@@ -5,8 +5,8 @@ import { Errors } from "../../../domain/errors";
 import { LightingGroup, LightingGroupState } from "../../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
 import { COMMON_RELAY_NAME } from "../../../domain/wirenboard/relays";
-import { LightingGroupTable, lightingGroupTable } from "../tables/lighting-group";
-import { checkWriteResult } from "../utils";
+import { checkWriteResult } from "../common";
+import { lightingGroupTable } from "../tables/lighting-group";
 
 export class LightingRepository implements ILightingRepository {
   private readonly rethinkdbConnection: Connection;
@@ -68,26 +68,54 @@ export class LightingRepository implements ILightingRepository {
     }
   }
 
-  removeLightingGroups(locations: string[]): Promise<Error | undefined> {
-    throw new Error("Method not implemented.");
+  async removeLightingGroups(locations: string[]): Promise<LightingGroup[] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .getAll(locations)
+        .delete()
+        .run(this.rethinkdbConnection);
+
+      return checkWriteResult({ logger: this.logger, loggerContext: { locations }, writeResult });
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 
-  addRelayToGroup(location: string, relays: COMMON_RELAY_NAME[]): Promise<LightingGroup | Error> {
-    throw new Error("Method not implemented.");
-  }
-
-  removeRelayFromGroup(
+  async setRelayToGroup(
     location: string,
     relays: COMMON_RELAY_NAME[],
-  ): Promise<LightingGroup | Error> {
-    throw new Error("Method not implemented.");
+  ): Promise<LightingGroup[] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .get(location)
+        .update({ relays })
+        .run(this.rethinkdbConnection);
+
+      return checkWriteResult({ logger: this.logger, loggerContext: { location }, writeResult });
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 
-  turnOnGroups(location: string[]): Promise<LightingGroup[] | Error> {
-    throw new Error("Method not implemented.");
-  }
+  async turnGroups(
+    locations: string[],
+    state: LightingGroupState,
+  ): Promise<LightingGroup[] | Error> {
+    try {
+      const writeResult = await lightingGroupTable
+        .getAll(locations)
+        .update({ state })
+        .run(this.rethinkdbConnection);
 
-  turnOffGroups(location: string[]): Promise<LightingGroup[] | Error> {
-    throw new Error("Method not implemented.");
+      return checkWriteResult({ logger: this.logger, loggerContext: { locations }, writeResult });
+    } catch (error) {
+      this.logger.error(error);
+
+      return new Error(Errors.UNEXPECTED_BEHAVIOR);
+    }
   }
 }
