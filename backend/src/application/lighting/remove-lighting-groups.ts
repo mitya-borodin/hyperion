@@ -1,17 +1,17 @@
-import { LightingDevice } from "../../domain/lighting/lighting-device";
+import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
 import type { Command } from "../Command";
 
 type Params = {
-  deviceIds: string[];
+  lightingGroupLocations: string[];
 };
 
-type Output = LightingDevice[] | Error;
+type Output = LightingGroup[] | Error;
 
-export const getDecommissioningLightingDevicesCommand = (
+export const removeLightingGroupsCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.decommissioningLightingDevices(params.deviceIds);
+    return lightingRepository.removeLightingGroups(params.lightingGroupLocations);
   };
 };

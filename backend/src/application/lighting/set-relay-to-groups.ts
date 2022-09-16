@@ -1,18 +1,19 @@
-import { LightingDevice } from "../../domain/lighting/lighting-device";
 import { LightingGroup } from "../../domain/lighting/lighting-group";
 import { ILightingRepository } from "../../domain/lighting/lighting-repository";
+import { COMMON_RELAY_NAME } from "../../domain/wirenboard/relays";
 import type { Command } from "../Command";
 
 type Params = {
-  lightingGroupLocation: string;
+  lightingGroupLocations: string;
+  relays: COMMON_RELAY_NAME[];
 };
 
-type Output = [LightingGroup, LightingDevice[]] | Error;
+type Output = LightingGroup[] | Error;
 
-export const getTurnOnGroupCommand = (
+export const removeLightingGroupsCommand = (
   lightingRepository: ILightingRepository,
 ): Command<Params, Promise<Output>> => {
   return async (params: Params): Promise<Output> => {
-    return lightingRepository.turnOnGroup(params.lightingGroupLocation);
+    return lightingRepository.setRelayToGroup(params.lightingGroupLocations, params.relays);
   };
 };
