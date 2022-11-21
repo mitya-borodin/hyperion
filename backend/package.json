@@ -21,7 +21,7 @@
     "debug": "^4.3.4",
     "defer-promise": "^3.0.0",
     "dotenv": "^14.2.0",
-    "fastify": "^3.27.4",
+    "fastify": "^3.29.4",
     "fastify-helmet": "^7.0.1",
     "fastify-metrics": "^8.0.0",
     "fastify-plugin": "^3.0.1",
