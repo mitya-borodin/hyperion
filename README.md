@@ -1,6 +1,6 @@
-# Butler
+# Abatur
 
-Butler is software which control all electronic system which powered by [wirenboard controller](https://wirenboard.com/ru/product/wiren-board-7/).
+Abatur is control system for components of a smart home built on [Wirenboard equipment](https://wirenboard.com/ru/product/wiren-board-7).
 
 ## Technology
 
@@ -12,7 +12,7 @@ Butler is software which control all electronic system which powered by [wirenbo
 - [SolidJS](https://www.solidjs.com)
 - [Tailwind](https://tailwindcss.com)
 - [Mobx](https://mobx.js.org/README.html)
-- [Snowpack](https://www.snowpack.dev/)
+- [ViteJS](https://vitejs.dev)
 
 ### Backend
 
@@ -25,11 +25,13 @@ Butler is software which control all electronic system which powered by [wirenbo
 - [RethinkDB](https://rethinkdb.com)
 - [MQTT](https://www.npmjs.com/package/mqtt)
 - [Mosquitto](https://mosquitto.org)
-- [Docker only for development in OS which will install on wirenboard](https://www.docker.com/)
+- [Docker compose for development](https://docs.docker.com/language/nodejs/develop/)
+- [Compose-file](https://docs.docker.com/compose/compose-file/)
+- [Run in production](https://docs.docker.com/get-started/orchestration/)
 
 ### Wirenboard
 
-- [WB 6](https://wirenboard.com/ru/product/wiren-board-6/)
+- [WB 7](https://wirenboard.com/ru/product/wiren-board-7)
 - [WB MQTT](https://wirenboard.com/wiki/index.php/MQTT)
 - [WB MQTT Convention](https://github.com/wirenboard/conventions/blob/main/README.md)
 - [WB WEB GUI IN ETH0](http://192.168.1.75)
@@ -41,9 +43,9 @@ Butler is software which control all electronic system which powered by [wirenbo
 
 ## Environment
 
-- Required `Node@14.17.6` `npm@6.14.15` or older
-- Required `Yarn 1.22.17` or older
-- Required `Docker version 20.10.8, build 3967b7d` or older
+- Required `Node@18.12.1` `npm@8.19.2`
+- Required `Yarn 1.22.19`
+- Required `Docker version 20.10.21, build baeda1f`
 
 ## IDE
 
@@ -56,7 +58,7 @@ Butler is software which control all electronic system which powered by [wirenbo
 
 ### Установка node в ручном режиме
 
-Самый простой вариант начать, это установить `Node@14.18.2` `npm@6.14.15` [отсюда](https://nodejs.org/download/release/v14.18.2/).
+Самый простой вариант начать, это установить `Node@18.12.1` `npm@8.19.2` [отсюда](https://nodejs.org/download/release/v18.12.1/).
 
 ### Настройка NVM и установка node в автоматизированном режиме
 
@@ -100,8 +102,8 @@ Butler is software which control all electronic system which powered by [wirenbo
 - Увидеть что-то подобное, только будет указана версия взятая из вашего `.nvmrc`.
 
   ```text
-  Found '~/programming/collaborative-data/.nvmrc' with version <v16.13.1>
-  Now using node v16.13.1 (npm v8.1.2)
+  Found '~/programming/collaborative-data/.nvmrc' with version <v18.12.1>
+  Now using node v18.12.1 (npm v8.19.2)
   ```
 
 - В случае если нужная версия `node` не установлено вы увидите предложение установить её.
@@ -184,16 +186,17 @@ yarn start
 
 Для отладки nodejs приложения запущенного на хостовой машине необходимо использовать конфигурацию `Nodemon`, и выбрать процесс запущенный в этом `src/index.ts` файле.
 
+Для отладки приложения запущенного через docker compose необходимо будет казать адрес инспектора.
+
 ## CI/CD
+
+Ранер будут находиться на локальном компе.
 
 ### CI
 
-Будет выполнена настройка в Github workflow.
+Будет выполнено как Docker in docker, запуск команд будет происходить в процессе билда образа, а тесты запущены при помощи docker compose.
+Собранные образы будут залиты в хранилище на github.
 
 ### CD
 
-В данный момент как это делать не понятно.
-
-## Развертывание
-
-В данный момент как это делать не понятно.
+Будет выполнена настройка в Github workflow, который будет менять имена образов в docker swarm 
