@@ -1,4 +1,0 @@
-{
-  "title": "Get lighting device reply schema",
-  "$ref": "./src/interfaces/http/schemas/lighting/lighting-device.json"
-}

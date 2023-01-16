@@ -1,11 +1,11 @@
-import EventEmitter from "events";
+import EventEmitter from 'node:events';
 
-import debug from "debug";
+import debug from 'debug';
 
-import { booleanProperty } from "../on-message-utils";
-import { WBIO_1_GPIO_TOPIC, WBIO_2_GPIO_TOPIC, WBIO_3_GPIO_TOPIC } from "../topics";
+import { booleanProperty } from '../on-message-utils';
+import { WBIO_1_GPIO_TOPIC, WBIO_2_GPIO_TOPIC, WBIO_3_GPIO_TOPIC } from '../topics';
 
-const logger = debug("wirenboard:counter");
+const logger = debug('wirenboard:counter');
 
 /**
  * Счетчик позволяет реализовать кнопки, датчики протечки, герконы ( датчики открывания дверей ), датчик протечки
@@ -18,7 +18,7 @@ export const onCounterMessage = (eventemitter: EventEmitter, topic: string, mess
       return;
     }
 
-    logger("WBIO-DI-WD-14 EXT1_IN Message was parsed ✅");
+    logger('WBIO-DI-WD-14 EXT1_IN Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     eventemitter.emit(`COUNTER_${result.pin}`, result.value);
@@ -31,7 +31,7 @@ export const onCounterMessage = (eventemitter: EventEmitter, topic: string, mess
       return;
     }
 
-    logger("WBIO-DI-WD-14 EXT2_IN Message was parsed ✅");
+    logger('WBIO-DI-WD-14 EXT2_IN Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     eventemitter.emit(`COUNTER_${result.pin + 14}`, result.value);
@@ -44,7 +44,7 @@ export const onCounterMessage = (eventemitter: EventEmitter, topic: string, mess
       return;
     }
 
-    logger("WBIO-DI-WD-14 EXT3_IN Message was parsed ✅");
+    logger('WBIO-DI-WD-14 EXT3_IN Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     eventemitter.emit(`COUNTER_${result.pin + 28}`, result.value);

@@ -1,34 +1,35 @@
-import { appendFile, stat, writeFile } from "fs/promises";
-import { spawn } from "node:child_process";
-import { resolve } from "node:path";
+/* eslint-disable unicorn/prefer-module */
+import { spawn } from 'node:child_process';
+import { appendFile, stat, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
-const logFilePath = resolve(__dirname, "../log.txt");
+const logFilePath = resolve(__dirname, '../log.txt');
 
 const run = async () => {
-  const ls = spawn("/root/node/bin/node", [resolve(__dirname, "index.js")]);
+  const ls = spawn('/root/node/bin/node', [resolve(__dirname, 'index.js')]);
 
   const timer = setInterval(async () => {
     const logStat = await stat(logFilePath);
     const logInMegaBytes = logStat.size / (1024 * 1024);
 
     if (logInMegaBytes > 0.05) {
-      await writeFile(logFilePath, "", "utf8");
+      await writeFile(logFilePath, '', 'utf8');
     }
   }, 1 * 60 * 1000);
 
-  ls.stdout.on("data", (data: Buffer) => {
+  ls.stdout.on('data', (data: Buffer) => {
     console.log(data.toString());
 
-    appendFile(logFilePath, data, { encoding: "utf8" });
+    appendFile(logFilePath, data, { encoding: 'utf8' });
   });
 
-  ls.stderr.on("data", (data: Buffer) => {
+  ls.stderr.on('data', (data: Buffer) => {
     console.error(data.toString());
 
-    appendFile(logFilePath, data, { encoding: "utf8" });
+    appendFile(logFilePath, data, { encoding: 'utf8' });
   });
 
-  ls.on("close", (code: number | null) => {
+  ls.on('close', (code: number | null) => {
     clearInterval(timer);
 
     console.log(`Child process exited with code ${code} 🛑`);

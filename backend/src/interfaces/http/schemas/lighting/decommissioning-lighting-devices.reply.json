@@ -1,7 +1,0 @@
-{
-  "title": "Decommissioning lighting device reply schema",
-  "type": "array",
-  "items": {
-    "$ref": "./src/interfaces/http/schemas/lighting/lighting-device.json"
-  }
-}

@@ -2,21 +2,31 @@
   "version": "1.0.0",
   "configurations": [
     {
-      "name": "Remote",
+      "name": "Backend",
       "request": "attach",
       "address": "127.0.0.1",
       "port": 9229,
-      "localRoot": "/app",
+      "localRoot": "${cwd}/backend/src",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "node"
     },
     {
-      "type": "node",
+      "name": "Frontend",
       "request": "attach",
-      "name": "Nodemon",
-      "processId": "${command:PickProcess}",
-      "restart": true,
-      "protocol": "inspector"
+      "address": "127.0.0.1",
+      "port": 9230,
+      "localRoot": "${cwd}/frontend/src",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Wirenboard",
+      "request": "attach",
+      "address": "127.0.0.1",
+      "port": 9231,
+      "localRoot": "${cwd}/wirenboard/src",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     }
   ]
 }

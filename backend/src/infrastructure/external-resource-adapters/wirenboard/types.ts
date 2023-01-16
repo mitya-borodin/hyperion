@@ -16,6 +16,6 @@ export type DirectionRelayProperty = {
   topic: string;
   message: string;
   pin: number;
-  type: "DIR" | "ON";
+  type: 'DIR' | 'ON';
   value: boolean;
 };

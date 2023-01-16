@@ -1,18 +1,14 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  // see https://github.com/tsconfig/bases to better understand @tsconfig/node16
+  "extends": "@tsconfig/node18/tsconfig.json",
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
-  "include": ["**/src/**/*.ts", "**/test/**/*.ts"],
   "compilerOptions": {
-    "baseUrl": ".",
-    "moduleResolution": "Node",
-    "allowJs": true,
-    "checkJs": false,
-    "noEmit": true,
-    "declaration": true,
-    "sourceMap": true,
-    "importHelpers": true,
-    "resolveJsonModule": true,
+    "baseUrl": "src",
+    "outDir": "build",
     "allowSyntheticDefaultImports": true,
-    "noPropertyAccessFromIndexSignature": false
-  }
+    "resolveJsonModule": true,
+    "strict": true
+  },
+  "exclude": ["node_modules", "bin"],
+  "include": ["src/**/*", "test/**/*"]
 }

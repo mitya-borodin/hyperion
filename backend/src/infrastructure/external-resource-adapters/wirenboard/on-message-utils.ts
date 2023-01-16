@@ -1,30 +1,30 @@
-import debug from "debug";
+import debug from 'debug';
 
-import { TRUE, FALSE } from "./topics";
-import { BoilerProperty, DirectionRelayProperty } from "./types";
+import { TRUE, FALSE } from './topics';
+import { BoilerProperty, DirectionRelayProperty } from './types';
 
-const logger = debug("wirenboard:on:message:utils");
+const logger = debug('wirenboard:on:message:utils');
 
 export const isNeedToSkip = (topic: string) => {
   return (
-    topic.includes("/devices/battery") ||
-    topic.includes("/devices/power_status") ||
-    topic.includes("/devices/wb-adc") ||
-    topic.includes("/devices/metrics") ||
-    topic.includes("/devices/hwmon") ||
-    topic.includes("meta") ||
-    topic.includes("/devices/network") ||
-    topic.includes("/devices/system") ||
-    topic.includes("/on")
+    topic.includes('/devices/battery') ||
+    topic.includes('/devices/power_status') ||
+    topic.includes('/devices/wb-adc') ||
+    topic.includes('/devices/metrics') ||
+    topic.includes('/devices/hwmon') ||
+    topic.includes('meta') ||
+    topic.includes('/devices/network') ||
+    topic.includes('/devices/system') ||
+    topic.includes('/on')
   );
 };
 
 export const booleanProperty = (topic: string, message: Buffer, targetTopic: string) => {
   if (isNeedToSkip(topic)) {
-    return new Error("NEED_TO_SKIP_TOPIC");
+    return new Error('NEED_TO_SKIP_TOPIC');
   }
 
-  const pin = parseInt(topic.replace(targetTopic, ""));
+  const pin = Number.parseInt(topic.replace(targetTopic, ''));
   let value = false;
 
   if (message.toString() === TRUE) {
@@ -39,7 +39,7 @@ export const booleanProperty = (topic: string, message: Buffer, targetTopic: str
     logger("Pin is not a integer, and value is nor '1' or '0' 🚨");
     logger(JSON.stringify({ topic, pin, message: message.toString() }, null, 2));
 
-    return new Error("INVALID_MESSAGE");
+    return new Error('INVALID_MESSAGE');
   }
 
   return { topic, message: message.toString(), pin, value };
@@ -47,21 +47,21 @@ export const booleanProperty = (topic: string, message: Buffer, targetTopic: str
 
 export const numberProperty = (topic: string, message: Buffer, targetTopic: string) => {
   if (isNeedToSkip(topic)) {
-    return new Error("NEED_TO_SKIP_TOPIC");
+    return new Error('NEED_TO_SKIP_TOPIC');
   }
 
-  let pin = parseInt(topic.replace(targetTopic, ""));
-  const value = parseInt(message.toString());
+  let pin = Number.parseInt(topic.replace(targetTopic, ''));
+  const value = Number.parseInt(message.toString());
 
   if (Number.isNaN(pin)) {
     pin = 0;
   }
 
   if (!Number.isSafeInteger(value)) {
-    logger("Pin or value is not a integer 🚨");
+    logger('Pin or value is not a integer 🚨');
     logger(JSON.stringify({ topic, pin, message: message.toString() }, null, 2));
 
-    return new Error("INVALID_MESSAGE");
+    return new Error('INVALID_MESSAGE');
   }
 
   return { topic, message: message.toString(), pin, value };
@@ -73,7 +73,7 @@ export const twoPinRelayProperty = (
   targetTopic: string,
 ): DirectionRelayProperty | Error => {
   if (isNeedToSkip(topic)) {
-    return new Error("NEED_TO_SKIP_TOPIC");
+    return new Error('NEED_TO_SKIP_TOPIC');
   }
 
   let value = false;
@@ -86,30 +86,26 @@ export const twoPinRelayProperty = (
     value = false;
   }
 
-  const subTopic = topic.replace(targetTopic, "");
+  const subTopic = topic.replace(targetTopic, '');
 
-  if (subTopic.includes("ON")) {
-    const pin = parseInt(subTopic.replace("ON", ""));
+  if (subTopic.includes('ON')) {
+    const pin = Number.parseInt(subTopic.replace('ON', ''));
 
-    return { topic, message: message.toString(), pin, value, type: "ON" };
+    return { topic, message: message.toString(), pin, value, type: 'ON' };
   }
 
-  if (subTopic.includes("DIR")) {
-    const pin = parseInt(subTopic.replace("DIR", ""));
+  if (subTopic.includes('DIR')) {
+    const pin = Number.parseInt(subTopic.replace('DIR', ''));
 
-    return { topic, message: message.toString(), pin, value, type: "DIR" };
+    return { topic, message: message.toString(), pin, value, type: 'DIR' };
   }
 
-  return new Error("UNEXPECTED_TYPE");
+  return new Error('UNEXPECTED_TYPE');
 };
 
-export const boilerProperty = (
-  topic: string,
-  message: Buffer,
-  targetTopic: string,
-): BoilerProperty | Error => {
+export const boilerProperty = (topic: string, message: Buffer, targetTopic: string): BoilerProperty | Error => {
   if (isNeedToSkip(topic)) {
-    return new Error("NEED_TO_SKIP_TOPIC");
+    return new Error('NEED_TO_SKIP_TOPIC');
   }
 
   const result: BoilerProperty = {
@@ -126,39 +122,39 @@ export const boilerProperty = (
     hotWaterTemperature: undefined,
   };
 
-  const property = topic.replace(targetTopic, "");
+  const property = topic.replace(targetTopic, '');
   const value = message.toString();
 
-  if (property === "FW Version") {
-    result.fwVersion = parseFloat(value);
+  if (property === 'FW Version') {
+    result.fwVersion = Number.parseFloat(value);
   }
 
-  if (property === "Heating Setpoint") {
-    result.heatingSetpoint = parseFloat(value);
+  if (property === 'Heating Setpoint') {
+    result.heatingSetpoint = Number.parseFloat(value);
   }
 
-  if (property === "Hot Water Setpoint") {
-    result.hotWaterSetpoint = parseFloat(value);
+  if (property === 'Hot Water Setpoint') {
+    result.hotWaterSetpoint = Number.parseFloat(value);
   }
 
-  if (property === "Water Pressure") {
-    result.waterPressure = parseFloat(value);
+  if (property === 'Water Pressure') {
+    result.waterPressure = Number.parseFloat(value);
   }
 
-  if (property === "Boiler Status") {
-    result.boilerStatus = parseFloat(value);
+  if (property === 'Boiler Status') {
+    result.boilerStatus = Number.parseFloat(value);
   }
 
-  if (property === "Error Code") {
-    result.errorCode = parseFloat(value);
+  if (property === 'Error Code') {
+    result.errorCode = Number.parseFloat(value);
   }
 
-  if (property === "Heating Temperature") {
-    result.heatingTemperature = parseFloat(value);
+  if (property === 'Heating Temperature') {
+    result.heatingTemperature = Number.parseFloat(value);
   }
 
-  if (property === "Hot Water Temperature") {
-    result.hotWaterTemperature = parseFloat(value);
+  if (property === 'Hot Water Temperature') {
+    result.hotWaterTemperature = Number.parseFloat(value);
   }
 
   return result;

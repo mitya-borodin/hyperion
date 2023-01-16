@@ -1,9 +1,9 @@
-import EventEmitter from "events";
+import EventEmitter from 'node:events';
 
-import debug from "debug";
+import debug from 'debug';
 
-import { TEMPERATURE_SENSOR } from "../../../../domain/wirenboard/on-temperature-sensor";
-import { numberProperty } from "../on-message-utils";
+import { TEMPERATURE_SENSOR } from '../../../../domain/wirenboard/on-temperature-sensor';
+import { numberProperty } from '../on-message-utils';
 import {
   WB_W1_UP_TOPIC,
   WB_W1_DOWN_TOPIC,
@@ -21,15 +21,11 @@ import {
   WB_M1W2_173_TOPIC,
   WB_M1W2_174_TOPIC,
   WB_M1W2_210_TOPIC,
-} from "../topics";
+} from '../topics';
 
-const logger = debug("wirenboard:temperature-sensor");
+const logger = debug('wirenboard:temperature-sensor');
 
-export const onTemperatureSensorMessage = (
-  eventemitter: EventEmitter,
-  topic: string,
-  message: Buffer,
-) => {
+export const onTemperatureSensorMessage = (eventemitter: EventEmitter, topic: string, message: Buffer) => {
   if (topic.includes(WB_W1_UP_TOPIC)) {
     const result = numberProperty(topic, message, WB_W1_UP_TOPIC);
 
@@ -37,7 +33,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-W1-UP Message was parsed ✅");
+    logger('WB-W1-UP Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     eventemitter.emit(TEMPERATURE_SENSOR.TEMPERATURE_SENSOR_1, result.value);
@@ -50,7 +46,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-W1-DOWN Message was parsed ✅");
+    logger('WB-W1-DOWN Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     eventemitter.emit(TEMPERATURE_SENSOR.TEMPERATURE_SENSOR_2, result.value);
@@ -63,7 +59,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-30 Message was parsed ✅");
+    logger('WB-M1W2-30 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -80,7 +76,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-41 Message was parsed ✅");
+    logger('WB-M1W2-41 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -97,7 +93,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-56 Message was parsed ✅");
+    logger('WB-M1W2-56 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -114,7 +110,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-69 Message was parsed ✅");
+    logger('WB-M1W2-69 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -131,7 +127,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-91 Message was parsed ✅");
+    logger('WB-M1W2-91 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -148,7 +144,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-97 Message was parsed ✅");
+    logger('WB-M1W2-97 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -165,7 +161,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-153 Message was parsed ✅");
+    logger('WB-M1W2-153 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -182,7 +178,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-168 Message was parsed ✅");
+    logger('WB-M1W2-168 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -199,7 +195,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-170 Message was parsed ✅");
+    logger('WB-M1W2-170 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -216,7 +212,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-171 Message was parsed ✅");
+    logger('WB-M1W2-171 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -233,7 +229,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-172 Message was parsed ✅");
+    logger('WB-M1W2-172 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -250,7 +246,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-173 Message was parsed ✅");
+    logger('WB-M1W2-173 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -267,7 +263,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-174 Message was parsed ✅");
+    logger('WB-M1W2-174 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**
@@ -284,7 +280,7 @@ export const onTemperatureSensorMessage = (
       return;
     }
 
-    logger("WB-M1W2-210 Message was parsed ✅");
+    logger('WB-M1W2-210 Message was parsed ✅');
     logger(JSON.stringify(result, null, 2));
 
     /**

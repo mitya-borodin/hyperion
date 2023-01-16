@@ -1,4 +1,4 @@
 export enum BOILER {
-  GAS = "GAS",
-  ELECTRO = "ELECTRO",
+  GAS = 'GAS',
+  ELECTRO = 'ELECTRO',
 }

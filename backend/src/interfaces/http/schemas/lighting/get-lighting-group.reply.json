@@ -1,4 +1,0 @@
-{
-  "title": "Get lighting group reply schema",
-  "$ref": "./src/interfaces/http/schemas/lighting/lighting-group.json"
-}

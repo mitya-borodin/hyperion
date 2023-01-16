@@ -2,120 +2,120 @@ export enum SOLID_RELAY {
   /**
    * Термоэлектрический привод - Гостиная - Петля 1
    */
-  SOLID_RELAY_1 = "SOLID_RELAY_1",
+  SOLID_RELAY_1 = 'SOLID_RELAY_1',
 
   /**
    * Термоэлектрический привод - Гостиная - Петля 2
    */
-  SOLID_RELAY_2 = "SOLID_RELAY_2",
+  SOLID_RELAY_2 = 'SOLID_RELAY_2',
 
   /**
    * Термоэлектрический привод - Гостиная - Петля 3
    */
-  SOLID_RELAY_3 = "SOLID_RELAY_3",
+  SOLID_RELAY_3 = 'SOLID_RELAY_3',
 
   /**
    * Термоэлектрический привод - Игровая - Петля 1
    */
-  SOLID_RELAY_4 = "SOLID_RELAY_4",
+  SOLID_RELAY_4 = 'SOLID_RELAY_4',
 
   /**
    * Термоэлектрический привод - Игровая - Петля 2
    */
-  SOLID_RELAY_5 = "SOLID_RELAY_5",
+  SOLID_RELAY_5 = 'SOLID_RELAY_5',
 
   /**
    * Термоэлектрический привод - Ванная - Петля 1
    */
-  SOLID_RELAY_6 = "SOLID_RELAY_6",
+  SOLID_RELAY_6 = 'SOLID_RELAY_6',
 
   /**
    * Термоэлектрический привод - Спальня - Петля 1
    */
-  SOLID_RELAY_7 = "SOLID_RELAY_7",
+  SOLID_RELAY_7 = 'SOLID_RELAY_7',
 
   /**
    * Термоэлектрический привод - Спальня - Петля 2
    */
-  SOLID_RELAY_8 = "SOLID_RELAY_8",
+  SOLID_RELAY_8 = 'SOLID_RELAY_8',
 
   /**
    * Термоэлектрический привод - Прихожая - Петля 1
    */
-  SOLID_RELAY_9 = "SOLID_RELAY_9",
+  SOLID_RELAY_9 = 'SOLID_RELAY_9',
 
   /**
    * Термоэлектрический привод - Коридор - Петля 1
    */
-  SOLID_RELAY_10 = "SOLID_RELAY_10",
+  SOLID_RELAY_10 = 'SOLID_RELAY_10',
 
   /**
    * Термоэлектрический привод - Хозяйственная - Петля 1
    */
-  SOLID_RELAY_11 = "SOLID_RELAY_11",
+  SOLID_RELAY_11 = 'SOLID_RELAY_11',
 
   /**
    * Термоэлектрический привод - Кабинет - Петля 1
    */
-  SOLID_RELAY_12 = "SOLID_RELAY_12",
+  SOLID_RELAY_12 = 'SOLID_RELAY_12',
 
   /**
    * Термоэлектрический привод - Техническая - Петля 1
    */
-  SOLID_RELAY_13 = "SOLID_RELAY_13",
+  SOLID_RELAY_13 = 'SOLID_RELAY_13',
 
   /**
    * Термоэлектрический привод - Гостиная - Радиатор
    */
-  SOLID_RELAY_14 = "SOLID_RELAY_14",
+  SOLID_RELAY_14 = 'SOLID_RELAY_14',
 
   /**
    * Термоэлектрический привод - Игровая - Радиатор
    */
-  SOLID_RELAY_15 = "SOLID_RELAY_15",
+  SOLID_RELAY_15 = 'SOLID_RELAY_15',
 
   /**
    * Термоэлектрический привод - Ванная - Радиатор
    */
-  SOLID_RELAY_16 = "SOLID_RELAY_16",
+  SOLID_RELAY_16 = 'SOLID_RELAY_16',
 
   /**
    * Термоэлектрический привод - Спальня - Радиатор
    */
-  SOLID_RELAY_17 = "SOLID_RELAY_17",
+  SOLID_RELAY_17 = 'SOLID_RELAY_17',
 
   /**
    * Термоэлектрический привод - Прихожая - Радиатор
    */
-  SOLID_RELAY_18 = "SOLID_RELAY_18",
+  SOLID_RELAY_18 = 'SOLID_RELAY_18',
 
   /**
    * Термоэлектрический привод - Кабинет - Радиатор
    */
-  SOLID_RELAY_19 = "SOLID_RELAY_19",
+  SOLID_RELAY_19 = 'SOLID_RELAY_19',
 
   /**
    * Свободная линия
    */
-  SOLID_RELAY_20 = "SOLID_RELAY_20",
+  SOLID_RELAY_20 = 'SOLID_RELAY_20',
 
   /**
    * Свободная линия
    */
-  SOLID_RELAY_21 = "SOLID_RELAY_21",
+  SOLID_RELAY_21 = 'SOLID_RELAY_21',
 
   /**
    * Свободная линия
    */
-  SOLID_RELAY_22 = "SOLID_RELAY_22",
+  SOLID_RELAY_22 = 'SOLID_RELAY_22',
 
   /**
    * Свободная линия
    */
-  SOLID_RELAY_23 = "SOLID_RELAY_23",
+  SOLID_RELAY_23 = 'SOLID_RELAY_23',
 
   /**
    * Свободная линия
    */
-  SOLID_RELAY_24 = "SOLID_RELAY_24",
+  SOLID_RELAY_24 = 'SOLID_RELAY_24',
 }

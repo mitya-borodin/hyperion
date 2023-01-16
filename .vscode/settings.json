@@ -76,7 +76,6 @@
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.wordWrap": "off",
 
-  "html.format.endWithNewline": true,
   "html.format.indentHandlebars": true,
   "html.format.indentInnerHtml": true,
   "html.format.templating": true,
@@ -86,7 +85,7 @@
   "eslint.packageManager": "yarn",
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
-  "eslint.workingDirectories": ["./backend", "./frontend"],
+  "eslint.workingDirectories": ["./backend", "./frontend", "./wirenboard"],
 
   "git.confirmSync": false,
   "git.enableStatusBarSync": true,
@@ -164,10 +163,14 @@
     }
   ],
   "cSpell.words": [
+    "abatur",
+    "abortable",
     "EBUS",
+    "geetest",
     "GPIO",
     "ifup",
     "inet",
+    "mitya",
     "MOSQUITTO",
     "MRPS",
     "MRWL",

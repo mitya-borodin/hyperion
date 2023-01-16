@@ -1,35 +1,53 @@
-import Fastify, { FastifyInstance } from "fastify";
-import helmet from "fastify-helmet";
-import metricsPlugin from "fastify-metrics";
-import Swagger from "fastify-swagger";
-import HttpStatusCodes from "http-status-codes";
-import { Logger } from "pino";
-import { Connection } from "rethinkdb-ts";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable unicorn/prefer-module */
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
-import { ILightingRepository } from "../../domain/lighting/lighting-repository";
-import { Config } from "../../infrastructure/config";
-import { register } from "../../infrastructure/prometheus";
+import Cookie from '@fastify/cookie';
+import fastifyJWT from '@fastify/jwt';
+import FastifyStatic from '@fastify/static';
+import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import metricsPlugin from 'fastify-metrics';
+import { fastifyRawBody } from 'fastify-raw-body';
 
-import routerFastifyPlugin from "./routes";
+import { getResolvers } from './graphql/get-resolvers';
 
-type CreateHttpInterfaceParams = {
+import { GraphQLResolveInfo } from 'graphql';
+import HttpStatusCodes from 'http-status-codes';
+
+import { routerFastifyPlugin } from './router';
+
+import Mercurius from 'mercurius';
+import MercuriusAuth from 'mercurius-auth';
+import { codegenMercurius, gql } from 'mercurius-codegen';
+import MercuriusGQLUpload from 'mercurius-upload';
+import { Logger } from 'pino';
+import { Connection } from 'rethinkdb-ts';
+
+import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
+import { Config } from '../../infrastructure/config';
+import { register } from '../../infrastructure/prometheus';
+import { ILightingRepository } from '../../ports/lighting-repository';
+
+type CreateHttpInterfaceParameters = {
   config: Config;
   rethinkdbConnection: Connection;
   logger: Logger;
   lightingRepository: ILightingRepository;
 };
 
-export const createHttpInterface = ({
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const createHttpInterface = async ({
   config,
   logger,
   lightingRepository,
   rethinkdbConnection,
-}: CreateHttpInterfaceParams): FastifyInstance => {
+}: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
     caseSensitive: true,
-    logger: {
-      level: config.fastify.log.level,
-    },
+    logger,
   });
 
   fastify.setErrorHandler(function (error, request, reply) {
@@ -43,50 +61,103 @@ export const createHttpInterface = ({
         query: request.query,
         body: request.body,
       },
-      "Unexpected error",
+      'Unexpected error',
     );
 
     reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send({
       statusCode: 500,
-      error: "Internal Server Error",
-      message: "Unexpected error",
+      error: 'Internal Server Error',
+      message: 'Unexpected error',
     });
   });
 
-  fastify.register(helmet);
-
-  fastify.register(metricsPlugin, {
-    endpoint: "/metrics",
-    enableDefaultMetrics: true,
-    register,
+  fastify.register(FastifyStatic, {
+    root: config.public,
   });
 
-  if (!config.production) {
-    fastify.register(Swagger, {
-      routePrefix: "/swagger",
-      exposeRoute: true,
-      staticCSP: true,
-      swagger: {
-        info: {
-          title: "Butler API",
-          description: "Butler API documentation",
-          version: "1.0.0",
-        },
-        externalDocs: {
-          url: "https://github.com/mitya-borodin/butler/tree/master/backend/src/interfaces/http",
-          description: "You can dive into source code for getting more details",
-        },
-        tags: [{ name: "lighting", description: "Lighting" }],
-      },
-    });
-  }
+  /**
+   * Default and fastify metrics
+   */
+  fastify.register(metricsPlugin, { endpoint: '/metrics' });
+
+  /**
+   * Business and application metrics
+   */
+  fastify.get('/business-metrics', async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const metrics = await register.getMetricsAsJSON();
+
+    logger.trace({ metrics }, 'Metrics was requested by prometheus 🚀');
+
+    return reply.code(200).send(metrics);
+  });
+
+  fastify.register(Cookie, {
+    secret: config.cookieSecret,
+  });
+
+  fastify.register(fastifyJWT, {
+    secret: config.auth.secret,
+    verify: { maxAge: config.nodeEnv === 'test' ? ONE_WEEK_MS : config.auth.tokenTtlMs },
+  });
+
+  fastify.register(fastifyRawBody, {
+    field: 'rawBody', // change the default request.rawBody property name
+    global: false, // add the rawBody to every request. **Default true**
+    encoding: false, // set it to false to set rawBody as a Buffer **Default utf8**
+    runFirst: true, // get the body before any preParsing hook change/uncompress it. **Default false**
+    routes: [], // array of routes, **`global`** will be ignored, wildcard routes not supported
+  });
 
   fastify.register(routerFastifyPlugin, {
-    prefix: "/api",
+    prefix: '/api',
     logger,
-    lightingRepository,
     config,
-    rethinkdbConnection,
+  });
+
+  fastify.register(MercuriusGQLUpload, {
+    logger,
+  });
+
+  fastify.register(Mercurius, {
+    schema: gql`
+      ${await readFile(resolve(__dirname, './graphql/schema.graphql'), { encoding: 'utf8' })}
+    `,
+    resolvers: getResolvers({
+      fastify,
+      config,
+      logger,
+    }),
+    graphiql: !config.production,
+    subscription: true,
+  });
+
+  fastify.register(MercuriusAuth, {
+    authContext: (context): { role: UserRole; id: number } => {
+      const { app, reply } = context;
+      const { authorization = '' } = reply.request.headers;
+
+      try {
+        const { id, role = UserRole.UNKNOWN }: JwtPayload = app.jwt.verify(authorization);
+
+        return { id, role };
+      } catch (error) {
+        logger.error({ authorization, err: error }, 'JWT is invalid 🚨');
+
+        return { id: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
+      }
+    },
+    async applyPolicy(authDirectiveAST, parent, arguments_, context, info: GraphQLResolveInfo) {
+      const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');
+
+      const authValues: any[] = requires.value.values;
+
+      return authValues.some((value: { value: UserRole }) => value.value === context.auth?.role);
+    },
+    authDirective: 'auth',
+  });
+
+  await codegenMercurius(fastify, {
+    targetPath: './src/graphql-types.ts',
   });
 
   return fastify;

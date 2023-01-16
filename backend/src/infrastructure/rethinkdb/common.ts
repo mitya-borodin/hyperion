@@ -1,27 +1,20 @@
-import { retry, throwIfAborted } from "abort-controller-x";
-import { AbortSignal } from "node-abort-controller";
-import { Logger } from "pino";
-import {
-  Connection,
-  IndexOptions,
-  r,
-  RConnectionOptions,
-  RDatum,
-  RTable,
-  WriteResult,
-} from "rethinkdb-ts";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable unicorn/prevent-abbreviations */
+import { retry, throwIfAborted } from 'abort-controller-x';
+import { Logger } from 'pino';
+import { Connection, IndexOptions, r, RConnectionOptions, RDatum, RTable, WriteResult } from 'rethinkdb-ts';
 
-import { Errors } from "../../domain/errors";
+import { Errors } from '../../enums/errors';
 
-const dbName = "butler";
+const databaseName = 'butler';
 
-export const db = r.db(dbName);
+export const database = r.db(databaseName);
 
 export async function createDB(rethinkdbConnection: Connection): Promise<void> {
   await r
     .dbList()
-    .contains(dbName)
-    .do((hasDb: RDatum<boolean>) => r.branch(hasDb, { created: 0 }, r.dbCreate(dbName)))
+    .contains(databaseName)
+    .do((hasDatabase: RDatum<boolean>) => r.branch(hasDatabase, { created: 0 }, r.dbCreate(databaseName)))
     .run(rethinkdbConnection);
 }
 
@@ -32,14 +25,14 @@ export async function createTable(
   replicas: number,
   shards = 1,
 ): Promise<void> {
-  await db
+  await database
     .tableList()
     .contains(tableName)
     .do((hasTable: RDatum<boolean>) =>
       r.branch(
         hasTable,
         { created: 0 },
-        db.tableCreate(tableName, {
+        database.tableCreate(tableName, {
           shards,
           replicas,
           primaryKey,
@@ -85,23 +78,19 @@ export function connectToRethinkDb(
         throwIfAborted(signal);
       }
 
-      logger.debug("Connection to RethinkDB has been established");
+      logger.debug('Connection to RethinkDB has been established');
 
       return connection;
     },
     {
       onError(error, attempt, delayMs) {
-        logger.error({ error, attempt, delayMs }, "Failed to connect to RethinkDB, retrying");
+        logger.error({ error, attempt, delayMs }, 'Failed to connect to RethinkDB, retrying');
       },
     },
   );
 }
 
-export function reconnectToRethinkDb(
-  signal: AbortSignal,
-  connection: Connection,
-  logger: Logger,
-): Promise<void> {
+export function reconnectToRethinkDb(signal: AbortSignal, connection: Connection, logger: Logger): Promise<void> {
   return retry(
     signal,
     async (signal) => {
@@ -113,17 +102,17 @@ export function reconnectToRethinkDb(
         throwIfAborted(signal);
       }
 
-      logger.debug("Connection to RethinkDB has been restored");
+      logger.debug('Connection to RethinkDB has been restored');
     },
     {
       onError(error, attempt, delayMs) {
-        logger.error({ error, attempt, delayMs }, "Failed to reconnect to RethinkDB, retrying");
+        logger.error({ error, attempt, delayMs }, 'Failed to reconnect to RethinkDB, retrying');
       },
     },
   );
 }
 
-type CheckWriteResultParams<T> = {
+type CheckWriteResultParameters<T> = {
   logger: Logger;
   loggerContext?: any;
   writeResult: WriteResult<T | null>;
@@ -133,7 +122,7 @@ export const checkWriteResult = <T>({
   logger,
   loggerContext = {},
   writeResult,
-}: CheckWriteResultParams<T>): T[] | Error => {
+}: CheckWriteResultParameters<T>): T[] | Error => {
   if (!writeResult.changes || writeResult.first_error) {
     logger.error({ ...loggerContext, writeResult }, "Lighting groups wasn't created 🚨");
 
@@ -142,13 +131,13 @@ export const checkWriteResult = <T>({
 
   const result: T[] = [];
 
-  writeResult.changes.forEach(({ new_val }) => {
+  for (const { new_val } of writeResult.changes) {
     if (new_val) {
       result.push(new_val);
     }
-  });
+  }
 
-  logger.debug({ ...loggerContext, writeResult }, "Lighting groups was created successful ✅");
+  logger.debug({ ...loggerContext, writeResult }, 'Lighting groups was created successful ✅');
 
   return result;
 };

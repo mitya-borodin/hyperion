@@ -8,7 +8,3 @@ COPY package.json yarn.lock ./
 RUN yarn --frozen-lockfile
 
 COPY ./ ./
-
-EXPOSE 9229
-
-CMD ["nodemon", "--config", "nodemon.json", "--inspect=0.0.0.0:9229", "src/index.ts"]

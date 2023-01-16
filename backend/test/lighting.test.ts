@@ -1,15 +1,17 @@
-import isEqual from "lodash.isequal";
-import omit from "lodash.omit";
-import fetch, { Response } from "node-fetch";
+/* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import isEqual from 'lodash.isequal';
+import omit from 'lodash.omit';
+import fetch, { Response } from 'node-fetch';
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = 'http://localhost:5000';
 
 beforeEach(async () => {
-  await fetch(`${BASE_URL}/purge-test-database`, { method: "POST" });
+  await fetch(`${BASE_URL}/purge-test-database`, { method: 'POST' });
 });
 
 afterEach(async () => {
-  await fetch(`${BASE_URL}/purge-test-database`, { method: "POST" });
+  await fetch(`${BASE_URL}/purge-test-database`, { method: 'POST' });
 });
 
 type LightningDevice = { [key: string]: string | string[] | number | object[] };
@@ -17,25 +19,25 @@ type LightningDevice = { [key: string]: string | string[] | number | object[] };
 const createLightningDevices = async (): Promise<[LightningDevice[], Response]> => {
   const sourceItems = [];
 
-  for (let i = 2; i > 0; i--) {
+  for (let index = 2; index > 0; index--) {
     sourceItems.push({
-      name: `lightning-device-${i}`,
-      brand: `FREON_${i}`,
-      power: "24",
-      lumens: "2700",
+      name: `lightning-device-${index}`,
+      brand: `FREON_${index}`,
+      power: '24',
+      lumens: '2700',
       lightTemperatureKelvin: 4000,
       resourceMs: 30_000,
-      price: "600",
-      currency: "RUB",
-      sellersWebsite: "http://feron.ru",
-      images: ["image_1", "image_2", "image_3"],
+      price: '600',
+      currency: 'RUB',
+      sellersWebsite: 'http://feron.ru',
+      images: ['image_1', 'image_2', 'image_3'],
     });
   }
 
   const response = await fetch(`${BASE_URL}/create-lighting-devices`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify(sourceItems),
   });
@@ -43,12 +45,9 @@ const createLightningDevices = async (): Promise<[LightningDevice[], Response]> 
   return [sourceItems, response];
 };
 
-const compareSourceAndTargetItems = (
-  sourceItems: LightningDevice[],
-  targetItems: LightningDevice[],
-): boolean => {
-  return !!sourceItems.find((sourceItem) => {
-    return !!targetItems.find((targetItem) => {
+const compareSourceAndTargetItems = (sourceItems: LightningDevice[], targetItems: LightningDevice[]): boolean => {
+  return sourceItems.some((sourceItem) => {
+    return targetItems.some((targetItem) => {
       return Object.keys(sourceItem).every((sourceItemKey) => {
         return isEqual(sourceItem[sourceItemKey], targetItem[sourceItemKey]);
       });
@@ -58,19 +57,19 @@ const compareSourceAndTargetItems = (
 
 const fetchCreateLightingGroups = async () => {
   const createLightingGroupsResponse = await fetch(`${BASE_URL}/create-lighting-groups`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify({
-      lightingGroupLocations: ["КУХНЯ", "ГОСТИНАЯ", "ИГРОВАЯ", "ВАННАЯ"],
+      lightingGroupLocations: ['КУХНЯ', 'ГОСТИНАЯ', 'ИГРОВАЯ', 'ВАННАЯ'],
     }),
   });
 
   return createLightingGroupsResponse;
 };
 
-test("Create lightning devices", async () => {
+test('Create lightning devices', async () => {
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
 
@@ -81,7 +80,7 @@ test("Create lightning devices", async () => {
   expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
 });
 
-test("Get lighting devices", async () => {
+test('Get lighting devices', async () => {
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
 
@@ -93,9 +92,9 @@ test("Get lighting devices", async () => {
 
   // ! Read lighting devices
   const response = await fetch(`${BASE_URL}/get-lighting-devices`, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
   });
 
@@ -106,7 +105,7 @@ test("Get lighting devices", async () => {
   expect(compareSourceAndTargetItems(sourceItems, readItems)).toEqual(true);
 });
 
-test("Get lighting device", async () => {
+test('Get lighting device', async () => {
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
 
@@ -120,9 +119,9 @@ test("Get lighting device", async () => {
   const readItems: LightningDevice[] = await Promise.all(
     createdItems.map(async ({ id }) => {
       const response = await fetch(`${BASE_URL}/get-lighting-device?deviceId=${id}`, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-type": "application/json",
+          'Content-type': 'application/json',
         },
       });
 
@@ -135,7 +134,7 @@ test("Get lighting device", async () => {
   expect(compareSourceAndTargetItems(sourceItems, readItems)).toEqual(true);
 });
 
-test("Update product data lighting devices", async () => {
+test('Update product data lighting devices', async () => {
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
 
@@ -148,24 +147,24 @@ test("Update product data lighting devices", async () => {
   const updatedSourceItems = createdItems.map((createdItem) => {
     return {
       id: createdItem.id,
-      name: createdItem.name + " UPDATED",
-      brand: createdItem.brand + " UPDATED",
-      power: createdItem.power + " UPDATED",
-      lumens: createdItem.lumens + " UPDATED",
+      name: `${createdItem.name} UPDATED`,
+      brand: `${createdItem.brand} UPDATED`,
+      power: `${createdItem.power} UPDATED`,
+      lumens: `${createdItem.lumens} UPDATED`,
       lightTemperatureKelvin: createdItem.lightTemperatureKelvin,
       resourceMs: createdItem.resourceMs,
       price: createdItem.price,
-      currency: createdItem.currency + " UPDATED",
-      sellersWebsite: createdItem.sellersWebsite + " UPDATED",
+      currency: `${createdItem.currency} UPDATED`,
+      sellersWebsite: `${createdItem.sellersWebsite} UPDATED`,
       images: createdItem.images,
     };
   });
 
   // ! Update lighting device product data
   const response = await fetch(`${BASE_URL}/update-product-data-lighting-devices`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify(updatedSourceItems),
   });
@@ -177,7 +176,7 @@ test("Update product data lighting devices", async () => {
   expect(compareSourceAndTargetItems(updatedSourceItems, updatedItems)).toEqual(true);
 });
 
-test("Decommissioning lighting devices", async () => {
+test('Decommissioning lighting devices', async () => {
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
 
@@ -189,9 +188,9 @@ test("Decommissioning lighting devices", async () => {
 
   // ! Decommissioning lighting devices
   const response = await fetch(`${BASE_URL}/decommissioning-lighting-devices`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify({ deviceIds: createdItems.map(({ id }) => id) }),
   });
@@ -202,11 +201,11 @@ test("Decommissioning lighting devices", async () => {
 
   const updatedSourceItems = sourceItems.map((sourceItem) => ({
     ...sourceItem,
-    placeOfInstallation: "NOT_INSTALLED",
-    state: "DECOMMISSIONED",
+    placeOfInstallation: 'NOT_INSTALLED',
+    state: 'DECOMMISSIONED',
     history: [
       {
-        placeOfInstallation: "NOT_INSTALLED",
+        placeOfInstallation: 'NOT_INSTALLED',
         turnedOnAt: null,
         turnedOffAt: null,
         workedMs: null,
@@ -217,7 +216,7 @@ test("Decommissioning lighting devices", async () => {
   expect(compareSourceAndTargetItems(updatedSourceItems, decommissionedItems)).toEqual(true);
 });
 
-test("Create lighting groups", async () => {
+test('Create lighting groups', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -225,12 +224,10 @@ test("Create lighting groups", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 });
 
-test("Get lighting groups", async () => {
+test('Get lighting groups', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -238,15 +235,13 @@ test("Get lighting groups", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Read lighting groups
   const getLightingGroupsResponse = await fetch(`${BASE_URL}/get-lighting-groups`, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
   });
 
@@ -254,12 +249,10 @@ test("Get lighting groups", async () => {
 
   const lightingGroups = await getLightingGroupsResponse.json();
 
-  expect(
-    lightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(lightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 });
 
-test("Get lighting group", async () => {
+test('Get lighting group', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -267,9 +260,7 @@ test("Get lighting group", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Read lighting group
   await Promise.all(
@@ -277,9 +268,9 @@ test("Get lighting group", async () => {
       const getLightingGroupResponse = await fetch(
         `${BASE_URL}/get-lighting-group?groupId=${createLightingGroup.location}`,
         {
-          method: "GET",
+          method: 'GET',
           headers: {
-            "Content-type": "application/json",
+            'Content-type': 'application/json',
           },
         },
       );
@@ -293,7 +284,7 @@ test("Get lighting group", async () => {
   );
 });
 
-test("Add lighting devices in group", async () => {
+test('Add lighting devices in group', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -301,9 +292,7 @@ test("Add lighting devices in group", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
@@ -315,38 +304,31 @@ test("Add lighting devices in group", async () => {
   expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
 
   // ! Add lighting devices in lighting group
-  const addLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/add-lighting-devices-in-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocation: "КУХНЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const addLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/add-lighting-devices-in-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocation: 'КУХНЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
 
   const { lightingGroup, lightingDevices } = await addLightingDevicesInGroupResponse.json();
 
-  expect(lightingGroup.location).toBe("КУХНЯ");
-  expect(lightingGroup.state).toBe("OFF");
+  expect(lightingGroup.location).toBe('КУХНЯ');
+  expect(lightingGroup.state).toBe('OFF');
   expect(
-    lightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
-    ),
+    lightingGroup.devices.every((deviceId: string) => createdItems.some((device: any) => deviceId === device.id)),
   ).toBe(true);
 
-  expect(
-    lightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(lightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 });
 
-test("Remove lighting devices from group", async () => {
+test('Remove lighting devices from group', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -354,9 +336,7 @@ test("Remove lighting devices from group", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
@@ -368,70 +348,58 @@ test("Remove lighting devices from group", async () => {
   expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
 
   // ! Add lighting devices in lighting group
-  const addLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/add-lighting-devices-in-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocation: "КУХНЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const addLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/add-lighting-devices-in-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocation: 'КУХНЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
 
   const { lightingGroup, lightingDevices } = await addLightingDevicesInGroupResponse.json();
 
-  expect(lightingGroup.location).toBe("КУХНЯ");
-  expect(lightingGroup.state).toBe("OFF");
+  expect(lightingGroup.location).toBe('КУХНЯ');
+  expect(lightingGroup.state).toBe('OFF');
   expect(
-    lightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
-    ),
+    lightingGroup.devices.every((deviceId: string) => createdItems.some((device: any) => deviceId === device.id)),
   ).toBe(true);
 
-  expect(
-    lightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(lightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Remove lighting devices from lighting group
-  const removeLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/remove-lighting-devices-from-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocation: "КУХНЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const removeLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/remove-lighting-devices-from-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocation: 'КУХНЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   expect(removeLightingDevicesInGroupResponse.ok).toEqual(true);
 
   const { lightingGroup: removedLightingGroup, lightingDevices: removedLightingDevices } =
     await removeLightingDevicesInGroupResponse.json();
 
-  expect(removedLightingGroup.location).toBe("КУХНЯ");
-  expect(removedLightingGroup.state).toBe("OFF");
+  expect(removedLightingGroup.location).toBe('КУХНЯ');
+  expect(removedLightingGroup.state).toBe('OFF');
   expect(
-    removedLightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
+    removedLightingGroup.devices.every((deviceId: string) =>
+      createdItems.some((device: any) => deviceId === device.id),
     ),
   ).toBe(true);
 
-  expect(
-    removedLightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(removedLightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 });
 
-test("Move lighting devices to another group", async () => {
+test('Move lighting devices to another group', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -439,9 +407,7 @@ test("Move lighting devices to another group", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
@@ -453,51 +419,41 @@ test("Move lighting devices to another group", async () => {
   expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
 
   // ! Add lighting devices in lighting group
-  const addLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/add-lighting-devices-in-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocation: "КУХНЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const addLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/add-lighting-devices-in-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocation: 'КУХНЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
 
   const { lightingGroup, lightingDevices } = await addLightingDevicesInGroupResponse.json();
 
-  expect(lightingGroup.location).toBe("КУХНЯ");
-  expect(lightingGroup.state).toBe("OFF");
+  expect(lightingGroup.location).toBe('КУХНЯ');
+  expect(lightingGroup.state).toBe('OFF');
   expect(
-    lightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
-    ),
+    lightingGroup.devices.every((deviceId: string) => createdItems.some((device: any) => deviceId === device.id)),
   ).toBe(true);
 
-  expect(
-    lightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(lightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Move lighting devices to another group
-  const moveLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/move-lighting-device-to-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocationFrom: "КУХНЯ",
-        lightingGroupLocationTo: "ГОСТИНАЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const moveLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/move-lighting-device-to-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocationFrom: 'КУХНЯ',
+      lightingGroupLocationTo: 'ГОСТИНАЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   console.log(moveLightingDevicesInGroupResponse.statusText);
 
@@ -506,20 +462,16 @@ test("Move lighting devices to another group", async () => {
   const { lightingGroup: movedLightingGroup, lightingDevices: movedLightingDevices } =
     await moveLightingDevicesInGroupResponse.json();
 
-  expect(movedLightingGroup.location).toBe("ГОСТИНАЯ");
-  expect(movedLightingGroup.state).toBe("OFF");
+  expect(movedLightingGroup.location).toBe('ГОСТИНАЯ');
+  expect(movedLightingGroup.state).toBe('OFF');
   expect(
-    movedLightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
-    ),
+    movedLightingGroup.devices.every((deviceId: string) => createdItems.some((device: any) => deviceId === device.id)),
   ).toBe(true);
 
-  expect(
-    movedLightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(movedLightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 });
 
-test("Turn on and turn off lighting group", async () => {
+test('Turn on and turn off lighting group', async () => {
   // ! Create lighting groups
   const createLightingGroupsResponse = await fetchCreateLightingGroups();
 
@@ -527,9 +479,7 @@ test("Turn on and turn off lighting group", async () => {
 
   const createLightingGroups = await createLightingGroupsResponse.json();
 
-  expect(
-    createLightingGroups.map((item: any) => omit(item, ["createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(createLightingGroups.map((item: any) => omit(item, ['createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Create lighting devices
   const [sourceItems, createLightningDeviceResponse] = await createLightningDevices();
@@ -541,44 +491,37 @@ test("Turn on and turn off lighting group", async () => {
   expect(compareSourceAndTargetItems(sourceItems, createdItems)).toEqual(true);
 
   // ! Add lighting devices in lighting group
-  const addLightingDevicesInGroupResponse = await fetch(
-    `${BASE_URL}/add-lighting-devices-in-group`,
-    {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify({
-        lightingGroupLocation: "КУХНЯ",
-        deviceIds: createdItems.map(({ id }: any) => id),
-      }),
+  const addLightingDevicesInGroupResponse = await fetch(`${BASE_URL}/add-lighting-devices-in-group`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      lightingGroupLocation: 'КУХНЯ',
+      deviceIds: createdItems.map(({ id }: any) => id),
+    }),
+  });
 
   expect(addLightingDevicesInGroupResponse.ok).toEqual(true);
 
   const { lightingGroup, lightingDevices } = await addLightingDevicesInGroupResponse.json();
 
-  expect(lightingGroup.location).toBe("КУХНЯ");
-  expect(lightingGroup.state).toBe("OFF");
+  expect(lightingGroup.location).toBe('КУХНЯ');
+  expect(lightingGroup.state).toBe('OFF');
   expect(
-    lightingGroup.devices.every(
-      (deviceId: string) => !!createdItems.find((device: any) => deviceId === device.id),
-    ),
+    lightingGroup.devices.every((deviceId: string) => createdItems.some((device: any) => deviceId === device.id)),
   ).toBe(true);
 
-  expect(
-    lightingDevices.map((device: any) => omit(device, ["id", "createdAt", "updatedAt"])),
-  ).toMatchSnapshot();
+  expect(lightingDevices.map((device: any) => omit(device, ['id', 'createdAt', 'updatedAt']))).toMatchSnapshot();
 
   // ! Turn on lighting group
   const turnOnLightingGroupResponse = await fetch(`${BASE_URL}/turn-on-group`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify({
-      lightingGroupLocation: "КУХНЯ",
+      lightingGroupLocation: 'КУХНЯ',
     }),
   });
 

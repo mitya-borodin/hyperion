@@ -2,7 +2,16 @@
 node_modules
 
 # don't lint build output (make sure it's set to your correct build folder name)
-dist
+build
 
 # don't lint nyc coverage output
 coverage
+
+# don't lint databases
+db
+
+cmd
+.eslintrc.js
+
+# don't ever lint GraphQl generated file
+graphql-types.ts

@@ -1,19 +1,16 @@
-import { delay } from "abort-controller-x";
-import debug from "debug";
+/* eslint-disable unicorn/prefer-ternary */
+import { delay } from 'abort-controller-x';
+import debug from 'debug';
 
-import { entrypoint } from "./infrastructure/entrypoint";
-import { ifup } from "./infrastructure/external-resource-adapters/ifup";
-import { ping } from "./infrastructure/external-resource-adapters/ping";
-import {
-  addEthRoute,
-  removeEthRoute,
-  resetRoutes,
-} from "./infrastructure/external-resource-adapters/routes";
-import { wbGsm } from "./infrastructure/external-resource-adapters/wb-gsm";
+import { entrypoint } from './infrastructure/entrypoint';
+import { ifup } from './infrastructure/external-resource-adapters/ifup';
+import { ping } from './infrastructure/external-resource-adapters/ping';
+import { addEthRoute, removeEthRoute, resetRoutes } from './infrastructure/external-resource-adapters/routes';
+import { wbGsm } from './infrastructure/external-resource-adapters/wb-gsm';
 
-const logger = debug("BUTLER-WB-NET");
+const logger = debug('BUTLER-WB-NET');
 
-export const DELAY_MS = 5_000;
+export const DELAY_MS = 5000;
 
 entrypoint(async ({ signal }) => {
   const wbGsmResult = await wbGsm({ signal });
@@ -34,10 +31,11 @@ entrypoint(async ({ signal }) => {
     return;
   }
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
-    logger("Launch new round 🚀");
+    logger('Launch new round 🚀');
 
-    const ethPing = await ping({ inet: "eth0" });
+    const ethPing = await ping({ inet: 'eth0' });
 
     if (ethPing instanceof Error) {
       /**
@@ -53,7 +51,7 @@ entrypoint(async ({ signal }) => {
       await addEthRoute();
     }
 
-    logger({ DELAY_MS }, "Wait next round 🌴");
+    logger({ DELAY_MS }, 'Wait next round 🌴');
 
     await delay(signal, DELAY_MS);
   }

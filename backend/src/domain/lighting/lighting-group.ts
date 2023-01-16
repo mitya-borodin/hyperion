@@ -1,8 +1,8 @@
-import { COMMON_RELAY_NAME } from "../wirenboard/relays";
+import { COMMON_RELAY_NAME } from '../wirenboard/relays';
 
 export enum LightingGroupState {
-  ON = "ON",
-  OFF = "OFF",
+  ON = 'ON',
+  OFF = 'OFF',
 }
 
 /**
@@ -19,6 +19,6 @@ export type LightingGroup = {
   readonly location: string;
   readonly relays: COMMON_RELAY_NAME[];
   readonly state: LightingGroupState;
-  readonly createdAt: string;
-  readonly updatedAt: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 };

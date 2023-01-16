@@ -1,9 +1,0 @@
-{
-  "title": "Get lighting device querystring schema",
-  "type": "object",
-  "properties": {
-    "deviceId": { "type": "string" }
-  },
-  "additionalProperties": false,
-  "required": ["deviceId"]
-}

@@ -1,9 +1,0 @@
-{
-  "title": "Turn off group body schema",
-  "type": "object",
-  "properties": {
-    "lightingGroupLocation": { "type": "string" }
-  },
-  "additionalProperties": false,
-  "required": ["lightingGroupLocation"]
-}

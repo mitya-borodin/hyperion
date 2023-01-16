@@ -8,7 +8,7 @@ services:
       - "127.0.0.1:28015:28015"
       - "127.0.0.1:27015:8080"
     volumes:
-      - ./rethinkdb:/data
+      - rethinkdb_data:/data
   rethinkdb_test:
     restart: "always"
     image: rethinkdb:2.4.2
@@ -17,4 +17,4 @@ services:
       - "127.0.0.1:28016:28015"
       - "127.0.0.1:27016:8080"
     volumes:
-      - ./rethinkdb_test:/data
+      - rethinkdb_data_test:/data

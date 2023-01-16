@@ -1,12 +1,12 @@
-import { Logger } from "pino";
-import { Connection, r } from "rethinkdb-ts";
+import { Logger } from 'pino';
+import { Connection } from 'rethinkdb-ts';
 
-import { Errors } from "../../../domain/errors";
-import { LightingGroup, LightingGroupState } from "../../../domain/lighting/lighting-group";
-import { ILightingRepository } from "../../../domain/lighting/lighting-repository";
-import { COMMON_RELAY_NAME } from "../../../domain/wirenboard/relays";
-import { checkWriteResult } from "../common";
-import { lightingGroupTable } from "../tables/lighting-group";
+import { LightingGroup, LightingGroupState } from '../../../domain/lighting/lighting-group';
+import { COMMON_RELAY_NAME } from '../../../domain/wirenboard/relays';
+import { Errors } from '../../../enums/errors';
+import { ILightingRepository } from '../../../ports/lighting-repository';
+import { checkWriteResult } from '../common';
+import { lightingGroupTable } from '../tables/lighting-group';
 
 export class LightingRepository implements ILightingRepository {
   private readonly rethinkdbConnection: Connection;
@@ -14,7 +14,7 @@ export class LightingRepository implements ILightingRepository {
 
   constructor(rethinkdbConnection: Connection, logger: Logger) {
     this.rethinkdbConnection = rethinkdbConnection;
-    this.logger = logger.child({ name: "lighting-repository" });
+    this.logger = logger.child({ name: 'lighting-repository' });
   }
 
   async getLightingGroups(): Promise<LightingGroup[] | Error> {
@@ -32,7 +32,7 @@ export class LightingRepository implements ILightingRepository {
       const readResult = await lightingGroupTable.get(location).run(this.rethinkdbConnection);
 
       if (readResult === null) {
-        this.logger.error({ location }, "Lighting group not found");
+        this.logger.error({ location }, 'Lighting group not found');
 
         return new Error(Errors.INVALID_ARGUMENTS);
       }
@@ -53,10 +53,10 @@ export class LightingRepository implements ILightingRepository {
             location,
             relays: [],
             state: LightingGroupState.OFF,
-            createdAt: r.now(),
-            updatedAt: r.now(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
           })),
-          { returnChanges: "always" },
+          { returnChanges: 'always' },
         )
         .run(this.rethinkdbConnection);
 
@@ -70,10 +70,7 @@ export class LightingRepository implements ILightingRepository {
 
   async removeLightingGroups(locations: string[]): Promise<LightingGroup[] | Error> {
     try {
-      const writeResult = await lightingGroupTable
-        .getAll(locations)
-        .delete()
-        .run(this.rethinkdbConnection);
+      const writeResult = await lightingGroupTable.getAll(locations).delete().run(this.rethinkdbConnection);
 
       return checkWriteResult({ logger: this.logger, loggerContext: { locations }, writeResult });
     } catch (error) {
@@ -83,15 +80,9 @@ export class LightingRepository implements ILightingRepository {
     }
   }
 
-  async setRelayToGroup(
-    location: string,
-    relays: COMMON_RELAY_NAME[],
-  ): Promise<LightingGroup[] | Error> {
+  async setRelayToGroup(location: string, relays: COMMON_RELAY_NAME[]): Promise<LightingGroup[] | Error> {
     try {
-      const writeResult = await lightingGroupTable
-        .get(location)
-        .update({ relays })
-        .run(this.rethinkdbConnection);
+      const writeResult = await lightingGroupTable.get(location).update({ relays }).run(this.rethinkdbConnection);
 
       return checkWriteResult({ logger: this.logger, loggerContext: { location }, writeResult });
     } catch (error) {
@@ -101,15 +92,9 @@ export class LightingRepository implements ILightingRepository {
     }
   }
 
-  async turnGroups(
-    locations: string[],
-    state: LightingGroupState,
-  ): Promise<LightingGroup[] | Error> {
+  async turnGroups(locations: string[], state: LightingGroupState): Promise<LightingGroup[] | Error> {
     try {
-      const writeResult = await lightingGroupTable
-        .getAll(locations)
-        .update({ state })
-        .run(this.rethinkdbConnection);
+      const writeResult = await lightingGroupTable.getAll(locations).update({ state }).run(this.rethinkdbConnection);
 
       return checkWriteResult({ logger: this.logger, loggerContext: { locations }, writeResult });
     } catch (error) {

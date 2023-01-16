@@ -1,7 +1,0 @@
-{
-  "title": "Get lighting groups reply schema",
-  "type": "array",
-  "items": {
-    "$ref": "./src/interfaces/http/schemas/lighting/lighting-group.json"
-  }
-}

@@ -49,8 +49,6 @@
     "bourhaouta.tailwindshad",
     "bourhaouta.tailwindshades",
     "zxh404.vscode-proto3",
-    "redhat.vscode-yaml",
-    "gitlab.gitlab-workflow",
-    "logerfo.gitlab-notifications"
+    "redhat.vscode-yaml"
   ]
 }

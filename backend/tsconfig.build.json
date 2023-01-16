@@ -4,13 +4,9 @@
   "exclude": ["**/test/**/*.ts"],
   "compilerOptions": {
     "rootDir": "./src",
-
     "outDir": "dist",
-
     "noEmit": false,
-
     "sourceMap": false,
-
     "declaration": false
   }
 }

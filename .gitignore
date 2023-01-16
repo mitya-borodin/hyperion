@@ -1,6 +1,8 @@
 # custom ignores
 dist
 !wirenboard/dist
+.DS_Store
+.idea
 
 # Created by https://www.gitignore.io/api/node,macos
 
@@ -140,9 +142,3 @@ terraform/helm
 terraform/kubectl
 
 .snowpack
-
-.env
-
-# RethinkDB
-/rethinkdb/rethinkdb_data
-/rethinkdb_test/rethinkdb_data

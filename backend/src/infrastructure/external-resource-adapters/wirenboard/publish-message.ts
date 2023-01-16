@@ -1,7 +1,7 @@
-import debug from "debug";
-import { MqttClient } from "mqtt";
+import debug from 'debug';
+import { MqttClient } from 'mqtt';
 
-const logger = debug("wirenboard:publish:message");
+const logger = debug('wirenboard:publish:message');
 
 export const publishWirenboardMessage = async (
   client: MqttClient,
@@ -11,7 +11,7 @@ export const publishWirenboardMessage = async (
   return new Promise((resolve) => {
     client.publish(topic, message, (error) => {
       if (error) {
-        logger("An error occurred when sending a message via MQTT WB 🚨");
+        logger('An error occurred when sending a message via MQTT WB 🚨');
         logger(error);
 
         resolve(error);
@@ -19,7 +19,7 @@ export const publishWirenboardMessage = async (
         return;
       }
 
-      resolve(undefined);
+      resolve();
     });
   });
 };

@@ -7,11 +7,11 @@
     "build": "del dist && tsc --project ./tsconfig.build.json"
   },
   "engines": {
-    "node": ">=16.4.0",
-    "npm": ">=8.3.1"
+    "node": ">=18.12.1",
+    "npm": ">=8.19.2"
   },
   "dependencies": {
-    "abort-controller-x": "^0.2.6",
+    "abort-controller-x": "^0.4.1",
     "debug": "^4.3.4",
     "defer-promise": "^3.0.0",
     "dotenv": "^16.0.1",
@@ -19,7 +19,7 @@
     "node-abort-controller": "^3.0.1"
   },
   "devDependencies": {
-    "@tsconfig/node16": "^1.0.2",
+    "@tsconfig/node18": "^1.0.1",
     "@types/debug": "^4.1.7",
     "@types/defer-promise": "^1.0.0",
     "@types/node": "^16.11.26",
