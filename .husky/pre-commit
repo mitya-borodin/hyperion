@@ -2,3 +2,15 @@
 . "$(dirname "$0")/_/husky.sh"
 
 npx --no lint-staged
+
+cd ./backend
+
+echo "Build backend 🚀"
+
+npx --no tsc --noEmit
+
+cd ../wirenboard
+
+echo "Build wirenboard 🚀"
+
+npx --no tsc --noEmit
