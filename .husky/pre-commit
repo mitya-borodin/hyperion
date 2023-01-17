@@ -3,14 +3,14 @@
 
 yarn lint-staged
 
-cd ./backend
+cd ./packages/rayner
 
-echo "Build backend 🚀"
+echo "Build rayner 🚀"
 
 yarn build:check
 
-cd ../wirenboard
+cd ../swan
 
-echo "Build wirenboard 🚀"
+echo "Build swan 🚀"
 
 yarn build:check

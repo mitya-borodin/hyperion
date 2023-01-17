@@ -2,29 +2,20 @@
   "version": "1.0.0",
   "configurations": [
     {
-      "name": "Backend",
+      "name": "Rayner",
       "request": "attach",
       "address": "127.0.0.1",
       "port": 9229,
-      "localRoot": "${cwd}/backend/src",
+      "localRoot": "${cwd}/packages/rayner/src",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     },
     {
-      "name": "Frontend",
+      "name": "Kerrigan",
       "request": "attach",
       "address": "127.0.0.1",
       "port": 9230,
-      "localRoot": "${cwd}/frontend/src",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Wirenboard",
-      "request": "attach",
-      "address": "127.0.0.1",
-      "port": 9231,
-      "localRoot": "${cwd}/wirenboard/src",
+      "localRoot": "${cwd}/packages/kerrigan/src",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }
