@@ -5,12 +5,16 @@ yarn lint-staged
 
 cd ./packages/rayner
 
-echo "Build rayner 🚀"
+echo "🚀 Build rayner..."
 
 yarn build:check
+
+echo "✅ Rayner was built successsful"
 
 cd ../swan
 
-echo "Build swan 🚀"
+echo "🚀 Build swan..."
 
 yarn build:check
+
+echo "✅ Swan was built successsful"
