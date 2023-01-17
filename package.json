@@ -1,8 +1,8 @@
 {
-  "name": "soul",
+  "name": "hyperion",
   "version": "1.0.0",
   "description": "Control system for components of a smart home built on Wirenboard equipment",
-  "repository": "git@github.com:mitya-borodin/soul.git",
+  "repository": "git@github.com:mitya-borodin/hyperion.git",
   "license": "MIT",
   "scripts": {
     "prettier:base": "prettier \"**/*.{ts,json,md}\"",
