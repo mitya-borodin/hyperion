@@ -199,4 +199,4 @@ yarn start
 
 ### CD
 
-Будет выполнена настройка в Github workflow, который будет менять имена образов в docker swarm 
+Будет выполнена настройка в Github workflow, который будет менять имена образов в docker swarm
