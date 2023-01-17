@@ -1,6 +1,6 @@
-# Abatur
+# Soul
 
-Abatur is control system for components of a smart home built on [Wirenboard equipment](https://wirenboard.com/ru/product/wiren-board-7).
+Soul is control system for components of a smart home built on [Wirenboard equipment](https://wirenboard.com/ru/product/wiren-board-7).
 
 ## Technology
 

@@ -1,8 +1,8 @@
 {
-  "name": "abatur",
+  "name": "soul",
   "version": "1.0.0",
   "description": "Control system for components of a smart home built on Wirenboard equipment",
-  "repository": "git@github.com:mitya-borodin/abatur.git",
+  "repository": "git@github.com:mitya-borodin/soul.git",
   "license": "MIT",
   "scripts": {
     "prettier:base": "prettier \"**/*.{ts,json,md}\"",

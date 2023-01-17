@@ -1,6 +1,6 @@
-# Abatur-WB
+# Swan
 
-Small node app, which give some features:
+Swan is small node app, which give some features:
 
 1. Launch WB-GSM module
 2. Launch ifup usb0
