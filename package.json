@@ -10,6 +10,7 @@
     "prettier:write": "yarn prettier:base --write",
     "eslint:check": "eslint --max-warnings 1000 --format stylish \"src/**/*.ts\"",
     "eslint:write": "yarn eslint:check --fix",
+    "lint-staged": "lint-staged",
     "prepare": "husky install || echo 'Husky is not used in production mode, skip husky install'",
     "ncu:outdated": "npm-check-updates",
     "ncu:upgrade": "npm-check-updates -u --target minor"

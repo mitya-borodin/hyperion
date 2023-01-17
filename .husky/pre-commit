@@ -1,16 +1,16 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npx --no lint-staged
+yarn lint-staged
 
 cd ./backend
 
 echo "Build backend 🚀"
 
-npx --no tsc --noEmit
+yarn build:check
 
 cd ../wirenboard
 
 echo "Build wirenboard 🚀"
 
-npx --no tsc --noEmit
+yarn build:check

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "nodemon --config nodemon.json src/index.ts",
+    "build:check": "tsc --project ./tsconfig.json",
     "build": "del-cli build && tsc --project ./tsconfig.build.json"
   },
   "engines": {
