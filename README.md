@@ -173,12 +173,22 @@ yarn start
   "version": "1.0.0",
   "configurations": [
     {
-      "type": "node",
+      "name": "Rayner",
       "request": "attach",
-      "name": "Nodemon",
-      "processId": "${command:PickProcess}",
-      "restart": true,
-      "protocol": "inspector"
+      "address": "127.0.0.1",
+      "port": 9229,
+      "localRoot": "${cwd}/packages/rayner/src",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Kerrigan",
+      "request": "attach",
+      "address": "127.0.0.1",
+      "port": 9230,
+      "localRoot": "${cwd}/packages/kerrigan/src",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     }
   ]
 }
@@ -186,11 +196,13 @@ yarn start
 
 Для отладки nodejs приложения запущенного на хостовой машине необходимо использовать конфигурацию `Nodemon`, и выбрать процесс запущенный в этом `src/index.ts` файле.
 
-Для отладки приложения запущенного через docker compose необходимо будет казать адрес инспектора.
+Для отладки приложения запущенного через docker compose необходимо будет указать адрес инспектора.
+
+В обоих случаях подключение происходит, через HTTP API.
 
 ## CI/CD
 
-Ранер будут находиться на локальном компе.
+Ранер будут находиться на локальном компе или в Digitalocean
 
 ### CI
 
