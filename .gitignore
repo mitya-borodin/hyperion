@@ -1,9 +1,3 @@
-# custom ignores
-dist
-!wirenboard/dist
-.DS_Store
-.idea
-
 # Created by https://www.gitignore.io/api/node,macos
 
 ### macOS ###
@@ -113,25 +107,17 @@ typings/
 .serverless
 
 # End of https://www.gitignore.io/api/node,macos
-# Snowpack
-.build
-build
-web_modules
 
-# Mongodb
-data
-
-# Postgres
-postgres
-
-#files
-uploadedFiles
+# Files
+file-storage
 
 # SSL
 ssl
 *.key
 *.crt
 credentials
+
+# Terraform
 .terraform
 terraform.tfstate
 terraform.tfstate.backup
@@ -141,4 +127,8 @@ terraform/.kube
 terraform/helm
 terraform/kubectl
 
-.snowpack
+# Custom ignores
+.DS_Store
+.idea
+build
+!wirenboard/build

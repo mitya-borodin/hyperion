@@ -4,7 +4,6 @@
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
   "compilerOptions": {
     "baseUrl": "src",
-    "outDir": "build",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "strict": true

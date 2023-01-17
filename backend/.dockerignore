@@ -1,4 +1,4 @@
-# git
+# Git
 .git
 .gitattributes
 .gitignore
@@ -23,4 +23,5 @@ yarn-error.log*
 ## Dependency directories
 node_modules
 
-dist
+## Assets
+build

@@ -6,6 +6,7 @@
     "start": "nodemon --config nodemon.json src/index.ts | pino-pretty -c",
     "start:test-mode": "nodemon --config nodemon.test.json src/index.ts | pino-pretty -c",
     "test": "jest --config jest.config.js --no-cache --runInBand",
+    "build": "del-cli build && tsc --project ./tsconfig.build.json",
     "ncu:outdated": "npm-check-updates",
     "ncu:upgrade": "npm-check-updates -u --target minor"
   },
