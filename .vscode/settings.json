@@ -163,11 +163,11 @@
     }
   ],
   "cSpell.words": [
-    "hyperion",
     "abortable",
     "EBUS",
     "geetest",
     "GPIO",
+    "hyperion",
     "ifup",
     "inet",
     "mitya",
@@ -181,7 +181,8 @@
     "Setpoint",
     "sharedb",
     "WBIO",
-    "wirenboard"
+    "wirenboard",
+    "мапим"
   ],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
