@@ -8,6 +8,83 @@
 4. Отслеживает интернет соединение через ping внешнего сервиса `ya.ru`, и dns сервисов
 5. Переключает параметр metric между eth0 и usb0, что приводит к перенаправлению трафика из eth0 в usb0 (sim-card), и обратно, при появлении интернета на eth0.
 
+## Установка node для запуска `Swan`
+
+Необходимо обновить переменную окружения `PATH`, только для наших терминальных сессий.
+
+Для этого необходимо в конец файла `.bashrc` добавить:
+
+```bash
+export PATH=/root/bin:$PATH
+```
+
+Далее нужно перейти в домашнюю директорию и создать директорию `bin`:
+
+```bash
+mkdir bin
+```
+
+После чего нужно создать ключевые символические ссылки:
+
+```bash
+cd bin
+
+ln -s /root/node/bin/node node
+ln -s /root/node/bin/npm npm
+ln -s /root/node/bin/npx npx
+ln -s /root/node/bin/pino-pretty pino-pretty
+```
+
+Для активации изменений в `.bashrc`, закрываем текущую терминальную сессию и открываем новую.
+
+Перед тем как скачивать сбору ноды, необходимо узнать архитекруту процессора используя команду:
+
+```bash
+lscpu
+```
+
+```text
+Architecture:          armv7l
+Byte Order:            Little Endian
+CPU(s):                1
+On-line CPU(s) list:   0
+Thread(s) per core:    1
+Core(s) per socket:    1
+Socket(s):             1
+Model:                 5
+Model name:            ARMv7 Processor rev 5 (v7l)
+CPU max MHz:           792.0000
+CPU min MHz:           198.0000
+BogoMIPS:              64.00
+Flags:                 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+```
+
+После чего скачиваем сборку с nodejs:
+
+```bash
+wget https://nodejs.org/download/release/latest-v16.x/node-v16.20.2-linux-armv7l.tar.xz
+
+tar -xvf node-v16.20.2-linux-armv7l.tar.xz
+
+mv node-v16.20.2-linux-armv7l node
+
+rm -rf node-v16.20.2-linux-armv7l.tar.xz
+```
+
+После чего можем проверить версию `node`:
+
+```bash
+node -v
+```
+
+Установка nodejs завершена, далее нужно глобавльно установить пакет `pino-pretty`:
+
+```bash
+npm i -g pino-pretty
+```
+
+Установка всех необходимых компонентов выполнена.
+
 ## Настройка запуска `Swan` на стороне Wirenboard
 
 Запуск осуществляется через cron, для его настройки необходимо добавить настройку в файл `/etc/crontab`.
