@@ -9,10 +9,9 @@ Hyperion is control system for components of a smart home built on [Wirenboard e
 
 ### Frontend
 
+- [ViteJS](https://vitejs.dev)
 - [SolidJS](https://www.solidjs.com)
 - [Tailwind](https://tailwindcss.com)
-- [Mobx](https://mobx.js.org/README.html)
-- [ViteJS](https://vitejs.dev)
 
 ### Backend
 
@@ -20,14 +19,13 @@ Hyperion is control system for components of a smart home built on [Wirenboard e
 - [Fastify](https://www.fastify.io)
 - [Pino](https://github.com/pinojs/pino)
 - [Pino-pretty](https://github.com/pinojs/pino-pretty)
-- [Mobx](https://mobx.js.org/README.html)
+- [RxJs](https://rxjs.dev)
 - [Nodemon](https://nodemon.io)
-- [RethinkDB](https://rethinkdb.com)
+- [MongoDB](https://www.mongodb.com)
 - [MQTT](https://www.npmjs.com/package/mqtt)
 - [Mosquitto](https://mosquitto.org)
 - [Docker compose for development](https://docs.docker.com/language/nodejs/develop/)
 - [Compose-file](https://docs.docker.com/compose/compose-file/)
-- [Run in production](https://docs.docker.com/get-started/orchestration/)
 
 ### Wirenboard
 
@@ -35,9 +33,9 @@ Hyperion is control system for components of a smart home built on [Wirenboard e
 - [WB MQTT](https://wirenboard.com/wiki/index.php/MQTT)
 - [WB MQTT Convention](https://github.com/wirenboard/conventions/blob/main/README.md)
 - [WB WEB GUI IN ETH0](http://192.168.1.75)
-- [WB WEB GUI IN WLAN0](http://192.168.2.75)
+- [WB WEB GUI IN WLAN0](http://192.168.42.1)
 - [WB MQTT Channels in ETH0](http://192.168.1.75/#!/MQTTChannels)
-- [WB MQTT Channels in WLAN0](http://192.168.2.75/#!/MQTTChannels)
+- [WB MQTT Channels in WLAN0](http://192.168.42.1/#!/MQTTChannels)
 - [Mosquitto](https://mosquitto.org)
 - [MQTT](https://www.npmjs.com/package/mqtt)
 
@@ -127,13 +125,7 @@ yarn
 #### Установить зависимости в каждом проекте
 
 ```bash
-cd backend
-
-yarn
-
-cp .env.example .env
-
-cd ../frontend
+cd rayner
 
 yarn
 
@@ -151,13 +143,7 @@ docker-compose up -d
 ### Регулярные действия
 
 ```bash
-cd backend
-
-yarn start
-
-// Открываем новую консоль и ием во frontend
-
-cd frontend
+cd rayner
 
 yarn start
 ```
@@ -178,15 +164,6 @@ yarn start
       "address": "127.0.0.1",
       "port": 9229,
       "localRoot": "${cwd}/packages/rayner/src",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Kerrigan",
-      "request": "attach",
-      "address": "127.0.0.1",
-      "port": 9230,
-      "localRoot": "${cwd}/packages/kerrigan/src",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }

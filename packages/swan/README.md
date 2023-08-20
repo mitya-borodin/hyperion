@@ -1,22 +1,24 @@
 # Swan
 
-Swan is small node app, which give some features:
+Небольшое приложение которое запускается как фоновый процесс и реализует несколько функций:
 
-1. Launch WB-GSM module
-2. Launch ifup usb0
-3. Reset route settings in first time
-4. Track internet connection through ping external services like `ya.ru`, and dns services
-5. Switch metric between eth0 and usb0
+1. Запуск модуля WB-GSM
+2. Запуск ifup usb0
+3. Сбрасывает настройки роутера при первом запуске
+4. Отслеживает интернет соединение через ping внешнего сервиса `ya.ru`, и dns сервисов
+5. Переключает параметр metric между eth0 и usb0, что приводит к перенаправлению трафика из eth0 в usb0 (sim-card), и обратно, при появлении интернета на eth0.
 
-## Configure the launch of `Swan` after restarting the system
+## Настройка запуска `Swan` на стороне Wirenboard
 
-It is necessary to add a line with the cron setting to the end of the `/etc/crontab` file:
+Запуск осуществляется через cron, для его настройки необходимо добавить настройку в файл `/etc/crontab`.
+
+Вот так выглядит настройка:
 
 ```bash
 @reboot root DEBUG=* /root/node/bin/node /root/hyperion/swan/build/run.js
 ```
 
-As a result, the file will look like:
+В результате, файл должен выглядеть примерно так:
 
 ```bash
 # /etc/crontab: system-wide crontab
@@ -35,4 +37,32 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
 #
 @reboot root DEBUG=* /root/node/bin/node /root/hyperion/swan/build/run.js
+```
+
+## Сборка проекта
+
+После того как мы добавили настройку в cron, необходимо:
+
+### Клонировать проект в домашнюю директорию
+
+```bash
+cd
+
+git clone git@github.com:mitya-borodin/hyperion.git
+```
+
+### Перейти в `Swan` и установить зависимости, собрать проект
+
+```bash
+cd hyperion/packages/swan
+
+npm i
+
+npm run build
+```
+
+### Создать `symlink` ссылку для доступа к файлу логов
+
+```bash
+ln -s ~/hyperion/packages/swan/log.txt swan.log
 ```
