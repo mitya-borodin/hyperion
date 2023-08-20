@@ -16,8 +16,7 @@
     "debug": "^4.3.4",
     "defer-promise": "^3.0.0",
     "dotenv": "^16.3.1",
-    "execa": "^5.1.1",
-    "node-abort-controller": "^3.1.1"
+    "execa": "^5.1.1"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.0",

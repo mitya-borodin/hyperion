@@ -4,7 +4,6 @@ import { exit } from 'node:process';
 import { abortable, race, spawn, SpawnEffects } from 'abort-controller-x';
 import debug from 'debug';
 import defer from 'defer-promise';
-import { AbortController } from 'node-abort-controller';
 
 import { Config } from './config';
 
