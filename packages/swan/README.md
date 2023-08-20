@@ -92,7 +92,7 @@ npm i -g pino-pretty
 Вот так выглядит настройка:
 
 ```bash
-@reboot root DEBUG=* /root/node/bin/node /root/hyperion/swan/build/run.js
+@reboot root DEBUG=* /root/node/bin/node /root/hyperion/packages/swan/build/run.js
 ```
 
 В результате, файл должен выглядеть примерно так:
@@ -113,7 +113,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
 52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
 #
-@reboot root DEBUG=* /root/node/bin/node /root/hyperion/swan/build/run.js
+@reboot root DEBUG=* /root/node/bin/node /root/hyperion/packages/swan/build/run.js
 ```
 
 ## Сборка проекта
