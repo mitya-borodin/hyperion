@@ -2,7 +2,6 @@ import os from 'node:os';
 
 import { abortable, race, spawn, SpawnEffects } from 'abort-controller-x';
 import defer from 'defer-promise';
-import { AbortController } from 'node-abort-controller';
 import { Logger, pino } from 'pino';
 
 import { Config } from './config';
