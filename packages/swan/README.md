@@ -59,7 +59,7 @@ BogoMIPS:              64.00
 Flags:                 half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
 ```
 
-После чего скачиваем сборку с nodejs:
+После чего скачиваем сборку с nodejs, `прям сейчас 18 версия не работает`.
 
 ```bash
 wget https://nodejs.org/download/release/latest-v16.x/node-v16.20.2-linux-armv7l.tar.xz
