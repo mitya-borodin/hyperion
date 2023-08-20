@@ -20,7 +20,7 @@
     "node-abort-controller": "^3.0.1"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^1.0.1",
+    "@tsconfig/node18": "^18.2.0",
     "@types/debug": "^4.1.7",
     "@types/defer-promise": "^1.0.0",
     "@types/node": "^16.11.26",
