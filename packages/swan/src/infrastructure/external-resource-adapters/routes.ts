@@ -2,7 +2,7 @@
 import debug from 'debug';
 import execa from 'execa';
 
-const logger = debug('BUTLER-WB-ROUTE');
+const logger = debug('SWAN-WB-ROUTE');
 
 export const resetRoutes = async () => {
   try {

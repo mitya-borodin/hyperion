@@ -8,7 +8,7 @@ import { ping } from './infrastructure/external-resource-adapters/ping';
 import { addEthRoute, removeEthRoute, resetRoutes } from './infrastructure/external-resource-adapters/routes';
 import { wbGsm } from './infrastructure/external-resource-adapters/wb-gsm';
 
-const logger = debug('BUTLER-WB-NET');
+const logger = debug('SWAN-WB-NET');
 
 export const DELAY_MS = 5000;
 

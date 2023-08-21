@@ -8,6 +8,12 @@
 4. Отслеживает интернет соединение через ping внешнего сервиса `ya.ru`, и dns сервисов
 5. Переключает параметр metric между eth0 и usb0, что приводит к перенаправлению трафика из eth0 в usb0 (sim-card), и обратно, при появлении интернета на eth0.
 
+## Установка библиотек для окружения
+
+```bash
+apt install gcc
+```
+
 ## Установка NodeJS
 
 Необходимо обновить переменную окружения `PATH`, только для наших терминальных сессий.
@@ -132,6 +138,8 @@ git clone git@github.com:mitya-borodin/hyperion.git
 
 ```bash
 cd hyperion/packages/swan
+
+cp .env.example .env
 
 npm i
 

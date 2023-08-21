@@ -1,7 +1,7 @@
 import debug from 'debug';
 import execa from 'execa';
 
-const logger = debug('BUTLER-WB-PING');
+const logger = debug('SWAN-WB-PING');
 
 type PingParameters = {
   inet: 'eth0' | 'usb0';

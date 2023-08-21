@@ -6,7 +6,7 @@ import { Connection, IndexOptions, r, RConnectionOptions, RDatum, RTable, WriteR
 
 import { Errors } from '../../enums/errors';
 
-const databaseName = 'butler';
+const databaseName = 'rayner';
 
 export const database = r.db(databaseName);
 

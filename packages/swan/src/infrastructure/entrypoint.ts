@@ -14,7 +14,7 @@ type ExecutorParameters = {
 
 type Executor = (parameters: ExecutorParameters) => Promise<void>;
 
-const logger = debug('BUTLER-ENTRYPOINT');
+const logger = debug('SWAN-ENTRYPOINT');
 
 export const entrypoint = async (executor: Executor) => {
   const abortController = new AbortController();

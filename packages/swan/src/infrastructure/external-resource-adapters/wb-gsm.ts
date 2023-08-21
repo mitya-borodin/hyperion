@@ -6,7 +6,7 @@ import debug from 'debug';
 
 import { DELAY_MS } from '../..';
 
-const logger = debug('BUTLER-WB-GSM');
+const logger = debug('SWAN-WB-GSM');
 
 type WbGsmParameters = {
   signal: AbortSignal;
