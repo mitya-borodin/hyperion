@@ -1,6 +1,6 @@
 # Hyperion
 
-Hyperion is control system for components of a smart home built on [Wirenboard equipment](https://wirenboard.com/ru/product/wiren-board-7).
+Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.
 
 ## Technology
 
@@ -16,7 +16,7 @@ Hyperion is control system for components of a smart home built on [Wirenboard e
 ### Backend
 
 - [NodeJS](https://nodejs.org/en/)
-- [Fastify](https://www.fastify.io)
+- [NestJS](https://nestjs.com)
 - [Pino](https://github.com/pinojs/pino)
 - [Pino-pretty](https://github.com/pinojs/pino-pretty)
 - [RxJs](https://rxjs.dev)
@@ -24,7 +24,7 @@ Hyperion is control system for components of a smart home built on [Wirenboard e
 - [MongoDB](https://www.mongodb.com)
 - [MQTT](https://www.npmjs.com/package/mqtt)
 - [Mosquitto](https://mosquitto.org)
-- [Docker compose for development](https://docs.docker.com/language/nodejs/develop/)
+- [Docker compose](https://docs.docker.com/language/nodejs/develop/)
 - [Compose-file](https://docs.docker.com/compose/compose-file/)
 
 ### Wirenboard
