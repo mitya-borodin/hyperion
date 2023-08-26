@@ -163,6 +163,7 @@
     }
   ],
   "cSpell.words": [
+    "мапим",
     "abortable",
     "EBUS",
     "geetest",
@@ -180,9 +181,9 @@
     "rethinkdb",
     "Setpoint",
     "sharedb",
+    "Tailscale",
     "WBIO",
-    "wirenboard",
-    "мапим"
+    "wirenboard"
   ],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
