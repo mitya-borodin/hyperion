@@ -8,11 +8,38 @@ directive @auth(requires: [UserRole!]!) on OBJECT | FIELD_DEFINITION
 
 scalar Upload
 
+input GetDeviceInput {
+  id: ID!
+}
+
+type GetDeviceOutput {
+  id: ID!
+}
+
+input CreateDeviceInput {
+  id: ID!
+}
+
+type CreateDeviceOutput {
+  id: ID!
+}
+
+input OnDeviceInput {
+  id: ID!
+}
+
+type OnDeviceOutput {
+  id: ID!
+}
+
 type Query {
+  getDevice(input: GetDeviceInput!): GetDeviceOutput!
 }
 
 type Mutation {
+  createDevice(input: CreateDeviceInput!): CreateDeviceOutput!
 }
 
 type Subscription {
+  onDevice(input: OnDeviceInput!): OnDeviceOutput!
 }
