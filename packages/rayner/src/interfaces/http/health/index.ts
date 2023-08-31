@@ -8,5 +8,5 @@ type RouterParameters = {
 };
 
 export const health = async function (fastify: FastifyInstance, parameters: RouterParameters): Promise<void> {
-  fastify.get('/alive', { schema: undefined }, getHealth({ ...parameters, fastify }));
+  fastify.get('/alive', { schema: undefined }, getHealth({ ...parameters }));
 };

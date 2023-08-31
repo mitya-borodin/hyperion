@@ -1,12 +1,11 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { Logger } from 'pino';
 
 type RouterParameters = {
   logger: Logger;
-  fastify: FastifyInstance;
 };
 
-export const getHealth = ({ logger, fastify }: RouterParameters) => {
+export const getHealth = ({ logger }: RouterParameters) => {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     logger.trace('Health check started 🎰');
 

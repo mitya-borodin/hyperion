@@ -5,8 +5,6 @@ import { connect } from 'mqtt';
 
 import { Config } from '../../config';
 
-import { onMessage } from './on-message';
-
 type RunWirenboard = {
   config: Config;
 };
@@ -52,7 +50,11 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
     logger(error.message);
   });
 
-  client.on('message', (topic, message) => onMessage(eventemitter, topic, message));
+  // client.on('message', (topic, message) => onMessage(eventemitter, topic, message));
+
+  client.on('message', (topic, message) => {
+    console.log(topic, message.toString());
+  });
 
   return {
     client,

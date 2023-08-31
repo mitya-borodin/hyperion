@@ -28,13 +28,10 @@ import { Connection } from 'rethinkdb-ts';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
-import { ILightingRepository } from '../../ports/lighting-repository';
 
 type CreateHttpInterfaceParameters = {
   config: Config;
-  rethinkdbConnection: Connection;
   logger: Logger;
-  lightingRepository: ILightingRepository;
 };
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,8 +39,6 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export const createHttpInterface = async ({
   config,
   logger,
-  lightingRepository,
-  rethinkdbConnection,
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
     caseSensitive: true,
@@ -61,24 +56,26 @@ export const createHttpInterface = async ({
         query: request.query,
         body: request.body,
       },
-      'Unexpected error',
+      'Caught an uncaught request handler exception 🚨',
     );
 
     reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send({
       statusCode: 500,
       error: 'Internal Server Error',
-      message: 'Unexpected error',
+      message: 'Caught an uncaught request handler exception 🚨',
     });
   });
 
   fastify.register(FastifyStatic, {
-    root: config.public,
+    root: config.fastify.public,
   });
 
   /**
    * Default and fastify metrics
    */
-  fastify.register(metricsPlugin, { endpoint: '/metrics' });
+  fastify.register(metricsPlugin, {
+    endpoint: '/metrics',
+  });
 
   /**
    * Business and application metrics
@@ -92,12 +89,12 @@ export const createHttpInterface = async ({
   });
 
   fastify.register(Cookie, {
-    secret: config.cookieSecret,
+    secret: config.fastify.cookieSecret,
   });
 
   fastify.register(fastifyJWT, {
-    secret: config.auth.secret,
-    verify: { maxAge: config.nodeEnv === 'test' ? ONE_WEEK_MS : config.auth.tokenTtlMs },
+    secret: config.fastify.auth.secret,
+    verify: { maxAge: config.isProduction ? config.fastify.auth.tokenTtlMs : ONE_WEEK_MS },
   });
 
   fastify.register(fastifyRawBody, {
@@ -127,7 +124,7 @@ export const createHttpInterface = async ({
       config,
       logger,
     }),
-    graphiql: !config.production,
+    graphiql: !config.isProduction,
     subscription: true,
   });
 
