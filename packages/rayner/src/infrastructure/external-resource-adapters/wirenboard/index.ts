@@ -16,6 +16,9 @@ const ROOT_TOPIC = '/devices/#';
 // eslint-disable-next-line unicorn/prefer-event-target
 const eventemitter = new EventEmitter();
 
+/**
+ * ! https://github.com/wirenboard/conventions
+ */
 export const runWirenboard = async ({ config }: RunWirenboard) => {
   logger('Try to establish connection with wirenboard ℹ️');
   logger(`Socket: ${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port} ℹ️`);
@@ -53,7 +56,81 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
   // client.on('message', (topic, message) => onMessage(eventemitter, topic, message));
 
   client.on('message', (topic, message) => {
-    console.log(topic, message.toString());
+    if (!topic.startsWith('/devices')) {
+      return;
+    }
+
+    if (topic.startsWith('/devices/system__networks')) {
+      return;
+    }
+
+    /**
+     * ! META
+     */
+    if (topic.includes('meta')) {
+      try {
+        const [device, type, ...path] = topic.replace('/devices/', '').split('/');
+
+        if (type === 'meta') {
+          const [error] = path;
+
+          if (error === 'error') {
+            /**
+             * ! https://github.com/wirenboard/conventions#errors
+             *
+             * * /devices/+/controls/+/meta/error topics can contain a combination of values:
+             * * r - read from device error
+             * * w - write to device error
+             * * p - read period miss
+             */
+            // console.log(device, type, error, message.toString());
+          }
+
+          /**
+           * ! https://github.com/wirenboard/conventions#devices-meta-topic
+           *
+           * ! /devices/RoomLight/meta - JSON with all meta information about device
+           */
+          if (error !== 'error') {
+            // console.log(device, type, JSON.parse(message.toString()));
+          }
+        }
+
+        if (type === 'controls') {
+          const [control, meta, error] = path;
+
+          /**
+           * ! /devices/RoomLight/controls/Switch/meta/error
+           *
+           * ! non-null value means there was an error reading or writing the control.
+           */
+          if (error === 'error') {
+            // console.log(device, control, meta, JSON.parse(message.toString()));
+          }
+
+          /**
+           * ! https://github.com/wirenboard/conventions#controlss-meta-topic
+           *
+           * ! JSON with all meta information about control
+           */
+          if (!error) {
+            // console.log(device, control, meta, JSON.parse(message.toString()));
+          }
+        }
+      } catch (error) {
+        logger(error);
+      }
+    }
+
+    if (!topic.includes('meta')) {
+      try {
+        const [device, type, ...path] = topic.replace('/devices/', '').split('/');
+
+        console.log([device, type, ...path], message.toString());
+      } catch (error) {
+        logger(error);
+      }
+    }
   });
 
   return {
