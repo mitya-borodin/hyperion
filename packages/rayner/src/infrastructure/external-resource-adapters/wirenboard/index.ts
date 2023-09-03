@@ -1,8 +1,7 @@
-import EventEmitter from 'node:events';
-
 import debug from 'debug';
 import { connect } from 'mqtt';
 
+import { isJson } from '../../../helpers/is-json';
 import { Config } from '../../config';
 
 type RunWirenboard = {
@@ -12,9 +11,6 @@ type RunWirenboard = {
 const logger = debug('wirenboard');
 
 const ROOT_TOPIC = '/devices/#';
-
-// eslint-disable-next-line unicorn/prefer-event-target
-const eventemitter = new EventEmitter();
 
 /**
  * ! https://github.com/wirenboard/conventions
@@ -53,7 +49,7 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
     logger(error.message);
   });
 
-  client.on('message', (topic, message) => {
+  client.on('message', (topic, messageBuffer) => {
     /**
      * ! В рамках нашей системы, не рассматриваются другие топики.
      */
@@ -68,6 +64,8 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
       return;
     }
 
+    const message = messageBuffer.toString();
+
     /**
      * ! META
      */
@@ -78,28 +76,45 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
         if (type === 'meta') {
           const [error] = path;
 
-          if (error === 'error') {
-            /**
-             * ! https://github.com/wirenboard/conventions#errors
-             *
-             * * /devices/+/controls/+/meta/error topics can contain a combination of values:
-             * * r - read from device error
-             * * w - write to device error
-             * * p - read period miss
-             */
-            // console.log(device, type, error, message.toString());
+          /**
+           * * Канал: devices-meta
+           *
+           * ! https://github.com/wirenboard/conventions#devices-meta-topic
+           *
+           * ! /devices/+/meta - JSON with all meta information about device
+           *
+           * ! Дает информацию:
+           * ! 1. Идентификатор устройства
+           * ! 2. Какой драйвер используется
+           * ! 3. Название устройства
+           * ? 4. Возможно ещё какие-то данные, на текущем оборудовании других нет.
+           *
+           * * Нужно подождать 2000 мс, после последнего сообщения из этого канала, и продолжить.
+           */
+          if (error !== 'error' && isJson(message)) {
+            // console.log(device, type, JSON.parse(message));
           }
 
           /**
-           * ! https://github.com/wirenboard/conventions#devices-meta-topic
+           * * Канал: devices-meta-error
            *
-           * ! /devices/RoomLight/meta - JSON with all meta information about device
+           * ! https://github.com/wirenboard/conventions#errors
+           * ! Device-level error state, non-null means there was an error (usable as Last Will and Testament)
            *
-           * ! Дает информацию о том, какие устройства имеются и как они называются.
-           * ? Можно использовать совместно с https://github.com/wirenboard/conventions#controlss-meta-topic
+           * ! /devices/+/meta/error
+           *
+           * ! Дает информацию:
+           * ! 1. Идентификатор устройства
+           * ! 2. Текс ошибки всего устройства
+           *
+           * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
            */
-          if (error !== 'error') {
-            // console.log(device, type, JSON.parse(message.toString()));
+          if (error === 'error') {
+            // if (isJson(message)) {
+            //   console.log(device, type, error, JSON.parse(message));
+            // } else {
+            //   console.log(device, type, error, message);
+            // }
           }
         }
 
@@ -107,31 +122,52 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
           const [control, meta, error] = path;
 
           /**
-           * ! /devices/RoomLight/controls/Switch/meta/error
+           * * Канал: controls-meta
            *
-           * ! non-null value means there was an error reading or writing the control.
-           *
-           * ! Дает информацию о ошибке на конкретной ручке устройства.
-           * ? Можно использовать для отображения статуса ошибки конкретной ручки.
-           */
-          if (error === 'error') {
-            // console.log(device, control, meta, JSON.parse(message.toString()));
-          }
-
-          /**
            * ! https://github.com/wirenboard/conventions#controlss-meta-topic
            *
            * ! JSON with all meta information about control
            *
-           * ! Дает информацию о том, какие параметры имеются в устройстве, и как их можно использовать.
-           * ? Можно использовать только эти данные для составления схем устройств.
+           * ! Дает информацию:
+           * ! 1. Идентификатор устройства
+           * ! 2. Идентификатор контрола
+           * ! 3. Порядок расположения поля в списке
+           * ! 4. Статус readonly
+           * ! 5. Тип
+           * ! 6. Единицу измерения если она есть
+           * ! 7. Название с переводом если оно есть
+           *
+           * * Нужно подождать 2000 мс, после последнего сообщения из этого канала, и продолжить.
            */
           if (!error) {
-            // console.log(device, control, meta, JSON.parse(message.toString()));
+            // console.log(device, control, meta, JSON.parse(message));
+          }
+
+          /**
+           * * Канал: controls-meta-error
+           *
+           * ! https://github.com/wirenboard/conventions#errors
+           *
+           * ! non-null value means there was an error reading or writing the control.
+           *
+           * ! /devices/+/controls/+/meta/error topics can contain a combination of values:
+           * ! r - read from device error
+           * ! w - write to device error
+           * ! p - read period miss
+           *
+           * ! Дает информацию:
+           * ! 1. Идентификатор устройства
+           * ! 2. Идентификатор контрола
+           * ! 3. Статус ошибки, если статус пустой то ошибки нет
+           *
+           * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
+           */
+          if (error === 'error') {
+            // console.log(device, control, meta, message);
           }
         }
-      } catch (error) {
-        logger(error);
+      } catch {
+        logger('Error 🚨', topic, message.toString());
       }
     }
 
@@ -140,20 +176,45 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
      */
     if (!topic.includes('meta')) {
       try {
+        /**
+         * * Канал: controls-value
+         *
+         * ! https://github.com/wirenboard/conventions#units
+         *
+         * ! /devices/+/controls/+ topics can contain a value of control.
+         *
+         * ! Дает информацию:
+         * ! 1. Идентификатор устройства
+         * ! 2. Идентификатор контрола
+         * ! 3. Значение контрола
+         *
+         * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
+         */
         const [device, type, ...path] = topic.replace('/devices/', '').split('/');
 
-        console.log([device, type, ...path], message.toString());
-      } catch (error) {
-        logger(error);
+        console.log([device, type, ...path], message);
+      } catch {
+        logger('Error 🚨', topic, message.toString());
       }
     }
   });
 
+  /**
+   * * По итогу мы должны получить информацию из каналов devices-meta и controls-meta,
+   * * и только после этого взять информацию из каналов devices-meta-error и controls-meta-error.
+   *
+   * ! Исходя из каналов devices-meta, devices-meta-error, controls-meta, controls-meta-error, controls-value
+   * ! получим текущее состояние устройства и его контролов, и это состояние будет передано на слой application-service
+   * ! где будет переписано в БД, и аналитику по устройству.
+   *
+   * ! На этом сбор данных заканчивается, и дальше уже можно размечать устройства через GUI по типу, назначению и
+   * ! другим параметрам.
+   *
+   * ! После разметки устройства могут быть использованы в пресетах.
+   */
+
   return {
-    client,
-    eventemitter,
     stopWirenboard: () => {
-      eventemitter.removeAllListeners();
       client.unsubscribe(ROOT_TOPIC);
       client.end();
     },
