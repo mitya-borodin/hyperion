@@ -23,7 +23,6 @@ import MercuriusAuth from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
 import { Logger } from 'pino';
-import { Connection } from 'rethinkdb-ts';
 
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
