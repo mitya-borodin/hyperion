@@ -53,13 +53,17 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
     logger(error.message);
   });
 
-  // client.on('message', (topic, message) => onMessage(eventemitter, topic, message));
-
   client.on('message', (topic, message) => {
+    /**
+     * ! В рамках нашей системы, не рассматриваются другие топики.
+     */
     if (!topic.startsWith('/devices')) {
       return;
     }
 
+    /**
+     * ! В рамках нашей системы, не рассматриваются сетевые соединения.
+     */
     if (topic.startsWith('/devices/system__networks')) {
       return;
     }
@@ -90,6 +94,9 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * ! https://github.com/wirenboard/conventions#devices-meta-topic
            *
            * ! /devices/RoomLight/meta - JSON with all meta information about device
+           *
+           * ! Дает информацию о том, какие устройства имеются и как они называются.
+           * ? Можно использовать совместно с https://github.com/wirenboard/conventions#controlss-meta-topic
            */
           if (error !== 'error') {
             // console.log(device, type, JSON.parse(message.toString()));
@@ -103,6 +110,9 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * ! /devices/RoomLight/controls/Switch/meta/error
            *
            * ! non-null value means there was an error reading or writing the control.
+           *
+           * ! Дает информацию о ошибке на конкретной ручке устройства.
+           * ? Можно использовать для отображения статуса ошибки конкретной ручки.
            */
           if (error === 'error') {
             // console.log(device, control, meta, JSON.parse(message.toString()));
@@ -112,6 +122,9 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * ! https://github.com/wirenboard/conventions#controlss-meta-topic
            *
            * ! JSON with all meta information about control
+           *
+           * ! Дает информацию о том, какие параметры имеются в устройстве, и как их можно использовать.
+           * ? Можно использовать только эти данные для составления схем устройств.
            */
           if (!error) {
             // console.log(device, control, meta, JSON.parse(message.toString()));
@@ -122,6 +135,9 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
       }
     }
 
+    /**
+     * ! DATA
+     */
     if (!topic.includes('meta')) {
       try {
         const [device, type, ...path] = topic.replace('/devices/', '').split('/');
