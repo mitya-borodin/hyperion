@@ -1,20 +1,16 @@
 version: '3.7'
+
 services:
-  rethinkdb:
-    restart: 'always'
-    image: rethinkdb:2.4.2
+  mongodb:
+    image: mongo
     ports:
-      - '127.0.0.1:29015:29015'
-      - '127.0.0.1:28015:28015'
-      - '127.0.0.1:27015:8080'
+      - '127.0.0.1:27017:27017'
+    restart: always
+    logging:
+      options:
+        max-size: 1g
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=wirenboard
+      - MONGO_INITDB_ROOT_PASSWORD=def37057-1c5f-4e73-bf89-37241ed42453
     volumes:
-      - rethinkdb_data:/data
-  rethinkdb_test:
-    restart: 'always'
-    image: rethinkdb:2.4.2
-    ports:
-      - '127.0.0.1:29016:29015'
-      - '127.0.0.1:28016:28015'
-      - '127.0.0.1:27016:8080'
-    volumes:
-      - rethinkdb_data_test:/data
+      - ./mongodb:/data

@@ -131,3 +131,5 @@ terraform/kubectl
 .idea
 build
 !wirenboard/build
+
+mongodb
