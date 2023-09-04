@@ -23,17 +23,13 @@ entrypoint(async ({ signal, logger, defer }) => {
 
   await mongoClient.connect();
 
-  const myDB = mongoClient.db('wirenboard');
-  const myColl = myDB.collection('devices');
+  const wirenboard = await runWirenboard({ config, logger: logger.child({ name: 'wirenboard' }) });
 
-  const document = { name: 'Neapolitan pizza', shape: 'round' };
-  const result = await myColl.insertOne(document);
+  if (wirenboard instanceof Error) {
+    throw wirenboard;
+  }
 
-  console.log(`A document was inserted with the _id: ${result.insertedId}`);
-
-  const { stopWirenboard } = await runWirenboard({ config });
-
-  defer(() => stopWirenboard());
+  defer(() => wirenboard.stop());
 
   const fastify = await createHttpInterface({
     config,

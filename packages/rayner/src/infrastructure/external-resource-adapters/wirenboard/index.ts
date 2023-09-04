@@ -1,55 +1,34 @@
-import debug from 'debug';
-import { connect } from 'mqtt';
+import { Logger } from 'pino';
 
+import { WirenboardDevice } from '../../../domain/wirenboard-device';
 import { isJson } from '../../../helpers/is-json';
+
+import { getMqttClient } from './get-mqtt-client';
+
 import { Config } from '../../config';
 
 type RunWirenboard = {
   config: Config;
+  logger: Logger;
 };
 
-const logger = debug('wirenboard');
+type RunWirenboardResult = {
+  stop: () => void;
+};
 
 const ROOT_TOPIC = '/devices/#';
 
 /**
  * ! https://github.com/wirenboard/conventions
  */
-export const runWirenboard = async ({ config }: RunWirenboard) => {
-  logger('Try to establish connection with wirenboard ℹ️');
-  logger(`Socket: ${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port} ℹ️`);
+export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<Error | RunWirenboardResult> => {
+  const client = await getMqttClient({ config, logger, rootTopic: ROOT_TOPIC });
 
-  const client = connect({
-    host: config.mosquitto.host,
-    port: config.mosquitto.port,
-    protocol: config.mosquitto.protocol,
-    username: config.mosquitto.username,
-    password: config.mosquitto.password,
-  });
+  if (client instanceof Error) {
+    return client;
+  }
 
-  await new Promise((resolve, reject) => {
-    client.on('connect', () => {
-      client.subscribe(ROOT_TOPIC, (error) => {
-        if (error) {
-          logger('Unable to establish connection with wirenboard 🚨');
-          logger(error.message);
-
-          return reject();
-        }
-
-        logger('Connection to the wirenboard is established ✅');
-
-        resolve('');
-      });
-    });
-  });
-
-  client.on('error', (error) => {
-    logger('An error occurred in the MQTT connection to the WB 🚨');
-    logger(error.message);
-  });
-
-  client.on('message', (topic, messageBuffer) => {
+  client.on('message', (topic: string, messageBuffer: Buffer) => {
     /**
      * ! В рамках нашей системы, не рассматриваются другие топики.
      */
@@ -67,7 +46,7 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
     const message = messageBuffer.toString();
 
     /**
-     * ! META
+     * * META
      */
     if (topic.includes('meta')) {
       try {
@@ -92,7 +71,20 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * * Нужно подождать 2000 мс, после последнего сообщения из этого канала, и продолжить.
            */
           if (error !== 'error' && isJson(message)) {
-            // console.log(device, type, JSON.parse(message));
+            const meta = JSON.parse(message);
+
+            const wirenboardDevice: WirenboardDevice = {
+              id: device,
+              meta: {
+                driver: meta?.driver,
+                title: {
+                  ru: meta?.title?.ru,
+                  en: meta?.title?.en,
+                },
+              },
+            };
+
+            // console.log(JSON.stringify(wirenboardDevice, null, 2));
           }
 
           /**
@@ -110,11 +102,21 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
            */
           if (error === 'error') {
-            // if (isJson(message)) {
-            //   console.log(device, type, error, JSON.parse(message));
-            // } else {
-            //   console.log(device, type, error, message);
-            // }
+            if (isJson(message)) {
+              const wirenboardDevice: WirenboardDevice = {
+                id: device,
+                error: JSON.parse(message),
+              };
+
+              console.log(device, type, error, JSON.parse(message), wirenboardDevice);
+            } else {
+              const wirenboardDevice: WirenboardDevice = {
+                id: device,
+                error: message,
+              };
+
+              // console.log(device, type, error, message, wirenboardDevice);
+            }
           }
         }
 
@@ -140,7 +142,30 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * * Нужно подождать 2000 мс, после последнего сообщения из этого канала, и продолжить.
            */
           if (!error) {
-            // console.log(device, control, meta, JSON.parse(message));
+            const { title, order, readonly, type, units, max, min, precision, ...meta } = JSON.parse(message);
+
+            const wirenboardDevice: WirenboardDevice = {
+              id: device,
+              controls: {
+                [control]: {
+                  title: {
+                    ru: title?.ru,
+                    en: title?.en,
+                  },
+                  order,
+                  readonly,
+                  type,
+                  units,
+                  max,
+                  min,
+                  precision,
+                  topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
+                  meta,
+                },
+              },
+            };
+
+            // console.log(JSON.stringify(wirenboardDevice, null, 2));
           }
 
           /**
@@ -163,18 +188,29 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
            * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
            */
           if (error === 'error') {
-            // console.log(device, control, meta, message);
+            const wirenboardDevice: WirenboardDevice = {
+              id: device,
+              controls: {
+                [control]: {
+                  error: message,
+                },
+              },
+            };
+
+            // console.log(wirenboardDevice);
           }
         }
-      } catch {
-        logger('Error 🚨', topic, message.toString());
+      } catch (error) {
+        logger.error({ err: error, topic, message: message.toString() }, 'Could not get meta information 🚨');
       }
     }
 
     /**
-     * ! DATA
+     * * VALUE
      */
     if (!topic.includes('meta')) {
+      const message = messageBuffer.toString();
+
       try {
         /**
          * * Канал: controls-value
@@ -190,31 +226,27 @@ export const runWirenboard = async ({ config }: RunWirenboard) => {
          *
          * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
          */
-        const [device, type, ...path] = topic.replace('/devices/', '').split('/');
+        const [device, type, control] = topic.replace('/devices/', '').split('/');
 
-        console.log([device, type, ...path], message);
-      } catch {
-        logger('Error 🚨', topic, message.toString());
+        const wirenboardDevice: WirenboardDevice = {
+          id: device,
+          controls: {
+            [control]: {
+              value: message,
+            },
+          },
+        };
+
+        // console.log(wirenboardDevice);
+      } catch (error) {
+        logger.error({ err: error, topic, message: message.toString() }, 'Could not get controls value 🚨');
       }
     }
   });
 
-  /**
-   * * По итогу мы должны получить информацию из каналов devices-meta и controls-meta,
-   * * и только после этого взять информацию из каналов devices-meta-error и controls-meta-error.
-   *
-   * ! Исходя из каналов devices-meta, devices-meta-error, controls-meta, controls-meta-error, controls-value
-   * ! получим текущее состояние устройства и его контролов, и это состояние будет передано на слой application-service
-   * ! где будет переписано в БД, и аналитику по устройству.
-   *
-   * ! На этом сбор данных заканчивается, и дальше уже можно размечать устройства через GUI по типу, назначению и
-   * ! другим параметрам.
-   *
-   * ! После разметки устройства могут быть использованы в пресетах.
-   */
-
   return {
-    stopWirenboard: () => {
+    stop: () => {
+      client.removeAllListeners();
       client.unsubscribe(ROOT_TOPIC);
       client.end();
     },
