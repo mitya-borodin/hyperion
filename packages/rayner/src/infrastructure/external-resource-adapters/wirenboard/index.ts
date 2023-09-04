@@ -71,17 +71,16 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
            * * Нужно подождать 2000 мс, после последнего сообщения из этого канала, и продолжить.
            */
           if (error !== 'error' && isJson(message)) {
-            const meta = JSON.parse(message);
+            const { driver, title, ...meta } = JSON.parse(message);
 
             const wirenboardDevice: WirenboardDevice = {
               id: device,
-              meta: {
-                driver: meta?.driver,
-                title: {
-                  ru: meta?.title?.ru,
-                  en: meta?.title?.en,
-                },
+              driver,
+              title: {
+                ru: title?.ru,
+                en: title?.en,
               },
+              meta,
             };
 
             // console.log(JSON.stringify(wirenboardDevice, null, 2));
@@ -108,7 +107,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
                 error: JSON.parse(message),
               };
 
-              console.log(device, type, error, JSON.parse(message), wirenboardDevice);
+              // console.log(device, type, error, wirenboardDevice);
             } else {
               const wirenboardDevice: WirenboardDevice = {
                 id: device,

@@ -2,14 +2,13 @@ import { JsonObject, JsonValue } from '../helpers/json-types';
 
 export type WirenboardDevice = {
   id: string;
-  meta?: {
-    driver?: string;
-    title?: {
-      ru?: string;
-      en?: string;
-    };
+  driver?: string;
+  title?: {
+    ru?: string;
+    en?: string;
   };
   error?: JsonValue;
+  meta?: JsonObject;
   controls?: {
     [id: string]: {
       title?: {
