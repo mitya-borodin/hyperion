@@ -31,8 +31,8 @@
     "eslint-plugin-unused-imports": "^2.0.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
+    "npm-check-updates": "^12.5.4",
     "prettier": "^2.6.1",
-    "typescript": "^4.4.4",
-    "npm-check-updates": "^12.5.4"
+    "typescript": "^4.4.4"
   }
 }
