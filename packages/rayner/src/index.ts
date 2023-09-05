@@ -1,35 +1,33 @@
 /* eslint-disable no-constant-condition */
+import { PrismaClient } from '@prisma/client';
 import { forever } from 'abort-controller-x';
-import { MongoClient, ServerApiVersion } from 'mongodb';
 
+import { runCollectWirenboardDeviceData } from './application-services/apply-wirenboard-device';
 import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
+import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
+import { WirenboardDeviceRepository } from './infrastructure/postgres/repository/wirenboard-device-repository';
 import { createHttpInterface } from './interfaces/http';
 
 entrypoint(async ({ signal, logger, defer }) => {
-  const mongoClient = new MongoClient(config.mongodbConnectionUrl, {
-    appName: config.appName,
-    writeConcern: {
-      w: 'majority',
-    },
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
-    heartbeatFrequencyMS: 5000,
-  });
+  const prismaClient = new PrismaClient();
 
-  await mongoClient.connect();
+  await waitSeedingComplete({ signal, logger, prismaClient });
+
+  const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
 
   const wirenboard = await runWirenboard({ config, logger: logger.child({ name: 'wirenboard' }) });
 
-  if (wirenboard instanceof Error) {
-    throw wirenboard;
-  }
-
   defer(() => wirenboard.stop());
+
+  const stopCollectWirenboardDeviceData = runCollectWirenboardDeviceData({
+    logger,
+    pubSub: wirenboard.pubSub,
+    wirenboardDeviceRepository,
+  });
+
+  defer(() => stopCollectWirenboardDeviceData());
 
   const fastify = await createHttpInterface({
     config,
@@ -42,7 +40,7 @@ entrypoint(async ({ signal, logger, defer }) => {
   });
 
   defer(() => fastify.close());
-  defer(() => mongoClient.close());
+  defer(() => prismaClient.$disconnect());
 
   await forever(signal);
 });

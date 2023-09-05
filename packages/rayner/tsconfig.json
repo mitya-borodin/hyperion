@@ -10,6 +10,6 @@
     "resolveJsonModule": true,
     "strict": true
   },
-  "exclude": ["node_modules", "bin"],
-  "include": ["src/**/*", "test/**/*", "src/infrastructure/external-resource-adapters/wirenboard/.ts"]
+  "exclude": ["node_modules", "bin", "ecosystem.config.js"],
+  "include": ["src/**/*", "test/**/*", ".eslintrc.js"]
 }

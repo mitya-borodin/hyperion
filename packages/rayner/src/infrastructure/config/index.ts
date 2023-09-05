@@ -53,8 +53,6 @@ export class Config {
     readonly url: string;
   };
 
-  public readonly mongodbConnectionUrl: string;
-
   public readonly mosquitto: {
     readonly host: string;
     readonly port: number;
@@ -103,15 +101,6 @@ export class Config {
     this.redis = {
       url: process.env.REDIS_URL ?? 'redis://localhost:6379',
     };
-
-    const mongodb = {
-      host: process.env.MONGO_HOST ?? 'localhost',
-      port: this.toInt(process.env.MONGO_PORT ?? '', 27_017),
-      user: process.env.MONGO_USER ?? 'wirenboard',
-      password: process.env.MONGO_PASSWORD ?? 'def37057-1c5f-4e73-bf89-37241ed42453',
-    };
-
-    this.mongodbConnectionUrl = `mongodb://${mongodb.user}:${mongodb.password}@${mongodb.host}:${mongodb.port}`;
 
     this.mosquitto = {
       host: process.env.MOSQUITTO_HOST ?? 'borodin.site',

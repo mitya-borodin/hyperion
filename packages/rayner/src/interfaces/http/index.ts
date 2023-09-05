@@ -41,7 +41,6 @@ export const createHttpInterface = async ({
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
     caseSensitive: true,
-    logger,
   });
 
   fastify.setErrorHandler(function (error, request, reply) {

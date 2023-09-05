@@ -132,4 +132,6 @@ terraform/kubectl
 build
 !wirenboard/build
 
-mongodb
+# SQLlite
+hyperion.db
+hyperion.db-journal

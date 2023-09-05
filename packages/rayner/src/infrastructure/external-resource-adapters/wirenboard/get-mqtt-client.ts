@@ -23,7 +23,7 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
     password: config.mosquitto.password,
   });
 
-  const result = await new Promise<MqttClient | Error>((resolve, reject) => {
+  await new Promise<MqttClient | Error>((resolve, reject) => {
     client.on('connect', () => {
       client.subscribe(rootTopic, (error) => {
         if (error) {
@@ -43,5 +43,5 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
     logger.error({ err: error }, 'An error occurred in the MQTT connection to the WB 🚨');
   });
 
-  return result;
+  return client;
 };

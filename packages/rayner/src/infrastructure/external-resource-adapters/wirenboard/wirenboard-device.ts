@@ -1,4 +1,4 @@
-import { JsonObject, JsonValue } from '../helpers/json-types';
+import { JsonObject, JsonValue } from '../../../helpers/json-types';
 
 export type WirenboardDevice = {
   id: string;
@@ -29,3 +29,8 @@ export type WirenboardDevice = {
     };
   };
 };
+
+export enum WirenboardDeviceEvent {
+  APPEARED = 'APPEARED',
+  PUBLISH_MESSAGE = 'PUBLISH_MESSAGE',
+}

@@ -1,11 +1,17 @@
+/* eslint-disable unicorn/prefer-event-target */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { EventEmitter } from 'node:events';
+
 import { Logger } from 'pino';
 
-import { WirenboardDevice } from '../../../domain/wirenboard-device';
 import { isJson } from '../../../helpers/is-json';
 
 import { getMqttClient } from './get-mqtt-client';
 
 import { Config } from '../../config';
+
+import { publishWirenboardMessage } from './publish-wirenboard-message';
+import { WirenboardDevice, WirenboardDeviceEvent } from './wirenboard-device';
 
 type RunWirenboard = {
   config: Config;
@@ -13,6 +19,7 @@ type RunWirenboard = {
 };
 
 type RunWirenboardResult = {
+  pubSub: EventEmitter;
   stop: () => void;
 };
 
@@ -21,12 +28,14 @@ const ROOT_TOPIC = '/devices/#';
 /**
  * ! https://github.com/wirenboard/conventions
  */
-export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<Error | RunWirenboardResult> => {
+export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<RunWirenboardResult> => {
   const client = await getMqttClient({ config, logger, rootTopic: ROOT_TOPIC });
 
-  if (client instanceof Error) {
-    return client;
-  }
+  const pubSub = new EventEmitter();
+
+  pubSub.on(WirenboardDeviceEvent.PUBLISH_MESSAGE, (topic: string, message: Buffer) => {
+    publishWirenboardMessage({ logger, client, topic, message });
+  });
 
   client.on('message', (topic: string, messageBuffer: Buffer) => {
     /**
@@ -83,7 +92,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
               meta,
             };
 
-            // console.log(JSON.stringify(wirenboardDevice, null, 2));
+            pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
           }
 
           /**
@@ -107,14 +116,14 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
                 error: JSON.parse(message),
               };
 
-              // console.log(device, type, error, wirenboardDevice);
+              pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
             } else {
               const wirenboardDevice: WirenboardDevice = {
                 id: device,
                 error: message,
               };
 
-              // console.log(device, type, error, message, wirenboardDevice);
+              pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
             }
           }
         }
@@ -164,7 +173,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
               },
             };
 
-            // console.log(JSON.stringify(wirenboardDevice, null, 2));
+            pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
           }
 
           /**
@@ -196,7 +205,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
               },
             };
 
-            // console.log(wirenboardDevice);
+            pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
           }
         }
       } catch (error) {
@@ -208,8 +217,6 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
      * * VALUE
      */
     if (!topic.includes('meta')) {
-      const message = messageBuffer.toString();
-
       try {
         /**
          * * Канал: controls-value
@@ -236,7 +243,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
           },
         };
 
-        // console.log(wirenboardDevice);
+        pubSub.emit(WirenboardDeviceEvent.APPEARED, wirenboardDevice);
       } catch (error) {
         logger.error({ err: error, topic, message: message.toString() }, 'Could not get controls value 🚨');
       }
@@ -244,7 +251,10 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
   });
 
   return {
+    pubSub,
     stop: () => {
+      pubSub.removeAllListeners();
+
       client.removeAllListeners();
       client.unsubscribe(ROOT_TOPIC);
       client.end();

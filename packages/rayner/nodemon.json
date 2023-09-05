@@ -5,9 +5,5 @@
   "execMap": {
     "ts": "node --inspect=0.0.0.0:9229 --trace-warnings -r ts-node/register"
   },
-  "env": {
-    "NODE_ENV": "development",
-    "DEBUG": "wirenboard"
-  },
   "ext": "js,json,ts"
 }
