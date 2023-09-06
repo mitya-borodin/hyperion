@@ -156,6 +156,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
               id: device,
               controls: {
                 [control]: {
+                  id: control,
                   title: {
                     ru: title?.ru,
                     en: title?.en,
@@ -200,6 +201,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
               id: device,
               controls: {
                 [control]: {
+                  id: control,
                   error: message,
                 },
               },
@@ -238,6 +240,7 @@ export const runWirenboard = async ({ config, logger }: RunWirenboard): Promise<
           id: device,
           controls: {
             [control]: {
+              id: control,
               value: message,
             },
           },

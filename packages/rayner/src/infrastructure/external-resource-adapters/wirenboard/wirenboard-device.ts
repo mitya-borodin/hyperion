@@ -11,6 +11,7 @@ export type WirenboardDevice = {
   meta?: JsonObject;
   controls?: {
     [id: string]: {
+      id: string;
       title?: {
         ru?: string;
         en?: string;

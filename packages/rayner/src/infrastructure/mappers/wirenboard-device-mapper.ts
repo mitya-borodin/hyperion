@@ -10,7 +10,7 @@ export const toDomainHyperionDevice = (
   prismaHyperionDevice: HyperionDevicePrisma & { controls: HyperionDeviceControlPrisma[] },
 ): HyperionDevice => {
   return {
-    id: prismaHyperionDevice.id,
+    id: prismaHyperionDevice.deviceId,
     driver: prismaHyperionDevice.driver,
     title: JSON.parse(prismaHyperionDevice.title),
     error: JSON.parse(prismaHyperionDevice.error),
@@ -18,7 +18,7 @@ export const toDomainHyperionDevice = (
     controls: prismaHyperionDevice.controls
       .map<HyperionDeviceControl>((control) => {
         return {
-          id: control.id,
+          id: control.controlId,
           title: JSON.parse(control.title),
           order: control.order,
           readonly: control.readonly,

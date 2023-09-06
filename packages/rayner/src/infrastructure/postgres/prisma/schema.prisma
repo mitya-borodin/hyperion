@@ -15,17 +15,21 @@ model Settings {
 }
 
 model HyperionDevice {
-  id     String @id
-  driver String @default("UNSPECIFIED")
-  title  String @default("UNSPECIFIED")
-  error  String @default("UNSPECIFIED")
-  meta   String @default("UNSPECIFIED")
+  deviceId String @id
+  driver   String @default("UNSPECIFIED")
+  title    String @default("{}")
+  error    String @default("{}")
+  meta     String @default("{}")
+
   controls HyperionDeviceControl[]
 }
 
 model HyperionDeviceControl {
-  id        String  @id
-  title     String  @default("UNSPECIFIED")
+  device   HyperionDevice @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  deviceId String
+
+  controlId String
+  title     String  @default("{}")
   order     Int     @default(0)
   readonly  Boolean @default(true)
   type      String  @default("UNSPECIFIED")
@@ -33,11 +37,10 @@ model HyperionDeviceControl {
   max       Float   @default(0)
   min       Float   @default(0)
   precision Float   @default(0)
-  value     String  @default("UNSPECIFIED")
+  value     String  @default("0")
   topic     String  @default("UNSPECIFIED")
   error     String  @default("UNSPECIFIED")
-  meta      String  @default("UNSPECIFIED")
+  meta      String  @default("{}")
 
-  device   HyperionDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  deviceId String         @unique
+  @@unique([deviceId, controlId])
 }
