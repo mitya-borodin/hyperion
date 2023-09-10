@@ -1,13 +1,13 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/naming-convention */
-import { HyperionDeviceControl, PrismaClient } from '@prisma/client';
+import { Control, PrismaClient } from '@prisma/client';
 import { Logger } from 'pino';
 
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
 import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-repository';
 import { WirenboardDevice } from '../../external-resource-adapters/wirenboard/wirenboard-device';
-import { toDomainHyperionDevice } from '../../mappers/wirenboard-device-mapper';
+import { toDomainDevice } from '../../mappers/wirenboard-device-mapper';
 import { toPrismaWirenboardDevice } from '../../mappers/wirenboard-device-to-prisma-mapper';
 
 type WirenboardDeviceRepositoryParameters = {
@@ -37,7 +37,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
-      const prismaDevice = await this.client.hyperionDevice.upsert({
+      const prismaDevice = await this.client.device.upsert({
         create: {
           deviceId: device.id,
           driver: device.driver,
@@ -51,11 +51,13 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
           title: device.title,
           error: device.error,
           meta: device.meta,
+          updatedAt: new Date(),
         },
         where: {
           deviceId: device.id,
         },
       });
+
       const prismaControls = await Promise.all(
         controls.map(async (control) => {
           if (!control.id) {
@@ -67,7 +69,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
             return new Error(ErrorType.INVALID_ARGUMENTS);
           }
 
-          return await this.client.hyperionDeviceControl.upsert({
+          const prismaControl = await this.client.control.upsert({
             create: {
               deviceId: device.id,
               controlId: control.id,
@@ -99,6 +101,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
               topic: control.topic,
               error: control.error,
               meta: control.meta,
+              updatedAt: new Date(),
             },
             where: {
               deviceId: device.id,
@@ -109,10 +112,21 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
               },
             },
           });
+
+          await this.client.history.create({
+            data: {
+              deviceId: device.id,
+              controlId: control.id,
+              value: control.value,
+              error: control.error,
+            },
+          });
+
+          return prismaControl;
         }),
       );
 
-      const prismaControlsWithOutError: HyperionDeviceControl[] = [];
+      const prismaControlsWithOutError: Control[] = [];
 
       for (const prismaControl of prismaControls) {
         if (prismaControl instanceof Error) {
@@ -121,7 +135,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
         prismaControlsWithOutError.push(prismaControl);
       }
-      const hyperionDevice = toDomainHyperionDevice({
+      const hyperionDevice = toDomainDevice({
         ...prismaDevice,
         controls: prismaControlsWithOutError,
       });

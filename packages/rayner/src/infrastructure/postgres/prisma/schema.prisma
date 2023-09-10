@@ -1,10 +1,13 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./hyperion.db"
+  provider = "postgresql"
+  url      = env("PRISMA_PG_DATABASE_URL")
 }
 
 model Settings {
@@ -14,21 +17,27 @@ model Settings {
   @@map("_settings")
 }
 
-model HyperionDevice {
+model Device {
   deviceId String @id
-  driver   String @default("UNSPECIFIED")
-  title    String @default("{}")
-  error    String @default("{}")
-  meta     String @default("{}")
 
-  controls HyperionDeviceControl[]
+  driver String @default("UNSPECIFIED")
+  title  String @default("{}")
+  error  String @default("{}")
+  meta   String @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  controls Control[]
+  history  History[]
 }
 
-model HyperionDeviceControl {
-  device   HyperionDevice @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+model Control {
+  device   Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
   deviceId String
 
   controlId String
+
   title     String  @default("{}")
   order     Int     @default(0)
   readonly  Boolean @default(true)
@@ -42,5 +51,26 @@ model HyperionDeviceControl {
   error     String  @default("UNSPECIFIED")
   meta      String  @default("{}")
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  history History[]
+
   @@unique([deviceId, controlId])
+}
+
+model History {
+  id String @id @default(uuid())
+
+  device   Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  deviceId String
+
+  control   Control @relation(fields: [deviceId, controlId], references: [deviceId, controlId], onDelete: Cascade)
+  controlId String
+
+  value String @default("0")
+  error String @default("UNSPECIFIED")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }

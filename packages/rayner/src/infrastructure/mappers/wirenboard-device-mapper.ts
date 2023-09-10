@@ -1,13 +1,10 @@
 /* eslint-disable unicorn/no-array-reduce */
-import {
-  HyperionDeviceControl as HyperionDeviceControlPrisma,
-  HyperionDevice as HyperionDevicePrisma,
-} from '@prisma/client';
+import { Device as DevicePrisma, Control as DeviceControlPrisma } from '@prisma/client';
 
 import { HyperionDevice, HyperionDeviceControl } from '../../domain/hyperion-device';
 
-export const toDomainHyperionDevice = (
-  prismaHyperionDevice: HyperionDevicePrisma & { controls: HyperionDeviceControlPrisma[] },
+export const toDomainDevice = (
+  prismaHyperionDevice: DevicePrisma & { controls: DeviceControlPrisma[] },
 ): HyperionDevice => {
   return {
     id: prismaHyperionDevice.deviceId,
