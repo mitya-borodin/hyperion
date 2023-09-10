@@ -1,0 +1,41 @@
+version: '3.8'
+
+volumes:
+  postgres-data:
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: hyperion
+      POSTGRES_USER: hyperion
+      POSTGRES_PASSWORD: hyperion
+    ports:
+      - '127.0.0.1:5436:5432'
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hyperion -d hyperion']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  # rayner:
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./packages/rayner
+  #   image: registry.gitlab.com/hyperion/rayner-local:latest
+  #   command: 'yarn start'
+  #   restart: unless-stopped
+  #   env_file: ./packages/rayner/.env
+  #   environment:
+  #     - PRISMA_PG_DATABASE_URL=postgresql://hyperion:hyperion@postgres:5432/hyperion?schema=public
+  #     - FASTIFY_HOST=0.0.0.0
+  #   volumes:
+  #     - ./packages/rayner:/app
+  #     - /app/node_modules
+  #   ports:
+  #     - '127.0.0.1:8080:8080'
+  #     - '127.0.0.1:9229:9229'
