@@ -5,7 +5,11 @@ import { Logger } from 'pino';
 
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
-import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-repository';
+import {
+  IWirenboardDeviceRepository,
+  MarkupWirenboardControl,
+  MarkupWirenboardDevice,
+} from '../../../ports/wirenboard-device-repository';
 import { WirenboardDevice } from '../../external-resource-adapters/wirenboard/wirenboard-device';
 import { toDomainDevice } from '../../mappers/wirenboard-device-mapper';
 import { toPrismaWirenboardDevice } from '../../mappers/wirenboard-device-to-prisma-mapper';
@@ -146,6 +150,67 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
       return hyperionDevice;
     } catch (error) {
       this.logger.error({ wirenboardDevice, device, controls, err: error }, 'Unable to apply wirenboard device 🚨');
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async markupDevice(parameters: MarkupWirenboardDevice): Promise<Error | HyperionDevice> {
+    try {
+      if (!parameters.markup && !parameters.labels) {
+        this.logger.error({ parameters }, 'To mark up the device, you need to pass the markup parameters 🚨');
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const prismaDevice = await this.client.device.update({
+        include: {
+          controls: true,
+        },
+        where: {
+          deviceId: parameters.deviceId,
+        },
+        data: {
+          ...(parameters.markup ? { markup: JSON.stringify(parameters.markup) } : {}),
+          ...(parameters.labels ? { labels: parameters.labels } : {}),
+        },
+      });
+
+      return toDomainDevice(prismaDevice);
+    } catch (error) {
+      this.logger.error({ parameters, err: error }, 'Unable to markup wirenboard device 🚨');
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async markupControl(parameters: MarkupWirenboardControl): Promise<Error | HyperionDevice> {
+    try {
+      if (!parameters.markup && !parameters.labels) {
+        this.logger.error({ parameters }, 'To mark up the control, you need to pass the markup parameters 🚨');
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const prismaControl = await this.client.control.update({
+        include: {
+          device: true,
+        },
+        where: {
+          deviceId_controlId: {
+            deviceId: parameters.deviceId,
+            controlId: parameters.controlId,
+          },
+        },
+        data: {
+          ...(parameters.markup ? { markup: JSON.stringify(parameters.markup) } : {}),
+          ...(parameters.labels ? { labels: parameters.labels } : {}),
+        },
+      });
+
+      return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
+    } catch (error) {
+      this.logger.error({ parameters, err: error }, 'Unable to markup wirenboard control 🚨');
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

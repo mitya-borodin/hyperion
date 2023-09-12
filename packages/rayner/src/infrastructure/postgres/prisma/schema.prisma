@@ -25,6 +25,9 @@ model Device {
   error  String @default("{}")
   meta   String @default("{}")
 
+  markup String   @default("{}")
+  labels String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
@@ -50,6 +53,9 @@ model Control {
   topic     String  @default("UNSPECIFIED")
   error     String  @default("UNSPECIFIED")
   meta      String  @default("{}")
+
+  markup String   @default("{}")
+  labels String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())

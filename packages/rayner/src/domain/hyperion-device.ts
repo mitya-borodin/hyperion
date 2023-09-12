@@ -1,5 +1,7 @@
 import { JsonObject, JsonValue } from '../helpers/json-types';
 
+import { HyperionDeviceControl } from './hyperion-control';
+
 export type HyperionDevice = {
   id: string;
   driver: string;
@@ -9,24 +11,18 @@ export type HyperionDevice = {
   };
   error: JsonValue;
   meta: JsonObject;
-  controls: HyperionDeviceControl[];
-};
 
-export type HyperionDeviceControl = {
-  id: string;
-  title: {
-    ru: string;
-    en: string;
+  markup: {
+    title: {
+      ru: string;
+      en: string;
+    };
+    description: string;
+    order: number;
+    color: string;
   };
-  order: number;
-  readonly: boolean;
-  type: string;
-  units: string;
-  max: number;
-  min: number;
-  precision: number;
-  value: string | number | boolean;
-  topic?: string;
-  error: string;
-  meta: JsonObject;
+
+  labels: string[];
+
+  controls: HyperionDeviceControl[];
 };
