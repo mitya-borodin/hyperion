@@ -127,11 +127,11 @@ model Macros {
   name        String // Пользователькое имя.
   description String // Пользователькое описания макроса.
   type        String // Уникальный тип макроса, доавляется в enum при создании макроса.
-  labels      String // Набор лейблов, по которым можно найти макросы.
+  labels      String[] // Набор лейблов, по которым можно найти макросы.
 
   input  Json
   output Json
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }
