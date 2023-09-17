@@ -6,7 +6,7 @@ export enum MacrosType {
 
 export enum ControlType {
   SWITCH = 'switch',
-  ILLUMINATION = 'LUX',
+  ILLUMINATION = 'lux',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -3,6 +3,7 @@ import { Device as DevicePrisma, Control as DeviceControlPrisma } from '@prisma/
 
 import { HyperionDeviceControl } from '../../domain/hyperion-control';
 import { HyperionDevice } from '../../domain/hyperion-device';
+import { ControlType } from '../../domain/macroses/macros';
 
 export const toDomainDevice = (
   prismaHyperionDevice: DevicePrisma & { controls: DeviceControlPrisma[] },
@@ -29,12 +30,22 @@ export const toDomainDevice = (
       .map<HyperionDeviceControl>((control) => {
         const markup = JSON.parse(control.markup);
 
+        let type: ControlType = control.type as ControlType;
+
+        if (control.type === ControlType.SWITCH) {
+          type = ControlType.SWITCH;
+        }
+
+        if (control.type === ControlType.ILLUMINATION) {
+          type = ControlType.ILLUMINATION;
+        }
+
         return {
           id: control.controlId,
           title: JSON.parse(control.title),
           order: control.order,
           readonly: control.readonly,
-          type: control.type,
+          type,
           units: control.units,
           max: control.max,
           min: control.min,

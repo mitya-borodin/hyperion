@@ -1,5 +1,7 @@
 import { JsonObject } from '../helpers/json-types';
 
+import { ControlType } from './macroses/macros';
+
 export type HyperionDeviceControl = {
   id: string;
   title: {
@@ -8,7 +10,7 @@ export type HyperionDeviceControl = {
   };
   order: number;
   readonly: boolean;
-  type: string;
+  type: ControlType;
   units: string;
   max: number;
   min: number;

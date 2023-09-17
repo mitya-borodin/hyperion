@@ -4,42 +4,139 @@ enum UserRole {
   ADMIN
 }
 
+enum MacrosType {
+  LIGHTING
+}
+
+enum ControlType {
+  SWITCH
+  ILLUMINATION
+}
+
 directive @auth(requires: [UserRole!]!) on OBJECT | FIELD_DEFINITION
 
 scalar Upload
 
-input GetDeviceInput {
-  id: ID!
+type DefaultOutput {
+  message: String
 }
 
-type GetDeviceOutput {
-  id: ID!
+type Error {
+  code: Int!
+  message: String!
 }
 
-input CreateDeviceInput {
-  id: ID!
+input PaginationInput {
+  page: Int = 1
+  limit: Int = 25
 }
 
-type CreateDeviceOutput {
-  id: ID!
+type PaginationOutput {
+  total: Int!
+  page: Int!
+  limit: Int!
 }
 
-input OnDeviceInput {
-  id: ID!
+type Title {
+  ru: String!
+  en: String!
 }
 
-type OnDeviceOutput {
+type Markup {
+  title: Title!
+  description: String!
+  order: Int!
+  color: String!
+}
+
+type Control {
   id: ID!
+
+  title: Title!
+  order: Int!
+  readonly: Boolean!
+  type: ControlType!
+  units: String!
+  max: Float!
+  min: Float!
+  precision: Float!
+  value: String!
+  topic: String
+  error: String!
+  meta: String!
+
+  markup: Markup!
+  labels: [String!]
+}
+
+type Device {
+  id: ID!
+
+  driver: String!
+  title: Title!
+
+  error: String!
+  meta: String!
+
+  markup: Markup!
+  labels: [String!]
+
+  controls: [Control!]
+}
+
+type Macros {
+  id: ID!
+
+  name: String!
+  description: String!
+  type: MacrosType!
+  labels: [String!]
+
+  settings: String!
+
+  createdAt: String!
+  updatedAt: String!
+}
+
+type MacrosWireframe {
+  type: ID!
+
+  name: String!
+  description: String!
+
+  settings: String!
+}
+
+input MarkupDeviceInput {
+  deviceId: ID!
+  markup: Markup!
+  labels: [String!]
+}
+
+input MarkupDeviceControlInput {
+  deviceId: ID!
+  controlId: ID!
+  markup: Markup!
+  labels: [String!]
+}
+
+input SetControlValueInput {
+  deviceId: String!
+  constrolId: String!
+  value: String!
 }
 
 type Query {
-  getDevice(input: GetDeviceInput!): GetDeviceOutput!
+  getMacrosWireframes: [MacrosWireframe!]!
 }
 
 type Mutation {
-  createDevice(input: CreateDeviceInput!): CreateDeviceOutput!
+  markupDevice(input: MarkupDeviceInput!): DefaultOutput
+  markupDeviceControl(input: MarkupDeviceControlInput!): DefaultOutput
+  setControlValue(input: SetControlValueInput!): DefaultOutput
 }
 
 type Subscription {
-  onDevice(input: OnDeviceInput!): OnDeviceOutput!
+  device: [Device!]!
+  macros: [Macros!]!
 }
