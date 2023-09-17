@@ -37,13 +37,25 @@ type PaginationOutput {
   limit: Int!
 }
 
-type Title {
+input TitleInput {
   ru: String!
   en: String!
 }
 
-type Markup {
-  title: Title!
+type TitleOutput {
+  ru: String!
+  en: String!
+}
+
+input MarkupInput {
+  title: TitleInput!
+  description: String!
+  order: Int!
+  color: String!
+}
+
+type MarkupOutput {
+  title: TitleOutput!
   description: String!
   order: Int!
   color: String!
@@ -52,7 +64,7 @@ type Markup {
 type Control {
   id: ID!
 
-  title: Title!
+  title: TitleOutput!
   order: Int!
   readonly: Boolean!
   type: ControlType!
@@ -65,7 +77,7 @@ type Control {
   error: String!
   meta: String!
 
-  markup: Markup!
+  markup: MarkupOutput!
   labels: [String!]
 }
 
@@ -73,12 +85,12 @@ type Device {
   id: ID!
 
   driver: String!
-  title: Title!
+  title: TitleOutput!
 
   error: String!
   meta: String!
 
-  markup: Markup!
+  markup: MarkupOutput!
   labels: [String!]
 
   controls: [Control!]
@@ -109,14 +121,14 @@ type MacrosWireframe {
 
 input MarkupDeviceInput {
   deviceId: ID!
-  markup: Markup!
+  markup: MarkupInput!
   labels: [String!]
 }
 
 input MarkupDeviceControlInput {
   deviceId: ID!
   controlId: ID!
-  markup: Markup!
+  markup: MarkupInput!
   labels: [String!]
 }
 

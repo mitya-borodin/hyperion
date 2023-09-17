@@ -29,58 +29,162 @@ export enum UserRole {
   ADMIN = 'ADMIN',
 }
 
-export type GetDeviceInput = {
-  id: Scalars['ID'];
+export enum MacrosType {
+  LIGHTING = 'LIGHTING',
+}
+
+export enum ControlType {
+  SWITCH = 'SWITCH',
+  ILLUMINATION = 'ILLUMINATION',
+}
+
+export type DefaultOutput = {
+  __typename?: 'DefaultOutput';
+  message?: Maybe<Scalars['String']>;
 };
 
-export type GetDeviceOutput = {
-  __typename?: 'GetDeviceOutput';
-  id: Scalars['ID'];
+export type Error = {
+  __typename?: 'Error';
+  code: Scalars['Int'];
+  message: Scalars['String'];
 };
 
-export type CreateDeviceInput = {
-  id: Scalars['ID'];
+export type PaginationInput = {
+  page?: InputMaybe<Scalars['Int']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
-export type CreateDeviceOutput = {
-  __typename?: 'CreateDeviceOutput';
-  id: Scalars['ID'];
+export type PaginationOutput = {
+  __typename?: 'PaginationOutput';
+  total: Scalars['Int'];
+  page: Scalars['Int'];
+  limit: Scalars['Int'];
 };
 
-export type OnDeviceInput = {
-  id: Scalars['ID'];
+export type TitleInput = {
+  ru: Scalars['String'];
+  en: Scalars['String'];
 };
 
-export type OnDeviceOutput = {
-  __typename?: 'OnDeviceOutput';
+export type TitleOutput = {
+  __typename?: 'TitleOutput';
+  ru: Scalars['String'];
+  en: Scalars['String'];
+};
+
+export type MarkupInput = {
+  title: TitleInput;
+  description: Scalars['String'];
+  order: Scalars['Int'];
+  color: Scalars['String'];
+};
+
+export type MarkupOutput = {
+  __typename?: 'MarkupOutput';
+  title: TitleOutput;
+  description: Scalars['String'];
+  order: Scalars['Int'];
+  color: Scalars['String'];
+};
+
+export type Control = {
+  __typename?: 'Control';
   id: Scalars['ID'];
+  title: TitleOutput;
+  order: Scalars['Int'];
+  readonly: Scalars['Boolean'];
+  type: ControlType;
+  units: Scalars['String'];
+  max: Scalars['Float'];
+  min: Scalars['Float'];
+  precision: Scalars['Float'];
+  value: Scalars['String'];
+  topic?: Maybe<Scalars['String']>;
+  error: Scalars['String'];
+  meta: Scalars['String'];
+  markup: MarkupOutput;
+  labels?: Maybe<Array<Scalars['String']>>;
+};
+
+export type Device = {
+  __typename?: 'Device';
+  id: Scalars['ID'];
+  driver: Scalars['String'];
+  title: TitleOutput;
+  error: Scalars['String'];
+  meta: Scalars['String'];
+  markup: MarkupOutput;
+  labels?: Maybe<Array<Scalars['String']>>;
+  controls?: Maybe<Array<Control>>;
+};
+
+export type Macros = {
+  __typename?: 'Macros';
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  type: MacrosType;
+  labels?: Maybe<Array<Scalars['String']>>;
+  settings: Scalars['String'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+};
+
+export type MacrosWireframe = {
+  __typename?: 'MacrosWireframe';
+  type: Scalars['ID'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  settings: Scalars['String'];
+};
+
+export type MarkupDeviceInput = {
+  deviceId: Scalars['ID'];
+  markup: MarkupInput;
+  labels?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type MarkupDeviceControlInput = {
+  deviceId: Scalars['ID'];
+  controlId: Scalars['ID'];
+  markup: MarkupInput;
+  labels?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type SetControlValueInput = {
+  deviceId: Scalars['String'];
+  constrolId: Scalars['String'];
+  value: Scalars['String'];
 };
 
 export type Query = {
   __typename?: 'Query';
-  getDevice: GetDeviceOutput;
-};
-
-export type QuerygetDeviceArgs = {
-  input: GetDeviceInput;
+  getMacrosWireframes: Array<MacrosWireframe>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createDevice: CreateDeviceOutput;
+  markupDevice?: Maybe<DefaultOutput>;
+  markupDeviceControl?: Maybe<DefaultOutput>;
+  setControlValue?: Maybe<DefaultOutput>;
 };
 
-export type MutationcreateDeviceArgs = {
-  input: CreateDeviceInput;
+export type MutationmarkupDeviceArgs = {
+  input: MarkupDeviceInput;
+};
+
+export type MutationmarkupDeviceControlArgs = {
+  input: MarkupDeviceControlInput;
+};
+
+export type MutationsetControlValueArgs = {
+  input: SetControlValueInput;
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
-  onDevice: OnDeviceOutput;
-};
-
-export type SubscriptiononDeviceArgs = {
-  input: OnDeviceInput;
+  device: Array<Device>;
+  macros: Array<Macros>;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -149,36 +253,60 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   UserRole: UserRole;
+  MacrosType: MacrosType;
+  ControlType: ControlType;
   Upload: ResolverTypeWrapper<Scalars['Upload']>;
-  GetDeviceInput: GetDeviceInput;
+  DefaultOutput: ResolverTypeWrapper<DefaultOutput>;
+  String: ResolverTypeWrapper<Scalars['String']>;
+  Error: ResolverTypeWrapper<Error>;
+  Int: ResolverTypeWrapper<Scalars['Int']>;
+  PaginationInput: PaginationInput;
+  PaginationOutput: ResolverTypeWrapper<PaginationOutput>;
+  TitleInput: TitleInput;
+  TitleOutput: ResolverTypeWrapper<TitleOutput>;
+  MarkupInput: MarkupInput;
+  MarkupOutput: ResolverTypeWrapper<MarkupOutput>;
+  Control: ResolverTypeWrapper<Control>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
-  GetDeviceOutput: ResolverTypeWrapper<GetDeviceOutput>;
-  CreateDeviceInput: CreateDeviceInput;
-  CreateDeviceOutput: ResolverTypeWrapper<CreateDeviceOutput>;
-  OnDeviceInput: OnDeviceInput;
-  OnDeviceOutput: ResolverTypeWrapper<OnDeviceOutput>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  Float: ResolverTypeWrapper<Scalars['Float']>;
+  Device: ResolverTypeWrapper<Device>;
+  Macros: ResolverTypeWrapper<Macros>;
+  MacrosWireframe: ResolverTypeWrapper<MacrosWireframe>;
+  MarkupDeviceInput: MarkupDeviceInput;
+  MarkupDeviceControlInput: MarkupDeviceControlInput;
+  SetControlValueInput: SetControlValueInput;
   Query: ResolverTypeWrapper<{}>;
   Mutation: ResolverTypeWrapper<{}>;
   Subscription: ResolverTypeWrapper<{}>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
-  String: ResolverTypeWrapper<Scalars['String']>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
   Upload: Scalars['Upload'];
-  GetDeviceInput: GetDeviceInput;
+  DefaultOutput: DefaultOutput;
+  String: Scalars['String'];
+  Error: Error;
+  Int: Scalars['Int'];
+  PaginationInput: PaginationInput;
+  PaginationOutput: PaginationOutput;
+  TitleInput: TitleInput;
+  TitleOutput: TitleOutput;
+  MarkupInput: MarkupInput;
+  MarkupOutput: MarkupOutput;
+  Control: Control;
   ID: Scalars['ID'];
-  GetDeviceOutput: GetDeviceOutput;
-  CreateDeviceInput: CreateDeviceInput;
-  CreateDeviceOutput: CreateDeviceOutput;
-  OnDeviceInput: OnDeviceInput;
-  OnDeviceOutput: OnDeviceOutput;
+  Boolean: Scalars['Boolean'];
+  Float: Scalars['Float'];
+  Device: Device;
+  Macros: Macros;
+  MacrosWireframe: MacrosWireframe;
+  MarkupDeviceInput: MarkupDeviceInput;
+  MarkupDeviceControlInput: MarkupDeviceControlInput;
+  SetControlValueInput: SetControlValueInput;
   Query: {};
   Mutation: {};
   Subscription: {};
-  Boolean: Scalars['Boolean'];
-  String: Scalars['String'];
 };
 
 export type authDirectiveArgs = {
@@ -196,27 +324,113 @@ export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTyp
   name: 'Upload';
 }
 
-export type GetDeviceOutputResolvers<
+export type DefaultOutputResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['GetDeviceOutput'] = ResolversParentTypes['GetDeviceOutput'],
+  ParentType extends ResolversParentTypes['DefaultOutput'] = ResolversParentTypes['DefaultOutput'],
 > = {
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type CreateDeviceOutputResolvers<
+export type ErrorResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['CreateDeviceOutput'] = ResolversParentTypes['CreateDeviceOutput'],
+  ParentType extends ResolversParentTypes['Error'] = ResolversParentTypes['Error'],
 > = {
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  code?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type OnDeviceOutputResolvers<
+export type PaginationOutputResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['OnDeviceOutput'] = ResolversParentTypes['OnDeviceOutput'],
+  ParentType extends ResolversParentTypes['PaginationOutput'] = ResolversParentTypes['PaginationOutput'],
+> = {
+  total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  page?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  limit?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type TitleOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['TitleOutput'] = ResolversParentTypes['TitleOutput'],
+> = {
+  ru?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  en?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MarkupOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['MarkupOutput'] = ResolversParentTypes['MarkupOutput'],
+> = {
+  title?: Resolver<ResolversTypes['TitleOutput'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  order?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  color?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ControlResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['Control'] = ResolversParentTypes['Control'],
 > = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['TitleOutput'], ParentType, ContextType>;
+  order?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  readonly?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ControlType'], ParentType, ContextType>;
+  units?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  max?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  min?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  precision?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topic?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  meta?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  markup?: Resolver<ResolversTypes['MarkupOutput'], ParentType, ContextType>;
+  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DeviceResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['Device'] = ResolversParentTypes['Device'],
+> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  driver?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['TitleOutput'], ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  meta?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  markup?: Resolver<ResolversTypes['MarkupOutput'], ParentType, ContextType>;
+  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  controls?: Resolver<Maybe<Array<ResolversTypes['Control']>>, ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MacrosResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['Macros'] = ResolversParentTypes['Macros'],
+> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['MacrosType'], ParentType, ContextType>;
+  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  settings?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MacrosWireframeResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['MacrosWireframe'] = ResolversParentTypes['MacrosWireframe'],
+> = {
+  type?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  settings?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -224,23 +438,30 @@ export type QueryResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
 > = {
-  getDevice?: Resolver<
-    ResolversTypes['GetDeviceOutput'],
-    ParentType,
-    ContextType,
-    RequireFields<QuerygetDeviceArgs, 'input'>
-  >;
+  getMacrosWireframes?: Resolver<Array<ResolversTypes['MacrosWireframe']>, ParentType, ContextType>;
 };
 
 export type MutationResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation'],
 > = {
-  createDevice?: Resolver<
-    ResolversTypes['CreateDeviceOutput'],
+  markupDevice?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
     ParentType,
     ContextType,
-    RequireFields<MutationcreateDeviceArgs, 'input'>
+    RequireFields<MutationmarkupDeviceArgs, 'input'>
+  >;
+  markupDeviceControl?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationmarkupDeviceControlArgs, 'input'>
+  >;
+  setControlValue?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationsetControlValueArgs, 'input'>
   >;
 };
 
@@ -248,20 +469,21 @@ export type SubscriptionResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription'],
 > = {
-  onDevice?: SubscriptionResolver<
-    ResolversTypes['OnDeviceOutput'],
-    'onDevice',
-    ParentType,
-    ContextType,
-    RequireFields<SubscriptiononDeviceArgs, 'input'>
-  >;
+  device?: SubscriptionResolver<Array<ResolversTypes['Device']>, 'device', ParentType, ContextType>;
+  macros?: SubscriptionResolver<Array<ResolversTypes['Macros']>, 'macros', ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = MercuriusContext> = {
   Upload?: GraphQLScalarType;
-  GetDeviceOutput?: GetDeviceOutputResolvers<ContextType>;
-  CreateDeviceOutput?: CreateDeviceOutputResolvers<ContextType>;
-  OnDeviceOutput?: OnDeviceOutputResolvers<ContextType>;
+  DefaultOutput?: DefaultOutputResolvers<ContextType>;
+  Error?: ErrorResolvers<ContextType>;
+  PaginationOutput?: PaginationOutputResolvers<ContextType>;
+  TitleOutput?: TitleOutputResolvers<ContextType>;
+  MarkupOutput?: MarkupOutputResolvers<ContextType>;
+  Control?: ControlResolvers<ContextType>;
+  Device?: DeviceResolvers<ContextType>;
+  Macros?: MacrosResolvers<ContextType>;
+  MacrosWireframe?: MacrosWireframeResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
@@ -289,16 +511,78 @@ export type LoaderResolver<TReturn, TObj, TParams, TContext> =
       };
     };
 export interface Loaders<TContext = import('mercurius').MercuriusContext & { reply: import('fastify').FastifyReply }> {
-  GetDeviceOutput?: {
-    id?: LoaderResolver<Scalars['ID'], GetDeviceOutput, {}, TContext>;
+  DefaultOutput?: {
+    message?: LoaderResolver<Maybe<Scalars['String']>, DefaultOutput, {}, TContext>;
   };
 
-  CreateDeviceOutput?: {
-    id?: LoaderResolver<Scalars['ID'], CreateDeviceOutput, {}, TContext>;
+  Error?: {
+    code?: LoaderResolver<Scalars['Int'], Error, {}, TContext>;
+    message?: LoaderResolver<Scalars['String'], Error, {}, TContext>;
   };
 
-  OnDeviceOutput?: {
-    id?: LoaderResolver<Scalars['ID'], OnDeviceOutput, {}, TContext>;
+  PaginationOutput?: {
+    total?: LoaderResolver<Scalars['Int'], PaginationOutput, {}, TContext>;
+    page?: LoaderResolver<Scalars['Int'], PaginationOutput, {}, TContext>;
+    limit?: LoaderResolver<Scalars['Int'], PaginationOutput, {}, TContext>;
+  };
+
+  TitleOutput?: {
+    ru?: LoaderResolver<Scalars['String'], TitleOutput, {}, TContext>;
+    en?: LoaderResolver<Scalars['String'], TitleOutput, {}, TContext>;
+  };
+
+  MarkupOutput?: {
+    title?: LoaderResolver<TitleOutput, MarkupOutput, {}, TContext>;
+    description?: LoaderResolver<Scalars['String'], MarkupOutput, {}, TContext>;
+    order?: LoaderResolver<Scalars['Int'], MarkupOutput, {}, TContext>;
+    color?: LoaderResolver<Scalars['String'], MarkupOutput, {}, TContext>;
+  };
+
+  Control?: {
+    id?: LoaderResolver<Scalars['ID'], Control, {}, TContext>;
+    title?: LoaderResolver<TitleOutput, Control, {}, TContext>;
+    order?: LoaderResolver<Scalars['Int'], Control, {}, TContext>;
+    readonly?: LoaderResolver<Scalars['Boolean'], Control, {}, TContext>;
+    type?: LoaderResolver<ControlType, Control, {}, TContext>;
+    units?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
+    max?: LoaderResolver<Scalars['Float'], Control, {}, TContext>;
+    min?: LoaderResolver<Scalars['Float'], Control, {}, TContext>;
+    precision?: LoaderResolver<Scalars['Float'], Control, {}, TContext>;
+    value?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
+    topic?: LoaderResolver<Maybe<Scalars['String']>, Control, {}, TContext>;
+    error?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
+    meta?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
+    markup?: LoaderResolver<MarkupOutput, Control, {}, TContext>;
+    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Control, {}, TContext>;
+  };
+
+  Device?: {
+    id?: LoaderResolver<Scalars['ID'], Device, {}, TContext>;
+    driver?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
+    title?: LoaderResolver<TitleOutput, Device, {}, TContext>;
+    error?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
+    meta?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
+    markup?: LoaderResolver<MarkupOutput, Device, {}, TContext>;
+    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Device, {}, TContext>;
+    controls?: LoaderResolver<Maybe<Array<Control>>, Device, {}, TContext>;
+  };
+
+  Macros?: {
+    id?: LoaderResolver<Scalars['ID'], Macros, {}, TContext>;
+    name?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+    description?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+    type?: LoaderResolver<MacrosType, Macros, {}, TContext>;
+    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Macros, {}, TContext>;
+    settings?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+    createdAt?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+    updatedAt?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+  };
+
+  MacrosWireframe?: {
+    type?: LoaderResolver<Scalars['ID'], MacrosWireframe, {}, TContext>;
+    name?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
+    description?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
+    settings?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
   };
 }
 declare module 'mercurius' {
