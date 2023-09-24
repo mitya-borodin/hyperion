@@ -13,6 +13,13 @@ enum ControlType {
   ILLUMINATION
 }
 
+enum LightingLevel {
+  HIGHT
+  MIDDLE
+  LOW
+  ACCIDENT
+}
+
 directive @auth(requires: [UserRole!]!) on OBJECT | FIELD_DEFINITION
 
 scalar Upload
@@ -61,6 +68,23 @@ type MarkupOutput {
   color: String!
 }
 
+input MarkupDevice {
+  deviceId: ID!
+
+  labels: [String!]!
+
+  markup: MarkupInput!
+}
+
+input MarkupControl {
+  deviceId: ID!
+  controlId: ID!
+
+  labels: [String!]!
+
+  markup: MarkupInput!
+}
+
 type Control {
   id: ID!
 
@@ -77,8 +101,9 @@ type Control {
   error: String!
   meta: String!
 
+  labels: [String!]!
+
   markup: MarkupOutput!
-  labels: [String!]
 }
 
 type Device {
@@ -90,52 +115,79 @@ type Device {
   error: String!
   meta: String!
 
+  labels: [String!]!
+
   markup: MarkupOutput!
-  labels: [String!]
 
   controls: [Control!]
 }
 
-type Macros {
-  id: ID!
+input SetControlValue {
+  deviceId: String!
+  controlId: String!
 
-  name: String!
-  description: String!
-  type: MacrosType!
-  labels: [String!]
-
-  settings: String!
-
-  createdAt: String!
-  updatedAt: String!
+  value: String!
 }
 
+## MacrosWireframe
+# Используется только как витрина доступных макросов для установки.
+# Возможность установки нескольких макросов одного типа
+# задается реализацией макроса.
+#
+# Список хардкодится в реализации, и новые MacrosWireframe, добавляются
+# по средством разработки.
+#
 type MacrosWireframe {
+  ## Уникальный тип макроса
+  #
   type: ID!
 
+  ## Подробное название
+  #
   name: String!
+
+  ## Подробное описание
+  #
   description: String!
 
+  ## Пример конфигурации, только для чтения
+  #
   settings: String!
 }
 
-input MarkupDeviceInput {
-  deviceId: ID!
-  markup: MarkupInput!
-  labels: [String!]
+## MacrosSetup
+# Задает интерфейс добавления макроса, для каждого макроса он уникальный.
+# union не может быть использован как input type, по этому будем использовать
+# список не обязательных полей.
+#
+input MacrosSetup {
+  lighting: LightingMacrosSetup
 }
 
-input MarkupDeviceControlInput {
-  deviceId: ID!
-  controlId: ID!
-  markup: MarkupInput!
-  labels: [String!]
+## Macros
+# Задает интерфейс установленного макроса, для каждого макроса он уникален.
+#
+union Macros = LightingMacros
+
+type MacrosOutput {
+  macros: Macros
+  error: Error!
 }
 
-input SetControlValueInput {
-  deviceId: String!
-  constrolId: String!
-  value: String!
+input RemoveMacrosInput {
+  id: ID!
+}
+
+type DeviceSubscriptionEvent {
+  type: String!
+  error: Error!
+  value: Device!
+}
+
+type MacrosSubscriptionEvent {
+  type: String!
+  error: Error!
+  value: Macros!
 }
 
 type Query {
@@ -143,12 +195,17 @@ type Query {
 }
 
 type Mutation {
-  markupDevice(input: MarkupDeviceInput!): DefaultOutput
-  markupDeviceControl(input: MarkupDeviceControlInput!): DefaultOutput
-  setControlValue(input: SetControlValueInput!): DefaultOutput
+  setControlValue(input: SetControlValue!): Device!
+
+  markupDevice(input: MarkupDevice!): Device!
+  markupControl(input: MarkupControl!): Device!
+
+  setupMacros(input: MacrosSetup!): MacrosOutput!
+  updateMacros(input: MacrosSetup!): MacrosOutput!
+  removeMacros(input: RemoveMacrosInput!): MacrosOutput!
 }
 
 type Subscription {
-  device: [Device!]!
-  macros: [Macros!]!
+  device: [DeviceSubscriptionEvent!]!
+  macros: [MacrosSubscriptionEvent!]!
 }

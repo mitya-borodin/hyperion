@@ -7,6 +7,10 @@ export enum LightingLevel {
   ACCIDENT = 'ACCIDENT',
 }
 
+export type LightingMacrosState = {
+  forceOn: boolean;
+};
+
 export type LightingMacrosSettings = {
   buttons: Array<{
     deviceId: string;
@@ -40,4 +44,9 @@ export type LightingMacrosOutput = {
   }>;
 };
 
-export type LightingMacros = Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosOutput>;
+export type LightingMacros = Macros<
+  MacrosType.LIGHTING,
+  LightingMacrosState,
+  LightingMacrosSettings,
+  LightingMacrosOutput
+>;

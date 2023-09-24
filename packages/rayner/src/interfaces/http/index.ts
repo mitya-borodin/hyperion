@@ -114,9 +114,19 @@ export const createHttpInterface = async ({
   });
 
   fastify.register(Mercurius, {
-    schema: gql`
-      ${await readFile(resolve(__dirname, './graphql/schema.graphql'), { encoding: 'utf8' })}
-    `,
+    schema: [
+      gql`
+        ${await readFile(resolve(__dirname, './graphql/macros-setup/lighting-macros-setup.graphql'), {
+          encoding: 'utf8',
+        })}
+      `,
+      gql`
+        ${await readFile(resolve(__dirname, './graphql/macros/lighting-macros.graphql'), { encoding: 'utf8' })}
+      `,
+      gql`
+        ${await readFile(resolve(__dirname, './graphql/schema.graphql'), { encoding: 'utf8' })}
+      `,
+    ],
     resolvers: getResolvers({
       fastify,
       config,

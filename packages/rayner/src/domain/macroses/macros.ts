@@ -2,6 +2,7 @@ import { JsonObject } from '../../helpers/json-types';
 
 export enum MacrosType {
   LIGHTING = 'LIGHTING',
+  MANUAL_LIGHTING_SWITCH = 'MANUAL_LIGHTING_SWITCH',
 }
 
 export enum ControlType {
@@ -10,16 +11,24 @@ export enum ControlType {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export type Macros<T extends MacrosType, S extends JsonObject, O extends JsonObject> = {
+export type Macros<
+  TYPE extends MacrosType,
+  STATE extends JsonObject,
+  SETTINGS extends JsonObject,
+  OUTPUT extends JsonObject,
+> = {
   id: string;
+
+  type: TYPE;
 
   name: string;
   description: string;
-  type: T;
+
   labels: string[];
 
-  settings: S;
-  output: O;
+  state: STATE;
+  settings: SETTINGS;
+  output: OUTPUT;
 
   createdAt: Date;
   updatedAt: Date;

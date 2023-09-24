@@ -11,6 +11,7 @@ export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   context: TContext,
   info: GraphQLResolveInfo,
 ) => Promise<import('mercurius-codegen').DeepPartial<TResult>> | import('mercurius-codegen').DeepPartial<TResult>;
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -21,6 +22,108 @@ export type Scalars = {
   Float: number;
   Upload: any;
   _FieldSet: any;
+};
+
+export type LightingMacrosSetupState = {
+  forceOn: Scalars['Boolean'];
+};
+
+export type LightingMacrosSetupSettingButton = {
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  trigger: Scalars['Boolean'];
+};
+
+export type LightingMacrosSetupSettingIllumination = {
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  trigger: Scalars['Int'];
+};
+
+export type LightingMacrosSetupSettingLighting = {
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  level: LightingLevel;
+};
+
+export type LightingMacrosSetupSettings = {
+  buttons: Array<LightingMacrosSetupSettingButton>;
+  illuminations: Array<LightingMacrosSetupSettingIllumination>;
+  lightings: Array<LightingMacrosSetupSettingLighting>;
+};
+
+export type LightingMacrosSetup = {
+  type: Scalars['ID'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  labels: Array<Scalars['String']>;
+  state: LightingMacrosSetupState;
+  settings: LightingMacrosSetupSettings;
+};
+
+export type LightingMacrosState = {
+  __typename?: 'LightingMacrosState';
+  forceOn: Scalars['Boolean'];
+};
+
+export type LightingMacrosSettingButton = {
+  __typename?: 'LightingMacrosSettingButton';
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  trigger: Scalars['Boolean'];
+};
+
+export type LightingMacrosSettingIllumination = {
+  __typename?: 'LightingMacrosSettingIllumination';
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  trigger: Scalars['Int'];
+};
+
+export type LightingMacrosSettingLighting = {
+  __typename?: 'LightingMacrosSettingLighting';
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  type: ControlType;
+  level: LightingLevel;
+};
+
+export type LightingMacrosSettings = {
+  __typename?: 'LightingMacrosSettings';
+  buttons: Array<LightingMacrosSettingButton>;
+  illuminations: Array<LightingMacrosSettingIllumination>;
+  lightings: Array<LightingMacrosSettingLighting>;
+};
+
+export type LightingMacrosOutputLighting = {
+  __typename?: 'LightingMacrosOutputLighting';
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  value: Scalars['String'];
+};
+
+export type LightingMacrosOutput = {
+  __typename?: 'LightingMacrosOutput';
+  lightings: Array<LightingMacrosOutputLighting>;
+};
+
+export type LightingMacros = {
+  __typename?: 'LightingMacros';
+  id: Scalars['ID'];
+  type: MacrosType;
+  name: Scalars['String'];
+  description: Scalars['String'];
+  labels: Array<Scalars['String']>;
+  state: LightingMacrosState;
+  settings: LightingMacrosSettings;
+  output: LightingMacrosOutput;
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
 };
 
 export enum UserRole {
@@ -36,6 +139,13 @@ export enum MacrosType {
 export enum ControlType {
   SWITCH = 'SWITCH',
   ILLUMINATION = 'ILLUMINATION',
+}
+
+export enum LightingLevel {
+  HIGHT = 'HIGHT',
+  MIDDLE = 'MIDDLE',
+  LOW = 'LOW',
+  ACCIDENT = 'ACCIDENT',
 }
 
 export type DefaultOutput = {
@@ -87,6 +197,19 @@ export type MarkupOutput = {
   color: Scalars['String'];
 };
 
+export type MarkupDevice = {
+  deviceId: Scalars['ID'];
+  labels: Array<Scalars['String']>;
+  markup: MarkupInput;
+};
+
+export type MarkupControl = {
+  deviceId: Scalars['ID'];
+  controlId: Scalars['ID'];
+  labels: Array<Scalars['String']>;
+  markup: MarkupInput;
+};
+
 export type Control = {
   __typename?: 'Control';
   id: Scalars['ID'];
@@ -102,8 +225,8 @@ export type Control = {
   topic?: Maybe<Scalars['String']>;
   error: Scalars['String'];
   meta: Scalars['String'];
+  labels: Array<Scalars['String']>;
   markup: MarkupOutput;
-  labels?: Maybe<Array<Scalars['String']>>;
 };
 
 export type Device = {
@@ -113,21 +236,15 @@ export type Device = {
   title: TitleOutput;
   error: Scalars['String'];
   meta: Scalars['String'];
+  labels: Array<Scalars['String']>;
   markup: MarkupOutput;
-  labels?: Maybe<Array<Scalars['String']>>;
   controls?: Maybe<Array<Control>>;
 };
 
-export type Macros = {
-  __typename?: 'Macros';
-  id: Scalars['ID'];
-  name: Scalars['String'];
-  description: Scalars['String'];
-  type: MacrosType;
-  labels?: Maybe<Array<Scalars['String']>>;
-  settings: Scalars['String'];
-  createdAt: Scalars['String'];
-  updatedAt: Scalars['String'];
+export type SetControlValue = {
+  deviceId: Scalars['String'];
+  controlId: Scalars['String'];
+  value: Scalars['String'];
 };
 
 export type MacrosWireframe = {
@@ -138,23 +255,34 @@ export type MacrosWireframe = {
   settings: Scalars['String'];
 };
 
-export type MarkupDeviceInput = {
-  deviceId: Scalars['ID'];
-  markup: MarkupInput;
-  labels?: InputMaybe<Array<Scalars['String']>>;
+export type MacrosSetup = {
+  lighting?: InputMaybe<LightingMacrosSetup>;
 };
 
-export type MarkupDeviceControlInput = {
-  deviceId: Scalars['ID'];
-  controlId: Scalars['ID'];
-  markup: MarkupInput;
-  labels?: InputMaybe<Array<Scalars['String']>>;
+export type Macros = LightingMacros;
+
+export type MacrosOutput = {
+  __typename?: 'MacrosOutput';
+  macros?: Maybe<Macros>;
+  error: Error;
 };
 
-export type SetControlValueInput = {
-  deviceId: Scalars['String'];
-  constrolId: Scalars['String'];
-  value: Scalars['String'];
+export type RemoveMacrosInput = {
+  id: Scalars['ID'];
+};
+
+export type DeviceSubscriptionEvent = {
+  __typename?: 'DeviceSubscriptionEvent';
+  type: Scalars['String'];
+  error: Error;
+  value: Device;
+};
+
+export type MacrosSubscriptionEvent = {
+  __typename?: 'MacrosSubscriptionEvent';
+  type: Scalars['String'];
+  error: Error;
+  value: Macros;
 };
 
 export type Query = {
@@ -164,27 +292,42 @@ export type Query = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  markupDevice?: Maybe<DefaultOutput>;
-  markupDeviceControl?: Maybe<DefaultOutput>;
-  setControlValue?: Maybe<DefaultOutput>;
-};
-
-export type MutationmarkupDeviceArgs = {
-  input: MarkupDeviceInput;
-};
-
-export type MutationmarkupDeviceControlArgs = {
-  input: MarkupDeviceControlInput;
+  setControlValue: Device;
+  markupDevice: Device;
+  markupControl: Device;
+  setupMacros: MacrosOutput;
+  updateMacros: MacrosOutput;
+  removeMacros: MacrosOutput;
 };
 
 export type MutationsetControlValueArgs = {
-  input: SetControlValueInput;
+  input: SetControlValue;
+};
+
+export type MutationmarkupDeviceArgs = {
+  input: MarkupDevice;
+};
+
+export type MutationmarkupControlArgs = {
+  input: MarkupControl;
+};
+
+export type MutationsetupMacrosArgs = {
+  input: MacrosSetup;
+};
+
+export type MutationupdateMacrosArgs = {
+  input: MacrosSetup;
+};
+
+export type MutationremoveMacrosArgs = {
+  input: RemoveMacrosInput;
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
-  device: Array<Device>;
-  macros: Array<Macros>;
+  device: Array<DeviceSubscriptionEvent>;
+  macros: Array<MacrosSubscriptionEvent>;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -250,32 +393,64 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo,
 ) => TResult | Promise<TResult>;
 
+/** Mapping of union types */
+export type ResolversUnionTypes = {
+  Macros: LightingMacros;
+};
+
+/** Mapping of union parent types */
+export type ResolversUnionParentTypes = {
+  Macros: LightingMacros;
+};
+
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  LightingMacrosSetupState: LightingMacrosSetupState;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  LightingMacrosSetupSettingButton: LightingMacrosSetupSettingButton;
+  String: ResolverTypeWrapper<Scalars['String']>;
+  LightingMacrosSetupSettingIllumination: LightingMacrosSetupSettingIllumination;
+  Int: ResolverTypeWrapper<Scalars['Int']>;
+  LightingMacrosSetupSettingLighting: LightingMacrosSetupSettingLighting;
+  LightingMacrosSetupSettings: LightingMacrosSetupSettings;
+  LightingMacrosSetup: LightingMacrosSetup;
+  ID: ResolverTypeWrapper<Scalars['ID']>;
+  LightingMacrosState: ResolverTypeWrapper<LightingMacrosState>;
+  LightingMacrosSettingButton: ResolverTypeWrapper<LightingMacrosSettingButton>;
+  LightingMacrosSettingIllumination: ResolverTypeWrapper<LightingMacrosSettingIllumination>;
+  LightingMacrosSettingLighting: ResolverTypeWrapper<LightingMacrosSettingLighting>;
+  LightingMacrosSettings: ResolverTypeWrapper<LightingMacrosSettings>;
+  LightingMacrosOutputLighting: ResolverTypeWrapper<LightingMacrosOutputLighting>;
+  LightingMacrosOutput: ResolverTypeWrapper<LightingMacrosOutput>;
+  LightingMacros: ResolverTypeWrapper<LightingMacros>;
   UserRole: UserRole;
   MacrosType: MacrosType;
   ControlType: ControlType;
+  LightingLevel: LightingLevel;
   Upload: ResolverTypeWrapper<Scalars['Upload']>;
   DefaultOutput: ResolverTypeWrapper<DefaultOutput>;
-  String: ResolverTypeWrapper<Scalars['String']>;
   Error: ResolverTypeWrapper<Error>;
-  Int: ResolverTypeWrapper<Scalars['Int']>;
   PaginationInput: PaginationInput;
   PaginationOutput: ResolverTypeWrapper<PaginationOutput>;
   TitleInput: TitleInput;
   TitleOutput: ResolverTypeWrapper<TitleOutput>;
   MarkupInput: MarkupInput;
   MarkupOutput: ResolverTypeWrapper<MarkupOutput>;
+  MarkupDevice: MarkupDevice;
+  MarkupControl: MarkupControl;
   Control: ResolverTypeWrapper<Control>;
-  ID: ResolverTypeWrapper<Scalars['ID']>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   Device: ResolverTypeWrapper<Device>;
-  Macros: ResolverTypeWrapper<Macros>;
+  SetControlValue: SetControlValue;
   MacrosWireframe: ResolverTypeWrapper<MacrosWireframe>;
-  MarkupDeviceInput: MarkupDeviceInput;
-  MarkupDeviceControlInput: MarkupDeviceControlInput;
-  SetControlValueInput: SetControlValueInput;
+  MacrosSetup: MacrosSetup;
+  Macros: ResolverTypeWrapper<ResolversUnionTypes['Macros']>;
+  MacrosOutput: ResolverTypeWrapper<Omit<MacrosOutput, 'macros'> & { macros?: Maybe<ResolversTypes['Macros']> }>;
+  RemoveMacrosInput: RemoveMacrosInput;
+  DeviceSubscriptionEvent: ResolverTypeWrapper<DeviceSubscriptionEvent>;
+  MacrosSubscriptionEvent: ResolverTypeWrapper<
+    Omit<MacrosSubscriptionEvent, 'value'> & { value: ResolversTypes['Macros'] }
+  >;
   Query: ResolverTypeWrapper<{}>;
   Mutation: ResolverTypeWrapper<{}>;
   Subscription: ResolverTypeWrapper<{}>;
@@ -283,27 +458,46 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  LightingMacrosSetupState: LightingMacrosSetupState;
+  Boolean: Scalars['Boolean'];
+  LightingMacrosSetupSettingButton: LightingMacrosSetupSettingButton;
+  String: Scalars['String'];
+  LightingMacrosSetupSettingIllumination: LightingMacrosSetupSettingIllumination;
+  Int: Scalars['Int'];
+  LightingMacrosSetupSettingLighting: LightingMacrosSetupSettingLighting;
+  LightingMacrosSetupSettings: LightingMacrosSetupSettings;
+  LightingMacrosSetup: LightingMacrosSetup;
+  ID: Scalars['ID'];
+  LightingMacrosState: LightingMacrosState;
+  LightingMacrosSettingButton: LightingMacrosSettingButton;
+  LightingMacrosSettingIllumination: LightingMacrosSettingIllumination;
+  LightingMacrosSettingLighting: LightingMacrosSettingLighting;
+  LightingMacrosSettings: LightingMacrosSettings;
+  LightingMacrosOutputLighting: LightingMacrosOutputLighting;
+  LightingMacrosOutput: LightingMacrosOutput;
+  LightingMacros: LightingMacros;
   Upload: Scalars['Upload'];
   DefaultOutput: DefaultOutput;
-  String: Scalars['String'];
   Error: Error;
-  Int: Scalars['Int'];
   PaginationInput: PaginationInput;
   PaginationOutput: PaginationOutput;
   TitleInput: TitleInput;
   TitleOutput: TitleOutput;
   MarkupInput: MarkupInput;
   MarkupOutput: MarkupOutput;
+  MarkupDevice: MarkupDevice;
+  MarkupControl: MarkupControl;
   Control: Control;
-  ID: Scalars['ID'];
-  Boolean: Scalars['Boolean'];
   Float: Scalars['Float'];
   Device: Device;
-  Macros: Macros;
+  SetControlValue: SetControlValue;
   MacrosWireframe: MacrosWireframe;
-  MarkupDeviceInput: MarkupDeviceInput;
-  MarkupDeviceControlInput: MarkupDeviceControlInput;
-  SetControlValueInput: SetControlValueInput;
+  MacrosSetup: MacrosSetup;
+  Macros: ResolversUnionParentTypes['Macros'];
+  MacrosOutput: Omit<MacrosOutput, 'macros'> & { macros?: Maybe<ResolversParentTypes['Macros']> };
+  RemoveMacrosInput: RemoveMacrosInput;
+  DeviceSubscriptionEvent: DeviceSubscriptionEvent;
+  MacrosSubscriptionEvent: Omit<MacrosSubscriptionEvent, 'value'> & { value: ResolversParentTypes['Macros'] };
   Query: {};
   Mutation: {};
   Subscription: {};
@@ -319,6 +513,92 @@ export type authDirectiveResolver<
   ContextType = MercuriusContext,
   Args = authDirectiveArgs,
 > = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type LightingMacrosStateResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosState'] = ResolversParentTypes['LightingMacrosState'],
+> = {
+  forceOn?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosSettingButtonResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosSettingButton'] = ResolversParentTypes['LightingMacrosSettingButton'],
+> = {
+  deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ControlType'], ParentType, ContextType>;
+  trigger?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosSettingIlluminationResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosSettingIllumination'] = ResolversParentTypes['LightingMacrosSettingIllumination'],
+> = {
+  deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ControlType'], ParentType, ContextType>;
+  trigger?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosSettingLightingResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosSettingLighting'] = ResolversParentTypes['LightingMacrosSettingLighting'],
+> = {
+  deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ControlType'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['LightingLevel'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosSettingsResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosSettings'] = ResolversParentTypes['LightingMacrosSettings'],
+> = {
+  buttons?: Resolver<Array<ResolversTypes['LightingMacrosSettingButton']>, ParentType, ContextType>;
+  illuminations?: Resolver<Array<ResolversTypes['LightingMacrosSettingIllumination']>, ParentType, ContextType>;
+  lightings?: Resolver<Array<ResolversTypes['LightingMacrosSettingLighting']>, ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosOutputLightingResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosOutputLighting'] = ResolversParentTypes['LightingMacrosOutputLighting'],
+> = {
+  deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacrosOutput'] = ResolversParentTypes['LightingMacrosOutput'],
+> = {
+  lightings?: Resolver<Array<ResolversTypes['LightingMacrosOutputLighting']>, ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LightingMacrosResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['LightingMacros'] = ResolversParentTypes['LightingMacros'],
+> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['MacrosType'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  state?: Resolver<ResolversTypes['LightingMacrosState'], ParentType, ContextType>;
+  settings?: Resolver<ResolversTypes['LightingMacrosSettings'], ParentType, ContextType>;
+  output?: Resolver<ResolversTypes['LightingMacrosOutput'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
   name: 'Upload';
@@ -388,8 +668,8 @@ export type ControlResolvers<
   topic?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   meta?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   markup?: Resolver<ResolversTypes['MarkupOutput'], ParentType, ContextType>;
-  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -402,24 +682,9 @@ export type DeviceResolvers<
   title?: Resolver<ResolversTypes['TitleOutput'], ParentType, ContextType>;
   error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   meta?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   markup?: Resolver<ResolversTypes['MarkupOutput'], ParentType, ContextType>;
-  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   controls?: Resolver<Maybe<Array<ResolversTypes['Control']>>, ParentType, ContextType>;
-  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type MacrosResolvers<
-  ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['Macros'] = ResolversParentTypes['Macros'],
-> = {
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['MacrosType'], ParentType, ContextType>;
-  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
-  settings?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -434,6 +699,42 @@ export type MacrosWireframeResolvers<
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MacrosResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['Macros'] = ResolversParentTypes['Macros'],
+> = {
+  resolveType: TypeResolveFn<'LightingMacros', ParentType, ContextType>;
+};
+
+export type MacrosOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['MacrosOutput'] = ResolversParentTypes['MacrosOutput'],
+> = {
+  macros?: Resolver<Maybe<ResolversTypes['Macros']>, ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DeviceSubscriptionEventResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['DeviceSubscriptionEvent'] = ResolversParentTypes['DeviceSubscriptionEvent'],
+> = {
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['Device'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MacrosSubscriptionEventResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['MacrosSubscriptionEvent'] = ResolversParentTypes['MacrosSubscriptionEvent'],
+> = {
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['Macros'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type QueryResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
@@ -445,23 +746,41 @@ export type MutationResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation'],
 > = {
+  setControlValue?: Resolver<
+    ResolversTypes['Device'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationsetControlValueArgs, 'input'>
+  >;
   markupDevice?: Resolver<
-    Maybe<ResolversTypes['DefaultOutput']>,
+    ResolversTypes['Device'],
     ParentType,
     ContextType,
     RequireFields<MutationmarkupDeviceArgs, 'input'>
   >;
-  markupDeviceControl?: Resolver<
-    Maybe<ResolversTypes['DefaultOutput']>,
+  markupControl?: Resolver<
+    ResolversTypes['Device'],
     ParentType,
     ContextType,
-    RequireFields<MutationmarkupDeviceControlArgs, 'input'>
+    RequireFields<MutationmarkupControlArgs, 'input'>
   >;
-  setControlValue?: Resolver<
-    Maybe<ResolversTypes['DefaultOutput']>,
+  setupMacros?: Resolver<
+    ResolversTypes['MacrosOutput'],
     ParentType,
     ContextType,
-    RequireFields<MutationsetControlValueArgs, 'input'>
+    RequireFields<MutationsetupMacrosArgs, 'input'>
+  >;
+  updateMacros?: Resolver<
+    ResolversTypes['MacrosOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationupdateMacrosArgs, 'input'>
+  >;
+  removeMacros?: Resolver<
+    ResolversTypes['MacrosOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationremoveMacrosArgs, 'input'>
   >;
 };
 
@@ -469,11 +788,19 @@ export type SubscriptionResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription'],
 > = {
-  device?: SubscriptionResolver<Array<ResolversTypes['Device']>, 'device', ParentType, ContextType>;
-  macros?: SubscriptionResolver<Array<ResolversTypes['Macros']>, 'macros', ParentType, ContextType>;
+  device?: SubscriptionResolver<Array<ResolversTypes['DeviceSubscriptionEvent']>, 'device', ParentType, ContextType>;
+  macros?: SubscriptionResolver<Array<ResolversTypes['MacrosSubscriptionEvent']>, 'macros', ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = MercuriusContext> = {
+  LightingMacrosState?: LightingMacrosStateResolvers<ContextType>;
+  LightingMacrosSettingButton?: LightingMacrosSettingButtonResolvers<ContextType>;
+  LightingMacrosSettingIllumination?: LightingMacrosSettingIlluminationResolvers<ContextType>;
+  LightingMacrosSettingLighting?: LightingMacrosSettingLightingResolvers<ContextType>;
+  LightingMacrosSettings?: LightingMacrosSettingsResolvers<ContextType>;
+  LightingMacrosOutputLighting?: LightingMacrosOutputLightingResolvers<ContextType>;
+  LightingMacrosOutput?: LightingMacrosOutputResolvers<ContextType>;
+  LightingMacros?: LightingMacrosResolvers<ContextType>;
   Upload?: GraphQLScalarType;
   DefaultOutput?: DefaultOutputResolvers<ContextType>;
   Error?: ErrorResolvers<ContextType>;
@@ -482,8 +809,11 @@ export type Resolvers<ContextType = MercuriusContext> = {
   MarkupOutput?: MarkupOutputResolvers<ContextType>;
   Control?: ControlResolvers<ContextType>;
   Device?: DeviceResolvers<ContextType>;
-  Macros?: MacrosResolvers<ContextType>;
   MacrosWireframe?: MacrosWireframeResolvers<ContextType>;
+  Macros?: MacrosResolvers<ContextType>;
+  MacrosOutput?: MacrosOutputResolvers<ContextType>;
+  DeviceSubscriptionEvent?: DeviceSubscriptionEventResolvers<ContextType>;
+  MacrosSubscriptionEvent?: MacrosSubscriptionEventResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
@@ -511,6 +841,60 @@ export type LoaderResolver<TReturn, TObj, TParams, TContext> =
       };
     };
 export interface Loaders<TContext = import('mercurius').MercuriusContext & { reply: import('fastify').FastifyReply }> {
+  LightingMacrosState?: {
+    forceOn?: LoaderResolver<Scalars['Boolean'], LightingMacrosState, {}, TContext>;
+  };
+
+  LightingMacrosSettingButton?: {
+    deviceId?: LoaderResolver<Scalars['String'], LightingMacrosSettingButton, {}, TContext>;
+    controlId?: LoaderResolver<Scalars['String'], LightingMacrosSettingButton, {}, TContext>;
+    type?: LoaderResolver<ControlType, LightingMacrosSettingButton, {}, TContext>;
+    trigger?: LoaderResolver<Scalars['Boolean'], LightingMacrosSettingButton, {}, TContext>;
+  };
+
+  LightingMacrosSettingIllumination?: {
+    deviceId?: LoaderResolver<Scalars['String'], LightingMacrosSettingIllumination, {}, TContext>;
+    controlId?: LoaderResolver<Scalars['String'], LightingMacrosSettingIllumination, {}, TContext>;
+    type?: LoaderResolver<ControlType, LightingMacrosSettingIllumination, {}, TContext>;
+    trigger?: LoaderResolver<Scalars['Int'], LightingMacrosSettingIllumination, {}, TContext>;
+  };
+
+  LightingMacrosSettingLighting?: {
+    deviceId?: LoaderResolver<Scalars['String'], LightingMacrosSettingLighting, {}, TContext>;
+    controlId?: LoaderResolver<Scalars['String'], LightingMacrosSettingLighting, {}, TContext>;
+    type?: LoaderResolver<ControlType, LightingMacrosSettingLighting, {}, TContext>;
+    level?: LoaderResolver<LightingLevel, LightingMacrosSettingLighting, {}, TContext>;
+  };
+
+  LightingMacrosSettings?: {
+    buttons?: LoaderResolver<Array<LightingMacrosSettingButton>, LightingMacrosSettings, {}, TContext>;
+    illuminations?: LoaderResolver<Array<LightingMacrosSettingIllumination>, LightingMacrosSettings, {}, TContext>;
+    lightings?: LoaderResolver<Array<LightingMacrosSettingLighting>, LightingMacrosSettings, {}, TContext>;
+  };
+
+  LightingMacrosOutputLighting?: {
+    deviceId?: LoaderResolver<Scalars['String'], LightingMacrosOutputLighting, {}, TContext>;
+    controlId?: LoaderResolver<Scalars['String'], LightingMacrosOutputLighting, {}, TContext>;
+    value?: LoaderResolver<Scalars['String'], LightingMacrosOutputLighting, {}, TContext>;
+  };
+
+  LightingMacrosOutput?: {
+    lightings?: LoaderResolver<Array<LightingMacrosOutputLighting>, LightingMacrosOutput, {}, TContext>;
+  };
+
+  LightingMacros?: {
+    id?: LoaderResolver<Scalars['ID'], LightingMacros, {}, TContext>;
+    type?: LoaderResolver<MacrosType, LightingMacros, {}, TContext>;
+    name?: LoaderResolver<Scalars['String'], LightingMacros, {}, TContext>;
+    description?: LoaderResolver<Scalars['String'], LightingMacros, {}, TContext>;
+    labels?: LoaderResolver<Array<Scalars['String']>, LightingMacros, {}, TContext>;
+    state?: LoaderResolver<LightingMacrosState, LightingMacros, {}, TContext>;
+    settings?: LoaderResolver<LightingMacrosSettings, LightingMacros, {}, TContext>;
+    output?: LoaderResolver<LightingMacrosOutput, LightingMacros, {}, TContext>;
+    createdAt?: LoaderResolver<Scalars['String'], LightingMacros, {}, TContext>;
+    updatedAt?: LoaderResolver<Scalars['String'], LightingMacros, {}, TContext>;
+  };
+
   DefaultOutput?: {
     message?: LoaderResolver<Maybe<Scalars['String']>, DefaultOutput, {}, TContext>;
   };
@@ -552,8 +936,8 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     topic?: LoaderResolver<Maybe<Scalars['String']>, Control, {}, TContext>;
     error?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
     meta?: LoaderResolver<Scalars['String'], Control, {}, TContext>;
+    labels?: LoaderResolver<Array<Scalars['String']>, Control, {}, TContext>;
     markup?: LoaderResolver<MarkupOutput, Control, {}, TContext>;
-    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Control, {}, TContext>;
   };
 
   Device?: {
@@ -562,20 +946,9 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     title?: LoaderResolver<TitleOutput, Device, {}, TContext>;
     error?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
     meta?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
+    labels?: LoaderResolver<Array<Scalars['String']>, Device, {}, TContext>;
     markup?: LoaderResolver<MarkupOutput, Device, {}, TContext>;
-    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Device, {}, TContext>;
     controls?: LoaderResolver<Maybe<Array<Control>>, Device, {}, TContext>;
-  };
-
-  Macros?: {
-    id?: LoaderResolver<Scalars['ID'], Macros, {}, TContext>;
-    name?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
-    description?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
-    type?: LoaderResolver<MacrosType, Macros, {}, TContext>;
-    labels?: LoaderResolver<Maybe<Array<Scalars['String']>>, Macros, {}, TContext>;
-    settings?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
-    createdAt?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
-    updatedAt?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
   };
 
   MacrosWireframe?: {
@@ -583,6 +956,23 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     name?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
     description?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
     settings?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
+  };
+
+  MacrosOutput?: {
+    macros?: LoaderResolver<Maybe<Macros>, MacrosOutput, {}, TContext>;
+    error?: LoaderResolver<Error, MacrosOutput, {}, TContext>;
+  };
+
+  DeviceSubscriptionEvent?: {
+    type?: LoaderResolver<Scalars['String'], DeviceSubscriptionEvent, {}, TContext>;
+    error?: LoaderResolver<Error, DeviceSubscriptionEvent, {}, TContext>;
+    value?: LoaderResolver<Device, DeviceSubscriptionEvent, {}, TContext>;
+  };
+
+  MacrosSubscriptionEvent?: {
+    type?: LoaderResolver<Scalars['String'], MacrosSubscriptionEvent, {}, TContext>;
+    error?: LoaderResolver<Error, MacrosSubscriptionEvent, {}, TContext>;
+    value?: LoaderResolver<Macros, MacrosSubscriptionEvent, {}, TContext>;
   };
 }
 declare module 'mercurius' {
