@@ -185,6 +185,7 @@
     "sharedb",
     "Tailscale",
     "WBIO",
+    "wireframe",
     "wirenboard"
   ],
   "[shellscript]": {
