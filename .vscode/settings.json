@@ -85,7 +85,7 @@
   "eslint.packageManager": "yarn",
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
-  "eslint.workingDirectories": ["./packages/rayner", "./packages/swan"],
+  "eslint.workingDirectories": ["./rayner", "./swan"],
 
   "git.confirmSync": false,
   "git.enableStatusBarSync": true,
@@ -163,6 +163,9 @@
     }
   ],
   "cSpell.words": [
+    "контрола",
+    "мапим",
+    "пресетах",
     "abortable",
     "EBUS",
     "geetest",
@@ -180,9 +183,10 @@
     "rethinkdb",
     "Setpoint",
     "sharedb",
+    "Tailscale",
     "WBIO",
-    "wirenboard",
-    "мапим"
+    "wireframe",
+    "wirenboard"
   ],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"

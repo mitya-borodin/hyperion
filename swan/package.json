@@ -1,0 +1,33 @@
+{
+  "name": "swan",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "nodemon --config nodemon.json src/index.ts",
+    "build:check": "tsc --project ./tsconfig.json",
+    "build": "del-cli build && tsc --project ./tsconfig.build.json"
+  },
+  "engines": {
+    "node": ">=16.17.0",
+    "npm": ">=8.15.0"
+  },
+  "dependencies": {
+    "abort-controller-x": "^0.4.3",
+    "debug": "^4.3.4",
+    "defer-promise": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "execa": "^5.1.1"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.0",
+    "@types/debug": "^4.1.8",
+    "@types/defer-promise": "^1.0.1",
+    "@types/node": "^16.11.26",
+    "del-cli": "^5.0.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "tsc-watch": "^6.0.4",
+    "tslib": "^2.6.2",
+    "typescript": "^5.1.6"
+  }
+}
