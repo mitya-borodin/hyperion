@@ -163,7 +163,7 @@ yarn start
       "request": "attach",
       "address": "127.0.0.1",
       "port": 9229,
-      "localRoot": "${cwd}/packages/rayner/src",
+      "localRoot": "${cwd}/rayner/src",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }

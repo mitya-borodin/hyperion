@@ -1,7 +1,7 @@
 {
   "name": "hyperion",
   "version": "1.0.0",
-  "description": "Control system for components of a smart home built on Wirenboard equipment",
+  "description": "Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.",
   "repository": "git@github.com:mitya-borodin/hyperion.git",
   "license": "MIT",
   "scripts": {

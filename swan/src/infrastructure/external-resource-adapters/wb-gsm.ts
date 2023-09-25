@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-null */
 /* eslint-disable no-constant-condition */
 import { exec } from 'node:child_process';
 

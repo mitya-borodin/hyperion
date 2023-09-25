@@ -3,7 +3,7 @@
 
 yarn lint-staged
 
-cd ./packages/rayner
+cd ./rayner
 
 echo "🚀 Build rayner..."
 

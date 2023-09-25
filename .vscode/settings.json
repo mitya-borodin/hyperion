@@ -85,7 +85,7 @@
   "eslint.packageManager": "yarn",
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
-  "eslint.workingDirectories": ["./packages/rayner", "./packages/swan"],
+  "eslint.workingDirectories": ["./rayner", "./swan"],
 
   "git.confirmSync": false,
   "git.enableStatusBarSync": true,

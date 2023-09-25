@@ -25,16 +25,16 @@ services:
   # rayner:
   #   build:
   #     dockerfile: Dockerfile
-  #     context: ./packages/rayner
+  #     context: ./rayner
   #   image: registry.gitlab.com/hyperion/rayner-local:latest
   #   command: 'yarn start'
   #   restart: unless-stopped
-  #   env_file: ./packages/rayner/.env
+  #   env_file: ./rayner/.env
   #   environment:
   #     - PRISMA_PG_DATABASE_URL=postgresql://hyperion:hyperion@postgres:5432/hyperion?schema=public
   #     - FASTIFY_HOST=0.0.0.0
   #   volumes:
-  #     - ./packages/rayner:/app
+  #     - ./rayner:/app
   #     - /app/node_modules
   #   ports:
   #     - '127.0.0.1:8080:8080'
