@@ -2,22 +2,23 @@ import EventEmitter from 'node:events';
 
 import { Logger } from 'pino';
 
-import {
-  WirenboardDevice,
-  WirenboardDeviceEvent,
-} from '../infrastructure/external-resource-adapters/wirenboard/wirenboard-device';
+import { EventBus } from '../domain/event-bus';
+import { ErrorCode, ErrorMessage } from '../helpers/error-type';
+import { WirenboardDevice } from '../infrastructure/external-resource-adapters/wirenboard/wirenboard-device';
+import { toGraphQlSubscriptionDevice } from '../interfaces/http/graphql/mappers/to-graphql-subscription-device';
+import { SubscriptionDeviceType } from '../interfaces/http/graphql/subscription';
 import { IWirenboardDeviceRepository } from '../ports/wirenboard-device-repository';
 
 type ApplyWirenboardDevice = {
   logger: Logger;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
-  pubSub: EventEmitter;
+  eventBus: EventEmitter;
 };
 
 export const runCollectWirenboardDeviceData = ({
   logger,
   wirenboardDeviceRepository,
-  pubSub,
+  eventBus,
 }: ApplyWirenboardDevice) => {
   const wirenboardDeviceHandler = async (wirenboardDevice: WirenboardDevice) => {
     const hyperionDevice = await wirenboardDeviceRepository.apply(wirenboardDevice);
@@ -25,11 +26,23 @@ export const runCollectWirenboardDeviceData = ({
     if (hyperionDevice instanceof Error) {
       return hyperionDevice;
     }
+
+    eventBus.emit(
+      EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
+      toGraphQlSubscriptionDevice({
+        devices: [hyperionDevice],
+        type: SubscriptionDeviceType.APPEARED,
+        error: {
+          code: ErrorCode.ALL_RIGHT,
+          message: ErrorMessage.ALL_RIGHT,
+        },
+      }),
+    );
   };
 
-  pubSub.on(WirenboardDeviceEvent.APPEARED, wirenboardDeviceHandler);
+  eventBus.on(EventBus.WB_APPEARED, wirenboardDeviceHandler);
 
   return () => {
-    pubSub.off(WirenboardDeviceEvent.APPEARED, wirenboardDeviceHandler);
+    eventBus.off(EventBus.WB_APPEARED, wirenboardDeviceHandler);
   };
 };

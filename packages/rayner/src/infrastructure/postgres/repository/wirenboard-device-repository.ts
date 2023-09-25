@@ -144,12 +144,27 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
         controls: prismaControlsWithOutError,
       });
 
-      // eslint-disable-next-line max-len
-      // this.logger.debug({ hyperionDevice }, 'The device with control has been successfully applied to the database ✅');
+      this.logger.trace({ hyperionDevice }, 'The device with control has been successfully applied to the database ✅');
 
       return hyperionDevice;
     } catch (error) {
       this.logger.error({ wirenboardDevice, device, controls, err: error }, 'Unable to apply wirenboard device 🚨');
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async getAll(): Promise<Error | HyperionDevice[]> {
+    try {
+      const prismaDevices = await this.client.device.findMany({
+        include: {
+          controls: true,
+        },
+      });
+
+      return prismaDevices.map((prismaDevice) => toDomainDevice(prismaDevice));
+    } catch (error) {
+      this.logger.error({ err: error }, 'Unable to markup wirenboard device 🚨');
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

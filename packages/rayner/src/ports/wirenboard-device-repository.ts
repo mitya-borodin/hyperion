@@ -36,6 +36,8 @@ export type MarkupWirenboardControl = {
 export interface IWirenboardDeviceRepository {
   apply(wirenboardDevice: WirenboardDevice): Promise<Error | HyperionDevice>;
 
+  getAll(): Promise<Error | HyperionDevice[]>;
+
   markupDevice(parameters: MarkupWirenboardDevice): Promise<Error | HyperionDevice>;
 
   markupControl(parameters: MarkupWirenboardControl): Promise<Error | HyperionDevice>;

@@ -30,8 +30,3 @@ export type WirenboardDevice = {
     };
   };
 };
-
-export enum WirenboardDeviceEvent {
-  APPEARED = 'APPEARED',
-  PUBLISH_MESSAGE = 'PUBLISH_MESSAGE',
-}

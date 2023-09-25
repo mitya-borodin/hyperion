@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable unicorn/prefer-module */
+import EventEmitter from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -27,10 +28,13 @@ import { Logger } from 'pino';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
+import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
 
 type CreateHttpInterfaceParameters = {
   config: Config;
   logger: Logger;
+  eventBus: EventEmitter;
+  wirenboardDeviceRepository: IWirenboardDeviceRepository;
 };
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -38,6 +42,8 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export const createHttpInterface = async ({
   config,
   logger,
+  eventBus,
+  wirenboardDeviceRepository,
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
     caseSensitive: true,
@@ -131,6 +137,8 @@ export const createHttpInterface = async ({
       fastify,
       config,
       logger,
+      eventBus,
+      wirenboardDeviceRepository,
     }),
     graphiql: !config.isProduction,
     subscription: true,

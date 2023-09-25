@@ -9,6 +9,7 @@ enum MacrosType {
 }
 
 enum ControlType {
+  UNSPECIFIED
   SWITCH
   ILLUMINATION
 }
@@ -18,6 +19,20 @@ enum LightingLevel {
   MIDDLE
   LOW
   ACCIDENT
+}
+
+enum SubscriptionDeviceType {
+  CONNECTION_ESTABLISHED
+  APPEARED
+  MARKED_UP
+  VALUE_IS_SET
+}
+
+enum SubscriptionMacrosType {
+  SETUP
+  UPDATE
+  REMOVE
+  OUTPUT_APPEARED
 }
 
 directive @auth(requires: [UserRole!]!) on OBJECT | FIELD_DEFINITION
@@ -170,7 +185,7 @@ input MacrosSetup {
 union Macros = LightingMacros
 
 type MacrosOutput {
-  macros: Macros
+  value: Macros
   error: Error!
 }
 
@@ -179,15 +194,15 @@ input RemoveMacrosInput {
 }
 
 type DeviceSubscriptionEvent {
-  type: String!
+  items: [Device!]!
+  type: SubscriptionDeviceType!
   error: Error!
-  value: Device!
 }
 
 type MacrosSubscriptionEvent {
-  type: String!
+  items: [Macros!]!
+  type: SubscriptionMacrosType!
   error: Error!
-  value: Macros!
 }
 
 type Query {
@@ -206,6 +221,6 @@ type Mutation {
 }
 
 type Subscription {
-  device: [DeviceSubscriptionEvent!]!
-  macros: [MacrosSubscriptionEvent!]!
+  device: DeviceSubscriptionEvent!
+  macros: MacrosSubscriptionEvent!
 }

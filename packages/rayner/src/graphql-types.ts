@@ -137,6 +137,7 @@ export enum MacrosType {
 }
 
 export enum ControlType {
+  UNSPECIFIED = 'UNSPECIFIED',
   SWITCH = 'SWITCH',
   ILLUMINATION = 'ILLUMINATION',
 }
@@ -146,6 +147,20 @@ export enum LightingLevel {
   MIDDLE = 'MIDDLE',
   LOW = 'LOW',
   ACCIDENT = 'ACCIDENT',
+}
+
+export enum SubscriptionDeviceType {
+  CONNECTION_ESTABLISHED = 'CONNECTION_ESTABLISHED',
+  APPEARED = 'APPEARED',
+  MARKED_UP = 'MARKED_UP',
+  VALUE_IS_SET = 'VALUE_IS_SET',
+}
+
+export enum SubscriptionMacrosType {
+  SETUP = 'SETUP',
+  UPDATE = 'UPDATE',
+  REMOVE = 'REMOVE',
+  OUTPUT_APPEARED = 'OUTPUT_APPEARED',
 }
 
 export type DefaultOutput = {
@@ -263,7 +278,7 @@ export type Macros = LightingMacros;
 
 export type MacrosOutput = {
   __typename?: 'MacrosOutput';
-  macros?: Maybe<Macros>;
+  value?: Maybe<Macros>;
   error: Error;
 };
 
@@ -273,16 +288,16 @@ export type RemoveMacrosInput = {
 
 export type DeviceSubscriptionEvent = {
   __typename?: 'DeviceSubscriptionEvent';
-  type: Scalars['String'];
+  items: Array<Device>;
+  type: SubscriptionDeviceType;
   error: Error;
-  value: Device;
 };
 
 export type MacrosSubscriptionEvent = {
   __typename?: 'MacrosSubscriptionEvent';
-  type: Scalars['String'];
+  items: Array<Macros>;
+  type: SubscriptionMacrosType;
   error: Error;
-  value: Macros;
 };
 
 export type Query = {
@@ -326,8 +341,8 @@ export type MutationremoveMacrosArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  device: Array<DeviceSubscriptionEvent>;
-  macros: Array<MacrosSubscriptionEvent>;
+  device: DeviceSubscriptionEvent;
+  macros: MacrosSubscriptionEvent;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -427,6 +442,8 @@ export type ResolversTypes = {
   MacrosType: MacrosType;
   ControlType: ControlType;
   LightingLevel: LightingLevel;
+  SubscriptionDeviceType: SubscriptionDeviceType;
+  SubscriptionMacrosType: SubscriptionMacrosType;
   Upload: ResolverTypeWrapper<Scalars['Upload']>;
   DefaultOutput: ResolverTypeWrapper<DefaultOutput>;
   Error: ResolverTypeWrapper<Error>;
@@ -445,11 +462,11 @@ export type ResolversTypes = {
   MacrosWireframe: ResolverTypeWrapper<MacrosWireframe>;
   MacrosSetup: MacrosSetup;
   Macros: ResolverTypeWrapper<ResolversUnionTypes['Macros']>;
-  MacrosOutput: ResolverTypeWrapper<Omit<MacrosOutput, 'macros'> & { macros?: Maybe<ResolversTypes['Macros']> }>;
+  MacrosOutput: ResolverTypeWrapper<Omit<MacrosOutput, 'value'> & { value?: Maybe<ResolversTypes['Macros']> }>;
   RemoveMacrosInput: RemoveMacrosInput;
   DeviceSubscriptionEvent: ResolverTypeWrapper<DeviceSubscriptionEvent>;
   MacrosSubscriptionEvent: ResolverTypeWrapper<
-    Omit<MacrosSubscriptionEvent, 'value'> & { value: ResolversTypes['Macros'] }
+    Omit<MacrosSubscriptionEvent, 'items'> & { items: Array<ResolversTypes['Macros']> }
   >;
   Query: ResolverTypeWrapper<{}>;
   Mutation: ResolverTypeWrapper<{}>;
@@ -494,10 +511,10 @@ export type ResolversParentTypes = {
   MacrosWireframe: MacrosWireframe;
   MacrosSetup: MacrosSetup;
   Macros: ResolversUnionParentTypes['Macros'];
-  MacrosOutput: Omit<MacrosOutput, 'macros'> & { macros?: Maybe<ResolversParentTypes['Macros']> };
+  MacrosOutput: Omit<MacrosOutput, 'value'> & { value?: Maybe<ResolversParentTypes['Macros']> };
   RemoveMacrosInput: RemoveMacrosInput;
   DeviceSubscriptionEvent: DeviceSubscriptionEvent;
-  MacrosSubscriptionEvent: Omit<MacrosSubscriptionEvent, 'value'> & { value: ResolversParentTypes['Macros'] };
+  MacrosSubscriptionEvent: Omit<MacrosSubscriptionEvent, 'items'> & { items: Array<ResolversParentTypes['Macros']> };
   Query: {};
   Mutation: {};
   Subscription: {};
@@ -710,7 +727,7 @@ export type MacrosOutputResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['MacrosOutput'] = ResolversParentTypes['MacrosOutput'],
 > = {
-  macros?: Resolver<Maybe<ResolversTypes['Macros']>, ParentType, ContextType>;
+  value?: Resolver<Maybe<ResolversTypes['Macros']>, ParentType, ContextType>;
   error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -719,9 +736,9 @@ export type DeviceSubscriptionEventResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['DeviceSubscriptionEvent'] = ResolversParentTypes['DeviceSubscriptionEvent'],
 > = {
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Device']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['SubscriptionDeviceType'], ParentType, ContextType>;
   error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
-  value?: Resolver<ResolversTypes['Device'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -729,9 +746,9 @@ export type MacrosSubscriptionEventResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['MacrosSubscriptionEvent'] = ResolversParentTypes['MacrosSubscriptionEvent'],
 > = {
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Macros']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['SubscriptionMacrosType'], ParentType, ContextType>;
   error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
-  value?: Resolver<ResolversTypes['Macros'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -788,8 +805,8 @@ export type SubscriptionResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription'],
 > = {
-  device?: SubscriptionResolver<Array<ResolversTypes['DeviceSubscriptionEvent']>, 'device', ParentType, ContextType>;
-  macros?: SubscriptionResolver<Array<ResolversTypes['MacrosSubscriptionEvent']>, 'macros', ParentType, ContextType>;
+  device?: SubscriptionResolver<ResolversTypes['DeviceSubscriptionEvent'], 'device', ParentType, ContextType>;
+  macros?: SubscriptionResolver<ResolversTypes['MacrosSubscriptionEvent'], 'macros', ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = MercuriusContext> = {
@@ -959,20 +976,20 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
   };
 
   MacrosOutput?: {
-    macros?: LoaderResolver<Maybe<Macros>, MacrosOutput, {}, TContext>;
+    value?: LoaderResolver<Maybe<Macros>, MacrosOutput, {}, TContext>;
     error?: LoaderResolver<Error, MacrosOutput, {}, TContext>;
   };
 
   DeviceSubscriptionEvent?: {
-    type?: LoaderResolver<Scalars['String'], DeviceSubscriptionEvent, {}, TContext>;
+    items?: LoaderResolver<Array<Device>, DeviceSubscriptionEvent, {}, TContext>;
+    type?: LoaderResolver<SubscriptionDeviceType, DeviceSubscriptionEvent, {}, TContext>;
     error?: LoaderResolver<Error, DeviceSubscriptionEvent, {}, TContext>;
-    value?: LoaderResolver<Device, DeviceSubscriptionEvent, {}, TContext>;
   };
 
   MacrosSubscriptionEvent?: {
-    type?: LoaderResolver<Scalars['String'], MacrosSubscriptionEvent, {}, TContext>;
+    items?: LoaderResolver<Array<Macros>, MacrosSubscriptionEvent, {}, TContext>;
+    type?: LoaderResolver<SubscriptionMacrosType, MacrosSubscriptionEvent, {}, TContext>;
     error?: LoaderResolver<Error, MacrosSubscriptionEvent, {}, TContext>;
-    value?: LoaderResolver<Macros, MacrosSubscriptionEvent, {}, TContext>;
   };
 }
 declare module 'mercurius' {
