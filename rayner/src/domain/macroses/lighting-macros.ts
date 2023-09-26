@@ -1,4 +1,6 @@
-import { ControlType, Macros, MacrosType } from './macros';
+import { ControlType } from '../control-type';
+
+import { Macros, MacrosType } from './macros';
 
 export enum LightingLevel {
   HIGHT = 'HIGHT',

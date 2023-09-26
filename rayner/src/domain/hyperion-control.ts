@@ -1,6 +1,6 @@
 import { JsonObject } from '../helpers/json-types';
 
-import { ControlType } from './macroses/macros';
+import { ControlType } from './control-type';
 
 export type HyperionDeviceControl = {
   id: string;

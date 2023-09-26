@@ -5,11 +5,6 @@ export enum MacrosType {
   MANUAL_LIGHTING_SWITCH = 'MANUAL_LIGHTING_SWITCH',
 }
 
-export enum ControlType {
-  SWITCH = 'switch',
-  ILLUMINATION = 'lux',
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type Macros<
   TYPE extends MacrosType,

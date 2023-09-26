@@ -1,6 +1,8 @@
 import { HyperionDevice } from '../../../../domain/hyperion-device';
 import { Device as GraphQlDevice } from '../../../../graphql-types';
 
+import { toGraphQLControlType } from './to-graphql-control-type';
+
 export const toGraphQlDevice = (hyperionDevice: HyperionDevice): GraphQlDevice => {
   return {
     id: hyperionDevice.id,
@@ -30,7 +32,7 @@ export const toGraphQlDevice = (hyperionDevice: HyperionDevice): GraphQlDevice =
         },
         order: control.order,
         readonly: control.readonly,
-        type: control.type,
+        type: toGraphQLControlType(control.type),
         units: control.units,
         max: control.max,
         min: control.min,
