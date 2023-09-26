@@ -93,7 +93,7 @@ export const toDomainDevice = (
           max: control.max,
           min: control.min,
           precision: control.precision,
-          value: JSON.parse(control.value),
+          value: control.value,
           topic: control.topic,
           error: control.error,
           meta: JSON.parse(control.meta),

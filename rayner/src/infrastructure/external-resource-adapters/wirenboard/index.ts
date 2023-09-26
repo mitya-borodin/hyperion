@@ -25,6 +25,11 @@ type RunWirenboardResult = {
   stop: () => void;
 };
 
+export type PublishWirenboardMessage = {
+  topic: string;
+  message: string;
+};
+
 const ROOT_TOPIC = '/devices/#';
 
 /**
@@ -33,12 +38,9 @@ const ROOT_TOPIC = '/devices/#';
 export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
   const client = await getMqttClient({ config, logger, rootTopic: ROOT_TOPIC });
 
-  const publishMessage = (topic: string, message: Buffer) => {
-    publishWirenboardMessage({ logger, client, topic, message });
-  };
-
-  eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);
-
+  /**
+   * ! Получение состояние контроллера
+   */
   client.on('message', (topic: string, messageBuffer: Buffer) => {
     /**
      * ! В рамках нашей системы, не рассматриваются другие топики.
@@ -254,6 +256,15 @@ export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard)
       }
     }
   });
+
+  /**
+   * ! Изменение состояния контроллера
+   */
+  const publishMessage = ({ topic, message }: PublishWirenboardMessage) => {
+    publishWirenboardMessage({ logger, client, topic, message });
+  };
+
+  eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);
 
   return {
     stop: () => {

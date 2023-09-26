@@ -9,6 +9,7 @@ import {
   IWirenboardDeviceRepository,
   MarkupWirenboardControl,
   MarkupWirenboardDevice,
+  SetControlValue,
 } from '../../../ports/wirenboard-device-repository';
 import { WirenboardDevice } from '../../external-resource-adapters/wirenboard/wirenboard-device';
 import { toDomainDevice } from '../../mappers/wirenboard-device-mapper';
@@ -220,6 +221,31 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
         data: {
           ...(parameters.markup ? { markup: JSON.stringify(parameters.markup) } : {}),
           ...(parameters.labels ? { labels: parameters.labels } : {}),
+        },
+      });
+
+      return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
+    } catch (error) {
+      this.logger.error({ parameters, err: error }, 'Unable to markup wirenboard control 🚨');
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async setControlValue(parameters: SetControlValue): Promise<Error | HyperionDevice> {
+    try {
+      const prismaControl = await this.client.control.update({
+        include: {
+          device: true,
+        },
+        where: {
+          deviceId_controlId: {
+            deviceId: parameters.deviceId,
+            controlId: parameters.controlId,
+          },
+        },
+        data: {
+          value: parameters.value,
         },
       });
 

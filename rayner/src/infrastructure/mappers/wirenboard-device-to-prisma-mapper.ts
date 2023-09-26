@@ -32,7 +32,7 @@ export const toPrismaWirenboardDevice = (wirenboardDevice: WirenboardDevice) => 
       max: control.max,
       min: control.min,
       precision: control.precision,
-      value: control.value ? JSON.stringify(control.value) : undefined,
+      value: control.value,
       topic: control.topic,
       error: control.error,
       meta: control.meta ? JSON.stringify(control.meta) : undefined,

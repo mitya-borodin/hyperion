@@ -33,6 +33,13 @@ export type MarkupWirenboardControl = {
   labels?: string[];
 };
 
+export type SetControlValue = {
+  deviceId: string;
+  controlId: string;
+
+  value: string;
+};
+
 export interface IWirenboardDeviceRepository {
   apply(wirenboardDevice: WirenboardDevice): Promise<Error | HyperionDevice>;
 
@@ -41,4 +48,6 @@ export interface IWirenboardDeviceRepository {
   markupDevice(parameters: MarkupWirenboardDevice): Promise<Error | HyperionDevice>;
 
   markupControl(parameters: MarkupWirenboardControl): Promise<Error | HyperionDevice>;
+
+  setControlValue(parameters: SetControlValue): Promise<Error | HyperionDevice>;
 }

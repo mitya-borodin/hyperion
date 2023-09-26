@@ -144,30 +144,30 @@ export const createHttpInterface = async ({
     subscription: true,
   });
 
-  fastify.register(MercuriusAuth, {
-    authContext: (context): { role: UserRole; id: number } => {
-      const { app, reply } = context;
-      const { authorization = '' } = reply.request.headers;
+  // fastify.register(MercuriusAuth, {
+  //   authContext: (context): { role: UserRole; id: number } => {
+  //     const { app, reply } = context;
+  //     const { authorization = '' } = reply.request.headers;
 
-      try {
-        const { id, role = UserRole.UNKNOWN }: JwtPayload = app.jwt.verify(authorization);
+  //     try {
+  //       const { id, role = UserRole.UNKNOWN }: JwtPayload = app.jwt.verify(authorization);
 
-        return { id, role };
-      } catch (error) {
-        logger.error({ authorization, err: error }, 'JWT is invalid 🚨');
+  //       return { id, role };
+  //     } catch (error) {
+  //       logger.error({ authorization, err: error }, 'JWT is invalid 🚨');
 
-        return { id: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
-      }
-    },
-    async applyPolicy(authDirectiveAST, parent, arguments_, context, info: GraphQLResolveInfo) {
-      const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');
+  //       return { id: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
+  //     }
+  //   },
+  //   async applyPolicy(authDirectiveAST, parent, arguments_, context, info: GraphQLResolveInfo) {
+  //     const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');
 
-      const authValues: any[] = requires.value.values;
+  //     const authValues: any[] = requires.value.values;
 
-      return authValues.some((value: { value: UserRole }) => value.value === context.auth?.role);
-    },
-    authDirective: 'auth',
-  });
+  //     return authValues.some((value: { value: UserRole }) => value.value === context.auth?.role);
+  //   },
+  //   authDirective: 'auth',
+  // });
 
   await codegenMercurius(fastify, {
     targetPath: './src/graphql-types.ts',

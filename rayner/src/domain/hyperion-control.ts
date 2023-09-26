@@ -15,7 +15,7 @@ export type HyperionDeviceControl = {
   max: number;
   min: number;
   precision: number;
-  value: string | number | boolean;
+  value: string;
   topic?: string;
   error: string;
   meta: JsonObject;

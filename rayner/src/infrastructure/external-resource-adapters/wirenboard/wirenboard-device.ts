@@ -23,7 +23,7 @@ export type WirenboardDevice = {
       max?: number;
       min?: number;
       precision?: number;
-      value?: string | number | boolean;
+      value?: string;
       topic?: string;
       error?: string;
       meta?: JsonObject;
