@@ -2,43 +2,6 @@
 
 Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.
 
-## Technology
-
-- [Typescript](https://www.typescriptlang.org)
-- [Typescript CLI](https://www.typescriptlang.org/docs/handbook/compiler-options.html#using-the-cli)
-
-### Frontend
-
-- [ViteJS](https://vitejs.dev)
-- [SolidJS](https://www.solidjs.com)
-- [Tailwind](https://tailwindcss.com)
-
-### Backend
-
-- [NodeJS](https://nodejs.org/en/)
-- [NestJS](https://nestjs.com)
-- [Pino](https://github.com/pinojs/pino)
-- [Pino-pretty](https://github.com/pinojs/pino-pretty)
-- [RxJs](https://rxjs.dev)
-- [Nodemon](https://nodemon.io)
-- [MongoDB](https://www.mongodb.com)
-- [MQTT](https://www.npmjs.com/package/mqtt)
-- [Mosquitto](https://mosquitto.org)
-- [Docker compose](https://docs.docker.com/language/nodejs/develop/)
-- [Compose-file](https://docs.docker.com/compose/compose-file/)
-
-### Wirenboard
-
-- [WB 7](https://wirenboard.com/ru/product/wiren-board-7)
-- [WB MQTT](https://wirenboard.com/wiki/index.php/MQTT)
-- [WB MQTT Convention](https://github.com/wirenboard/conventions/blob/main/README.md)
-- [WB WEB GUI IN ETH0](http://192.168.1.75)
-- [WB WEB GUI IN WLAN0](http://192.168.42.1)
-- [WB MQTT Channels in ETH0](http://192.168.1.75/#!/MQTTChannels)
-- [WB MQTT Channels in WLAN0](http://192.168.42.1/#!/MQTTChannels)
-- [Mosquitto](https://mosquitto.org)
-- [MQTT](https://www.npmjs.com/package/mqtt)
-
 ## Environment
 
 - Required `Node@18.12.1` `npm@8.19.2`
@@ -189,3 +152,41 @@ yarn start
 ### CD
 
 Будет выполнена настройка в Github workflow, который будет менять имена образов в docker swarm
+
+## Technology
+
+- [Typescript](https://www.typescriptlang.org)
+- [Typescript CLI](https://www.typescriptlang.org/docs/handbook/compiler-options.html#using-the-cli)
+
+### Frontend
+
+- [React](https://react.dev)
+- [Tailwind](https://tailwindcss.com)
+- [Mobx](https://mobx.js.org/README.html)
+- [ViteJS](https://vitejs.dev)
+
+### Backend
+
+- [DDH](https://github.com/Sairyss/domain-driven-hexagon)
+- [NodeJS](https://nodejs.org/en/)
+- [Nodemon](https://nodemon.io)
+- [Prisma](https://www.prisma.io)
+- [MQTT](https://www.npmjs.com/package/mqtt)
+- [Pino](https://github.com/pinojs/pino)
+- [Pino-pretty](https://github.com/pinojs/pino-pretty)
+- [Mosquitto](https://mosquitto.org)
+- [Docker compose](https://docs.docker.com/language/nodejs/develop/)
+- [Compose-file](https://docs.docker.com/compose/compose-file/)
+
+### Wirenboard
+
+- [WB 7](https://wirenboard.com/ru/product/wiren-board-7)
+- [WB MQTT](https://wirenboard.com/wiki/index.php/MQTT)
+- [WB MQTT Convention](https://github.com/wirenboard/conventions/blob/main/README.md)
+- [WB WEB GUI IN ETH0](http://192.168.1.75)
+- [WB WEB GUI IN WLAN0](http://192.168.42.1)
+- [WB MQTT Channels in ETH0](http://192.168.1.75/#!/MQTTChannels)
+- [WB MQTT Channels in WLAN0](http://192.168.42.1/#!/MQTTChannels)
+- [Mosquitto](https://mosquitto.org)
+- [MQTT](https://www.npmjs.com/package/mqtt)
+
