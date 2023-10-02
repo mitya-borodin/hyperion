@@ -135,3 +135,5 @@ build
 # SQLlite
 hyperion.db
 hyperion.db-journal
+
+analyse.html
