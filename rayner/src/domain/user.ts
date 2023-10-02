@@ -1,7 +1,12 @@
 export enum UserRole {
-  UNKNOWN = 'UNKNOWN',
-  OPERATOR = 'OPERATOR',
   ADMIN = 'ADMIN',
+  OPERATOR = 'OPERATOR',
+  VIEWER = 'VIEWER',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  DELETED = 'DELETED',
 }
 
 export const UNKNOWN_USER_ID = -1000;
@@ -13,10 +18,16 @@ export type JwtPayload = {
 
 export type User = {
   id: number;
+
+  role: UserRole;
+  status: UserStatus;
+
+  name: string;
   email: string;
-  userRole: UserRole;
-  hash?: string;
+
   salt?: string;
+  hash?: string;
+
   createdAt: Date;
   updatedAt: Date;
 };

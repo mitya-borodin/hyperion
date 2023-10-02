@@ -1,0 +1,41 @@
+@import 'sanitize.css';
+@import 'sanitize.css/typography.css';
+@import 'sanitize.css/forms.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+svg {
+  width: 100%;
+  height: auto;
+}
+
+#root {
+  @apply flex min-h-screen flex-col;
+}
+
+::-webkit-input-placeholder {
+  opacity: 1;
+}
+
+.ql-editor.ql-blank::before {
+  color: rgba(0, 0, 0, 0.25);
+  font-style: normal;
+}

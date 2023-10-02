@@ -11,7 +11,6 @@ export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   context: TContext,
   info: GraphQLResolveInfo,
 ) => Promise<import('mercurius-codegen').DeepPartial<TResult>> | import('mercurius-codegen').DeepPartial<TResult>;
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -127,10 +126,117 @@ export type LightingMacros = {
 };
 
 export enum UserRole {
-  UNKNOWN = 'UNKNOWN',
-  OPERATOR = 'OPERATOR',
   ADMIN = 'ADMIN',
+  OPERATOR = 'OPERATOR',
+  VIEWER = 'VIEWER',
 }
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  DELETED = 'DELETED',
+}
+
+export type GeetestCaptchaInput = {
+  lot_number: Scalars['String'];
+  captcha_output: Scalars['String'];
+  pass_token: Scalars['String'];
+  gen_time: Scalars['String'];
+};
+
+export type UserOutput = {
+  __typename?: 'UserOutput';
+  id: Scalars['ID'];
+  role: UserRole;
+  status: UserStatus;
+  name: Scalars['String'];
+  email: Scalars['String'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+};
+
+export type GetUserInput = {
+  id?: InputMaybe<Scalars['ID']>;
+};
+
+export type GetUsersInput = {
+  pagination: PaginationInput;
+};
+
+export type GetUsersOutput = {
+  __typename?: 'GetUsersOutput';
+  users: Array<UserOutput>;
+  pagination: PaginationOutput;
+};
+
+export type SignInInput = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+  captchaCheck: GeetestCaptchaInput;
+};
+
+export type SignInOutput = {
+  __typename?: 'SignInOutput';
+  accessToken?: Maybe<Scalars['String']>;
+  isTwoFaActivated: Scalars['Boolean'];
+  error: Error;
+};
+
+export type CreateUserInput = {
+  role: UserRole;
+  name: Scalars['String'];
+  email: Scalars['String'];
+  password: Scalars['String'];
+};
+
+export type CreateUserOutput = {
+  __typename?: 'CreateUserOutput';
+  user?: Maybe<UserOutput>;
+  error: Error;
+};
+
+export type DeleteUserInput = {
+  id: Scalars['ID'];
+};
+
+export type SetRoleInput = {
+  id: Scalars['ID'];
+  role: UserRole;
+};
+
+export type SetPasswordInput = {
+  id: Scalars['ID'];
+  password: Scalars['String'];
+};
+
+export type ActivateTwoFaOutput = {
+  __typename?: 'ActivateTwoFaOutput';
+  code: Scalars['String'];
+  qr: Scalars['String'];
+};
+
+export type ConfirmTwoFaInput = {
+  totp: Scalars['String'];
+};
+
+export type VerifyTwoFaInput = {
+  fingerprint: Scalars['String'];
+  email: Scalars['String'];
+  totp: Scalars['String'];
+};
+
+export type TwoFaOtpOutput = {
+  __typename?: 'TwoFaOtpOutput';
+  accessToken: Scalars['String'];
+};
+
+export type DeactivateTwoFaInput = {
+  totp: Scalars['String'];
+};
+
+export type RefreshAccessTokenOutput = {
+  __typename?: 'RefreshAccessTokenOutput';
+  accessToken: Scalars['String'];
+};
 
 export enum MacrosType {
   LIGHTING = 'LIGHTING',
@@ -284,7 +390,10 @@ export type MacrosSetup = {
   lighting?: InputMaybe<LightingMacrosSetup>;
 };
 
-export type Macros = LightingMacros;
+export type Macros = {
+  __typename?: 'Macros';
+  lighting?: Maybe<LightingMacros>;
+};
 
 export type MacrosOutput = {
   __typename?: 'MacrosOutput';
@@ -312,17 +421,70 @@ export type MacrosSubscriptionEvent = {
 
 export type Query = {
   __typename?: 'Query';
+  getUser?: Maybe<UserOutput>;
+  getUsers?: Maybe<GetUsersOutput>;
   getMacrosWireframes: Array<MacrosWireframe>;
+};
+
+export type QuerygetUserArgs = {
+  input: GetUserInput;
+};
+
+export type QuerygetUsersArgs = {
+  input: GetUsersInput;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
+  signIn?: Maybe<SignInOutput>;
+  signOut?: Maybe<DefaultOutput>;
+  createUser?: Maybe<CreateUserOutput>;
+  deleteUser?: Maybe<DefaultOutput>;
+  setPassword?: Maybe<DefaultOutput>;
+  setRole?: Maybe<DefaultOutput>;
+  activateTwoFa?: Maybe<ActivateTwoFaOutput>;
+  confirmTwoFa?: Maybe<DefaultOutput>;
+  verifyTwoFa?: Maybe<TwoFaOtpOutput>;
+  deactivateTwoFa?: Maybe<DefaultOutput>;
+  refreshAccessToken?: Maybe<RefreshAccessTokenOutput>;
   setControlValue: Device;
   markupDevice: Device;
   markupControl: Device;
   setupMacros: MacrosOutput;
   updateMacros: MacrosOutput;
   removeMacros: MacrosOutput;
+};
+
+export type MutationsignInArgs = {
+  input: SignInInput;
+};
+
+export type MutationcreateUserArgs = {
+  input: CreateUserInput;
+};
+
+export type MutationdeleteUserArgs = {
+  input: DeleteUserInput;
+};
+
+export type MutationsetPasswordArgs = {
+  input: SetPasswordInput;
+};
+
+export type MutationsetRoleArgs = {
+  input: SetRoleInput;
+};
+
+export type MutationconfirmTwoFaArgs = {
+  input: ConfirmTwoFaInput;
+};
+
+export type MutationverifyTwoFaArgs = {
+  input: VerifyTwoFaInput;
+};
+
+export type MutationdeactivateTwoFaArgs = {
+  input: DeactivateTwoFaInput;
 };
 
 export type MutationsetControlValueArgs = {
@@ -418,16 +580,6 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo,
 ) => TResult | Promise<TResult>;
 
-/** Mapping of union types */
-export type ResolversUnionTypes = {
-  Macros: LightingMacros;
-};
-
-/** Mapping of union parent types */
-export type ResolversUnionParentTypes = {
-  Macros: LightingMacros;
-};
-
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   LightingMacrosSetupState: LightingMacrosSetupState;
@@ -449,6 +601,25 @@ export type ResolversTypes = {
   LightingMacrosOutput: ResolverTypeWrapper<LightingMacrosOutput>;
   LightingMacros: ResolverTypeWrapper<LightingMacros>;
   UserRole: UserRole;
+  UserStatus: UserStatus;
+  GeetestCaptchaInput: GeetestCaptchaInput;
+  UserOutput: ResolverTypeWrapper<UserOutput>;
+  GetUserInput: GetUserInput;
+  GetUsersInput: GetUsersInput;
+  GetUsersOutput: ResolverTypeWrapper<GetUsersOutput>;
+  SignInInput: SignInInput;
+  SignInOutput: ResolverTypeWrapper<SignInOutput>;
+  CreateUserInput: CreateUserInput;
+  CreateUserOutput: ResolverTypeWrapper<CreateUserOutput>;
+  DeleteUserInput: DeleteUserInput;
+  SetRoleInput: SetRoleInput;
+  SetPasswordInput: SetPasswordInput;
+  ActivateTwoFaOutput: ResolverTypeWrapper<ActivateTwoFaOutput>;
+  ConfirmTwoFaInput: ConfirmTwoFaInput;
+  VerifyTwoFaInput: VerifyTwoFaInput;
+  TwoFaOtpOutput: ResolverTypeWrapper<TwoFaOtpOutput>;
+  DeactivateTwoFaInput: DeactivateTwoFaInput;
+  RefreshAccessTokenOutput: ResolverTypeWrapper<RefreshAccessTokenOutput>;
   MacrosType: MacrosType;
   ControlType: ControlType;
   LightingLevel: LightingLevel;
@@ -471,13 +642,11 @@ export type ResolversTypes = {
   SetControlValue: SetControlValue;
   MacrosWireframe: ResolverTypeWrapper<MacrosWireframe>;
   MacrosSetup: MacrosSetup;
-  Macros: ResolverTypeWrapper<ResolversUnionTypes['Macros']>;
-  MacrosOutput: ResolverTypeWrapper<Omit<MacrosOutput, 'value'> & { value?: Maybe<ResolversTypes['Macros']> }>;
+  Macros: ResolverTypeWrapper<Macros>;
+  MacrosOutput: ResolverTypeWrapper<MacrosOutput>;
   RemoveMacrosInput: RemoveMacrosInput;
   DeviceSubscriptionEvent: ResolverTypeWrapper<DeviceSubscriptionEvent>;
-  MacrosSubscriptionEvent: ResolverTypeWrapper<
-    Omit<MacrosSubscriptionEvent, 'items'> & { items: Array<ResolversTypes['Macros']> }
-  >;
+  MacrosSubscriptionEvent: ResolverTypeWrapper<MacrosSubscriptionEvent>;
   Query: ResolverTypeWrapper<{}>;
   Mutation: ResolverTypeWrapper<{}>;
   Subscription: ResolverTypeWrapper<{}>;
@@ -503,6 +672,24 @@ export type ResolversParentTypes = {
   LightingMacrosOutputLighting: LightingMacrosOutputLighting;
   LightingMacrosOutput: LightingMacrosOutput;
   LightingMacros: LightingMacros;
+  GeetestCaptchaInput: GeetestCaptchaInput;
+  UserOutput: UserOutput;
+  GetUserInput: GetUserInput;
+  GetUsersInput: GetUsersInput;
+  GetUsersOutput: GetUsersOutput;
+  SignInInput: SignInInput;
+  SignInOutput: SignInOutput;
+  CreateUserInput: CreateUserInput;
+  CreateUserOutput: CreateUserOutput;
+  DeleteUserInput: DeleteUserInput;
+  SetRoleInput: SetRoleInput;
+  SetPasswordInput: SetPasswordInput;
+  ActivateTwoFaOutput: ActivateTwoFaOutput;
+  ConfirmTwoFaInput: ConfirmTwoFaInput;
+  VerifyTwoFaInput: VerifyTwoFaInput;
+  TwoFaOtpOutput: TwoFaOtpOutput;
+  DeactivateTwoFaInput: DeactivateTwoFaInput;
+  RefreshAccessTokenOutput: RefreshAccessTokenOutput;
   Upload: Scalars['Upload'];
   DefaultOutput: DefaultOutput;
   Error: Error;
@@ -520,11 +707,11 @@ export type ResolversParentTypes = {
   SetControlValue: SetControlValue;
   MacrosWireframe: MacrosWireframe;
   MacrosSetup: MacrosSetup;
-  Macros: ResolversUnionParentTypes['Macros'];
-  MacrosOutput: Omit<MacrosOutput, 'value'> & { value?: Maybe<ResolversParentTypes['Macros']> };
+  Macros: Macros;
+  MacrosOutput: MacrosOutput;
   RemoveMacrosInput: RemoveMacrosInput;
   DeviceSubscriptionEvent: DeviceSubscriptionEvent;
-  MacrosSubscriptionEvent: Omit<MacrosSubscriptionEvent, 'items'> & { items: Array<ResolversParentTypes['Macros']> };
+  MacrosSubscriptionEvent: MacrosSubscriptionEvent;
   Query: {};
   Mutation: {};
   Subscription: {};
@@ -624,6 +811,73 @@ export type LightingMacrosResolvers<
   output?: Resolver<ResolversTypes['LightingMacrosOutput'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UserOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['UserOutput'] = ResolversParentTypes['UserOutput'],
+> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['UserRole'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['UserStatus'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type GetUsersOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['GetUsersOutput'] = ResolversParentTypes['GetUsersOutput'],
+> = {
+  users?: Resolver<Array<ResolversTypes['UserOutput']>, ParentType, ContextType>;
+  pagination?: Resolver<ResolversTypes['PaginationOutput'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SignInOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['SignInOutput'] = ResolversParentTypes['SignInOutput'],
+> = {
+  accessToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  isTwoFaActivated?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CreateUserOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['CreateUserOutput'] = ResolversParentTypes['CreateUserOutput'],
+> = {
+  user?: Resolver<Maybe<ResolversTypes['UserOutput']>, ParentType, ContextType>;
+  error?: Resolver<ResolversTypes['Error'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ActivateTwoFaOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['ActivateTwoFaOutput'] = ResolversParentTypes['ActivateTwoFaOutput'],
+> = {
+  code?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  qr?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type TwoFaOtpOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['TwoFaOtpOutput'] = ResolversParentTypes['TwoFaOtpOutput'],
+> = {
+  accessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type RefreshAccessTokenOutputResolvers<
+  ContextType = MercuriusContext,
+  ParentType extends ResolversParentTypes['RefreshAccessTokenOutput'] = ResolversParentTypes['RefreshAccessTokenOutput'],
+> = {
+  accessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -730,7 +984,8 @@ export type MacrosResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Macros'] = ResolversParentTypes['Macros'],
 > = {
-  resolveType: TypeResolveFn<'LightingMacros', ParentType, ContextType>;
+  lighting?: Resolver<Maybe<ResolversTypes['LightingMacros']>, ParentType, ContextType>;
+  isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MacrosOutputResolvers<
@@ -766,6 +1021,18 @@ export type QueryResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
 > = {
+  getUser?: Resolver<
+    Maybe<ResolversTypes['UserOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<QuerygetUserArgs, 'input'>
+  >;
+  getUsers?: Resolver<
+    Maybe<ResolversTypes['GetUsersOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<QuerygetUsersArgs, 'input'>
+  >;
   getMacrosWireframes?: Resolver<Array<ResolversTypes['MacrosWireframe']>, ParentType, ContextType>;
 };
 
@@ -773,6 +1040,57 @@ export type MutationResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation'],
 > = {
+  signIn?: Resolver<
+    Maybe<ResolversTypes['SignInOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationsignInArgs, 'input'>
+  >;
+  signOut?: Resolver<Maybe<ResolversTypes['DefaultOutput']>, ParentType, ContextType>;
+  createUser?: Resolver<
+    Maybe<ResolversTypes['CreateUserOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationcreateUserArgs, 'input'>
+  >;
+  deleteUser?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationdeleteUserArgs, 'input'>
+  >;
+  setPassword?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationsetPasswordArgs, 'input'>
+  >;
+  setRole?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationsetRoleArgs, 'input'>
+  >;
+  activateTwoFa?: Resolver<Maybe<ResolversTypes['ActivateTwoFaOutput']>, ParentType, ContextType>;
+  confirmTwoFa?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationconfirmTwoFaArgs, 'input'>
+  >;
+  verifyTwoFa?: Resolver<
+    Maybe<ResolversTypes['TwoFaOtpOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationverifyTwoFaArgs, 'input'>
+  >;
+  deactivateTwoFa?: Resolver<
+    Maybe<ResolversTypes['DefaultOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationdeactivateTwoFaArgs, 'input'>
+  >;
+  refreshAccessToken?: Resolver<Maybe<ResolversTypes['RefreshAccessTokenOutput']>, ParentType, ContextType>;
   setControlValue?: Resolver<
     ResolversTypes['Device'],
     ParentType,
@@ -828,6 +1146,13 @@ export type Resolvers<ContextType = MercuriusContext> = {
   LightingMacrosOutputLighting?: LightingMacrosOutputLightingResolvers<ContextType>;
   LightingMacrosOutput?: LightingMacrosOutputResolvers<ContextType>;
   LightingMacros?: LightingMacrosResolvers<ContextType>;
+  UserOutput?: UserOutputResolvers<ContextType>;
+  GetUsersOutput?: GetUsersOutputResolvers<ContextType>;
+  SignInOutput?: SignInOutputResolvers<ContextType>;
+  CreateUserOutput?: CreateUserOutputResolvers<ContextType>;
+  ActivateTwoFaOutput?: ActivateTwoFaOutputResolvers<ContextType>;
+  TwoFaOtpOutput?: TwoFaOtpOutputResolvers<ContextType>;
+  RefreshAccessTokenOutput?: RefreshAccessTokenOutputResolvers<ContextType>;
   Upload?: GraphQLScalarType;
   DefaultOutput?: DefaultOutputResolvers<ContextType>;
   Error?: ErrorResolvers<ContextType>;
@@ -922,6 +1247,45 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     updatedAt?: LoaderResolver<Scalars['String'], LightingMacros, {}, TContext>;
   };
 
+  UserOutput?: {
+    id?: LoaderResolver<Scalars['ID'], UserOutput, {}, TContext>;
+    role?: LoaderResolver<UserRole, UserOutput, {}, TContext>;
+    status?: LoaderResolver<UserStatus, UserOutput, {}, TContext>;
+    name?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
+    email?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
+    createdAt?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
+    updatedAt?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
+  };
+
+  GetUsersOutput?: {
+    users?: LoaderResolver<Array<UserOutput>, GetUsersOutput, {}, TContext>;
+    pagination?: LoaderResolver<PaginationOutput, GetUsersOutput, {}, TContext>;
+  };
+
+  SignInOutput?: {
+    accessToken?: LoaderResolver<Maybe<Scalars['String']>, SignInOutput, {}, TContext>;
+    isTwoFaActivated?: LoaderResolver<Scalars['Boolean'], SignInOutput, {}, TContext>;
+    error?: LoaderResolver<Error, SignInOutput, {}, TContext>;
+  };
+
+  CreateUserOutput?: {
+    user?: LoaderResolver<Maybe<UserOutput>, CreateUserOutput, {}, TContext>;
+    error?: LoaderResolver<Error, CreateUserOutput, {}, TContext>;
+  };
+
+  ActivateTwoFaOutput?: {
+    code?: LoaderResolver<Scalars['String'], ActivateTwoFaOutput, {}, TContext>;
+    qr?: LoaderResolver<Scalars['String'], ActivateTwoFaOutput, {}, TContext>;
+  };
+
+  TwoFaOtpOutput?: {
+    accessToken?: LoaderResolver<Scalars['String'], TwoFaOtpOutput, {}, TContext>;
+  };
+
+  RefreshAccessTokenOutput?: {
+    accessToken?: LoaderResolver<Scalars['String'], RefreshAccessTokenOutput, {}, TContext>;
+  };
+
   DefaultOutput?: {
     message?: LoaderResolver<Maybe<Scalars['String']>, DefaultOutput, {}, TContext>;
   };
@@ -983,6 +1347,10 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     name?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
     description?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
     settings?: LoaderResolver<Scalars['String'], MacrosWireframe, {}, TContext>;
+  };
+
+  Macros?: {
+    lighting?: LoaderResolver<Maybe<LightingMacros>, Macros, {}, TContext>;
   };
 
   MacrosOutput?: {

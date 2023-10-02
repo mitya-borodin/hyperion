@@ -130,6 +130,11 @@ export const createHttpInterface = async ({
         ${await readFile(resolve(__dirname, './graphql/macros/lighting-macros.graphql'), { encoding: 'utf8' })}
       `,
       gql`
+        ${await readFile(resolve(__dirname, './graphql/authentication-and-access-control.graphql'), {
+          encoding: 'utf8',
+        })}
+      `,
+      gql`
         ${await readFile(resolve(__dirname, './graphql/schema.graphql'), { encoding: 'utf8' })}
       `,
     ],

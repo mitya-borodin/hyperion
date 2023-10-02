@@ -17,6 +17,39 @@ model Settings {
   @@map("_settings")
 }
 
+model User {
+  id String @id @default(uuid())
+
+  email  String @unique
+  name   String
+  role   String
+  status String @default("ACTIVE")
+
+  salt String?
+  hash String?
+
+  is2FaActivated  Boolean @default(false)
+  twoFactorSecret String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshSessions RefreshSession[]
+}
+
+model RefreshSession {
+  id Int @id @default(autoincrement())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  refreshToken String   @unique
+  fingerprint  String
+  expiresIn    DateTime
+
+  createdAt DateTime @default(now())
+}
+
 // Device используется для:
 // 1. Просмотра данных устройства
 // 2. Изменение данных прям на устройстве

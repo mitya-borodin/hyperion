@@ -1,0 +1,109 @@
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  DELETED
+}
+
+input GeetestCaptchaInput {
+  lot_number: String!
+  captcha_output: String!
+  pass_token: String!
+  gen_time: String!
+}
+
+type UserOutput {
+  id: ID!
+
+  role: UserRole!
+  status: UserStatus!
+
+  name: String!
+  email: String!
+
+  createdAt: String!
+  updatedAt: String!
+}
+
+input GetUserInput {
+  id: ID
+}
+
+input GetUsersInput {
+  pagination: PaginationInput!
+}
+
+type GetUsersOutput {
+  users: [UserOutput!]!
+  pagination: PaginationOutput!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+  captchaCheck: GeetestCaptchaInput!
+}
+
+type SignInOutput {
+  accessToken: String
+  isTwoFaActivated: Boolean!
+  error: Error!
+}
+
+input CreateUserInput {
+  role: UserRole!
+
+  name: String!
+  email: String!
+  password: String!
+}
+
+type CreateUserOutput {
+  user: UserOutput
+  error: Error!
+}
+
+input DeleteUserInput {
+  id: ID!
+}
+
+input SetRoleInput {
+  id: ID!
+  role: UserRole!
+}
+
+input SetPasswordInput {
+  id: ID!
+  password: String!
+}
+
+type ActivateTwoFaOutput {
+  code: String!
+  qr: String!
+}
+
+input ConfirmTwoFaInput {
+  totp: String!
+}
+
+input VerifyTwoFaInput {
+  fingerprint: String!
+  email: String!
+  totp: String!
+}
+
+type TwoFaOtpOutput {
+  accessToken: String!
+}
+
+input DeactivateTwoFaInput {
+  totp: String!
+}
+
+type RefreshAccessTokenOutput {
+  accessToken: String!
+}
