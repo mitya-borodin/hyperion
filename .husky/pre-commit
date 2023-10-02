@@ -3,14 +3,20 @@
 
 yarn lint-staged
 
-cd ./rayner
+cd ./mett
 
-echo "🚀 Build rayner..."
+echo "🚀 Build Mett..."
+
+yarn build
+
+cd ../rayner
+
+echo "🚀 Build Rayner..."
 
 yarn build:check
 
 cd ../swan
 
-echo "🚀 Build swan..."
+echo "🚀 Build Swan..."
 
 yarn build:check
