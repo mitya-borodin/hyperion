@@ -20,7 +20,7 @@ import HttpStatusCodes from 'http-status-codes';
 import { routerFastifyPlugin } from './router';
 
 import Mercurius from 'mercurius';
-import MercuriusAuth from 'mercurius-auth';
+import MercuriusAuth, { MercuriusAuthContext } from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
 import { Logger } from 'pino';
@@ -28,21 +28,35 @@ import { Logger } from 'pino';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
+import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
+import { IUserRepository } from '../../ports/user-repository';
 import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
 
 type CreateHttpInterfaceParameters = {
   config: Config;
   logger: Logger;
   eventBus: EventEmitter;
+  userRepository: IUserRepository;
+  refreshSessionRepository: IRefreshSessionRepository;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
 };
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+export type AuthContext = {
+  fingerprint: string;
+  refreshToken?: string;
+  userId: string;
+  role: UserRole;
+  onlyForActivateTwoFa?: boolean;
+};
+
 export const createHttpInterface = async ({
   config,
   logger,
   eventBus,
+  userRepository,
+  refreshSessionRepository,
   wirenboardDeviceRepository,
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
@@ -143,36 +157,57 @@ export const createHttpInterface = async ({
       config,
       logger,
       eventBus,
+      userRepository,
+      refreshSessionRepository,
       wirenboardDeviceRepository,
     }),
     graphiql: !config.isProduction,
     subscription: true,
   });
 
-  // fastify.register(MercuriusAuth, {
-  //   authContext: (context): { role: UserRole; id: number } => {
-  //     const { app, reply } = context;
-  //     const { authorization = '' } = reply.request.headers;
+  fastify.register(MercuriusAuth, {
+    authContext: (context): AuthContext => {
+      const { app, reply } = context;
+      const { authorization = '', fingerprint = '' } = reply.request.headers;
+      const { refreshToken } = reply.request.cookies;
 
-  //     try {
-  //       const { id, role = UserRole.UNKNOWN }: JwtPayload = app.jwt.verify(authorization);
+      if (!authorization) {
+        return { fingerprint: fingerprint as string, refreshToken, userId: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
+      }
 
-  //       return { id, role };
-  //     } catch (error) {
-  //       logger.error({ authorization, err: error }, 'JWT is invalid 🚨');
+      try {
+        const { userId, role = UserRole.UNKNOWN, onlyForActivateTwoFa }: JwtPayload = app.jwt.verify(authorization);
 
-  //       return { id: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
-  //     }
-  //   },
-  //   async applyPolicy(authDirectiveAST, parent, arguments_, context, info: GraphQLResolveInfo) {
-  //     const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');
+        return { fingerprint: fingerprint as string, refreshToken, userId, role, onlyForActivateTwoFa };
+      } catch (error) {
+        logger.error(
+          { authorization, headers: reply.request.headers, cookies: reply.request.cookies, err: error },
+          'JWT is invalid 🚨',
+        );
 
-  //     const authValues: any[] = requires.value.values;
+        return { fingerprint: fingerprint as string, refreshToken, userId: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };
+      }
+    },
+    async applyPolicy(authDirectiveAST, parent, arguments_, context, info: GraphQLResolveInfo) {
+      if (context.auth?.onlyForActivateTwoFa) {
+        /**
+         * ! Проверить имя мутации, если используется не confirmTwoFa то кидать ошибку, так как этот токен
+         * ! предназначен, только для confirmTwoFa и более ни для чего.
+         * ! Рабочий токен будет выдан после verifyTwoFa.
+         */
 
-  //     return authValues.some((value: { value: UserRole }) => value.value === context.auth?.role);
-  //   },
-  //   authDirective: 'auth',
-  // });
+        console.log(authDirectiveAST);
+        console.log(info);
+      }
+
+      const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');
+
+      const authValues: any[] = requires.value.values;
+
+      return authValues.some(({ value }: { value: UserRole }) => value === context.auth?.role);
+    },
+    authDirective: 'auth',
+  });
 
   await codegenMercurius(fastify, {
     targetPath: './src/graphql-types.ts',
@@ -180,3 +215,7 @@ export const createHttpInterface = async ({
 
   return fastify;
 };
+
+declare module 'mercurius' {
+  type MercuriusAuthContext = AuthContext;
+}

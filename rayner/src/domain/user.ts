@@ -1,23 +1,26 @@
 export enum UserRole {
+  UNKNOWN = 'UNKNOWN',
   ADMIN = 'ADMIN',
   OPERATOR = 'OPERATOR',
   VIEWER = 'VIEWER',
 }
 
 export enum UserStatus {
+  UNKNOWN = 'UNKNOWN',
   ACTIVE = 'ACTIVE',
   DELETED = 'DELETED',
 }
 
-export const UNKNOWN_USER_ID = -1000;
+export const UNKNOWN_USER_ID = 'UNKNOWN';
 
 export type JwtPayload = {
-  id: number;
+  userId: string;
   role: UserRole;
+  onlyForActivateTwoFa: boolean;
 };
 
 export type User = {
-  id: number;
+  id: string;
 
   role: UserRole;
   status: UserStatus;
@@ -28,6 +31,10 @@ export type User = {
   salt?: string;
   hash?: string;
 
+  isTwoFaActivated?: boolean;
+  twoFaSecret?: string;
+
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date;
 };

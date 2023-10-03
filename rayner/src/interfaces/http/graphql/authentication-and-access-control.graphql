@@ -27,6 +27,7 @@ type UserOutput {
 
   createdAt: String!
   updatedAt: String!
+  deletedAt: String
 }
 
 input GetUserInput {
@@ -91,7 +92,6 @@ input ConfirmTwoFaInput {
 }
 
 input VerifyTwoFaInput {
-  fingerprint: String!
   email: String!
   totp: String!
 }

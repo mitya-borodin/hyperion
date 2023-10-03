@@ -3,15 +3,19 @@
 import EventEmitter from 'node:events';
 
 import { runCollectWirenboardDeviceData } from './application-services/apply-wirenboard-device';
+import { EventBus } from './domain/event-bus';
 
 import { PrismaClient } from '@prisma/client';
+
+import { config } from './infrastructure/config';
+
 import { forever } from 'abort-controller-x';
 
-import { EventBus } from './domain/event-bus';
-import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
+import { RefreshSessionRepository } from './infrastructure/postgres/repository/refresh-session-repository';
+import { UserRepository } from './infrastructure/postgres/repository/user-repository';
 import { WirenboardDeviceRepository } from './infrastructure/postgres/repository/wirenboard-device-repository';
 import { createHttpInterface } from './interfaces/http';
 
@@ -25,6 +29,8 @@ export const run = () => {
 
     const eventBus = new EventEmitter();
 
+    const userRepository = new UserRepository({ config, logger, client: prismaClient });
+    const refreshSessionRepository = new RefreshSessionRepository({ logger, client: prismaClient });
     const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
 
     const wirenboard = await runWirenboard({ config, logger: logger.child({ name: 'wirenboard' }), eventBus });
@@ -43,6 +49,8 @@ export const run = () => {
       config,
       logger: logger.child({ name: 'http-server' }),
       eventBus,
+      userRepository,
+      refreshSessionRepository,
       wirenboardDeviceRepository,
     });
 

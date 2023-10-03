@@ -6,10 +6,12 @@ export enum ErrorType {
 
 export enum ErrorCode {
   ALL_RIGHT = 0,
-  SIGN_IN_FAILED = 1,
+  PASSWORD_OR_EMAIL_INCORRECT = 1,
+  USER_EXISTS = 2,
 }
 
 export enum ErrorMessage {
   ALL_RIGHT = 'All right!',
-  SIGN_IN_FAILED = 'Sign in failed!',
+  PASSWORD_OR_EMAIL_INCORRECT = 'Email or password incorrect!',
+  USER_EXISTS = 'User already exist!',
 }

@@ -28,11 +28,12 @@ model User {
   salt String?
   hash String?
 
-  is2FaActivated  Boolean @default(false)
-  twoFactorSecret String?
+  isTwoFaActivated Boolean @default(false)
+  twoFaSecret      String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   refreshSessions RefreshSession[]
 }

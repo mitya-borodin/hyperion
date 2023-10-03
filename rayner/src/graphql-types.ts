@@ -152,6 +152,7 @@ export type UserOutput = {
   email: Scalars['String'];
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
+  deletedAt?: Maybe<Scalars['String']>;
 };
 
 export type GetUserInput = {
@@ -219,7 +220,6 @@ export type ConfirmTwoFaInput = {
 };
 
 export type VerifyTwoFaInput = {
-  fingerprint: Scalars['String'];
   email: Scalars['String'];
   totp: Scalars['String'];
 };
@@ -825,6 +825,7 @@ export type UserOutputResolvers<
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  deletedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1255,6 +1256,7 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     email?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
     createdAt?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
     updatedAt?: LoaderResolver<Scalars['String'], UserOutput, {}, TContext>;
+    deletedAt?: LoaderResolver<Maybe<Scalars['String']>, UserOutput, {}, TContext>;
   };
 
   GetUsersOutput?: {
