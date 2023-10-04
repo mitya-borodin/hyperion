@@ -49,7 +49,7 @@ export const gqlFormDataClient = async <DATA = any>(
     const { data, errors } = await response.json();
 
     if (errors) {
-      console.error(errors);
+      console.info('Graphql form-data client', { type, name }, errors);
 
       return new Error(data?.errors?.[0].message ?? '');
     }

@@ -55,7 +55,7 @@ export const gqlClient = async <DATA = any, VARIABLES = any>(
     const { data, errors } = await response.json();
 
     if (errors) {
-      console.error(errors);
+      console.info('Graphql client', { type, name }, errors);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

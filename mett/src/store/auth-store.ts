@@ -72,6 +72,8 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
     },
 
     async runSession() {
+      console.log('Attempt to run a session 🏃');
+
       const { globalLoadingStore, notificationStore, fingerprintStore, userStore } = rootStore;
 
       await fingerprintStore.init();
@@ -85,8 +87,6 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
       globalLoadingStore.off(loadingKey);
 
       if (refreshAccessToken instanceof Error) {
-        notificationStore.push({ message: 'Refresh access token filed 🚨' });
-
         this.destroy();
         userStore.destroy();
 

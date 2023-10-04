@@ -29,8 +29,8 @@ const router = createBrowserRouter(
       <Route index element={<Navigate replace to={RoutePath.Dashboard} />} />
       <Route path={RoutePath.Auth} element={<Outlet />}>
         <Route element={<AuthLayout />}>
-          <Route path={RoutePath.SignIn} element={<SignIn />} />
           <Route index element={<Navigate replace to={RoutePath.SignIn} />} />
+          <Route path={RoutePath.SignIn} element={<SignIn />} />
           <Route path="*" element={<Navigate replace to={RoutePath.SignIn} />} />
         </Route>
       </Route>

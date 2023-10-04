@@ -3,7 +3,6 @@ import { ConfigProvider } from 'antd';
 import { I18nextProvider } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
 
-import { AccessTokenManager } from './components/AccessTokenManager';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalLoadingManager } from './components/GlobalLoadingManager';
 import { NotificationManager } from './components/NotificationManager';
@@ -28,9 +27,7 @@ export const ServiceLayout = () => {
           >
             <NotificationManager />
             <GlobalLoadingManager />
-            <AccessTokenManager>
-              <Outlet />
-            </AccessTokenManager>
+            <Outlet />
           </ConfigProvider>
         </ErrorBoundary>
       </I18nextProvider>
