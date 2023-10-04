@@ -61,6 +61,12 @@ export class Config {
     readonly password: string;
   };
 
+  public readonly masterUser: {
+    readonly email: string;
+    readonly password: string;
+    readonly name: string;
+  };
+
   constructor() {
     this.appName = process.env.APP_NAME ?? os.hostname();
     this.gracefullyShutdownMs = this.toInt(process.env.GRACEFULLY_SHUTDOWN_MS ?? '', 5000);
@@ -108,6 +114,12 @@ export class Config {
       protocol: this.toMosquittoProtocol(process.env.MOSQUITTO_PORT ?? 'mqtt'),
       username: process.env.MOSQUITTO_USERNAME ?? 'wirenboard',
       password: process.env.MOSQUITTO_PASSWORD ?? 'password',
+    };
+
+    this.masterUser = {
+      email: process.env.MASTER_USER_EMAIL ?? 'dmitriy@borodin.site',
+      password: process.env.MASTER_USER_PASSWORD ?? 'password',
+      name: process.env.MASTER_USER_NAME ?? 'Dmitriy Borodin',
     };
   }
 

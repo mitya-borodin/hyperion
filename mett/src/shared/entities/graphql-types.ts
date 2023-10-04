@@ -484,6 +484,7 @@ export type TwoFaOtpOutput = {
 export type UserOutput = {
   __typename?: 'UserOutput';
   createdAt: Scalars['String']['output'];
+  deletedAt?: Maybe<Scalars['String']['output']>;
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -505,6 +506,5 @@ export enum UserStatus {
 
 export type VerifyTwoFaInput = {
   email: Scalars['String']['input'];
-  fingerprint: Scalars['String']['input'];
   totp: Scalars['String']['input'];
 };

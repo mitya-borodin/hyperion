@@ -18,8 +18,8 @@ export const gqlClient = async <DATA = any, VARIABLES = any>(
   const headers = {
     'Content-Type': 'application/json',
     credentials: 'include',
-    authorization: options?.authorization ?? rootStore.authStore.accessToken ?? '',
-    fingerprint: options?.fingerprint ?? rootStore.fingerprintStore.fingerprint ?? '',
+    authorization: rootStore.authStore.accessToken,
+    fingerprint: rootStore.fingerprintStore.fingerprint,
     ...options?.headers,
   };
 

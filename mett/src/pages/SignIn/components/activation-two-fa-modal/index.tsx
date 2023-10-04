@@ -63,7 +63,7 @@ export const ActivationTwoFaModal = observer(() => {
       title="Enable 2FA"
       open={authStore.openActivationTwoFaModal}
       okText="Confirm"
-      onOk={() => authStore.confirmTwoFa(totp)}
+      onOk={async () => authStore.confirmTwoFa(totp)}
       cancelText="Cancel"
       onCancel={() => authStore.destroy()}
     >

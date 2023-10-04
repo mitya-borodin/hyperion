@@ -2,6 +2,8 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { RoutePath, getAuthPath } from '../../router';
+
 import { useStore } from '@/store';
 
 const SignOut = observer(() => {
@@ -10,10 +12,8 @@ const SignOut = observer(() => {
 
   useEffect(() => {
     authStore.signOut().then((result) => {
-      if (result) {
-        navigate('/');
-      } else {
-        navigate(-1);
+      if (result === 'GoToSignIn') {
+        navigate(getAuthPath(RoutePath.SignIn), { replace: true });
       }
     });
   }, [authStore, navigate]);

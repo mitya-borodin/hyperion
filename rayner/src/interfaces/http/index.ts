@@ -195,9 +195,8 @@ export const createHttpInterface = async ({
          * ! предназначен, только для confirmTwoFa и более ни для чего.
          * ! Рабочий токен будет выдан после verifyTwoFa.
          */
-
-        console.log(authDirectiveAST);
-        console.log(info);
+        // console.log(authDirectiveAST);
+        // console.log(info);
       }
 
       const requires = authDirectiveAST.arguments.find((argument: any) => argument.name.value === 'requires');

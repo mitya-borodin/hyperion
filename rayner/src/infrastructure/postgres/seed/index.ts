@@ -10,6 +10,10 @@ import { settingsSeed } from './settings-seed';
 
 import { SettingsRepository } from '../repository/settings-repository';
 
+import { userSeed } from './user-seed';
+
+import { UserRepository } from '../repository/user-repository';
+
 const config = new Config();
 
 const logger = pino({
@@ -31,6 +35,9 @@ const seed = async () => {
   await prismaClient.$connect();
 
   const settingsRepository = new SettingsRepository({ logger, client: prismaClient });
+  const userRepository = new UserRepository({ config, logger, client: prismaClient });
+
+  await userSeed({ config, logger: logger.child({ name: 'UserSeed' }), userRepository });
 
   /**
    * ! Настройки всегда заполняются в самый последний момент, так как

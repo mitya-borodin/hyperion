@@ -72,11 +72,9 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
     },
 
     async runSession() {
-      console.log('Attempt to run a session 🏃');
+      console.log('An attempt to establish a working session has begun 🚀');
 
-      const { globalLoadingStore, notificationStore, fingerprintStore, userStore } = rootStore;
-
-      await fingerprintStore.init();
+      const { globalLoadingStore, notificationStore, userStore } = rootStore;
 
       const loadingKey = 'runSession';
 
@@ -89,6 +87,8 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
       if (refreshAccessToken instanceof Error) {
         this.destroy();
         userStore.destroy();
+
+        console.log('Failed to establish a working session 🚨');
 
         return 'GoToSignIn';
       }
@@ -107,6 +107,8 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
       }
 
       this.setSessionIsActive(true);
+
+      console.log('The working session has been successfully installed ✅');
 
       return 'GoToIndex';
     },
@@ -213,29 +215,27 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
 
       globalLoadingStore.off(globalKey);
 
+      this.destroyDataForTwoFaActivation();
+
       if (confirmTwoFaResult instanceof Error) {
         notificationStore.push({ message: 'TwoFa was not confirmed 🚨' });
-
-        this.destroyDataForTwoFaActivation();
 
         return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
       }
 
-      this.destroyDataForTwoFaActivation();
       this.setIsTwoFaActivated(true);
 
-      return undefined;
+      return 'GoToDashboard';
     },
 
     async verifyTwoFa(totp: string) {
-      const { fingerprintStore, notificationStore, globalLoadingStore, userStore } = rootStore;
+      const { notificationStore, globalLoadingStore, userStore } = rootStore;
 
       const globalKey = 'verifyTwoFa';
 
       globalLoadingStore.on(globalKey);
 
       const verifyTwoFaResult = await api.verifyTwoFa({
-        fingerprint: fingerprintStore.fingerprint,
         email: this.emailForTwoFaActivation,
         totp,
       });
@@ -252,6 +252,7 @@ export const createAuthStore = (rootStore: RootStoreInterface) => {
       }
 
       this.setAccessToken(verifyTwoFaResult.accessToken);
+      await this.runSession();
 
       return undefined;
     },

@@ -113,7 +113,7 @@ export const getResolvers = ({
           if (singInResult.user.isTwoFaActivated) {
             return {
               accessToken: undefined,
-              is2FaActive: true,
+              isTwoFaActivated: true,
               error: singInResult.error,
             };
           }
@@ -131,13 +131,13 @@ export const getResolvers = ({
 
           return {
             accessToken,
-            is2FaActive: false,
+            isTwoFaActivated: false,
             error: singInResult.error,
           };
         }
 
         return {
-          is2FaActive: undefined,
+          isTwoFaActivated: undefined,
           accessToken: undefined,
           error: singInResult.error,
         };
@@ -231,7 +231,10 @@ export const getResolvers = ({
 
       activateTwoFa: async (parent, _, context: MercuriusContext, info) => {
         if (!context.auth?.userId) {
-          logger.error({ context }, 'To activate TwoFa, you must have a user ID in the authentication context 🚨');
+          logger.error(
+            { context: context.auth },
+            'To activate TwoFa, you must have a user ID in the authentication context 🚨',
+          );
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
@@ -254,7 +257,10 @@ export const getResolvers = ({
 
       confirmTwoFa: async (parent, { input }, context: MercuriusContext, info) => {
         if (!context.auth?.userId) {
-          logger.error({ context }, 'To confirm TwoFa, you must have a user ID in the authentication context 🚨');
+          logger.error(
+            { context: context.auth },
+            'To confirm TwoFa, you must have a user ID in the authentication context 🚨',
+          );
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }

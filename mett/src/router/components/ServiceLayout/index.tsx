@@ -6,6 +6,7 @@ import { Outlet } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalLoadingManager } from './components/GlobalLoadingManager';
 import { NotificationManager } from './components/NotificationManager';
+import { SessionLayout } from './components/SessionLayout';
 
 import { i18n } from '@/shared/i18n';
 import { StoreProvider, rootStore } from '@/store';
@@ -27,7 +28,9 @@ export const ServiceLayout = () => {
           >
             <NotificationManager />
             <GlobalLoadingManager />
-            <Outlet />
+            <SessionLayout>
+              <Outlet />
+            </SessionLayout>
           </ConfigProvider>
         </ErrorBoundary>
       </I18nextProvider>
