@@ -15,7 +15,7 @@ const Devices = observer(() => {
 
     hardWareStore.devices.forEach((device) => {
       devices.push(
-        <div key={device.id} className="bg-slate-300">
+        <div key={device.id}>
           <span>Device ID: {device.id}</span>
           {device.controls.map((control) => {
             return (

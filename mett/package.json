@@ -22,6 +22,8 @@
   "dependencies": {
     "@ant-design/icons": "5.2.5",
     "@fingerprintjs/fingerprintjs": "3.4.1",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
     "antd": "5.6.1",
     "date-fns": "2.30.0",
     "debounce": "1.2.1",
