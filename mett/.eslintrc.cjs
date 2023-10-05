@@ -6,6 +6,7 @@ module.exports = {
   parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   plugins: ['react', 'react-hooks', '@typescript-eslint', 'react-refresh'],
   rules: {
+    '@typescript-eslint/no-unused-vars': 'off',
     'react-refresh/only-export-components': 'warn',
     'react/display-name': 'off',
     'no-use-before-define': 'off',

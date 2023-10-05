@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { RoutePath, getAuthPath } from '../../router';
+import { RoutePath, getAuthPath } from '../../router/router-path';
 
 import { useStore } from '@/store';
 

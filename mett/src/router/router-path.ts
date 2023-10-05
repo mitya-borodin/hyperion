@@ -6,6 +6,7 @@ export enum RoutePath {
   Devices = 'devices',
   MacrosWireframe = 'macros-wireframe',
   Macros = 'macros',
+  User = 'user',
   Users = 'users',
   SignOut = 'sign-out',
 }
@@ -13,7 +14,7 @@ export enum RoutePath {
 export const joinPaths = (paths: string[]): string => paths.join('/').replace(/\/\/+/g, '/');
 
 export const getBaseNamePath = (path: string) => {
-  return joinPaths([/* import.meta.env.VITE_BASE_PATH ?? */ '/', path]);
+  return joinPaths([import.meta.env.VITE_BASE_PATH ?? '/', path]);
 };
 
 export const getAuthPath = (path: RoutePath) => {

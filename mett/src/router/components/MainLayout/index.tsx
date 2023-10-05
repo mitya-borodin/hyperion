@@ -1,11 +1,12 @@
-import { Disclosure, Transition, Menu } from '@headlessui/react';
-import { Bars3Icon, BellIcon } from '@heroicons/react/24/outline';
+import { Disclosure, Menu, Transition } from '@headlessui/react';
+import { Bars3Icon, BellIcon, UserCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import { Fragment, useEffect } from 'react';
-import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { classNames } from '../../../shared/utils/class-names';
 import { useStore } from '../../../store';
-import { RoutePath, getBaseNamePath } from '../../router-path';
+import { RoutePath, joinPaths } from '../../router-path';
 
 const user = {
   name: 'Tom Cook',
@@ -14,21 +15,17 @@ const user = {
     'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
 };
 const navigation = [
-  { name: 'Dashboard', href: '#', current: true },
-  { name: 'Team', href: '#', current: false },
-  { name: 'Projects', href: '#', current: false },
-  { name: 'Calendar', href: '#', current: false },
-  { name: 'Reports', href: '#', current: false },
-];
-const userNavigation = [
-  { name: 'Your Profile', href: '#' },
-  { name: 'Users', href: '#' },
-  { name: 'Sign out', href: '#' },
+  { name: 'Dashboard', href: joinPaths(['/', RoutePath.Dashboard]) },
+  { name: 'Devices', href: joinPaths(['/', RoutePath.Devices]) },
+  { name: 'Macros wireframe', href: joinPaths(['/', RoutePath.MacrosWireframe]) },
+  { name: 'Macros', href: joinPaths(['/', RoutePath.Macros]) },
 ];
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}
+const userNavigation = [
+  { name: 'Your Profile', href: joinPaths(['/', RoutePath.User]) },
+  { name: 'Users', href: joinPaths(['/', RoutePath.Users]) },
+  { name: 'Sign out', href: joinPaths(['/', RoutePath.SignOut]) },
+];
 
 export const MainLayout = observer(() => {
   const navigate = useNavigate();
@@ -53,29 +50,28 @@ export const MainLayout = observer(() => {
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <img
-                      className="h-8 w-8"
-                      src="/apple-touch-icon.png"
-                      alt="Hyperion"
-                    />
+                    <img className="h-8 w-8" src="/apple-touch-icon.png" alt="Hyperion" />
                   </div>
                   <div className="hidden md:block">
                     <div className="ml-10 flex items-baseline space-x-4">
-                      {navigation.map((item) => (
-                        <a
-                          key={item.name}
-                          href={item.href}
-                          className={classNames(
-                            item.current
-                              ? 'bg-gray-900 text-white'
-                              : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                            'rounded-md px-3 py-2 text-sm font-medium',
-                          )}
-                          aria-current={item.current ? 'page' : undefined}
-                        >
-                          {item.name}
-                        </a>
-                      ))}
+                      {navigation.map((item) => {
+                        const isCurrent = location.pathname.includes(item.href);
+
+                        return (
+                          <a
+                            key={item.name}
+                            href="#"
+                            onClick={() => navigate(item.href)}
+                            className={classNames(
+                              isCurrent ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                              'rounded-md px-3 py-2 text-sm font-medium',
+                            )}
+                            aria-current={isCurrent ? 'page' : undefined}
+                          >
+                            {item.name}
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -96,7 +92,7 @@ export const MainLayout = observer(() => {
                         <Menu.Button className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                           <span className="absolute -inset-1.5" />
                           <span className="sr-only">Open user menu</span>
-                          <img className="h-8 w-8 rounded-full" src={user.imageUrl} alt="" />
+                          <UserCircleIcon className="h-8 w-8 rounded-full" />
                         </Menu.Button>
                       </div>
                       <Transition
@@ -146,20 +142,25 @@ export const MainLayout = observer(() => {
 
             <Disclosure.Panel className="md:hidden">
               <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-                {navigation.map((item) => (
-                  <Disclosure.Button
-                    key={item.name}
-                    as="a"
-                    href={item.href}
-                    className={classNames(
-                      item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                      'block rounded-md px-3 py-2 text-base font-medium',
-                    )}
-                    aria-current={item.current ? 'page' : undefined}
-                  >
-                    {item.name}
-                  </Disclosure.Button>
-                ))}
+                {navigation.map((item) => {
+                  const isCurrent = location.pathname.includes(item.href);
+
+                  return (
+                    <Disclosure.Button
+                      key={item.name}
+                      as="a"
+                      href="#"
+                      onClick={() => navigate(item.href)}
+                      className={classNames(
+                        isCurrent ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                        'block rounded-md px-3 py-2 text-base font-medium',
+                      )}
+                      aria-current={isCurrent ? 'page' : undefined}
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  );
+                })}
               </div>
               <div className="border-t border-gray-700 pb-3 pt-4">
                 <div className="flex items-center px-5">

@@ -38,9 +38,6 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[svelte]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode"
-  },
   "[dockerfile]": {
     "editor.defaultFormatter": "ms-azuretools.vscode-docker"
   },
@@ -52,9 +49,6 @@
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[proto3]": {
-    "editor.defaultFormatter": "xaver.clang-format"
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -94,7 +88,7 @@
   "eslint.validate": ["javascript", "typescript"],
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
-  "eslint.workingDirectories": ["./mett", "./rayner", "./swan"],
+  // "eslint.workingDirectories": ["./mett", "./rayner"],
 
   "git.confirmSync": false,
   "git.enableStatusBarSync": true,

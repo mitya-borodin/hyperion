@@ -1,38 +1,14 @@
 {
   "name": "hyperion",
+  "private": true,
   "version": "1.0.0",
   "description": "Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.",
   "repository": "git@github.com:mitya-borodin/hyperion.git",
-  "license": "MIT",
-  "scripts": {
-    "prettier:base": "prettier \"**/*.{ts,json,md}\"",
-    "prettier:check": "yarn prettier:base --check",
-    "prettier:write": "yarn prettier:base --write",
-    "eslint:check": "eslint --max-warnings 1000 --format stylish \"src/**/*.ts\"",
-    "eslint:write": "yarn eslint:check --fix",
-    "lint-staged": "lint-staged",
-    "prepare": "husky install || echo 'Husky is not used in production mode, skip husky install'",
-    "ncu:outdated": "npm-check-updates",
-    "ncu:upgrade": "npm-check-updates -u --target minor"
+  "homepage": "https://github.com:mitya-borodin/hyperion.git",
+  "author": {
+    "name": "Dmitriy Borodin",
+    "email": "dmitriy@borodin.site",
+    "url": "https://borodin.site"
   },
-  "lint-staged": {
-    "**/*.{ts,json,md}": "prettier --write",
-    "**/*.ts": "eslint --max-warnings 1000 --format stylish --fix"
-  },
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.42.1",
-    "@typescript-eslint/parser": "^5.42.1",
-    "eslint": "^8.27.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-import-resolver-typescript": "^3.5.2",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^27.1.5",
-    "eslint-plugin-unicorn": "^44.0.2",
-    "eslint-plugin-unused-imports": "^2.0.0",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.3.7",
-    "npm-check-updates": "^12.5.4",
-    "prettier": "^2.6.1",
-    "typescript": "^4.4.4"
-  }
+  "license": "MIT"
 }
