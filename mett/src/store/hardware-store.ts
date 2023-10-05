@@ -1,5 +1,5 @@
 import type { Client, ExecutionResult } from 'graphql-ws';
-import { makeAutoObservable, runInAction } from 'mobx';
+import { action, makeAutoObservable, runInAction, toJS } from 'mobx';
 
 import { deviceQueryFragment } from '../shared/api/hardware/device-query-fragment';
 import { lightingMacrosQueryFragment } from '../shared/api/hardware/lighting-macros-query-fragment';
@@ -20,6 +20,44 @@ export const createHardWareStore = (rootStore: RootStoreInterface) => {
     device: new Map<string, Device>(),
     macros: new Map<string, LightingMacros>(),
 
+    get devices(): Device[] {
+      let devices: Device[] = [];
+
+      this.device.forEach((device) => {
+        devices.push(toJS(device));
+      });
+
+      devices = devices.sort((a, b) => {
+        const aOrder = a.markup.order;
+        const bOrder = b.markup.order;
+
+        if (aOrder >= 0 && bOrder >= 0) {
+          return aOrder > bOrder ? 1 : -1;
+        }
+
+        return a.id > b.id ? 1 : -1;
+      });
+
+      devices.forEach((device, index) => {
+        devices[index].controls = device.controls.sort((a, b) => {
+          let aOrder = a.order;
+          let bOrder = b.order;
+
+          if (a.markup.order >= 0) {
+            aOrder = a.markup.order;
+          }
+
+          if (b.markup.order >= 0) {
+            bOrder = b.markup.order;
+          }
+
+          return aOrder > bOrder ? 1 : -1;
+        });
+      });
+
+      return devices;
+    },
+
     setOnline(sate: boolean) {
       this.online = sate;
     },
@@ -39,13 +77,30 @@ export const createHardWareStore = (rootStore: RootStoreInterface) => {
 
       this.subscriptionInProgress = true;
 
-      const onNextDevice = (event: ExecutionResult<DeviceSubscriptionEvent, unknown>) => {
-        console.log('Device event appeared 🚀', event);
+      const onNextDevice = action(
+        'onNextDevice',
+        (event: ExecutionResult<{ device: DeviceSubscriptionEvent }, unknown>) => {
+          event.data?.device?.items?.forEach((nextDevice) => {
+            const device = this.device.get(nextDevice.id);
 
-        /**
-         * ! Обновляем состояние device
-         */
-      };
+            if (!device) {
+              this.device.set(nextDevice.id, nextDevice);
+            }
+
+            if (device) {
+              nextDevice.controls.forEach((nextControl) => {
+                const willBeUpdatedControlIndex = device.controls.findIndex((control) => control.id === nextControl.id);
+
+                if (typeof willBeUpdatedControlIndex === 'number') {
+                  device.controls[willBeUpdatedControlIndex] = nextControl;
+                } else {
+                  device.controls.push(nextControl);
+                }
+              });
+            }
+          });
+        },
+      );
 
       await new Promise((resolve, reject) => {
         if (!graphQLClient) {
@@ -79,13 +134,13 @@ export const createHardWareStore = (rootStore: RootStoreInterface) => {
         );
       });
 
-      const onNextMacros = (event: ExecutionResult<DeviceSubscriptionEvent, unknown>) => {
+      const onNextMacros = action('onNextMacros', (event: ExecutionResult<DeviceSubscriptionEvent, unknown>) => {
         console.log('Macros event appeared 🚀', event);
 
         /**
          * ! Обновляем состояние macros
          */
-      };
+      });
 
       await new Promise((resolve, reject) => {
         if (!graphQLClient) {

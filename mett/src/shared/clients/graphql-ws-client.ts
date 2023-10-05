@@ -13,17 +13,16 @@ export const createGqlWsClient = (connected: () => void, closed: () => void) => 
     connectionParams: async () => {
       return {
         authorization: rootStore.authStore.accessToken,
+        fingerprint: rootStore.fingerprintStore.fingerprint,
       };
     },
     on: {
-      connected: (...args) => {
-        console.log(args);
+      connected: () => {
         console.log('Websocket connection established 🌴 🛩');
 
         connected();
       },
-      closed: (...args) => {
-        console.log(args);
+      closed: () => {
         console.log('Websocket connection closed 🛑');
 
         closed();

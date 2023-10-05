@@ -9,9 +9,10 @@ import {
 import type { MenuProps } from 'antd';
 import { Layout, Menu } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { useStore } from '../../../store';
 import { RoutePath, getBaseNamePath } from '../../router-path';
 
 type MenuItem = Required<MenuProps>['items'][number];
@@ -51,10 +52,18 @@ const items: MenuItem[] = [
 ];
 
 export const MainLayout = observer(() => {
-  const [collapsed, setCollapsed] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { hardWareStore } = useStore();
+
+  useEffect(() => {
+    hardWareStore.subscribe();
+
+    return () => {
+      hardWareStore.destroy();
+    };
+  }, [hardWareStore]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -67,18 +76,13 @@ export const MainLayout = observer(() => {
           top: 0,
           bottom: 0,
         }}
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
       >
         <Menu
           className="flex h-full flex-col"
           theme="dark"
           items={items}
           selectedKeys={[location.pathname.replace('/', '')]}
-          onClick={({ key }) => {
-            navigate(getBaseNamePath(key));
-          }}
+          onClick={({ key }) => navigate(getBaseNamePath(key))}
         />
       </Layout.Sider>
       <Layout style={{ marginLeft: 200 }}>

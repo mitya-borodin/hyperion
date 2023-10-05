@@ -369,7 +369,7 @@ export type Device = {
   meta: Scalars['String'];
   labels: Array<Scalars['String']>;
   markup: MarkupOutput;
-  controls?: Maybe<Array<Control>>;
+  controls: Array<Control>;
 };
 
 export type SetControlValue = {
@@ -966,7 +966,7 @@ export type DeviceResolvers<
   meta?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   markup?: Resolver<ResolversTypes['MarkupOutput'], ParentType, ContextType>;
-  controls?: Resolver<Maybe<Array<ResolversTypes['Control']>>, ParentType, ContextType>;
+  controls?: Resolver<Array<ResolversTypes['Control']>, ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1341,7 +1341,7 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     meta?: LoaderResolver<Scalars['String'], Device, {}, TContext>;
     labels?: LoaderResolver<Array<Scalars['String']>, Device, {}, TContext>;
     markup?: LoaderResolver<MarkupOutput, Device, {}, TContext>;
-    controls?: LoaderResolver<Maybe<Array<Control>>, Device, {}, TContext>;
+    controls?: LoaderResolver<Array<Control>, Device, {}, TContext>;
   };
 
   MacrosWireframe?: {

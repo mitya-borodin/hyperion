@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { usePageTitle } from '@/shared/hooks';
 
 const MacrosWireframe = observer(() => {
-  usePageTitle('Hyperion - MacrosWireframe');
+  usePageTitle('MacrosWireframe');
 
   return <div>MacrosWireframe</div>;
 });

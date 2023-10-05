@@ -88,7 +88,7 @@ export type DeleteUserInput = {
 
 export type Device = {
   __typename?: 'Device';
-  controls?: Maybe<Array<Control>>;
+  controls: Array<Control>;
   driver: Scalars['String']['output'];
   error: Scalars['String']['output'];
   id: Scalars['ID']['output'];

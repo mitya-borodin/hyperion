@@ -16,7 +16,9 @@
 
   "files.autoSave": "afterDelay",
   "files.associations": {
-    "*.ts": "typescript"
+    "*.ts": "typescript",
+    "*.tsx": "typescript",
+    "*.css": "tailwindcss"
   },
   "files.autoGuessEncoding": true,
 
@@ -69,7 +71,16 @@
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
   },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
   "editor.minimap.enabled": false,
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  },
 
   "yaml.format.singleQuote": true,
 
@@ -193,8 +204,5 @@
     "wireframe",
     "Wireframes",
     "wirenboard"
-  ],
-  "[shellscript]": {
-    "editor.defaultFormatter": "foxundermoon.shell-format"
-  }
+  ]
 }

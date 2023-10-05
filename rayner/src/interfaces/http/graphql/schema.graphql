@@ -138,7 +138,7 @@ type Device {
 
   markup: MarkupOutput!
 
-  controls: [Control!]
+  controls: [Control!]!
 }
 
 input SetControlValue {
@@ -258,6 +258,6 @@ type Mutation {
 type Subscription {
   ## Hardware control
   #
-  device: DeviceSubscriptionEvent! @auth(requires: [ADMIN, OPERATOR, VIEWER])
-  macros: MacrosSubscriptionEvent! @auth(requires: [ADMIN, OPERATOR, VIEWER])
+  device: DeviceSubscriptionEvent!
+  macros: MacrosSubscriptionEvent!
 }
