@@ -2,15 +2,13 @@
 /* eslint-disable no-constant-condition */
 import EventEmitter from 'node:events';
 
-import { runCollectWirenboardDeviceData } from './application-services/apply-wirenboard-device';
-import { EventBus } from './domain/event-bus';
-
 import { PrismaClient } from '@prisma/client';
-
-import { config } from './infrastructure/config';
-
 import { forever } from 'abort-controller-x';
 
+import { runCollectWirenboardDeviceData } from './application-services/apply-wirenboard-device';
+import { EventBus } from './domain/event-bus';
+import { MacrosEngine } from './domain/macroses/macros-engine';
+import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
@@ -32,6 +30,11 @@ export const run = () => {
     const userRepository = new UserRepository({ config, logger, client: prismaClient });
     const refreshSessionRepository = new RefreshSessionRepository({ logger, client: prismaClient });
     const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
+    const macrosEngine = new MacrosEngine({ eventBus });
+
+    macrosEngine.start();
+
+    defer(() => macrosEngine.stop());
 
     const wirenboard = await runWirenboard({ config, logger: logger.child({ name: 'wirenboard' }), eventBus });
 

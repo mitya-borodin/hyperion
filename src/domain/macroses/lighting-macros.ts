@@ -1,6 +1,10 @@
-import { ControlType } from '../control-type';
+import { Logger } from 'pino';
+import { v4 } from 'uuid';
 
-import { Macros, MacrosType } from './macros';
+import { ControlType } from '../control-type';
+import { HyperionDeviceControl } from '../hyperion-control';
+
+import { Macros, MacrosAccept, MacrosType } from './macros';
 
 export enum LightingLevel {
   HIGHT = 'HIGHT',
@@ -10,45 +14,106 @@ export enum LightingLevel {
 }
 
 export type LightingMacrosState = {
-  forceOn: boolean;
+  forceOn: 'ON' | 'OFF' | 'UNSPECIFIED';
 };
 
 export type LightingMacrosSettings = {
-  buttons: Array<{
-    deviceId: string;
-    controlId: string;
-    type: ControlType.SWITCH;
-    trigger: boolean;
+  readonly buttons: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly type: ControlType.SWITCH;
+    readonly trigger: string;
   }>;
-  illuminations: Array<{
-    deviceId: string;
-    controlId: string;
-    type: ControlType.ILLUMINATION;
-    trigger: number;
+  readonly illuminations: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly type: ControlType.ILLUMINATION;
+    readonly trigger: string;
   }>;
-  lightings: Array<{
-    deviceId: string;
-    controlId: string;
-    type: ControlType.SWITCH;
-    level: LightingLevel;
+  readonly lightings: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly topic: string;
+    readonly type: ControlType.SWITCH;
+    readonly level: LightingLevel;
   }>;
 };
 
 export type LightingMacrosOutput = {
-  lightings: Array<{
-    deviceId: string;
-    controlId: string;
-    value: boolean;
-  }>;
-  messages: Array<{
-    topic: string;
-    message: string;
+  readonly lightings: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly value: string;
   }>;
 };
 
-export type LightingMacros = Macros<
-  MacrosType.LIGHTING,
-  LightingMacrosState,
-  LightingMacrosSettings,
-  LightingMacrosOutput
->;
+type LightingMacrosParameters = {
+  logger: Logger;
+  id?: string;
+  name: string;
+  description: string;
+  labels: string[];
+  settings: LightingMacrosSettings;
+};
+
+export class LightingMacros
+  implements Macros<MacrosType.LIGHTING, LightingMacrosState, LightingMacrosSettings, LightingMacrosOutput>
+{
+  readonly logger: Logger;
+  readonly id: string;
+  readonly type: MacrosType.LIGHTING;
+  readonly name: string;
+  readonly description: string;
+  readonly labels: string[];
+  readonly settings: LightingMacrosSettings;
+  readonly createdAt: Date;
+
+  readonly state: LightingMacrosState;
+  readonly output: LightingMacrosOutput;
+
+  private previous: Map<string, HyperionDeviceControl>;
+  private controls: Map<string, HyperionDeviceControl>;
+
+  constructor({ logger, id, name, description, labels, settings }: LightingMacrosParameters) {
+    this.logger = logger;
+    this.id = id ?? v4();
+    this.type = MacrosType.LIGHTING;
+    this.name = name;
+    this.description = description;
+    this.labels = labels;
+    this.settings = settings;
+    this.createdAt = new Date();
+
+    this.state = {
+      forceOn: 'UNSPECIFIED',
+    };
+    this.output = {
+      lightings: [],
+    };
+
+    this.previous = new Map();
+    this.controls = new Map();
+  }
+
+  setState = (state: LightingMacrosState): void => {
+    this.state.forceOn = state.forceOn;
+
+    this.execute();
+  };
+
+  accept = ({ previous, controls }: MacrosAccept): void => {
+    this.previous = previous;
+    this.controls = controls;
+
+    this.execute();
+  };
+
+  private execute = () => {
+    if (this.state.forceOn !== 'UNSPECIFIED') {
+      // ! Тут переключаем ON | OFF
+      return;
+    }
+
+    // ! Тут делаем выводы
+  };
+}

@@ -158,13 +158,14 @@ model History {
 model Macros {
   id String @id @default(uuid())
 
-  name        String // Пользователькое имя.
-  description String // Пользователькое описания макроса.
-  type        String // Уникальный тип макроса, доавляется в enum при создании макроса.
-  labels      String[] // Набор лейблов, по которым можно найти макросы.
+  type String // Уникальный тип макроса, доавляется в enum при создании макроса
 
-  input  Json
-  output Json
+  labels String[] // Набор лейблов, по которым можно найти макросы
+
+  settings Json
+
+  name        String // Пользователькое имя
+  description String // Пользователькое описания макроса
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
