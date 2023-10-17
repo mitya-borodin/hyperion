@@ -113,6 +113,29 @@ cp .env.example .env
 docker compose up -d
 ```
 
+Накатим миграции:
+
+```bash
+yarn prisma:migrate:dev
+```
+
+Накатим сидинг:
+
+Перед тем как катить сидинг, стоит изменить часть переменных на свои значения:
+
+```text
+## Master User
+#
+MASTER_USER_EMAIL=dmitriy@borodin.site
+MASTER_USER_PASSWORD='1234'
+MASTER_USER_NAME="Dmitriy Borodin"
+
+```
+
+```bash
+yarn prisma:seed
+```
+
 ### Регулярные действия
 
 ```bash
