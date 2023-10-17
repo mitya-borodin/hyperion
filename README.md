@@ -22,7 +22,7 @@ Automation of all engineering systems of a private house based on low-level soft
 
 ## Environment
 
-- Required `Node@18.12.1` `npm@8.19.2`
+- Required `Node@18.16.0` `npm@9.5.1`
 - Required `Yarn 1.22.19`
 - Required `Docker version 20.10.21, build baeda1f`
 
@@ -37,7 +37,7 @@ Automation of all engineering systems of a private house based on low-level soft
 
 ### Установка node в ручном режиме
 
-Самый простой вариант начать, это установить `Node@18.12.1` `npm@8.19.2` [отсюда](https://nodejs.org/download/release/v18.12.1/).
+Самый простой вариант начать, это установить `Node@18.16.0` `npm@9.5.1` [отсюда](https://nodejs.org/download/release/v18.16.0/).
 
 ### Настройка NVM и установка node в автоматизированном режиме
 
@@ -81,8 +81,8 @@ Automation of all engineering systems of a private house based on low-level soft
 - Увидеть что-то подобное, только будет указана версия взятая из вашего `.nvmrc`.
 
   ```text
-  Found '~/programming/collaborative-data/.nvmrc' with version <v18.12.1>
-  Now using node v18.12.1 (npm v8.19.2)
+  Found '~/programming/collaborative-data/.nvmrc' with version <v18.16.0>
+  Now using node v18.16.0 (npm v9.5.1)
   ```
 
 - В случае если нужная версия `node` не установлено вы увидите предложение установить её.
@@ -97,24 +97,12 @@ Automation of all engineering systems of a private house based on low-level soft
 npm i -g yarn
 ```
 
-#### Установить общие инструменты проекта
+#### Установить зависимости и определите переменные окружения
 
 ```bash
-yarn
-```
-
-#### Установить зависимости в каждом проекте
-
-```bash
-cd rayner
-
 yarn
 
 cp .env.example .env
-
-cd ../mett
-
-yarn
 ```
 
 #### Запуск БД
@@ -127,19 +115,7 @@ docker compose up -d
 
 ### Регулярные действия
 
-В первой консоли:
-
 ```bash
-cd rayner
-
-yarn start
-```
-
-Во второй консоли:
-
-```bash
-cd mett
-
 yarn start
 ```
 

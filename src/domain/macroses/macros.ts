@@ -1,12 +1,19 @@
 import { JsonObject } from '../../helpers/json-types';
 import { HyperionDeviceControl } from '../hyperion-control';
+import { HyperionDevice } from '../hyperion-device';
 
 export enum MacrosType {
   LIGHTING = 'LIGHTING',
-  HEATING = 'HEATING',
+  CLIMATE = 'CLIMATE',
+  HEATING_CABLE = 'HEATING_CABLE',
+  GATE_OPENING = 'GATE_OPENING',
+  CURTAINS_OPENING = 'CURTAINS_OPENING',
+  WATER_SUPPLY = 'WATER_SUPPLY',
+  HEATED_TOWEL_RAILS = 'HEATED_TOWEL_RAILS',
 }
 
 export type MacrosAccept = {
+  devices: Map<string, HyperionDevice>;
   previous: Map<string, HyperionDeviceControl>;
   controls: Map<string, HyperionDeviceControl>;
 };

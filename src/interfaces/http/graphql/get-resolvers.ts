@@ -8,11 +8,6 @@ import GraphQLUpload from 'graphql-upload';
 import { IResolvers, MercuriusContext } from 'mercurius';
 import { Logger } from 'pino';
 
-import { toGraphQlDevice } from './mappers/to-graphql-device';
-import { toGraphQlSubscriptionDevice } from './mappers/to-graphql-subscription-device';
-import { toGraphQlUser } from './mappers/to-graphql-user';
-import { SubscriptionDeviceType, SubscriptionTopic } from './subscription';
-
 import { createUser } from '../../../application-services/security/create-user';
 import { deleteUser } from '../../../application-services/security/delete-user';
 import { refreshAccessToken } from '../../../application-services/security/refresh-access-token';
@@ -25,6 +20,7 @@ import { confirmTwoFa } from '../../../application-services/security/two-fa/conf
 import { deactivateTwoFa } from '../../../application-services/security/two-fa/deactivate-two-fa';
 import { verifyTwoFa } from '../../../application-services/security/two-fa/verify-two-fa';
 import { EventBus } from '../../../domain/event-bus';
+import { macrosShowcase } from '../../../domain/macroses/macros-showcase';
 import { JwtPayload } from '../../../domain/user';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../../helpers/error-type';
 import { Config } from '../../../infrastructure/config';
@@ -32,6 +28,12 @@ import { emitWirenboardMessage } from '../../../infrastructure/external-resource
 import { IRefreshSessionRepository } from '../../../ports/refresh-session-repository';
 import { IUserRepository } from '../../../ports/user-repository';
 import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-repository';
+
+import { emitGqlDeviceSubscriptionEvent } from './helpers/emit-gql-device-subscription-event';
+import { toGraphQlDevice } from './mappers/to-graphql-device';
+import { toGraphQlSubscriptionDevice } from './mappers/to-graphql-subscription-device';
+import { toGraphQlUser } from './mappers/to-graphql-user';
+import { SubscriptionDeviceType, SubscriptionTopic } from './subscription';
 
 export type GetResolvers = {
   fastify: FastifyInstance;
@@ -91,7 +93,13 @@ export const getResolvers = ({
       },
 
       getMacrosWireframes: async (parent, _, context: MercuriusContext, info) => {
-        return [];
+        return Object.entries(macrosShowcase).map(([type, { name, description }]) => {
+          return {
+            type,
+            name,
+            description,
+          };
+        });
       },
     },
     Mutation: {
@@ -421,17 +429,7 @@ export const getResolvers = ({
 
         emitWirenboardMessage({ eventBus, topic: control.topic, message: input.value });
 
-        eventBus.emit(
-          EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
-          toGraphQlSubscriptionDevice({
-            devices: [hyperionDevice],
-            type: SubscriptionDeviceType.VALUE_IS_SET,
-            error: {
-              code: ErrorCode.ALL_RIGHT,
-              message: ErrorMessage.ALL_RIGHT,
-            },
-          }),
-        );
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice });
 
         return toGraphQlDevice(hyperionDevice);
       },

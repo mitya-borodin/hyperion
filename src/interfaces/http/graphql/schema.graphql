@@ -148,30 +148,18 @@ input SetControlValue {
   value: String!
 }
 
-## MacrosWireframe
+## MacrosShowcase
 # Используется только как витрина доступных макросов для установки.
 # Возможность установки нескольких макросов одного типа
 # задается реализацией макроса.
 #
-# Список хардкодится в реализации, и новые MacrosWireframe, добавляются
+# Список хардкодится в реализации, и новые MacrosShowcase, добавляются
 # по средством разработки.
 #
-type MacrosWireframe {
-  ## Уникальный тип макроса
-  #
+type MacrosShowcase {
   type: ID!
-
-  ## Подробное название
-  #
   name: String!
-
-  ## Подробное описание
-  #
   description: String!
-
-  ## Пример конфигурации, только для чтения
-  #
-  settings: String!
 }
 
 ## MacrosSetup
@@ -221,7 +209,7 @@ type Query {
 
   ## Hardware control
   #
-  getMacrosWireframes: [MacrosWireframe!]! @auth(requires: [ADMIN, OPERATOR, VIEWER])
+  getMacrosShowcase: [MacrosShowcase!]! @auth(requires: [ADMIN, OPERATOR, VIEWER])
 }
 
 type Mutation {

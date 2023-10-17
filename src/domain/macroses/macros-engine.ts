@@ -31,6 +31,7 @@ type MacrosEngineParameters = {
 export class MacrosEngine {
   readonly logger: Logger;
   readonly eventBus: EventEmitter;
+  readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly macros: Map<string, M>;
 
@@ -38,6 +39,7 @@ export class MacrosEngine {
     this.logger = logger;
     this.eventBus = eventBus;
 
+    this.devices = new Map();
     this.controls = new Map();
     this.macros = new Map();
   }
@@ -54,7 +56,15 @@ export class MacrosEngine {
     let macros: M | undefined;
 
     if (type === MacrosType.LIGHTING) {
-      macros = new LightingMacros({ logger: this.logger, id, name, description, labels, settings: settings[type] });
+      macros = new LightingMacros({
+        logger: this.logger,
+        eventBus: this.eventBus,
+        id,
+        name,
+        description,
+        labels,
+        settings: settings[type],
+      });
     }
 
     if (macros) {
@@ -71,6 +81,8 @@ export class MacrosEngine {
   };
 
   private accept = (device: HyperionDevice): void => {
+    this.devices.set(device.id, device);
+
     const previous = new Map();
 
     for (const control of device.controls) {
@@ -82,7 +94,7 @@ export class MacrosEngine {
     }
 
     for (const macros of this.macros.values()) {
-      macros.accept({ previous, controls: this.controls });
+      macros.accept({ devices: this.devices, previous, controls: this.controls });
     }
   };
 }
