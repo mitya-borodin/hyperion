@@ -433,6 +433,7 @@ export const getResolvers = ({
 
         return toGraphQlDevice(hyperionDevice);
       },
+
       markupDevice: async (root, { input }, context) => {
         const hyperionDevice = await wirenboardDeviceRepository.markupDevice({
           deviceId: input.deviceId,
@@ -483,6 +484,25 @@ export const getResolvers = ({
         );
 
         return toGraphQlDevice(hyperionDevice);
+      },
+
+      setupMacros: async (root, { input }, context) => {
+        return {
+          value: {},
+          error: {},
+        };
+      },
+      updateMacros: async (root, { input }, context) => {
+        return {
+          value: {},
+          error: {},
+        };
+      },
+      removeMacros: async (root, { input }, context) => {
+        return {
+          value: {},
+          error: {},
+        };
       },
     },
     Subscription: {
