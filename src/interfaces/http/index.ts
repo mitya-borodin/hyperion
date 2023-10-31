@@ -11,26 +11,24 @@ import FastifyStatic from '@fastify/static';
 import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import metricsPlugin from 'fastify-metrics';
 import { fastifyRawBody } from 'fastify-raw-body';
-
-import { getResolvers } from './graphql/get-resolvers';
-
 import { GraphQLResolveInfo } from 'graphql';
 import HttpStatusCodes from 'http-status-codes';
-
-import { routerFastifyPlugin } from './router';
-
 import Mercurius from 'mercurius';
 import MercuriusAuth, { MercuriusAuthContext } from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
 import { Logger } from 'pino';
 
+import { MacrosEngine } from '../../domain/macroses/macros-engine';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { IUserRepository } from '../../ports/user-repository';
 import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
+
+import { getResolvers } from './graphql/get-resolvers';
+import { routerFastifyPlugin } from './router';
 
 type CreateHttpInterfaceParameters = {
   config: Config;
@@ -39,6 +37,7 @@ type CreateHttpInterfaceParameters = {
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  macrosEngine: MacrosEngine;
 };
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -58,6 +57,7 @@ export const createHttpInterface = async ({
   userRepository,
   refreshSessionRepository,
   wirenboardDeviceRepository,
+  macrosEngine,
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
     caseSensitive: true,
@@ -134,6 +134,9 @@ export const createHttpInterface = async ({
   });
 
   fastify.register(Mercurius, {
+    /**
+     * ! ADD_MACROS
+     */
     schema: [
       gql`
         ${await readFile(resolve(__dirname, './graphql/macros-setup/lighting-macros-setup.graphql'), {
@@ -160,6 +163,7 @@ export const createHttpInterface = async ({
       userRepository,
       refreshSessionRepository,
       wirenboardDeviceRepository,
+      macrosEngine,
     }),
     graphiql: !config.isProduction,
     subscription: true,

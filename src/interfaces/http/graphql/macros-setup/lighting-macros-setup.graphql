@@ -1,25 +1,22 @@
 input LightingMacrosSetupState {
-  forceOn: Boolean!
+  force: LightingForce!
 }
 
 input LightingMacrosSetupSettingButton {
   deviceId: String!
   controlId: String!
-  type: ControlType!
-  trigger: Boolean!
+  trigger: String!
 }
 
 input LightingMacrosSetupSettingIllumination {
   deviceId: String!
   controlId: String!
-  type: ControlType!
-  trigger: Int!
+  trigger: String!
 }
 
 input LightingMacrosSetupSettingLighting {
   deviceId: String!
   controlId: String!
-  type: ControlType!
   level: LightingLevel!
 }
 
@@ -30,7 +27,7 @@ input LightingMacrosSetupSettings {
 }
 
 input LightingMacrosSetup {
-  type: ID!
+  id: ID
 
   name: String!
   description: String!

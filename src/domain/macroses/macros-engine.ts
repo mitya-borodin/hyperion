@@ -3,16 +3,22 @@ import EventEmitter from 'node:events';
 import cloneDeep from 'lodash.clonedeep';
 import { Logger } from 'pino';
 
+import { ErrorType } from '../../helpers/error-type';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
-import { LightingMacros, LightingMacrosSettings, LightingMacrosState } from './lighting-macros';
+import { LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
 import { MacrosType } from './macros';
 
 type M = LightingMacros;
+type T = { [MacrosType.LIGHTING]: LightingMacrosPublicState };
 type S = { [MacrosType.LIGHTING]: LightingMacrosSettings };
-type T = { [MacrosType.LIGHTING]: LightingMacrosState };
+
+/**
+ * ! ADD_MACROS
+ */
+export type MacrosOptions = { lighting?: LightingMacros };
 
 type Setup = {
   id?: string;
@@ -20,6 +26,7 @@ type Setup = {
   name: string;
   description: string;
   labels: string[];
+  state: T;
   settings: S;
 };
 
@@ -45,30 +52,64 @@ export class MacrosEngine {
   }
 
   start = () => {
-    this.eventBus.on(EventBus.WB_APPEARED, this.accept);
+    this.eventBus.on(EventBus.HD_APPEARED, this.accept);
   };
 
   stop = () => {
-    this.eventBus.off(EventBus.WB_APPEARED, this.accept);
+    this.eventBus.off(EventBus.HD_APPEARED, this.accept);
   };
 
-  setup = ({ id, type, name, description, labels, settings }: Setup): void => {
-    let macros: M | undefined;
+  setup = ({ id, type, name, description, labels, state, settings }: Setup): Error | M => {
+    try {
+      if (this.devices.size === 0 || this.controls.size === 0) {
+        this.logger.error(
+          { id, type, name, description, labels, settings },
+          'Before installing macros, you need to download device and control data 🚨',
+        );
 
-    if (type === MacrosType.LIGHTING) {
-      macros = new LightingMacros({
-        logger: this.logger,
-        eventBus: this.eventBus,
-        id,
-        name,
-        description,
-        labels,
-        settings: settings[type],
-      });
-    }
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
 
-    if (macros) {
-      this.macros.set(id ?? macros.id, macros);
+      let macros: M | undefined;
+
+      if (type === MacrosType.LIGHTING) {
+        macros = new LightingMacros({
+          logger: this.logger,
+          eventBus: this.eventBus,
+
+          devices: this.devices,
+          controls: this.controls,
+
+          id,
+          name,
+          description,
+          labels,
+          state: state[type],
+          settings: settings[type],
+        });
+      }
+
+      if (macros) {
+        this.macros.set(macros.id, macros);
+
+        this.logger.info(
+          { id: macros.id, type, name, description, labels, settings, macros },
+          'The macro has been successfully installed ✅',
+        );
+
+        return macros;
+      }
+
+      this.logger.error({ id, type, name, description, labels, settings }, 'Failed to install the macros 🚨');
+
+      return new Error(ErrorType.INVALID_ARGUMENTS);
+    } catch (error) {
+      this.logger.error(
+        { id, type, name, description, labels, settings, err: error },
+        'Failed to install the macro, for unforeseen reasons 🚨',
+      );
+
+      return new Error(ErrorType.INVALID_ARGUMENTS);
     }
   };
 
@@ -78,6 +119,20 @@ export class MacrosEngine {
     if (macros?.type === MacrosType.LIGHTING) {
       macros.setState(state[macros?.type]);
     }
+  };
+
+  getMarcosList = () => {
+    const list: MacrosOptions[] = [];
+
+    for (const macros of this.macros.values()) {
+      if (macros instanceof LightingMacros) {
+        list.push({
+          lighting: macros,
+        });
+      }
+    }
+
+    return list;
   };
 
   private accept = (device: HyperionDevice): void => {

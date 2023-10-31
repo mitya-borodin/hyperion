@@ -46,6 +46,7 @@ enum SubscriptionDeviceType {
 }
 
 enum SubscriptionMacrosType {
+  CONNECTION_ESTABLISHED
   SETUP
   UPDATE
   REMOVE
@@ -179,7 +180,7 @@ type MacrosShowcase {
 # Задает интерфейс добавления макроса, для каждого макроса он уникальный.
 # union не может быть использован как input type, по этому будем использовать
 # список не обязательных полей.
-#
+# ! ADD_MACROS
 input MacrosSetup {
   lighting: LightingMacrosSetup
 }
@@ -188,7 +189,7 @@ input MacrosSetup {
 # Задает интерфейс установленного макроса, для каждого макроса он уникален.
 # Как оказалось использовать union не так уж и удобно, сильно проще использовать
 # список не обязательных полей.
-#
+# ! ADD_MACROS
 type Macros {
   lighting: LightingMacros
 }
@@ -209,24 +210,24 @@ type DeviceSubscriptionEvent {
 }
 
 type MacrosSubscriptionEvent {
-  items: [Macros!]!
+  macros: [Macros!]!
   type: SubscriptionMacrosType!
   error: Error!
 }
 
 type Query {
-  ## Authentication and Access control
+  ## Authentication and Access
   #
   getUser(input: GetUserInput!): UserOutput @auth(requires: [ADMIN])
   getUsers(input: GetUsersInput!): GetUsersOutput @auth(requires: [ADMIN])
 
-  ## Hardware control
+  ## Hardware
   #
   getMacrosShowcase: [MacrosShowcase!]! @auth(requires: [ADMIN, OPERATOR, VIEWER])
 }
 
 type Mutation {
-  ## Authentication and Access control
+  ## Authentication and Access
   #
   signIn(input: SignInInput!): SignInOutput
   signOut: DefaultOutput @auth(requires: [ADMIN, OPERATOR, VIEWER])
@@ -244,7 +245,7 @@ type Mutation {
 
   refreshAccessToken: RefreshAccessTokenOutput
 
-  ## Hardware control
+  ## Hardware
   #
   setControlValue(input: SetControlValue!): Device! @auth(requires: [ADMIN, OPERATOR])
 
@@ -257,7 +258,7 @@ type Mutation {
 }
 
 type Subscription {
-  ## Hardware control
+  ## Hardware
   #
   device: DeviceSubscriptionEvent!
   macros: MacrosSubscriptionEvent!

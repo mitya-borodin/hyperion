@@ -11,6 +11,7 @@ export enum SubscriptionDeviceType {
 }
 
 export enum SubscriptionMacrosType {
+  CONNECTION_ESTABLISHED = 'CONNECTION_ESTABLISHED',
   SETUP = 'SETUP',
   UPDATE = 'UPDATE',
   REMOVE = 'REMOVE',

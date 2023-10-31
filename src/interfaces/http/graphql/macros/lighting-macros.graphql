@@ -1,25 +1,28 @@
+enum LightingForce {
+  ON
+  OFF
+  UNSPECIFIED
+}
+
 type LightingMacrosState {
-  forceOn: Boolean!
+  force: LightingForce!
 }
 
 type LightingMacrosSettingButton {
   deviceId: String!
   controlId: String!
-  type: ControlType!
-  trigger: Boolean!
+  trigger: String!
 }
 
 type LightingMacrosSettingIllumination {
   deviceId: String!
   controlId: String!
-  type: ControlType!
-  trigger: Int!
+  trigger: String!
 }
 
 type LightingMacrosSettingLighting {
   deviceId: String!
   controlId: String!
-  type: ControlType!
   level: LightingLevel!
 }
 
@@ -42,8 +45,6 @@ type LightingMacrosOutput {
 type LightingMacros {
   id: ID!
 
-  type: MacrosType!
-
   name: String!
   description: String!
 
@@ -52,7 +53,4 @@ type LightingMacros {
   state: LightingMacrosState!
   settings: LightingMacrosSettings!
   output: LightingMacrosOutput!
-
-  createdAt: String!
-  updatedAt: String!
 }

@@ -55,6 +55,7 @@ export const run = () => {
       userRepository,
       refreshSessionRepository,
       wirenboardDeviceRepository,
+      macrosEngine,
     });
 
     await fastify.listen({

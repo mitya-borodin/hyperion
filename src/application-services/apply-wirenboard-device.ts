@@ -3,9 +3,8 @@ import EventEmitter from 'node:events';
 import { Logger } from 'pino';
 
 import { EventBus } from '../domain/event-bus';
-import { ErrorCode, ErrorMessage } from '../helpers/error-type';
 import { WirenboardDevice } from '../infrastructure/external-resource-adapters/wirenboard/wirenboard-device';
-import { toGraphQlSubscriptionDevice } from '../interfaces/http/graphql/mappers/to-graphql-subscription-device';
+import { emitGqlDeviceSubscriptionEvent } from '../interfaces/http/graphql/helpers/emit-gql-device-subscription-event';
 import { SubscriptionDeviceType } from '../interfaces/http/graphql/subscription';
 import { IWirenboardDeviceRepository } from '../ports/wirenboard-device-repository';
 
@@ -27,17 +26,13 @@ export const runCollectWirenboardDeviceData = ({
       return hyperionDevice;
     }
 
-    eventBus.emit(
-      EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
-      toGraphQlSubscriptionDevice({
-        devices: [hyperionDevice],
-        type: SubscriptionDeviceType.APPEARED,
-        error: {
-          code: ErrorCode.ALL_RIGHT,
-          message: ErrorMessage.ALL_RIGHT,
-        },
-      }),
-    );
+    eventBus.emit(EventBus.HD_APPEARED, hyperionDevice);
+
+    emitGqlDeviceSubscriptionEvent({
+      eventBus,
+      hyperionDevice,
+      type: SubscriptionDeviceType.APPEARED,
+    });
   };
 
   eventBus.on(EventBus.WB_APPEARED, wirenboardDeviceHandler);

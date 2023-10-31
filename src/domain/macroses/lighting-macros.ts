@@ -1,16 +1,19 @@
 import EventEmitter from 'node:events';
 
+import cloneDeep from 'lodash.clonedeep';
 import { Logger } from 'pino';
 import { v4 } from 'uuid';
 
+import { ErrorType } from '../../helpers/error-type';
 import { emitWirenboardMessage } from '../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 // eslint-disable-next-line max-len
 import { emitGqlDeviceSubscriptionEvent } from '../../interfaces/http/graphql/helpers/emit-gql-device-subscription-event';
+import { SubscriptionDeviceType } from '../../interfaces/http/graphql/subscription';
 import { ControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
-import { constructId } from './get-control-id';
+import { getControlId } from './get-control-id';
 import { Macros, MacrosAccept, MacrosType } from './macros';
 
 export enum LightingLevel {
@@ -20,28 +23,36 @@ export enum LightingLevel {
   ACCIDENT = 'ACCIDENT',
 }
 
-export type LightingMacrosState = {
-  forceOn: 'ON' | 'OFF' | 'UNSPECIFIED';
+export enum LightingForce {
+  ON = 'ON',
+  OFF = 'OFF',
+  UNSPECIFIED = 'UNSPECIFIED',
+}
+
+export type LightingMacrosPublicState = {
+  force: LightingForce;
+};
+
+export type LightingMacrosPrivateState = {
   switch: 'ON' | 'OFF';
 };
+
+type State = LightingMacrosPublicState & LightingMacrosPrivateState;
 
 export type LightingMacrosSettings = {
   readonly buttons: Array<{
     readonly deviceId: string;
     readonly controlId: string;
-    readonly type: ControlType.SWITCH;
     readonly trigger: string;
   }>;
   readonly illuminations: Array<{
     readonly deviceId: string;
     readonly controlId: string;
-    readonly type: ControlType.ILLUMINATION;
     readonly trigger: string;
   }>;
   readonly lightings: Array<{
     readonly deviceId: string;
     readonly controlId: string;
-    readonly type: ControlType.SWITCH;
     readonly level: LightingLevel;
   }>;
 };
@@ -61,11 +72,15 @@ type LightingMacrosParameters = {
   name: string;
   description: string;
   labels: string[];
+  state: LightingMacrosPublicState;
   settings: LightingMacrosSettings;
+
+  readonly devices: Map<string, HyperionDevice>;
+  readonly controls: Map<string, HyperionDeviceControl>;
 };
 
 export class LightingMacros
-  implements Macros<MacrosType.LIGHTING, LightingMacrosState, LightingMacrosSettings, LightingMacrosOutput>
+  implements Macros<MacrosType.LIGHTING, State, LightingMacrosSettings, LightingMacrosOutput>
 {
   /**
    * ! Общие зависимости всех макросов
@@ -74,31 +89,52 @@ export class LightingMacros
   readonly eventBus: EventEmitter;
 
   /**
+   * ! Данные устройств
+   */
+  private devices: Map<string, HyperionDevice>;
+  private previous: Map<string, HyperionDeviceControl>;
+  private controls: Map<string, HyperionDeviceControl>;
+
+  /**
    * ! Общие параметры всех макросов
    */
   readonly id: string;
   readonly name: string;
   readonly description: string;
   readonly labels: string[];
-  readonly createdAt: Date;
-  private devices: Map<string, HyperionDevice>;
-  private previous: Map<string, HyperionDeviceControl>;
-  private controls: Map<string, HyperionDeviceControl>;
 
   /**
    * ! Уникальные параметры макроса
    */
   readonly type: MacrosType.LIGHTING;
+  readonly state: State;
   readonly settings: LightingMacrosSettings;
-  readonly state: LightingMacrosState;
   output: LightingMacrosOutput;
 
-  constructor({ logger, eventBus, id, name, description, labels, settings }: LightingMacrosParameters) {
+  constructor({
+    logger,
+    eventBus,
+    devices,
+    controls,
+    id,
+    name,
+    description,
+    labels,
+    state,
+    settings,
+  }: LightingMacrosParameters) {
     /**
      * ! Общие зависимости всех макросов
      */
-    this.logger = logger;
+    this.logger = logger.child({ name: 'LightingMacros 💡' });
     this.eventBus = eventBus;
+
+    /**
+     * ! Данные устройств
+     */
+    this.devices = cloneDeep(devices);
+    this.previous = new Map();
+    this.controls = cloneDeep(controls);
 
     /**
      * ! Общие параметры всех макросов
@@ -107,11 +143,6 @@ export class LightingMacros
     this.name = name;
     this.description = description;
     this.labels = labels;
-    this.createdAt = new Date();
-
-    this.devices = new Map();
-    this.previous = new Map();
-    this.controls = new Map();
 
     /**
      * ! Уникальные параметры макроса
@@ -119,41 +150,54 @@ export class LightingMacros
     this.type = MacrosType.LIGHTING;
     this.settings = settings;
     this.state = {
-      forceOn: 'UNSPECIFIED',
+      force: state.force,
       switch: 'OFF',
     };
     this.output = {
       lightings: [],
     };
+
+    this.checkSettings();
   }
 
-  setState = (state: LightingMacrosState): void => {
-    switch (state.forceOn) {
-      case 'ON': {
-        this.state.forceOn = 'ON';
+  toJS = () => {
+    return cloneDeep({
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      type: this.type,
+      labels: this.labels,
+      state: this.state,
+      settings: this.settings,
+      output: this.output,
+    });
+  };
 
-        this.execute();
+  setState = (state: LightingMacrosPublicState): void => {
+    switch (state.force) {
+      case LightingForce.ON: {
+        this.state.force = LightingForce.ON;
 
         break;
       }
-      case 'OFF': {
-        this.state.forceOn = 'OFF';
-
-        this.execute();
+      case LightingForce.OFF: {
+        this.state.force = LightingForce.OFF;
 
         break;
       }
-      case 'UNSPECIFIED': {
-        this.state.forceOn = 'UNSPECIFIED';
-
-        this.execute();
+      case LightingForce.UNSPECIFIED: {
+        this.state.force = LightingForce.UNSPECIFIED;
 
         break;
       }
       default: {
         this.logger.error({ state }, 'An incorrect state was received 🚨');
+
+        return;
       }
     }
+
+    this.execute();
   };
 
   accept = ({ devices, previous, controls }: MacrosAccept): void => {
@@ -168,16 +212,16 @@ export class LightingMacros
     /**
      * ! FORCE ON LOGIC
      */
-    if (this.state.forceOn !== 'UNSPECIFIED') {
+    if (this.state.force !== 'UNSPECIFIED') {
       let value = '0';
 
-      if (this.state.forceOn === 'ON') {
+      if (this.state.force === 'ON') {
         this.state.switch = 'ON';
 
         value = '1';
       }
 
-      if (this.state.forceOn === 'OFF') {
+      if (this.state.force === 'OFF') {
         this.state.switch = 'OFF';
 
         value = '0';
@@ -215,7 +259,7 @@ export class LightingMacros
 
   private hasButtonPress = (): boolean => {
     for (const button of this.settings.buttons) {
-      const id = constructId({ deviceId: button.deviceId, controlId: button.controlId });
+      const id = getControlId({ deviceId: button.deviceId, controlId: button.controlId });
 
       const previous = this.previous.get(id);
       const control = this.controls.get(id);
@@ -237,12 +281,14 @@ export class LightingMacros
       lightings: [],
     };
 
-    for (const { deviceId, controlId, type } of this.settings.lightings) {
-      const control = this.controls.get(constructId({ deviceId, controlId }));
+    for (const { deviceId, controlId } of this.settings.lightings) {
+      const type = ControlType.SWITCH;
+
+      const control = this.controls.get(getControlId({ deviceId, controlId }));
 
       if (!control) {
-        this.logger.warn(
-          { deviceId, controlId, type, controls: this.controls.size },
+        this.logger.error(
+          { deviceId, controlId, controls: [...this.controls.values()] },
           'The control specified in the settings was not found 🚨',
         );
 
@@ -251,8 +297,8 @@ export class LightingMacros
 
       if (control.type !== type) {
         this.logger.error(
-          { deviceId, controlId, type, controls: this.controls.size, control },
-          'Unsuitable control found 🚨',
+          { deviceId, controlId, type, control, controls: [...this.controls.values()] },
+          'The type of control does not match the settings 🚨',
         );
 
         continue;
@@ -260,8 +306,8 @@ export class LightingMacros
 
       if (!control.topic) {
         this.logger.error(
-          { deviceId, controlId, type, controls: this.controls.size, control },
-          'The control does not contain a topic 🚨',
+          { deviceId, controlId, type, control, controls: [...this.controls.values()] },
+          'The control object does not contain a topic for sending messages 🚨',
         );
 
         continue;
@@ -289,7 +335,7 @@ export class LightingMacros
     for (const lighting of this.output.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
       const hyperionControl = this.controls.get(
-        constructId({ deviceId: lighting.deviceId, controlId: lighting.controlId }),
+        getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId }),
       );
 
       if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
@@ -307,7 +353,67 @@ export class LightingMacros
        * ! переключиться в зависимости от тех или иных параметров в состоянии макросов.
        */
       emitWirenboardMessage({ eventBus: this.eventBus, topic: hyperionControl.topic, message: lighting.value });
-      emitGqlDeviceSubscriptionEvent({ eventBus: this.eventBus, hyperionDevice });
+      emitGqlDeviceSubscriptionEvent({
+        eventBus: this.eventBus,
+        hyperionDevice,
+        type: SubscriptionDeviceType.VALUE_IS_SET,
+      });
+      /**
+       * ! Добавить отправку данных макроса
+       */
+    }
+  };
+
+  /**
+   * ! Данная проверка обязательна, для того, чтобы обеспечить корректную работу в рантайме.
+   */
+  private checkSettings = () => {
+    for (const setting of this.settings.buttons) {
+      const button = this.controls.get(getControlId(setting));
+
+      if (!button) {
+        this.logger.error(setting, 'Button control not found 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      if (button.type !== ControlType.SWITCH) {
+        this.logger.error(setting, 'Button control is not SWITCH 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+    }
+
+    for (const setting of this.settings.illuminations) {
+      const illumination = this.controls.get(getControlId(setting));
+
+      if (!illumination) {
+        this.logger.error(setting, 'Illumination control not found 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      if (illumination.type !== ControlType.ILLUMINATION) {
+        this.logger.error(setting, 'Illumination control is not ILLUMINATION 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+    }
+
+    for (const setting of this.settings.lightings) {
+      const lighting = this.controls.get(getControlId(setting));
+
+      if (!lighting) {
+        this.logger.error(setting, 'Illumination control not found 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      if (lighting.type !== ControlType.SWITCH) {
+        this.logger.error(setting, 'Illumination control is not SWITCH 🚨');
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
+      }
     }
   };
 }

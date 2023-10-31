@@ -3,6 +3,6 @@ type GetControlId = {
   controlId: string;
 };
 
-export const constructId = ({ deviceId, controlId }: GetControlId) => {
+export const getControlId = ({ deviceId, controlId }: GetControlId) => {
   return `${deviceId}/${controlId}`;
 };

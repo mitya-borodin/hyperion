@@ -20,6 +20,9 @@ import { confirmTwoFa } from '../../../application-services/security/two-fa/conf
 import { deactivateTwoFa } from '../../../application-services/security/two-fa/deactivate-two-fa';
 import { verifyTwoFa } from '../../../application-services/security/two-fa/verify-two-fa';
 import { EventBus } from '../../../domain/event-bus';
+import { LightingMacros } from '../../../domain/macroses/lighting-macros';
+import { MacrosType } from '../../../domain/macroses/macros';
+import { MacrosEngine } from '../../../domain/macroses/macros-engine';
 import { macrosShowcase } from '../../../domain/macroses/macros-showcase';
 import { JwtPayload } from '../../../domain/user';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../../helpers/error-type';
@@ -31,9 +34,11 @@ import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-re
 
 import { emitGqlDeviceSubscriptionEvent } from './helpers/emit-gql-device-subscription-event';
 import { toGraphQlDevice } from './mappers/to-graphql-device';
+import { toGraphQlMacros } from './mappers/to-graphql-macros';
 import { toGraphQlSubscriptionDevice } from './mappers/to-graphql-subscription-device';
+import { toGraphQlSubscriptionMacros } from './mappers/to-graphql-subscription-macros';
 import { toGraphQlUser } from './mappers/to-graphql-user';
-import { SubscriptionDeviceType, SubscriptionTopic } from './subscription';
+import { SubscriptionDeviceType, SubscriptionMacrosType, SubscriptionTopic } from './subscription';
 
 export type GetResolvers = {
   fastify: FastifyInstance;
@@ -43,6 +48,7 @@ export type GetResolvers = {
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  macrosEngine: MacrosEngine;
 };
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -54,6 +60,7 @@ export const getResolvers = ({
   userRepository,
   refreshSessionRepository,
   wirenboardDeviceRepository,
+  macrosEngine,
 }: GetResolvers): IResolvers => {
   return {
     Upload: GraphQLUpload,
@@ -92,7 +99,7 @@ export const getResolvers = ({
         };
       },
 
-      getMacrosWireframes: async (parent, _, context: MercuriusContext, info) => {
+      getMacrosShowcase: async (parent, _, context: MercuriusContext, info) => {
         return Object.entries(macrosShowcase).map(([type, { name, description }]) => {
           return {
             type,
@@ -428,8 +435,7 @@ export const getResolvers = ({
         }
 
         emitWirenboardMessage({ eventBus, topic: control.topic, message: input.value });
-
-        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice });
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.VALUE_IS_SET });
 
         return toGraphQlDevice(hyperionDevice);
       },
@@ -486,19 +492,61 @@ export const getResolvers = ({
         return toGraphQlDevice(hyperionDevice);
       },
 
-      setupMacros: async (root, { input }, context) => {
-        return {
-          value: {},
-          error: {},
-        };
+      setupMacros: async (root, { input: { lighting } }, context) => {
+        /**
+         * ! ADD_MACROS
+         */
+        if (lighting) {
+          const macros = macrosEngine.setup({
+            id: lighting.id ?? undefined,
+            type: MacrosType.LIGHTING,
+            name: lighting.name,
+            description: lighting.description,
+            labels: lighting.labels,
+            state: {
+              [MacrosType.LIGHTING]: lighting.state,
+            },
+            settings: {
+              [MacrosType.LIGHTING]: lighting.settings,
+            },
+          });
+
+          if (macros instanceof LightingMacros) {
+            return {
+              value: toGraphQlMacros({ lighting: macros }),
+              error: {
+                code: ErrorCode.ALL_RIGHT,
+                message: ErrorMessage.ALL_RIGHT,
+              },
+            };
+          }
+        }
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
       },
       updateMacros: async (root, { input }, context) => {
-        return {
-          value: {},
-          error: {},
-        };
+        if (!input.lighting?.id) {
+          logger.error({ input }, 'To update the macro, you must specify the ID 🚨');
+
+          throw new Error(ErrorType.INVALID_ARGUMENTS);
+        }
+
+        if (input.lighting) {
+          return {
+            value: {},
+            error: {},
+          };
+        }
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
       },
       removeMacros: async (root, { input }, context) => {
+        if (!input?.id) {
+          logger.error({ input }, 'To remove the macro, you must specify the ID 🚨');
+
+          throw new Error(ErrorType.INVALID_ARGUMENTS);
+        }
+
         return {
           value: {},
           error: {},
@@ -533,7 +581,21 @@ export const getResolvers = ({
       },
       macros: {
         subscribe: async (root, _, { pubsub }) => {
-          return await pubsub.subscribe(SubscriptionTopic.MACROS);
+          const subscribe = await pubsub.subscribe(SubscriptionTopic.MACROS);
+
+          eventBus.emit(
+            EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
+            toGraphQlSubscriptionMacros({
+              macros: macrosEngine.getMarcosList(),
+              type: SubscriptionMacrosType.CONNECTION_ESTABLISHED,
+              error: {
+                code: ErrorCode.ALL_RIGHT,
+                message: ErrorMessage.ALL_RIGHT,
+              },
+            }),
+          );
+
+          return subscribe;
         },
       },
     },

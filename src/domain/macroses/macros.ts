@@ -38,11 +38,20 @@ export type Macros<
   description: string;
   labels: string[];
   settings: SETTINGS;
-  createdAt: Date;
 
   state: STATE;
   output: OUTPUT;
 
   setState(state: STATE): void;
   accept(parameters: MacrosAccept): void;
+  toJS(): {
+    id: string;
+    name: string;
+    description: string;
+    type: TYPE;
+    labels: string[];
+    state: STATE;
+    settings: SETTINGS;
+    output: OUTPUT;
+  };
 };

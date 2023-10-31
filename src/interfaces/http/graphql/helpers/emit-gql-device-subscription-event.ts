@@ -9,14 +9,15 @@ import { SubscriptionDeviceType } from '../subscription';
 type EmitGqlDeviceSubscriptionEvent = {
   eventBus: EventEmitter;
   hyperionDevice: HyperionDevice;
+  type: SubscriptionDeviceType;
 };
 
-export const emitGqlDeviceSubscriptionEvent = ({ eventBus, hyperionDevice }: EmitGqlDeviceSubscriptionEvent) => {
+export const emitGqlDeviceSubscriptionEvent = ({ eventBus, hyperionDevice, type }: EmitGqlDeviceSubscriptionEvent) => {
   eventBus.emit(
     EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
     toGraphQlSubscriptionDevice({
       devices: [hyperionDevice],
-      type: SubscriptionDeviceType.VALUE_IS_SET,
+      type,
       error: {
         code: ErrorCode.ALL_RIGHT,
         message: ErrorMessage.ALL_RIGHT,
