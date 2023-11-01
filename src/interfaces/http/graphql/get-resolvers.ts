@@ -33,6 +33,7 @@ import { IUserRepository } from '../../../ports/user-repository';
 import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-repository';
 
 import { emitGqlDeviceSubscriptionEvent } from './helpers/emit-gql-device-subscription-event';
+import { emitGqlMacrosSubscriptionEvent } from './helpers/emit-gql-macros-subscription-event';
 import { toGraphQlDevice } from './mappers/to-graphql-device';
 import { toGraphQlMacros } from './mappers/to-graphql-macros';
 import { toGraphQlSubscriptionDevice } from './mappers/to-graphql-subscription-device';
@@ -451,17 +452,7 @@ export const getResolvers = ({
           throw hyperionDevice;
         }
 
-        eventBus.emit(
-          EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
-          toGraphQlSubscriptionDevice({
-            devices: [hyperionDevice],
-            type: SubscriptionDeviceType.MARKED_UP,
-            error: {
-              code: ErrorCode.ALL_RIGHT,
-              message: ErrorMessage.ALL_RIGHT,
-            },
-          }),
-        );
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.MARKED_UP });
 
         return toGraphQlDevice(hyperionDevice);
       },
@@ -477,17 +468,7 @@ export const getResolvers = ({
           throw hyperionDevice;
         }
 
-        eventBus.emit(
-          EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
-          toGraphQlSubscriptionDevice({
-            devices: [hyperionDevice],
-            type: SubscriptionDeviceType.MARKED_UP,
-            error: {
-              code: ErrorCode.ALL_RIGHT,
-              message: ErrorMessage.ALL_RIGHT,
-            },
-          }),
-        );
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.MARKED_UP });
 
         return toGraphQlDevice(hyperionDevice);
       },
@@ -512,6 +493,12 @@ export const getResolvers = ({
           });
 
           if (macros instanceof LightingMacros) {
+            emitGqlMacrosSubscriptionEvent({
+              eventBus,
+              macros: { lighting: macros },
+              type: SubscriptionMacrosType.SETUP,
+            });
+
             return {
               value: toGraphQlMacros({ lighting: macros }),
               error: {
@@ -531,11 +518,41 @@ export const getResolvers = ({
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
-        if (input.lighting) {
-          return {
-            value: {},
-            error: {},
-          };
+        /**
+         * ! ADD_MACROS
+         */
+        const { lighting } = input;
+
+        if (lighting) {
+          const macros = macrosEngine.setup({
+            id: lighting.id ?? undefined,
+            type: MacrosType.LIGHTING,
+            name: lighting.name,
+            description: lighting.description,
+            labels: lighting.labels,
+            state: {
+              [MacrosType.LIGHTING]: lighting.state,
+            },
+            settings: {
+              [MacrosType.LIGHTING]: lighting.settings,
+            },
+          });
+
+          if (macros instanceof LightingMacros) {
+            emitGqlMacrosSubscriptionEvent({
+              eventBus,
+              macros: { lighting: macros },
+              type: SubscriptionMacrosType.UPDATE,
+            });
+
+            return {
+              value: toGraphQlMacros({ lighting: macros }),
+              error: {
+                code: ErrorCode.ALL_RIGHT,
+                message: ErrorMessage.ALL_RIGHT,
+              },
+            };
+          }
         }
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
@@ -547,10 +564,32 @@ export const getResolvers = ({
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
-        return {
-          value: {},
-          error: {},
-        };
+        const macros = macrosEngine.remove(input.id);
+
+        if (macros instanceof Error) {
+          throw macros;
+        }
+
+        /**
+         * ! ADD_MACROS
+         */
+        if (macros instanceof LightingMacros) {
+          emitGqlMacrosSubscriptionEvent({
+            eventBus,
+            macros: { lighting: macros },
+            type: SubscriptionMacrosType.REMOVE,
+          });
+
+          return {
+            value: toGraphQlMacros({ lighting: macros }),
+            error: {
+              code: ErrorCode.ALL_RIGHT,
+              message: ErrorMessage.ALL_RIGHT,
+            },
+          };
+        }
+
+        throw new Error(ErrorType.INVALID_ARGUMENTS);
       },
     },
     Subscription: {

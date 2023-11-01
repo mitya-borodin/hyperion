@@ -4,6 +4,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { Logger } from 'pino';
 
 import { ErrorType } from '../../helpers/error-type';
+import { IMacrosSettingsRepository } from '../../ports/macros-settings-repository';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -33,18 +34,21 @@ type Setup = {
 type MacrosEngineParameters = {
   logger: Logger;
   eventBus: EventEmitter;
+  macrosSettingsRepository: IMacrosSettingsRepository;
 };
 
 export class MacrosEngine {
   readonly logger: Logger;
   readonly eventBus: EventEmitter;
+  readonly macrosSettingsRepository: IMacrosSettingsRepository;
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly macros: Map<string, M>;
 
-  constructor({ logger, eventBus }: MacrosEngineParameters) {
+  constructor({ logger, eventBus, macrosSettingsRepository }: MacrosEngineParameters) {
     this.logger = logger;
     this.eventBus = eventBus;
+    this.macrosSettingsRepository = macrosSettingsRepository;
 
     this.devices = new Map();
     this.controls = new Map();
@@ -111,6 +115,20 @@ export class MacrosEngine {
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
+  };
+
+  remove = (id: string) => {
+    const macros = this.macros.get(id);
+
+    if (macros) {
+      this.macros.delete(id);
+
+      return macros;
+    }
+
+    this.logger.error({ id }, 'Failed to delete macro by ID 🚨');
+
+    return new Error(ErrorType.INVALID_ARGUMENTS);
   };
 
   setState = (id: string, state: T) => {

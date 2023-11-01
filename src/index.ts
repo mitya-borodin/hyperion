@@ -12,6 +12,7 @@ import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
+import { MacrosSettingsRepository } from './infrastructure/postgres/repository/macros-settings-repository';
 import { RefreshSessionRepository } from './infrastructure/postgres/repository/refresh-session-repository';
 import { UserRepository } from './infrastructure/postgres/repository/user-repository';
 import { WirenboardDeviceRepository } from './infrastructure/postgres/repository/wirenboard-device-repository';
@@ -30,7 +31,8 @@ export const run = () => {
     const userRepository = new UserRepository({ config, logger, client: prismaClient });
     const refreshSessionRepository = new RefreshSessionRepository({ logger, client: prismaClient });
     const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
-    const macrosEngine = new MacrosEngine({ logger, eventBus });
+    const macrosSettingsRepository = new MacrosSettingsRepository({ logger, client: prismaClient });
+    const macrosEngine = new MacrosEngine({ logger, eventBus, macrosSettingsRepository });
 
     macrosEngine.start();
 
