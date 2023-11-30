@@ -1,4 +1,6 @@
-# Про токены, JSON Web Tokens (JWT), аутентификацию и авторизацию. Token-Based Authentication
+# Token-Based Authentication
+
+Про токены, JSON Web Tokens (JWT), аутентификацию и авторизацию.
 
 `Last major update: 25.08.2020`
 
@@ -281,8 +283,3 @@ p.s. Каждой задаче свой подход. Юзайте в небол
 - <https://medium.com/@cjainn/anatomy-of-a-jwt-token-part-1-8f7616113c14>
 - <https://medium.com/@cjainn/anatomy-of-a-jwt-token-part-2-c12888abc1a2>
 - <https://scotch.io/bar-talk/why-jwts-suck-as-session-tokens>
-- <https://t.me/why_jwt_is_bad>
-
----
-
-_Комментарии периодически подчищаются_

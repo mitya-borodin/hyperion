@@ -111,6 +111,9 @@ export const getResolvers = ({
       },
     },
     Mutation: {
+      /**
+       * ! USER
+       */
       signIn: async (parent, { input }, context: MercuriusContext, info) => {
         const singInResult = await signIn({
           config,
@@ -404,6 +407,9 @@ export const getResolvers = ({
         return { accessToken };
       },
 
+      /**
+       * ! HARDWARE
+       */
       setControlValue: async (root, { input }, context) => {
         const hyperionDevice = await wirenboardDeviceRepository.setControlValue({
           deviceId: input.deviceId,
@@ -440,7 +446,6 @@ export const getResolvers = ({
 
         return toGraphQlDevice(hyperionDevice);
       },
-
       markupDevice: async (root, { input }, context) => {
         const hyperionDevice = await wirenboardDeviceRepository.markupDevice({
           deviceId: input.deviceId,
@@ -473,6 +478,9 @@ export const getResolvers = ({
         return toGraphQlDevice(hyperionDevice);
       },
 
+      /**
+       * ! MACROS
+       */
       setupMacros: async (root, { input: { lighting } }, context) => {
         /**
          * ! ADD_MACROS
