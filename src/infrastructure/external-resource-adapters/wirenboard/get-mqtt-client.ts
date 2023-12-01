@@ -39,8 +39,16 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
     });
   });
 
+  client.on('disconnect', () => {
+    logger.error('The mqtt connection with wirenboard was disconnected 👷‍♂️');
+  });
+
+  client.on('reconnect', () => {
+    logger.info('The mqtt connection to the wirenboard was reconnected ✅ 🚀');
+  });
+
   client.on('error', (error) => {
-    logger.error({ err: error }, 'An error occurred in the MQTT connection to the WB 🚨');
+    logger.error({ err: error }, 'An error occurred in the MQTT connection to the wirenboard 🚨');
   });
 
   return client;
