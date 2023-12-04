@@ -48,7 +48,9 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
   });
 
   client.on('error', (error) => {
-    logger.error({ err: error }, 'An error occurred in the MQTT connection to the wirenboard 🚨');
+    if (error) {
+      logger.error({ err: error }, 'An error occurred in the MQTT connection to the wirenboard 🚨');
+    }
   });
 
   return client;
