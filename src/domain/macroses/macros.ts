@@ -26,21 +26,14 @@ export type MacrosAccept = {
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export type Macros<
-  TYPE extends MacrosType,
-  STATE extends JsonObject,
-  SETTINGS extends JsonObject,
-  OUTPUT extends JsonObject,
-> = {
+export type Macros<TYPE extends MacrosType, STATE extends JsonObject, SETTINGS extends JsonObject> = {
   id: string;
   type: TYPE;
   name: string;
   description: string;
   labels: string[];
   settings: SETTINGS;
-
   state: STATE;
-  output: OUTPUT;
 
   setState(state: STATE): void;
   accept(parameters: MacrosAccept): void;
@@ -50,8 +43,7 @@ export type Macros<
     description: string;
     type: TYPE;
     labels: string[];
-    state: STATE;
     settings: SETTINGS;
-    output: OUTPUT;
+    state: STATE;
   };
 };
