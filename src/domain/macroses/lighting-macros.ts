@@ -37,7 +37,7 @@ export type LightingMacrosPrivateState = {
   switch: 'ON' | 'OFF';
 };
 
-type State = LightingMacrosPublicState & LightingMacrosPrivateState;
+type LightingMacrosState = LightingMacrosPublicState & LightingMacrosPrivateState;
 
 export type LightingMacrosSettings = {
   readonly buttons: Array<{
@@ -57,7 +57,7 @@ export type LightingMacrosSettings = {
   }>;
 };
 
-export type LightingMacrosOutput = {
+type LightingMacrosNextControlState = {
   readonly lightings: Array<{
     readonly deviceId: string;
     readonly controlId: string;
@@ -72,16 +72,14 @@ type LightingMacrosParameters = {
   name: string;
   description: string;
   labels: string[];
-  state: LightingMacrosPublicState;
   settings: LightingMacrosSettings;
+  state: LightingMacrosPublicState;
 
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
 };
 
-export class LightingMacros
-  implements Macros<MacrosType.LIGHTING, State, LightingMacrosSettings, LightingMacrosOutput>
-{
+export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacrosState, LightingMacrosSettings> {
   /**
    * ! Общие зависимости всех макросов
    */
@@ -107,9 +105,13 @@ export class LightingMacros
    * ! Уникальные параметры макроса
    */
   readonly type: MacrosType.LIGHTING;
-  readonly state: State;
   readonly settings: LightingMacrosSettings;
-  output: LightingMacrosOutput;
+  readonly state: LightingMacrosState;
+
+  /**
+   * ! Следующее состояние контролов находящихся под управлением
+   */
+  private nextControlState: LightingMacrosNextControlState;
 
   constructor({
     logger,
@@ -153,7 +155,11 @@ export class LightingMacros
       force: state.force,
       switch: 'OFF',
     };
-    this.output = {
+
+    /**
+     * ! Следующее состояние контролов находящихся под управлением
+     */
+    this.nextControlState = {
       lightings: [],
     };
 
@@ -167,9 +173,8 @@ export class LightingMacros
       description: this.description,
       type: this.type,
       labels: this.labels,
-      state: this.state,
       settings: this.settings,
-      output: this.output,
+      state: this.state,
     });
   };
 
@@ -227,7 +232,7 @@ export class LightingMacros
         value = '0';
       }
 
-      this.collectOutput(value);
+      this.computeNextControlState(value);
       this.sendMessages();
 
       return;
@@ -244,13 +249,13 @@ export class LightingMacros
       if (this.state.switch === 'ON') {
         this.state.switch = 'OFF';
 
-        this.collectOutput('0');
+        this.computeNextControlState('0');
       }
 
       if (this.state.switch === 'OFF') {
         this.state.switch = 'ON';
 
-        this.collectOutput('1');
+        this.computeNextControlState('1');
       }
 
       this.sendMessages();
@@ -276,8 +281,8 @@ export class LightingMacros
     return false;
   };
 
-  private collectOutput = (value: string) => {
-    const output: LightingMacrosOutput = {
+  private computeNextControlState = (value: string) => {
+    const nextControlState: LightingMacrosNextControlState = {
       lightings: [],
     };
 
@@ -320,7 +325,7 @@ export class LightingMacros
        * ! Не известно проверяет ли на это WB, скорее всего да, но нам не помешает проверить это самим.
        */
       if (control.value !== value) {
-        output.lightings.push({
+        nextControlState.lightings.push({
           deviceId,
           controlId,
           value,
@@ -328,11 +333,11 @@ export class LightingMacros
       }
     }
 
-    this.output = output;
+    this.nextControlState = nextControlState;
   };
 
   private sendMessages = () => {
-    for (const lighting of this.output.lightings) {
+    for (const lighting of this.nextControlState.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
       const hyperionControl = this.controls.get(
         getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId }),
@@ -358,9 +363,6 @@ export class LightingMacros
         hyperionDevice,
         type: SubscriptionDeviceType.VALUE_IS_SET,
       });
-      /**
-       * ! Добавить отправку данных макроса
-       */
     }
   };
 

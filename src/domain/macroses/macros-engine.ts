@@ -9,6 +9,7 @@ import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
+import { getControlId } from './get-control-id';
 import { LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
 import { MacrosType } from './macros';
 
@@ -27,8 +28,8 @@ type Setup = {
   name: string;
   description: string;
   labels: string[];
-  state: T;
   settings: S;
+  state: T;
 };
 
 type MacrosEngineParameters = {
@@ -63,7 +64,7 @@ export class MacrosEngine {
     this.eventBus.off(EventBus.HD_APPEARED, this.accept);
   };
 
-  setup = ({ id, type, name, description, labels, state, settings }: Setup): Error | M => {
+  setup = ({ id, type, name, description, labels, settings, state }: Setup): Error | M => {
     try {
       if (this.devices.size === 0 || this.controls.size === 0) {
         this.logger.error(
@@ -76,6 +77,9 @@ export class MacrosEngine {
 
       let macros: M | undefined;
 
+      /**
+       * ! ADD_MACROS
+       */
       if (type === MacrosType.LIGHTING) {
         macros = new LightingMacros({
           logger: this.logger,
@@ -88,13 +92,17 @@ export class MacrosEngine {
           name,
           description,
           labels,
-          state: state[type],
           settings: settings[type],
+          state: state[type],
         });
       }
 
       if (macros) {
         this.macros.set(macros.id, macros);
+
+        /**
+         * TODO Сохранить настройки в БД.
+         */
 
         this.logger.info(
           { id: macros.id, type, name, description, labels, settings, macros },
@@ -123,6 +131,10 @@ export class MacrosEngine {
     if (macros) {
       this.macros.delete(id);
 
+      /**
+       * TODO Удалить настройки и исторические данные из БД.
+       */
+
       return macros;
     }
 
@@ -134,6 +146,9 @@ export class MacrosEngine {
   setState = (id: string, state: T) => {
     const macros = this.macros.get(id);
 
+    /**
+     * ! ADD_MACROS
+     */
     if (macros?.type === MacrosType.LIGHTING) {
       macros.setState(state[macros?.type]);
     }
@@ -143,6 +158,9 @@ export class MacrosEngine {
     const list: MacrosOptions[] = [];
 
     for (const macros of this.macros.values()) {
+      /**
+       * ! ADD_MACROS
+       */
       if (macros instanceof LightingMacros) {
         list.push({
           lighting: macros,
@@ -159,11 +177,11 @@ export class MacrosEngine {
     const previous = new Map();
 
     for (const control of device.controls) {
-      const id = `${device.id}/${control.id}`;
+      const controlId = getControlId({ deviceId: device.id, controlId: control.id });
 
-      previous.set(id, cloneDeep(this.controls.get(id)));
+      previous.set(controlId, cloneDeep(this.controls.get(controlId)));
 
-      this.controls.set(id, control);
+      this.controls.set(controlId, control);
     }
 
     for (const macros of this.macros.values()) {

@@ -51,9 +51,6 @@ model RefreshSession {
   createdAt DateTime @default(now())
 }
 
-// Device используется для:
-// 1. Просмотра данных устройства
-// 2. Изменение данных прям на устройстве
 model Device {
   deviceId String @id
 
@@ -62,10 +59,8 @@ model Device {
   error  String @default("{}")
   meta   String @default("{}")
 
-  // Используется для разметки устройств пользовательскими данными
   markup String @default("{}")
 
-  // Используется для поиска пользователем
   labels String[] @default([])
 
   createdAt DateTime @default(now())
@@ -75,9 +70,6 @@ model Device {
   history  History[]
 }
 
-// Control используется для:
-// 1. Установки в макрос как вход или выход
-// 2. Анализа исторических данных
 model Control {
   device   Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
   deviceId String
@@ -97,10 +89,8 @@ model Control {
   error     String  @default("UNSPECIFIED")
   meta      String  @default("{}")
 
-  // Используется для разметки устройств пользовательскими данными
   markup String @default("{}")
 
-  // Используется для поиска пользователем
   labels String[] @default([])
 
   createdAt DateTime @default(now())
@@ -111,9 +101,6 @@ model Control {
   @@unique([deviceId, controlId])
 }
 
-// History используется для:
-// 1. Просмотр истории
-// 2. Вход для макроса
 model History {
   id String @id @default(uuid())
 
@@ -130,38 +117,11 @@ model History {
   updatedAt DateTime @default(now())
 }
 
-// Macros это:
-// 1. Заранее разработанный код, реализующий какой-либо аспект автоматизации, может быть произвольно слдожный.
-
-// Macros может быть:
-// 1. Использован как единственный экземпляр.
-// 2. Один тип может быть инстанцирован несколько раз, контроль количества находится в реализации макроса.
-// 3. Использован как вход для другого/гих макросов.
-
-// Macros может быть использован как:
-// 1. Котроллер отопления, включая в себя все необходимые концепты как комнаты, температура улицы, подача, обратка котел и так далее.
-// 2. Контроллер паралельной загрузки бойлера.
-// 3. Контроллер вентиляции.
-// 4. Контроллер освещения.
-// 5. Контроллер снеготаяния.
-// 6. Контроллер кондиционирования.
-// 7. Контроллер увлажнения.
-// 8. Контроллер бассейна.
-// 9. Контроллер парилки.
-// 10. Контроллер водоснабжения.
-// 11. Контроллер доступа.
-// 12. Контроллер охраны.
-// 13. И так далее все, что необходимо может быть запрограммировано как Macros.
-
-// Macros хранит в БД настройки которые инициализируются в момент 
-// запуска приложения, вся последующая работа выполняется в памяти приложения.
 model Macros {
-  id String @id @default(uuid())
-
-  type     String
-  labels   String[]
-  settings Json
-
+  id          String   @id @default(uuid())
   name        String
   description String
+  type        String
+  labels      String[]
+  settings    Json
 }

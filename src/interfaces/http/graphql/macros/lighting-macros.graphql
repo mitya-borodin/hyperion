@@ -32,16 +32,6 @@ type LightingMacrosSettings {
   lightings: [LightingMacrosSettingLighting!]!
 }
 
-type LightingMacrosOutputLighting {
-  deviceId: String!
-  controlId: String!
-  value: String!
-}
-
-type LightingMacrosOutput {
-  lightings: [LightingMacrosOutputLighting!]!
-}
-
 type LightingMacros {
   id: ID!
 
@@ -52,5 +42,4 @@ type LightingMacros {
 
   state: LightingMacrosState!
   settings: LightingMacrosSettings!
-  output: LightingMacrosOutput!
 }

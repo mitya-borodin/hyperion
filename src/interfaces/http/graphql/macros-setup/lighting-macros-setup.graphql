@@ -34,6 +34,6 @@ input LightingMacrosSetup {
 
   labels: [String!]!
 
-  state: LightingMacrosSetupState!
   settings: LightingMacrosSetupSettings!
+  state: LightingMacrosSetupState!
 }
