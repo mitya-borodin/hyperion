@@ -50,17 +50,34 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
     }
   }
 
-  async remove(id: string): Promise<Error | MacrosSettings> {
+  async destroy(id: string): Promise<Error | MacrosSettings> {
     try {
-      const prismaMacrosSetting = await this.client.macros.delete({
-        where: {
-          id,
-        },
-      });
+      const [prismaMacrosSetting] = await this.client.$transaction([
+        this.client.macros.delete({
+          where: {
+            id,
+          },
+        }),
+        this.client.device.deleteMany({
+          where: {
+            deviceId: id,
+          },
+        }),
+        this.client.control.deleteMany({
+          where: {
+            deviceId: id,
+          },
+        }),
+        this.client.history.deleteMany({
+          where: {
+            deviceId: id,
+          },
+        }),
+      ]);
 
       return toDomainMacrosSettings(prismaMacrosSetting);
     } catch (error) {
-      this.logger.error({ id, err: error }, 'Failed to remove macros settings 🚨');
+      this.logger.error({ id, err: error }, 'Failed to destroy macros settings 🚨');
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

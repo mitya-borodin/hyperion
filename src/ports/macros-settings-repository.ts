@@ -3,7 +3,7 @@ import { MacrosType } from '../graphql-types';
 import { JsonObject } from '../helpers/json-types';
 
 export type MacrosSettings = Pick<
-  Macros<MacrosType, JsonObject, JsonObject, JsonObject>,
+  Macros<MacrosType, JsonObject, JsonObject>,
   'id' | 'type' | 'name' | 'description' | 'labels' | 'settings'
 >;
 
@@ -11,5 +11,5 @@ export type MacrosSettings = Pick<
 export interface IMacrosSettingsRepository {
   upsert(parameters: MacrosSettings): Promise<Error | MacrosSettings>;
 
-  remove(id: string): Promise<Error | MacrosSettings>;
+  destroy(id: string): Promise<Error | MacrosSettings>;
 }

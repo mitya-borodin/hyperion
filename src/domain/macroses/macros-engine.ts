@@ -125,15 +125,13 @@ export class MacrosEngine {
     }
   };
 
-  remove = (id: string) => {
+  destroy = async (id: string) => {
     const macros = this.macros.get(id);
 
     if (macros) {
       this.macros.delete(id);
 
-      /**
-       * TODO Удалить настройки и исторические данные из БД.
-       */
+      await this.macrosSettingsRepository.destroy(id);
 
       return macros;
     }

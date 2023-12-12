@@ -199,8 +199,12 @@ type MacrosOutput {
   error: Error!
 }
 
-input RemoveMacrosInput {
+input DestroyMacrosInput {
   id: ID!
+}
+
+type DestroyMacrosOutput {
+  error: Error!
 }
 
 type DeviceSubscriptionEvent {
@@ -253,8 +257,7 @@ type Mutation {
   markupControl(input: MarkupControl!): Device! @auth(requires: [ADMIN, OPERATOR])
 
   setupMacros(input: MacrosSetup!): MacrosOutput! @auth(requires: [ADMIN, OPERATOR])
-  updateMacros(input: MacrosSetup!): MacrosOutput! @auth(requires: [ADMIN, OPERATOR])
-  removeMacros(input: RemoveMacrosInput!): MacrosOutput! @auth(requires: [ADMIN, OPERATOR])
+  destroyMacros(input: DestroyMacrosInput!): DestroyMacrosOutput! @auth(requires: [ADMIN, OPERATOR])
 }
 
 type Subscription {

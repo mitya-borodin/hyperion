@@ -500,11 +500,14 @@ export const getResolvers = ({
             },
           });
 
+          /**
+           * ! ADD_MACROS
+           */
           if (macros instanceof LightingMacros) {
             emitGqlMacrosSubscriptionEvent({
               eventBus,
               macros: { lighting: macros },
-              type: SubscriptionMacrosType.SETUP,
+              type: lighting.id ? SubscriptionMacrosType.UPDATE : SubscriptionMacrosType.SETUP,
             });
 
             return {
@@ -519,60 +522,14 @@ export const getResolvers = ({
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       },
-      updateMacros: async (root, { input }, context) => {
-        if (!input.lighting?.id) {
-          logger.error({ input }, 'To update the macro, you must specify the ID 🚨');
-
-          throw new Error(ErrorType.INVALID_ARGUMENTS);
-        }
-
-        /**
-         * ! ADD_MACROS
-         */
-        const { lighting } = input;
-
-        if (lighting) {
-          const macros = macrosEngine.setup({
-            id: lighting.id ?? undefined,
-            type: MacrosType.LIGHTING,
-            name: lighting.name,
-            description: lighting.description,
-            labels: lighting.labels,
-            state: {
-              [MacrosType.LIGHTING]: lighting.state,
-            },
-            settings: {
-              [MacrosType.LIGHTING]: lighting.settings,
-            },
-          });
-
-          if (macros instanceof LightingMacros) {
-            emitGqlMacrosSubscriptionEvent({
-              eventBus,
-              macros: { lighting: macros },
-              type: SubscriptionMacrosType.UPDATE,
-            });
-
-            return {
-              value: toGraphQlMacros({ lighting: macros }),
-              error: {
-                code: ErrorCode.ALL_RIGHT,
-                message: ErrorMessage.ALL_RIGHT,
-              },
-            };
-          }
-        }
-
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
-      },
-      removeMacros: async (root, { input }, context) => {
+      destroyMacros: async (root, { input }, context) => {
         if (!input?.id) {
-          logger.error({ input }, 'To remove the macro, you must specify the ID 🚨');
+          logger.error({ input }, 'To destroy the macro, you must specify the ID 🚨');
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
-        const macros = macrosEngine.remove(input.id);
+        const macros = macrosEngine.destroy(input.id);
 
         if (macros instanceof Error) {
           throw macros;
@@ -585,7 +542,7 @@ export const getResolvers = ({
           emitGqlMacrosSubscriptionEvent({
             eventBus,
             macros: { lighting: macros },
-            type: SubscriptionMacrosType.REMOVE,
+            type: SubscriptionMacrosType.DESTROY,
           });
 
           return {
