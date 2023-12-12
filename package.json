@@ -14,7 +14,10 @@
     "prisma:seed": "prisma db seed",
     "prisma:reset": "prisma migrate reset --schema ./src/infrastructure/postgres/prisma/schema.prisma",
     "prisma:studio": "cd ./src/infrastructure/postgres/prisma && prisma studio",
-    "eslint": "eslint --ext .js,.jsx,.ts,.tsx src",
+    "prettier:base": "prettier \"**/*.{ts,json,md}\"",
+    "prettier:check": "yarn prettier:base --check",
+    "prettier:write": "yarn prettier:base --write",
+    "eslint:check": "eslint --ext .js,.jsx,.ts,.tsx src",
     "eslint:fix": "eslint --fix --ext .js,.jsx,.ts,.tsx src",
     "ncu:outdated": "npm-check-updates",
     "ncu:upgrade": "npm-check-updates -u --target minor"

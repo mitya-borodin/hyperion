@@ -14,11 +14,7 @@ type ApplyWirenboardDevice = {
   eventBus: EventEmitter;
 };
 
-export const runCollectWirenboardDeviceData = ({
-  logger,
-  wirenboardDeviceRepository,
-  eventBus,
-}: ApplyWirenboardDevice) => {
+export const runCollectWirenboardDeviceData = ({ wirenboardDeviceRepository, eventBus }: ApplyWirenboardDevice) => {
   const wirenboardDeviceHandler = async (wirenboardDevice: WirenboardDevice) => {
     const hyperionDevice = await wirenboardDeviceRepository.apply(wirenboardDevice);
 

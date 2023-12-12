@@ -5,14 +5,11 @@ import { PrismaClient } from '@prisma/client';
 import { pino } from 'pino';
 
 import { Config } from '../../config';
+import { SettingsRepository } from '../repository/settings-repository';
+import { UserRepository } from '../repository/user-repository';
 
 import { settingsSeed } from './settings-seed';
-
-import { SettingsRepository } from '../repository/settings-repository';
-
 import { userSeed } from './user-seed';
-
-import { UserRepository } from '../repository/user-repository';
 
 const config = new Config();
 

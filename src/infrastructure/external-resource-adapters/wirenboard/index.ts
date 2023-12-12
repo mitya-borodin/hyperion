@@ -4,15 +4,12 @@ import { EventEmitter } from 'node:events';
 
 import { Logger } from 'pino';
 
-import { getMqttClient } from './get-mqtt-client';
-
 import { EventBus } from '../../../domain/event-bus';
 import { isJson } from '../../../helpers/is-json';
-
-import { publishWirenboardMessage } from './publish-wirenboard-message';
-
 import { Config } from '../../config';
 
+import { getMqttClient } from './get-mqtt-client';
+import { publishWirenboardMessage } from './publish-wirenboard-message';
 import { WirenboardDevice } from './wirenboard-device';
 
 type RunWirenboard = {
