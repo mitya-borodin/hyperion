@@ -49,7 +49,7 @@ enum SubscriptionMacrosType {
   CONNECTION_ESTABLISHED
   SETUP
   UPDATE
-  REMOVE
+  DESTROY
   OUTPUT_APPEARED
 }
 
