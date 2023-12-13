@@ -73,8 +73,8 @@ jobs:
           private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
-            docker info
-            docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
+            docker info;
+            docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }};
             cd ${{ secrets.PROJECT_FOLDER }};
             git checkout master;
             docker-compose down;
