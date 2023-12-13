@@ -59,8 +59,8 @@ jobs:
             host_fingerprint: ${{secrets.HOST_FINGERPRINT}}
             command: |
               cd ${{ secrets.PROJECT_FOLDER }};
+              docker-compose down;
               git checkout master;
               git pull;
-              docker-compose down;
               docker-compose up -d;
               docker system prune --all --force;
