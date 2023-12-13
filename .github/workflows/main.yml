@@ -46,6 +46,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name GITHUB_SHA
+        run: | 
+          echo ${{env.GITHUB_SHA}} 
+          echo ${{github.GITHUB_SHA}} 
+          echo ${{github.sha}} 
       - name: Build and push
         if: github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v5
