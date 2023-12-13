@@ -79,5 +79,6 @@ jobs:
             git checkout master;
             docker-compose down;
             git pull;
-            GITHUB_SHA=${{ github.sha }} && docker-compose up -d;
+            export GITHUB_SHA=${{ github.sha }};
+            docker-compose up -d;
             docker system prune --all --force;
