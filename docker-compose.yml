@@ -25,6 +25,8 @@ services:
       - FASTIFY_HOST=0.0.0.0
       - FASTIFY_PORT=8080
       - NODE_ENV=production
+    networks:
+      - nginx_network
 
   hyperion_pg_db:
     image: postgres:14
@@ -43,3 +45,5 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
+    networks:
+      - nginx_network
