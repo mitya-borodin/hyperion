@@ -24,7 +24,7 @@ services:
       - PRISMA_PG_DATABASE_URL=postgresql://hyperion:hyperion@hyperion_pg_db:5432/hyperion?schema=public
       - FASTIFY_HOST=0.0.0.0
       - FASTIFY_PORT=8080
-      - NODE_ENV=production
+      - NODE_ENV=development
     networks:
       - hyperion
 
