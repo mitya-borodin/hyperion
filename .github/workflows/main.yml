@@ -4,6 +4,7 @@ on:
     branches: ['master']
   pull_request:
     branches: ['master']
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -33,6 +34,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -50,13 +52,13 @@ jobs:
         with:
           context: .
           push: true
-          tags: borodindmitriy/hyperion:${{ GITHUB_SHA }}
-          cache-from: type=registry,ref=borodindmitriy/hyperion:${{ GITHUB_SHA }}
+          tags: borodindmitriy/hyperion:${{ env.GITHUB_SHA }}
+          cache-from: type=registry,ref=borodindmitriy/hyperion:${{ env.GITHUB_SHA }}
           cache-to: type=inline
 
   deploy:
     runs-on: ubuntu-latest
-    needs: test
+    needs: build
     if: github.ref == 'refs/heads/master'
     steps:
       - name: 'Checkout code'
