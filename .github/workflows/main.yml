@@ -1,0 +1,55 @@
+name: CI
+on:
+    push:
+      branches: [ "main" ]
+    pull_request:
+      branches: [ "main" ]
+jobs:
+    lint:
+      runs-on: ubuntu-latest
+      steps:
+        - name: "Checkout code"
+          uses: actions/checkout@v4
+        - name: Install Nodejs
+          uses: actions/setup-node@v4
+          with:
+            node-version: "18"
+            node-version-file: ".nvmrc"
+            cache: "yarn"
+        - name: "Install Yarn"
+          run: "npm i -g yarn"
+        - name: "Install deps"
+          run: "yarn"
+        - name: "Check prettier"
+          run: "yarn prettier:check"
+        - name: "Check eslint"
+          run: "yarn eslint:check"
+
+    test:
+      runs-on: ubuntu-latest
+      needs: lint
+      steps:
+        - name: "Run test"
+          run: "echo add test in future"
+    
+    deploy:
+      runs-on: ubuntu-latest
+      needs: test
+      if: github.ref == 'refs/heads/main'
+      steps:
+        - name: "Checkout code"
+          uses: actions/checkout@v4
+        - name: Run command on remote server
+          uses: D3rHase/ssh-command-action@v0.2.2
+          with:
+            host: ${{secrets.SSH_HOST}}
+            user: ${{secrets.SSH_USER}}
+            private_key: ${{secrets.SSH_PRIVATE_KEY}}
+            host_fingerprint: ${{secrets.HOST_FINGERPRINT}}
+            command: |
+              cd ${{ secrets.PROJECT_FOLDER }};
+              git checkout main;
+              git pull;
+              docker-compose down;
+              docker-compose up -d;
+              docker system prune --all --force;
