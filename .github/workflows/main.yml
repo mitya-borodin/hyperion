@@ -13,7 +13,6 @@ jobs:
         - name: Install Nodejs
           uses: actions/setup-node@v4
           with:
-            node-version: "18"
             node-version-file: ".nvmrc"
             cache: "yarn"
         - name: "Install Yarn"
@@ -29,6 +28,17 @@ jobs:
       runs-on: ubuntu-latest
       needs: lint
       steps:
+        - name: "Checkout code"
+          uses: actions/checkout@v4
+        - name: Install Nodejs
+          uses: actions/setup-node@v4
+          with:
+            node-version-file: ".nvmrc"
+            cache: "yarn"
+        - name: "Install Yarn"
+          run: "npm i -g yarn"
+        - name: "Install deps"
+          run: "yarn"
         - name: "Run test"
           run: "echo add test in future"
     
