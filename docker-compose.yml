@@ -14,10 +14,7 @@ networks:
 services:
   hyperion:
     container_name: hyperion
-    build:
-      dockerfile: Dockerfile
-      context: .
-    image: local/hyperion/be:latest
+    image: borodindmitriy/hyperion:${GITHUB_SHA}
     command: 'node ./bin/hyperion'
     restart: unless-stopped
     env_file: .env
