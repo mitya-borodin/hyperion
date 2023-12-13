@@ -4,10 +4,10 @@ volumes:
   postgres-data:
 
 networks:
-  postgres:
+  db:
     name: nginx_network
     external: true
-  hyperion:
+  server:
     name: nginx_network
     external: true
 
