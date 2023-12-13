@@ -14,7 +14,7 @@ networks:
 services:
   hyperion:
     container_name: hyperion
-    image: borodindmitriy/hyperion/server:${GITHUB_SHA}
+    image: borodindmitriy/hyperion:${GITHUB_SHA}
     command: 'node ./bin/hyperion'
     restart: unless-stopped
     env_file: .env
