@@ -75,10 +75,10 @@ jobs:
           command: |
             docker info;
             docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }};
+            export GITHUB_SHA=${{ github.sha }};
             cd ${{ secrets.PROJECT_FOLDER }};
             git checkout master;
             docker-compose down;
             git pull;
-            export GITHUB_SHA=${{ github.sha }};
             docker-compose up -d;
             docker system prune --all --force;
