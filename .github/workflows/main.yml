@@ -49,6 +49,8 @@ jobs:
       steps:
         - name: "Checkout code"
           uses: actions/checkout@v4
+        - name: "Scan ssh"
+          run: "echo ssh-keyscan -H -p ${{secrets.SSH_PORT}} ${{secrets.SSH_HOST}}"
         - name: Run command on remote server
           uses: D3rHase/ssh-command-action@v0.2.2
           with:
