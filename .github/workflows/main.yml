@@ -51,5 +51,4 @@ jobs:
             docker-compose down;
             git pull;
             docker-compose up -d --build;
-
-#            docker system prune --all --force;
+            docker system prune --all --force;
