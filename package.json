@@ -1,8 +1,8 @@
 {
-  "name": "rayner",
+  "name": "hyperion",
   "private": true,
   "scripts": {
-    "start": "nodemon --config nodemon.json cmd/rayner.ts | pino-pretty -c",
+    "start": "nodemon --config nodemon.json cmd/hyperion.ts | pino-pretty -c",
     "test": "jest --config jest.config.js --no-cache --runInBand",
     "build:check": "tsc --project ./tsconfig.json",
     "build": "del-cli build && tsc --project ./tsconfig.build.json",
@@ -13,7 +13,6 @@
     "prisma:migrate:status": "prisma migrate status --schema ./src/infrastructure/postgres/prisma/schema.prisma",
     "prisma:seed": "prisma db seed",
     "prisma:reset": "prisma migrate reset --schema ./src/infrastructure/postgres/prisma/schema.prisma",
-    "prisma:studio": "cd ./src/infrastructure/postgres/prisma && prisma studio",
     "prettier:base": "prettier \"**/*.{ts,json,md}\"",
     "prettier:check": "yarn prettier:base --check",
     "prettier:write": "yarn prettier:base --write",
