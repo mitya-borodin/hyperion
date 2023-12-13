@@ -4,16 +4,15 @@ volumes:
   postgres-data:
 
 networks:
-  db:
+  hyperion_pg_db:
     name: nginx_network
     external: true
-  server:
+  hyperion:
     name: nginx_network
     external: true
 
 services:
-  server:
-    container_name: hyperion
+  hyperion:
     build:
       dockerfile: Dockerfile
       context: .
@@ -27,9 +26,8 @@ services:
       - FASTIFY_PORT=8080
       - NODE_ENV=production
 
-  db:
+  hyperion_pg_db:
     image: postgres:14
-    container_name: hyperion_pg_db
     environment:
       POSTGRES_DB: hyperion
       POSTGRES_USER: hyperion
