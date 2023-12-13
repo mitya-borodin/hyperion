@@ -13,6 +13,7 @@ networks:
 
 services:
   hyperion:
+    container_name: hyperion
     build:
       dockerfile: Dockerfile
       context: .
@@ -29,6 +30,7 @@ services:
       - hyperion
 
   hyperion_pg_db:
+    container_name: hyperion_pg_db
     image: postgres:14
     environment:
       POSTGRES_DB: hyperion
