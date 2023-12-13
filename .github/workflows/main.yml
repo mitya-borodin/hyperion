@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
