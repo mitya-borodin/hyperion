@@ -107,6 +107,7 @@ module.exports = {
     'unicorn/better-regex': 'warn',
     'unicorn/escape-case': 'warn',
     'unicorn/prefer-array-find': 'warn',
+    'unicorn/no-null': 'off',
 
     eqeqeq: [
       'error',
