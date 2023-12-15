@@ -250,7 +250,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
       });
 
       return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
-    } catch (error) {
+    } catch (error) {-
       this.logger.error({ parameters, err: error }, 'Unable to markup wirenboard control 🚨');
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);

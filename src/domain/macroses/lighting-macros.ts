@@ -250,15 +250,19 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
         this.state.switch = 'OFF';
 
         this.computeNextControlState('0');
+        this.sendMessages();
+
+        return;
       }
 
       if (this.state.switch === 'OFF') {
         this.state.switch = 'ON';
 
         this.computeNextControlState('1');
-      }
+        this.sendMessages();
 
-      this.sendMessages();
+        return;
+      }
     }
   };
 

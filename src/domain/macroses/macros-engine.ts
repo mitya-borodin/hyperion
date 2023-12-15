@@ -5,16 +5,28 @@ import { Logger } from 'pino';
 
 import { ErrorType } from '../../helpers/error-type';
 import { IMacrosSettingsRepository } from '../../ports/macros-settings-repository';
+import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
-import { LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
+import { LightingForce, LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
 import { MacrosType } from './macros';
 
+/**
+ * ! ADD_MACROS
+ */
 type M = LightingMacros;
+
+/**
+ * ! ADD_MACROS
+ */
 type T = { [MacrosType.LIGHTING]: LightingMacrosPublicState };
+
+/**
+ * ! ADD_MACROS
+ */
 type S = { [MacrosType.LIGHTING]: LightingMacrosSettings };
 
 /**
@@ -30,25 +42,30 @@ type Setup = {
   labels: string[];
   settings: S;
   state: T;
+
+  save?: boolean;
 };
 
 type MacrosEngineParameters = {
   logger: Logger;
   eventBus: EventEmitter;
+  wirenboardDeviceRepository: IWirenboardDeviceRepository;
   macrosSettingsRepository: IMacrosSettingsRepository;
 };
 
 export class MacrosEngine {
   readonly logger: Logger;
   readonly eventBus: EventEmitter;
+  readonly wirenboardDeviceRepository: IWirenboardDeviceRepository;
   readonly macrosSettingsRepository: IMacrosSettingsRepository;
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly macros: Map<string, M>;
 
-  constructor({ logger, eventBus, macrosSettingsRepository }: MacrosEngineParameters) {
+  constructor({ logger, eventBus, wirenboardDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
     this.logger = logger;
     this.eventBus = eventBus;
+    this.wirenboardDeviceRepository = wirenboardDeviceRepository;
     this.macrosSettingsRepository = macrosSettingsRepository;
 
     this.devices = new Map();
@@ -56,15 +73,82 @@ export class MacrosEngine {
     this.macros = new Map();
   }
 
-  start = () => {
+  private accept = (device: HyperionDevice): void => {
+    this.devices.set(device.id, device);
+
+    const previous = new Map();
+
+    for (const control of device.controls) {
+      const controlId = getControlId({ deviceId: device.id, controlId: control.id });
+
+      previous.set(controlId, cloneDeep(this.controls.get(controlId)));
+
+      this.controls.set(controlId, control);
+    }
+
+    for (const macros of this.macros.values()) {
+      macros.accept({ devices: this.devices, previous, controls: this.controls });
+    }
+  };
+
+  start = async () => {
+    const devices = await this.wirenboardDeviceRepository.getAll();
+
+    if (devices instanceof Error) {
+      return devices;
+    }
+
+    for (const device of devices) {
+      this.accept(device);
+    }
+
+    const macrosSettings = await this.macrosSettingsRepository.getAll();
+
+    if (macrosSettings instanceof Error) {
+      return macrosSettings;
+    }
+
+    await Promise.all(
+      macrosSettings.map((macrosSetting) => {
+        if (macrosSetting.type === MacrosType.LIGHTING) {
+          return this.setup({
+            id: macrosSetting.id,
+            type: macrosSetting.type,
+            name: macrosSetting.name,
+            description: macrosSetting.description,
+            labels: macrosSetting.labels,
+            settings: {
+              [MacrosType.LIGHTING]: macrosSetting.settings as LightingMacrosSettings,
+            },
+            state: {
+              [MacrosType.LIGHTING]: {
+                force: LightingForce.UNSPECIFIED,
+              },
+            },
+            save: false,
+          });
+        }
+      }),
+    );
+
     this.eventBus.on(EventBus.HD_APPEARED, this.accept);
+
+    this.logger.info(
+      { devices: this.devices.size, controls: this.controls.size, macros: this.macros.size },
+      'The macros engine was run successful ✅ 🚀',
+    );
   };
 
   stop = () => {
     this.eventBus.off(EventBus.HD_APPEARED, this.accept);
+
+    this.logger.info(
+      { devices: this.devices.size, controls: this.controls.size, macros: this.macros.size },
+      'The macros engine was stopped 👷‍♂️ 🛑',
+    );
   };
 
-  setup = ({ id, type, name, description, labels, settings, state }: Setup): Error | M => {
+  setup = async ({ id, type, name, description, labels, settings, state, save = true }: Setup): Promise<Error | M> => {
     try {
       if (this.devices.size === 0 || this.controls.size === 0) {
         this.logger.error(
@@ -98,14 +182,25 @@ export class MacrosEngine {
       }
 
       if (macros) {
+        if (save) {
+          const macrosSettings = await this.macrosSettingsRepository.upsert({
+            id: macros.id,
+            type: macros.type,
+            name: macros.name,
+            description: macros.description,
+            settings: macros.settings,
+            labels: macros.labels,
+          });
+
+          if (macrosSettings instanceof Error) {
+            return macrosSettings;
+          }
+        }
+
         this.macros.set(macros.id, macros);
 
-        /**
-         * TODO Сохранить настройки в БД.
-         */
-
         this.logger.info(
-          { id: macros.id, type, name, description, labels, settings, macros },
+          { id: macros.id, type, name, description, labels, settings, macros: macros.toJS() },
           'The macro has been successfully installed ✅',
         );
 
@@ -125,39 +220,12 @@ export class MacrosEngine {
     }
   };
 
-  destroy = async (id: string) => {
-    const macros = this.macros.get(id);
-
-    if (macros) {
-      this.macros.delete(id);
-
-      await this.macrosSettingsRepository.destroy(id);
-
-      return macros;
-    }
-
-    this.logger.error({ id }, 'Failed to delete macro by ID 🚨');
-
-    return new Error(ErrorType.INVALID_ARGUMENTS);
-  };
-
-  setState = (id: string, state: T) => {
-    const macros = this.macros.get(id);
-
-    /**
-     * ! ADD_MACROS
-     */
-    if (macros?.type === MacrosType.LIGHTING) {
-      macros.setState(state[macros?.type]);
-    }
-  };
-
   getMarcosList = () => {
     const list: MacrosOptions[] = [];
 
     for (const macros of this.macros.values()) {
       /**
-       * ! ADD_MACROS
+       * ! ADD_MACROS - переделать на маппер
        */
       if (macros instanceof LightingMacros) {
         list.push({
@@ -169,21 +237,38 @@ export class MacrosEngine {
     return list;
   };
 
-  private accept = (device: HyperionDevice): void => {
-    this.devices.set(device.id, device);
+  setState = (id: string, state: T) => {
+    const macros = this.macros.get(id);
 
-    const previous = new Map();
-
-    for (const control of device.controls) {
-      const controlId = getControlId({ deviceId: device.id, controlId: control.id });
-
-      previous.set(controlId, cloneDeep(this.controls.get(controlId)));
-
-      this.controls.set(controlId, control);
+    /**
+     * ! ADD_MACROS
+     */
+    if (macros instanceof LightingMacros) {
+      macros.setState(state[macros?.type]);
     }
 
-    for (const macros of this.macros.values()) {
-      macros.accept({ devices: this.devices, previous, controls: this.controls });
+    return macros;
+  };
+
+  destroy = async (id: string) => {
+    const macros = this.macros.get(id);
+
+    if (macros) {
+      const macrosSettings = await this.macrosSettingsRepository.destroy(id);
+
+      if (macrosSettings instanceof Error) {
+        return macrosSettings;
+      }
+
+      this.macros.delete(id);
+
+      this.logger.error({ id }, 'The macros was delete by ID successfully ✅');
+
+      return macros;
     }
+
+    this.logger.error({ id }, 'Failed to delete macro by ID 🚨');
+
+    return new Error(ErrorType.INVALID_ARGUMENTS);
   };
 }

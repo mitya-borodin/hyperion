@@ -486,38 +486,37 @@ export const getResolvers = ({
          * ! ADD_MACROS
          */
         if (lighting) {
-          const macros = macrosEngine.setup({
+          const macros = await macrosEngine.setup({
             id: lighting.id ?? undefined,
             type: MacrosType.LIGHTING,
             name: lighting.name,
             description: lighting.description,
             labels: lighting.labels,
-            state: {
-              [MacrosType.LIGHTING]: lighting.state,
-            },
             settings: {
               [MacrosType.LIGHTING]: lighting.settings,
             },
+            state: {
+              [MacrosType.LIGHTING]: lighting.state,
+            },
           });
 
-          /**
-           * ! ADD_MACROS
-           */
-          if (macros instanceof LightingMacros) {
-            emitGqlMacrosSubscriptionEvent({
-              eventBus,
-              macros: { lighting: macros },
-              type: lighting.id ? SubscriptionMacrosType.UPDATE : SubscriptionMacrosType.SETUP,
-            });
-
-            return {
-              value: toGraphQlMacros({ lighting: macros }),
-              error: {
-                code: ErrorCode.ALL_RIGHT,
-                message: ErrorMessage.ALL_RIGHT,
-              },
-            };
+          if (macros instanceof Error) {
+            throw macros;
           }
+
+          emitGqlMacrosSubscriptionEvent({
+            eventBus,
+            macros: { lighting: macros },
+            type: lighting.id ? SubscriptionMacrosType.UPDATE : SubscriptionMacrosType.SETUP,
+          });
+
+          return {
+            value: toGraphQlMacros({ lighting: macros }),
+            error: {
+              code: ErrorCode.ALL_RIGHT,
+              message: ErrorMessage.ALL_RIGHT,
+            },
+          };
         }
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
@@ -536,7 +535,7 @@ export const getResolvers = ({
         }
 
         /**
-         * ! ADD_MACROS
+         * ! ADD_MACROS - переделать на макрос
          */
         if (macros instanceof LightingMacros) {
           emitGqlMacrosSubscriptionEvent({

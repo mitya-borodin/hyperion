@@ -32,7 +32,7 @@ export const run = () => {
     const refreshSessionRepository = new RefreshSessionRepository({ logger, client: prismaClient });
     const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
     const macrosSettingsRepository = new MacrosSettingsRepository({ logger, client: prismaClient });
-    const macrosEngine = new MacrosEngine({ logger, eventBus, macrosSettingsRepository });
+    const macrosEngine = new MacrosEngine({ logger, eventBus, wirenboardDeviceRepository, macrosSettingsRepository });
 
     macrosEngine.start();
 

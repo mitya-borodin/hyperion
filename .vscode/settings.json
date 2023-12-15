@@ -26,10 +26,10 @@
   "editor.accessibilitySupport": "off",
   "editor.wordWrap": "on",
   "editor.codeActionsOnSave": {
-    "source.organizeImports": false,
-    "source.fixAll.eslint": true,
-    "source.fixAll": true,
-    "source.fixAll.stylelint": true
+    "source.organizeImports": "never",
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll": "explicit",
+    "source.fixAll.stylelint": "explicit"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[dotenv]": {

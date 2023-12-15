@@ -19,6 +19,18 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
     this.client = client;
   }
 
+  async getAll(): Promise<Error | MacrosSettings[]> {
+    try {
+      const prismaMacrosSettings = await this.client.macros.findMany();
+
+      return prismaMacrosSettings.map((prismaMacrosSetting) => toDomainMacrosSettings(prismaMacrosSetting));
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to get all macros settings 🚨');
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
   async upsert(parameters: MacrosSettings): Promise<Error | MacrosSettings> {
     try {
       const prismaMacrosSetting = await this.client.macros.upsert({

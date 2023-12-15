@@ -256,7 +256,7 @@ type Mutation {
   markupDevice(input: MarkupDevice!): Device! @auth(requires: [ADMIN, OPERATOR])
   markupControl(input: MarkupControl!): Device! @auth(requires: [ADMIN, OPERATOR])
 
-  setupMacros(input: MacrosSetup!): MacrosOutput! @auth(requires: [ADMIN, OPERATOR])
+  setupMacros(input: MacrosSetup!): MacrosOutput!
   destroyMacros(input: DestroyMacrosInput!): DestroyMacrosOutput! @auth(requires: [ADMIN, OPERATOR])
 }
 

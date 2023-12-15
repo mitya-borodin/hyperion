@@ -9,6 +9,8 @@ export type MacrosSettings = Pick<
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMacrosSettingsRepository {
+  getAll(): Promise<Error | MacrosSettings[]>;
+
   upsert(parameters: MacrosSettings): Promise<Error | MacrosSettings>;
 
   destroy(id: string): Promise<Error | MacrosSettings>;
