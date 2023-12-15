@@ -269,7 +269,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
   };
 
   private hasButtonPress = (): boolean => {
-    for (const button of this.settings.buttons) {
+    return this.settings.buttons.some((button) => {
       const id = getControlId({ deviceId: button.deviceId, controlId: button.controlId });
 
       const previous = this.previous.get(id);
@@ -282,9 +282,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       if (previous.value !== control.value && control.value === '1') {
         return true;
       }
-    }
 
-    return false;
+      return false;
+    });
   };
 
   private computeNextControlState = (value: string) => {
