@@ -1,21 +1,21 @@
 import { PrismaClient } from '@prisma/client';
+import debug from 'debug';
 import { Logger } from 'pino';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { IMacrosSettingsRepository, MacrosSettings } from '../../../ports/macros-settings-repository';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';
 
+const logger = debug('macros-settings-repository');
+
 export type MacrosSettingsRepositoryParameters = {
-  logger: Logger;
   client: PrismaClient;
 };
 
 export class MacrosSettingsRepository implements IMacrosSettingsRepository {
-  private logger: Logger;
   private client: PrismaClient;
 
-  constructor({ logger, client }: MacrosSettingsRepositoryParameters) {
-    this.logger = logger.child({ name: 'MacrosSettingsRepository' });
+  constructor({ client }: MacrosSettingsRepositoryParameters) {
     this.client = client;
   }
 
@@ -25,7 +25,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
 
       return prismaMacrosSettings.map((prismaMacrosSetting) => toDomainMacrosSettings(prismaMacrosSetting));
     } catch (error) {
-      this.logger.error({ err: error }, 'Failed to get all macros settings 🚨');
+      logger('Failed to get all macros settings 🚨');
+      logger(JSON.stringify({ error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -56,7 +57,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
 
       return toDomainMacrosSettings(prismaMacrosSetting);
     } catch (error) {
-      this.logger.error({ parameters, err: error }, 'Failed to upsert macros settings 🚨');
+      logger('Failed to upsert macros settings 🚨');
+      logger(JSON.stringify({ parameters, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -89,7 +91,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
 
       return toDomainMacrosSettings(prismaMacrosSetting);
     } catch (error) {
-      this.logger.error({ id, err: error }, 'Failed to destroy macros settings 🚨');
+      logger('Failed to destroy macros settings 🚨');
+      logger(JSON.stringify({ id, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

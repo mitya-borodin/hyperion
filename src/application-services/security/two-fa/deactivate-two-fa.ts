@@ -1,22 +1,18 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { verifyTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
 import { IUserRepository } from '../../../ports/user-repository';
 
+const logger = debug('deactivate-two-fa');
+
 export type DeactivateTwoFa = {
-  logger: Logger;
   userRepository: IUserRepository;
   userId: string;
   totp: string;
 };
 
-export const deactivateTwoFa = async ({
-  logger,
-  userRepository,
-  userId,
-  totp,
-}: DeactivateTwoFa): Promise<Error | void> => {
+export const deactivateTwoFa = async ({ userRepository, userId, totp }: DeactivateTwoFa): Promise<Error | void> => {
   let user = await userRepository.get(userId);
 
   if (user instanceof Error) {
@@ -24,19 +20,18 @@ export const deactivateTwoFa = async ({
   }
 
   if (!user.isTwoFaActivated) {
-    logger.error('The user has not activated TwoFa before 🚨');
+    logger('The user has not activated TwoFa before 🚨');
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   if (!user.twoFaSecret) {
-    logger.error('The user does not contain the secret of Two Fa 🚨');
+    logger('The user does not contain the secret of Two Fa 🚨');
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   const isTotpValid = verifyTwoFa({
-    logger,
     secret: user.twoFaSecret,
     totp,
   });
@@ -46,7 +41,7 @@ export const deactivateTwoFa = async ({
   }
 
   if (!isTotpValid) {
-    logger.error('User provided wrong OTP 🚨');
+    logger('User provided wrong OTP 🚨');
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }

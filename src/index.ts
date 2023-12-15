@@ -21,29 +21,28 @@ import { createHttpInterface } from './interfaces/http';
 EventEmitter.defaultMaxListeners = 100;
 
 export const run = () => {
-  entrypoint(async ({ signal, logger, defer }) => {
+  entrypoint(async ({ signal, defer }) => {
     const prismaClient = new PrismaClient();
 
-    await waitSeedingComplete({ signal, logger, prismaClient });
+    await waitSeedingComplete({ signal, prismaClient });
 
     const eventBus = new EventEmitter();
 
-    const userRepository = new UserRepository({ config, logger, client: prismaClient });
-    const refreshSessionRepository = new RefreshSessionRepository({ logger, client: prismaClient });
-    const wirenboardDeviceRepository = new WirenboardDeviceRepository({ logger, client: prismaClient });
-    const macrosSettingsRepository = new MacrosSettingsRepository({ logger, client: prismaClient });
-    const macrosEngine = new MacrosEngine({ logger, eventBus, wirenboardDeviceRepository, macrosSettingsRepository });
+    const userRepository = new UserRepository({ config, client: prismaClient });
+    const refreshSessionRepository = new RefreshSessionRepository({ client: prismaClient });
+    const wirenboardDeviceRepository = new WirenboardDeviceRepository({ client: prismaClient });
+    const macrosSettingsRepository = new MacrosSettingsRepository({ client: prismaClient });
+    const macrosEngine = new MacrosEngine({ eventBus, wirenboardDeviceRepository, macrosSettingsRepository });
 
     macrosEngine.start();
 
     defer(() => macrosEngine.stop());
 
-    const wirenboard = await runWirenboard({ config, logger: logger.child({ name: 'wirenboard' }), eventBus });
+    const wirenboard = await runWirenboard({ config, eventBus });
 
     defer(() => wirenboard.stop());
 
     const stopCollectWirenboardDeviceData = runCollectWirenboardDeviceData({
-      logger,
       wirenboardDeviceRepository,
       eventBus,
     });
@@ -52,7 +51,6 @@ export const run = () => {
 
     const fastify = await createHttpInterface({
       config,
-      logger: logger.child({ name: 'http-server' }),
       eventBus,
       userRepository,
       refreshSessionRepository,
@@ -66,8 +64,6 @@ export const run = () => {
     });
 
     eventBus.on(EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT, (event) => {
-      // logger.debug({ event }, 'Send event to graphQl subscription 🚀');
-
       fastify.graphql.pubsub.publish(event);
     });
 

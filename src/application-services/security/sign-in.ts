@@ -1,4 +1,4 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { UserRole, UserStatus } from '../../domain/user';
 import { CaptchaParameters } from '../../helpers/captcha-parameters-type';
@@ -9,8 +9,9 @@ import { Config } from '../../infrastructure/config';
 import { verifyGeetestCaptcha } from '../../infrastructure/external-resource-adapters/geetest';
 import { IUserRepository, UserOutput } from '../../ports/user-repository';
 
+const logger = debug('sign-in');
+
 export type SignIn = {
-  logger: Logger;
   config: Config;
   email: string;
   password: string;
@@ -20,7 +21,6 @@ export type SignIn = {
 
 export const signIn = async ({
   config,
-  logger,
   userRepository,
   captcha,
   email,
@@ -28,7 +28,6 @@ export const signIn = async ({
 }: SignIn): Promise<Error | { user?: UserOutput; error: ErrorExplanation }> => {
   const isCaptchaValid = await verifyGeetestCaptcha({
     config,
-    logger,
     ...captcha,
   });
 
@@ -37,7 +36,8 @@ export const signIn = async ({
   }
 
   if (!isCaptchaValid) {
-    logger.error({ email, captcha }, 'Captcha invalid 🚨');
+    logger('Captcha invalid 🚨');
+    logger(JSON.stringify({ email, captcha }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
@@ -49,7 +49,8 @@ export const signIn = async ({
   }
 
   if (!user) {
-    logger.error({ email }, 'The user with this email does not exists 🚨');
+    logger('The user with this email does not exists 🚨');
+    logger(JSON.stringify({ email }, null, 2));
 
     return {
       user: undefined,
@@ -61,19 +62,22 @@ export const signIn = async ({
   }
 
   if (user.status !== UserStatus.ACTIVE) {
-    logger.error({ email, user }, 'The user with this email is not ACTIVE 🚨');
+    logger('The user with this email is not ACTIVE 🚨');
+    logger(JSON.stringify({ email, user }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   if (user.role !== UserRole.ADMIN && user.role !== UserRole.OPERATOR && user.role !== UserRole.VIEWER) {
-    logger.error({ user }, 'Invalid user role 🚨');
+    logger('Invalid user role 🚨');
+    logger(JSON.stringify({ user }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   if (!user.hash || !user.salt) {
-    logger.error({ user }, 'User does not have password 🚨');
+    logger('User does not have password 🚨');
+    logger(JSON.stringify({ user }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
@@ -86,7 +90,7 @@ export const signIn = async ({
   });
 
   if (!isPasswordValid) {
-    logger.error('Entered password is incorrect! 🚨');
+    logger('Entered password is incorrect! 🚨');
 
     return {
       user: undefined,

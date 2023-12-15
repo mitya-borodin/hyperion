@@ -1,22 +1,21 @@
 import { PrismaClient } from '@prisma/client';
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { Settings, SettingType } from '../../../domain/settings';
 import { ErrorType } from '../../../helpers/error-type';
 import { CreateSettingParameters, ISettingsRepository } from '../../../ports/settings-repository';
 import { toDomainSettings } from '../../mappers/settings-mapper';
 
+const logger = debug('settings-repository');
+
 export type SettingsRepositoryParameters = {
-  logger: Logger;
   client: PrismaClient;
 };
 
 export class SettingsRepository implements ISettingsRepository {
-  private logger: Logger;
   private client: PrismaClient;
 
-  constructor({ logger, client }: SettingsRepositoryParameters) {
-    this.logger = logger.child({ name: 'SettingsRepository' });
+  constructor({ client }: SettingsRepositoryParameters) {
     this.client = client;
   }
 
@@ -31,7 +30,8 @@ export class SettingsRepository implements ISettingsRepository {
 
       return toDomainSettings(prismaSetting);
     } catch (error) {
-      this.logger.error({ parameters, err: error }, 'Failed to create the setting 🚨');
+      logger('Failed to create the setting 🚨');
+      logger(JSON.stringify({ parameters, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -47,7 +47,8 @@ export class SettingsRepository implements ISettingsRepository {
 
       return Boolean(prismaSetting.value);
     } catch (error) {
-      this.logger.error({ err: error }, 'Could not find the SEED_IS_COMPLETE setting 🚨');
+      logger('Could not find the SEED_IS_COMPLETE setting 🚨');
+      logger(JSON.stringify({ error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

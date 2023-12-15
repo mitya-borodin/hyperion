@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from 'node:crypto';
 
+import debug from 'debug';
 import fetch from 'node-fetch';
-import { Logger } from 'pino';
 import { stringify } from 'qs';
 
 import { ErrorType } from '../../helpers/error-type';
 import { Config } from '../config';
 
+const logger = debug('verify-geetest-captcha');
+
 export type VerifyGeetestCaptchaParameters = {
   config: Config;
-  logger: Logger;
   lot_number: string;
   captcha_output: string;
   pass_token: string;
@@ -19,7 +20,6 @@ export type VerifyGeetestCaptchaParameters = {
 
 export const verifyGeetestCaptcha = async ({
   config,
-  logger,
   lot_number,
   captcha_output,
   pass_token,
@@ -42,16 +42,20 @@ export const verifyGeetestCaptcha = async ({
     const response = await fetch(`${config.geetest.apiUrl}?${querystring}`, { method: 'get' });
 
     if (!response.ok) {
-      logger.error(
-        {
-          geetestConfig: config.geetest,
-          query,
-          querystring,
-          method: 'get',
-          status: response.status,
-          statusText: response.statusText,
-        },
-        'Failed to verify a geetest captcha 🚨',
+      logger('Failed to verify a geetest captcha 🚨');
+      logger(
+        JSON.stringify(
+          {
+            geetestConfig: config.geetest,
+            query,
+            querystring,
+            method: 'get',
+            status: response.status,
+            statusText: response.statusText,
+          },
+          null,
+          2,
+        ),
       );
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
@@ -69,14 +73,18 @@ export const verifyGeetestCaptcha = async ({
 
     return false;
   } catch (error) {
-    logger.error(
-      {
-        geetestConfig: config.geetest,
-        query,
-        querystring,
-        err: error,
-      },
-      'The attempt to check geetest captcha failed 🚨',
+    logger('The attempt to check geetest captcha failed 🚨');
+    logger(
+      JSON.stringify(
+        {
+          geetestConfig: config.geetest,
+          query,
+          querystring,
+          error,
+        },
+        null,
+        2,
+      ),
     );
 
     return new Error(ErrorType.INVALID_ARGUMENTS);

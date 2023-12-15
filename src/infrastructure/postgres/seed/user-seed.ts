@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { exit } from 'node:process';
 
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { UserRole } from '../../../domain/user';
 import { createPasswordHash } from '../../../helpers/create-password-hash';
@@ -10,11 +10,11 @@ import { Config } from '../../config';
 
 export type UserSeed = {
   config: Config;
-  logger: Logger;
+
   userRepository: IUserRepository;
 };
 
-export const userSeed = async ({ config, logger, userRepository }: UserSeed) => {
+export const userSeed = async ({ config, userRepository }: UserSeed) => {
   let masterUser = await userRepository.getByEmail(config.masterUser.email);
 
   if (masterUser instanceof Error) {
@@ -22,7 +22,7 @@ export const userSeed = async ({ config, logger, userRepository }: UserSeed) => 
   }
 
   if (masterUser) {
-    logger.info('The master user already created ✅');
+    debug('The master user already created ✅');
 
     return;
   }

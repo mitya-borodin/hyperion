@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { delay } from 'abort-controller-x';
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { SettingType } from '../../../../domain/settings';
 
+const logger = debug('wait-seeding-complete');
+
 type WaitPostgres = {
   signal: AbortSignal;
-  logger: Logger;
   prismaClient: PrismaClient;
 };
 
-export const waitSeedingComplete = async ({ signal, logger, prismaClient }: WaitPostgres) => {
+export const waitSeedingComplete = async ({ signal, prismaClient }: WaitPostgres) => {
   await prismaClient.$connect();
 
   // eslint-disable-next-line no-constant-condition
@@ -23,7 +24,7 @@ export const waitSeedingComplete = async ({ signal, logger, prismaClient }: Wait
       });
 
       if (!seedIsComplete) {
-        logger.info({ seedIsComplete }, 'Postgresql has not been initialized yet 🌴');
+        logger('Postgresql has not been initialized yet 🌴');
 
         await delay(signal, 5000);
 
@@ -31,12 +32,12 @@ export const waitSeedingComplete = async ({ signal, logger, prismaClient }: Wait
       }
 
       if (seedIsComplete?.value) {
-        logger.info('Postgresql has been initialized 🚀');
+        logger('Postgresql has been initialized 🚀');
 
         return;
       }
     } catch {
-      logger.info('Postgresql has not been initialized yet 🐌');
+      logger('Postgresql has not been initialized yet 🐌');
     }
 
     await delay(signal, 5000);

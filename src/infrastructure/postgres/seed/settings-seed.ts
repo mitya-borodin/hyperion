@@ -1,14 +1,15 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { SettingType } from '../../../domain/settings';
 import { ISettingsRepository } from '../../../ports/settings-repository';
 
+const logger = debug('settings-seed');
+
 export type SettingsSeed = {
-  logger: Logger;
   settingsRepository: ISettingsRepository;
 };
 
-export const settingsSeed = async ({ logger, settingsRepository }: SettingsSeed) => {
+export const settingsSeed = async ({ settingsRepository }: SettingsSeed) => {
   try {
     const seedIsComplete = await settingsRepository.hasSeed();
 
@@ -19,14 +20,16 @@ export const settingsSeed = async ({ logger, settingsRepository }: SettingsSeed)
       });
 
       if (seedSetting instanceof Error) {
-        logger.error('Something went wrong while creating seed complete setting');
+        logger('Something went wrong while creating seed complete setting');
 
         return;
       }
 
-      logger.info({ seedSetting }, 'Settings have been set successfully ✅');
+      logger('Settings have been set successfully ✅');
+      logger(JSON.stringify({ seedSetting }, null, 2));
     }
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fill in the settings 🚨');
+    logger('Failed to fill in the settings 🚨');
+    logger(JSON.stringify({ error }, null, 2));
   }
 };

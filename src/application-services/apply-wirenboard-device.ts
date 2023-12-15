@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
 
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { EventBus } from '../domain/event-bus';
 import { WirenboardDevice } from '../infrastructure/external-resource-adapters/wirenboard/wirenboard-device';
@@ -8,8 +8,9 @@ import { emitGqlDeviceSubscriptionEvent } from '../interfaces/http/graphql/helpe
 import { SubscriptionDeviceType } from '../interfaces/http/graphql/subscription';
 import { IWirenboardDeviceRepository } from '../ports/wirenboard-device-repository';
 
+const logger = debug('run-collect-wirenboard-device-data');
+
 type ApplyWirenboardDevice = {
-  logger: Logger;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
   eventBus: EventEmitter;
 };

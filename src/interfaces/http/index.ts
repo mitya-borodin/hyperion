@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import Cookie from '@fastify/cookie';
 import fastifyJWT from '@fastify/jwt';
 import FastifyStatic from '@fastify/static';
+import debug from 'debug';
 import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import metricsPlugin from 'fastify-metrics';
 import { fastifyRawBody } from 'fastify-raw-body';
@@ -30,9 +31,10 @@ import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repos
 import { getResolvers } from './graphql/get-resolvers';
 import { routerFastifyPlugin } from './router';
 
+const logger = debug('create-http-interface');
+
 type CreateHttpInterfaceParameters = {
   config: Config;
-  logger: Logger;
   eventBus: EventEmitter;
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
@@ -52,7 +54,6 @@ export type AuthContext = {
 
 export const createHttpInterface = async ({
   config,
-  logger,
   eventBus,
   userRepository,
   refreshSessionRepository,
@@ -64,17 +65,21 @@ export const createHttpInterface = async ({
   });
 
   fastify.setErrorHandler(function (error, request, reply) {
-    logger.error(
-      {
-        err: error,
-        method: request.method,
-        url: request.url,
-        headers: request.headers,
-        params: request.params,
-        query: request.query,
-        body: request.body,
-      },
-      'Caught an uncaught request handler exception 🚨',
+    logger('Caught an uncaught request handler exception 🚨');
+    logger(
+      JSON.stringify(
+        {
+          error,
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          params: request.params,
+          query: request.query,
+          body: request.body,
+        },
+        null,
+        2,
+      ),
     );
 
     reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send({
@@ -101,8 +106,6 @@ export const createHttpInterface = async ({
   fastify.get('/business-metrics', async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const metrics = await register.getMetricsAsJSON();
 
-    logger.trace({ metrics }, 'Metrics was requested by prometheus 🚀');
-
     return reply.code(200).send(metrics);
   });
 
@@ -125,13 +128,10 @@ export const createHttpInterface = async ({
 
   fastify.register(routerFastifyPlugin, {
     prefix: '/api',
-    logger,
     config,
   });
 
-  fastify.register(MercuriusGQLUpload, {
-    logger,
-  });
+  fastify.register(MercuriusGQLUpload, {});
 
   fastify.register(Mercurius, {
     /**
@@ -158,7 +158,6 @@ export const createHttpInterface = async ({
     resolvers: getResolvers({
       fastify,
       config,
-      logger,
       eventBus,
       userRepository,
       refreshSessionRepository,
@@ -184,9 +183,13 @@ export const createHttpInterface = async ({
 
         return { fingerprint: fingerprint as string, refreshToken, userId, role, onlyForActivateTwoFa };
       } catch (error) {
-        logger.error(
-          { authorization, headers: reply.request.headers, cookies: reply.request.cookies, err: error },
-          'JWT is invalid 🚨',
+        logger('JWT is invalid 🚨');
+        logger(
+          JSON.stringify(
+            { authorization, headers: reply.request.headers, cookies: reply.request.cookies, error },
+            null,
+            2,
+          ),
         );
 
         return { fingerprint: fingerprint as string, refreshToken, userId: UNKNOWN_USER_ID, role: UserRole.UNKNOWN };

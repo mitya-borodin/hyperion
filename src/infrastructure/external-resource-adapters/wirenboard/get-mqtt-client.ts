@@ -1,18 +1,23 @@
+import debug from 'debug';
 import { MqttClient, connect } from 'mqtt';
-import { Logger } from 'pino';
 
 import { Config } from '../../config';
 
+const logger = debug('get-mqtt-client');
+
 type GetMqttClient = {
   config: Config;
-  logger: Logger;
   rootTopic: string;
 };
 
-export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient) => {
-  logger.info(
-    { broker: `${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port}` },
-    'Try to establish mqtt connection with Wirenboard 🚀',
+export const getMqttClient = async ({ config, rootTopic }: GetMqttClient) => {
+  logger('Try to establish mqtt connection with Wirenboard 🚀');
+  logger(
+    JSON.stringify(
+      { broker: `${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port}` },
+      null,
+      2,
+    ),
   );
 
   const client = connect({
@@ -27,12 +32,13 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
     client.on('connect', () => {
       client.subscribe(rootTopic, (error) => {
         if (error) {
-          logger.error({ err: error }, 'Unable to establish mqtt connection with wirenboard 🚨');
+          logger('Unable to establish mqtt connection with wirenboard 🚨');
+          logger(JSON.stringify({ error }, null, 2));
 
           return reject(error);
         }
 
-        logger.info('The mqtt connection to the wirenboard is established ✅ 🚀');
+        logger('The mqtt connection to the wirenboard is established ✅ 🚀');
 
         resolve(client);
       });
@@ -40,16 +46,17 @@ export const getMqttClient = async ({ config, logger, rootTopic }: GetMqttClient
   });
 
   client.on('disconnect', () => {
-    logger.error('The mqtt connection with wirenboard was disconnected 👷‍♂️');
+    logger('The mqtt connection with wirenboard was disconnected 👷‍♂️');
   });
 
   client.on('reconnect', () => {
-    logger.info('The mqtt connection to the wirenboard was reconnected ✅ 🚀');
+    logger('The mqtt connection to the wirenboard was reconnected ✅ 🚀');
   });
 
   client.on('error', (error) => {
     if (error) {
-      logger.error({ err: error }, 'An error occurred in the MQTT connection to the wirenboard 🚨');
+      logger('An error occurred in the MQTT connection to the wirenboard 🚨');
+      logger(JSON.stringify({ error }, null, 2));
     }
   });
 

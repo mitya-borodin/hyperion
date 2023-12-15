@@ -1,4 +1,4 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { RefreshSession } from '../../../domain/refresh-session';
 import { ErrorType } from '../../../helpers/error-type';
@@ -7,8 +7,9 @@ import { IRefreshSessionRepository } from '../../../ports/refresh-session-reposi
 import { IUserRepository, UserOutput } from '../../../ports/user-repository';
 import { createRefreshSession } from '../create-refresh-session';
 
+const logger = debug('verify-two-fa');
+
 export type VerifyTwoFa = {
-  logger: Logger;
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
   fingerprint: string;
@@ -19,7 +20,7 @@ export type VerifyTwoFa = {
 export const verifyTwoFa = async ({
   userRepository,
   refreshSessionRepository,
-  logger,
+
   fingerprint,
   email,
   totp,
@@ -31,7 +32,8 @@ export const verifyTwoFa = async ({
   }
 
   if (!user) {
-    logger.error({ fingerprint, email, totp }, 'The user was not found by email 🚨');
+    logger('The user was not found by email 🚨');
+    logger(JSON.stringify({ fingerprint, email, totp }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
@@ -39,13 +41,13 @@ export const verifyTwoFa = async ({
   const { id, twoFaSecret } = user;
 
   if (!twoFaSecret) {
-    logger.error({ user }, 'Two Fa was not activated 🚨');
+    logger('Two Fa was not activated 🚨');
+    logger(JSON.stringify({ user }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   const isTotpValid = verifyTwoFaAdapter({
-    logger,
     secret: twoFaSecret,
     totp,
   });
@@ -55,13 +57,13 @@ export const verifyTwoFa = async ({
   }
 
   if (!isTotpValid) {
-    logger.error({ fingerprint, totp, user }, 'TOTP failed verification 🚨');
+    logger('TOTP failed verification 🚨');
+    logger(JSON.stringify({ fingerprint, totp, user }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
   const refreshSession = await createRefreshSession({
-    logger,
     refreshSessionRepository,
     fingerprint,
     userId: id,

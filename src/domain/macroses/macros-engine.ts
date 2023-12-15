@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 
+import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
-import { Logger } from 'pino';
 
 import { ErrorType } from '../../helpers/error-type';
 import { IMacrosSettingsRepository } from '../../ports/macros-settings-repository';
@@ -13,6 +13,8 @@ import { HyperionDevice } from '../hyperion-device';
 import { getControlId } from './get-control-id';
 import { LightingForce, LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
 import { MacrosType } from './macros';
+
+const logger = debug('macros-engine');
 
 /**
  * ! ADD_MACROS
@@ -47,14 +49,12 @@ type Setup = {
 };
 
 type MacrosEngineParameters = {
-  logger: Logger;
   eventBus: EventEmitter;
   wirenboardDeviceRepository: IWirenboardDeviceRepository;
   macrosSettingsRepository: IMacrosSettingsRepository;
 };
 
 export class MacrosEngine {
-  readonly logger: Logger;
   readonly eventBus: EventEmitter;
   readonly wirenboardDeviceRepository: IWirenboardDeviceRepository;
   readonly macrosSettingsRepository: IMacrosSettingsRepository;
@@ -62,8 +62,7 @@ export class MacrosEngine {
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly macros: Map<string, M>;
 
-  constructor({ logger, eventBus, wirenboardDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
-    this.logger = logger;
+  constructor({ eventBus, wirenboardDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
     this.eventBus = eventBus;
     this.wirenboardDeviceRepository = wirenboardDeviceRepository;
     this.macrosSettingsRepository = macrosSettingsRepository;
@@ -133,28 +132,20 @@ export class MacrosEngine {
 
     this.eventBus.on(EventBus.HD_APPEARED, this.accept);
 
-    this.logger.info(
-      { devices: this.devices.size, controls: this.controls.size, macros: this.macros.size },
-      'The macros engine was run successful ✅ 🚀',
-    );
+    logger('The macros engine was run successful ✅ 🚀');
   };
 
   stop = () => {
     this.eventBus.off(EventBus.HD_APPEARED, this.accept);
 
-    this.logger.info(
-      { devices: this.devices.size, controls: this.controls.size, macros: this.macros.size },
-      'The macros engine was stopped 👷‍♂️ 🛑',
-    );
+    logger('The macros engine was stopped 👷‍♂️ 🛑');
   };
 
   setup = async ({ id, type, name, description, labels, settings, state, save = true }: Setup): Promise<Error | M> => {
     try {
       if (this.devices.size === 0 || this.controls.size === 0) {
-        this.logger.error(
-          { id, type, name, description, labels, settings },
-          'Before installing macros, you need to download device and control data 🚨',
-        );
+        logger('Before installing macros, you need to download device and control data 🚨');
+        logger(JSON.stringify({ id, type, name, description, labels, settings }, null, 2));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -166,7 +157,6 @@ export class MacrosEngine {
        */
       if (type === MacrosType.LIGHTING) {
         macros = new LightingMacros({
-          logger: this.logger,
           eventBus: this.eventBus,
 
           devices: this.devices,
@@ -199,22 +189,25 @@ export class MacrosEngine {
 
         this.macros.set(macros.id, macros);
 
-        this.logger.info(
-          { id: macros.id, type, name, description, labels, settings, macros: macros.toJS() },
-          'The macro has been successfully installed ✅',
+        logger('The macro has been successfully installed ✅');
+        logger(
+          JSON.stringify(
+            { id: macros.id, type, name, description, labels, settings, appliedMAcrosSettings: macros.toJS() },
+            null,
+            2,
+          ),
         );
 
         return macros;
       }
 
-      this.logger.error({ id, type, name, description, labels, settings }, 'Failed to install the macros 🚨');
+      logger('Failed to install the macros 🚨');
+      logger(JSON.stringify({ id, type, name, description, labels, settings }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     } catch (error) {
-      this.logger.error(
-        { id, type, name, description, labels, settings, err: error },
-        'Failed to install the macro, for unforeseen reasons 🚨',
-      );
+      logger('Failed to install the macro, for unforeseen reasons 🚨');
+      logger(JSON.stringify({ id, type, name, description, labels, settings, error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -262,12 +255,14 @@ export class MacrosEngine {
 
       this.macros.delete(id);
 
-      this.logger.error({ id }, 'The macros was delete by ID successfully ✅');
+      logger('The macros was delete by ID successfully ✅');
+      logger(JSON.stringify({ id }, null, 2));
 
       return macros;
     }
 
-    this.logger.error({ id }, 'Failed to delete macro by ID 🚨');
+    logger('Failed to delete macro by ID 🚨');
+    logger(JSON.stringify({ id }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   };

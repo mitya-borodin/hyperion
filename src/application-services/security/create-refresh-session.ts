@@ -1,19 +1,19 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { RefreshSession } from '../../domain/refresh-session';
 import { CodeType, createCode } from '../../helpers/create-code';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { UserOutput } from '../../ports/user-repository';
 
+const logger = debug('create-refresh-session');
+
 type CreateRefreshSessionParameters = {
-  logger: Logger;
   refreshSessionRepository: IRefreshSessionRepository;
   fingerprint: string;
   userId: string;
 };
 
 export const createRefreshSession = async ({
-  logger,
   refreshSessionRepository,
   fingerprint,
   userId,
@@ -25,12 +25,13 @@ export const createRefreshSession = async ({
   }
 
   if (refreshSessions.length >= 5) {
-    logger.warn({ userId }, 'The user has more than 5 simultaneous sessions 🚨');
+    logger('The user has more than 5 simultaneous sessions 🚨');
+    logger(JSON.stringify({ userId }, null, 2));
 
     await refreshSessionRepository.removeAllByUserId(userId);
   }
 
-  const code = createCode(CodeType.REFRESH_TOKEN, logger);
+  const code = createCode(CodeType.REFRESH_TOKEN);
 
   if (code instanceof Error) {
     return code;

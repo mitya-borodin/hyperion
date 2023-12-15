@@ -1,17 +1,18 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 import { toDataURL } from 'qrcode';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { createTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
 import { IUserRepository } from '../../../ports/user-repository';
 
+const logger = debug('activate-two-fa');
+
 export type ActivateTwoFa = {
-  logger: Logger;
   userRepository: IUserRepository;
   userId: string;
 };
 
-export const activateTwoFa = async ({ userRepository, logger, userId }: ActivateTwoFa) => {
+export const activateTwoFa = async ({ userRepository, userId }: ActivateTwoFa) => {
   let user = await userRepository.get(userId);
 
   if (user instanceof Error) {
@@ -19,19 +20,21 @@ export const activateTwoFa = async ({ userRepository, logger, userId }: Activate
   }
 
   if (user.isTwoFaActivated) {
-    logger.error({ userId }, 'Two Fa was already activated 🚨');
+    logger('Two Fa was already activated 🚨');
+    logger(JSON.stringify({ userId }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
-  const twoFa = createTwoFa({ logger });
+  const twoFa = createTwoFa();
 
   if (twoFa instanceof Error) {
     return twoFa;
   }
 
   if (!twoFa.otpauth_url) {
-    logger.error({ userId, twoFa }, 'The otpauth_url field is missing, TwoFa could not be created. 🚨');
+    logger('The otpauth_url field is missing, TwoFa could not be created 🚨');
+    logger(JSON.stringify({ userId, twoFa }, null, 2));
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }

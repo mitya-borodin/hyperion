@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 import { PrismaClient } from '@prisma/client';
+import debug from 'debug';
 import omit from 'lodash.omit';
-import { Logger } from 'pino';
 
 import { User, UserStatus } from '../../../domain/user';
 import { ErrorType } from '../../../helpers/error-type';
@@ -15,20 +15,19 @@ import {
 import { Config } from '../../config';
 import { toDomainUser } from '../../mappers/user-mapper';
 
+const logger = debug('user-repository');
+
 export type UserRepositoryParameters = {
   config: Config;
-  logger: Logger;
   client: PrismaClient;
 };
 
 export class UserRepository implements IUserRepository {
   private config: Config;
-  private logger: Logger;
   private client: PrismaClient;
 
-  constructor({ config, logger, client }: UserRepositoryParameters) {
+  constructor({ config, client }: UserRepositoryParameters) {
     this.config = config;
-    this.logger = logger.child({ name: 'UserRepository' });
     this.client = client;
   }
 
@@ -38,7 +37,8 @@ export class UserRepository implements IUserRepository {
 
       return toDomainUser(prismaUser);
     } catch (error) {
-      this.logger.error({ id, err: error }, 'The user was not found by id 🚨');
+      logger('The user was not found by id 🚨');
+      logger(JSON.stringify({ id, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -54,7 +54,8 @@ export class UserRepository implements IUserRepository {
 
       return toDomainUser(prismaUser);
     } catch (error) {
-      this.logger.error({ email, err: error }, 'The user was not found by email 🚨');
+      logger('The user was not found by email 🚨');
+      logger(JSON.stringify({ email, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -82,7 +83,8 @@ export class UserRepository implements IUserRepository {
         },
       };
     } catch (error) {
-      this.logger.error({ err: error }, 'The users was not found 🚨');
+      logger('The users was not found 🚨');
+      logger(JSON.stringify({ err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -103,7 +105,8 @@ export class UserRepository implements IUserRepository {
 
       return omit(toDomainUser(prismaUser), ['hash', 'salt']);
     } catch (error) {
-      this.logger.error({ parameters, err: error }, 'The user was not created 🚨');
+      logger('The user was not created 🚨');
+      logger(JSON.stringify({ parameters, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -127,7 +130,8 @@ export class UserRepository implements IUserRepository {
 
       return omit(toDomainUser(prismaUser), ['hash', 'salt']);
     } catch (error) {
-      this.logger.error({ parameters, err: error }, 'The user was not updated 🚨');
+      logger('The user was not updated 🚨');
+      logger(JSON.stringify({ parameters, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -145,7 +149,8 @@ export class UserRepository implements IUserRepository {
 
       return toDomainUser(prismaUser);
     } catch (error) {
-      this.logger.error({ err: error }, 'The user was not deleted 🚨');
+      logger('The user was not deleted 🚨');
+      logger(JSON.stringify({ err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }

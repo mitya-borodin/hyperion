@@ -1,4 +1,4 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { UserRole } from '../../domain/user';
 import { createPasswordHash } from '../../helpers/create-password-hash';
@@ -7,8 +7,9 @@ import { ErrorCode, ErrorMessage } from '../../helpers/error-type';
 import { Config } from '../../infrastructure/config';
 import { IUserRepository, UserOutput } from '../../ports/user-repository';
 
+const logger = debug('create-user');
+
 export type CreateUser = {
-  logger: Logger;
   config: Config;
   userRepository: IUserRepository;
   name: string;
@@ -18,7 +19,6 @@ export type CreateUser = {
 };
 
 export const createUser = async ({
-  logger,
   config,
   userRepository,
   email,
@@ -33,7 +33,8 @@ export const createUser = async ({
   }
 
   if (user) {
-    logger.error({ user }, 'The user already exist 🚨');
+    logger('The user already exist 🚨');
+    logger(JSON.stringify({ user }, null, 2));
 
     return {
       user: undefined,

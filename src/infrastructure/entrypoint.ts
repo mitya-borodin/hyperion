@@ -1,83 +1,23 @@
-import os from 'node:os';
-
 import { abortable, race, spawn, SpawnEffects } from 'abort-controller-x';
+import debug from 'debug';
 import defer from 'defer-promise';
-import { Logger, pino } from 'pino';
 
 import { Config } from './config';
 
 type ExecutorParameters = {
   signal: AbortSignal;
   config: Config;
-  logger: Logger;
 } & SpawnEffects;
 
 type Executor = (parameters: ExecutorParameters) => Promise<void>;
+
+const logger = debug('entrypoint');
 
 export const entrypoint = async (executor: Executor) => {
   const abortController = new AbortController();
   const shutdownDeferred = defer<unknown | undefined>();
 
-  const redact = {
-    paths: [] as string[],
-    censor: '**SENSITIVE_INFORMATION**',
-  };
-
   const config = new Config();
-
-  if (config.log.hideSensitiveInfo) {
-    redact.paths.push(
-      /**
-       * Config
-       */
-      '*.hashSalt',
-      '*.cookieSecret',
-      '*.auth.secret',
-      '*.auth.salt',
-      '*.geetest.captchaId',
-      '*.geetest.captchaKey',
-
-      /**
-       * App
-       */
-      'token',
-    );
-  }
-
-  const hooks = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    logMethod(inputArguments: unknown[], method: any, level: number) {
-      const [context, message] = inputArguments;
-
-      if (
-        typeof context === 'object' &&
-        typeof message === 'string' &&
-        /**
-         * Info
-         */ config.log.level === 'info' &&
-        level === 30
-      ) {
-        return Reflect.apply(method, this, [message]);
-      }
-
-      return method.apply(this, inputArguments);
-    },
-  };
-
-  const logger = pino({
-    name: 'entrypoint',
-    base: {
-      pid: process.pid,
-      appName: config.appName,
-      hostname: os.hostname(),
-    },
-    level: config.log.level,
-    hooks,
-    redact,
-    transport: {
-      target: 'pino-pretty',
-    },
-  });
 
   // eslint-disable-next-line unicorn/no-null
   let shutdownReason: 'TERMINATION_BY_PROCESS_SIGNAL' | 'UNEXPECTED_ERROR' | null = null;
@@ -89,12 +29,12 @@ export const entrypoint = async (executor: Executor) => {
 
     shutdownReason = 'TERMINATION_BY_PROCESS_SIGNAL';
 
-    logger.warn(`The process will be completed on the signal ${signal}`);
+    logger(`The process will be completed on the signal ${signal}`);
 
     // eslint-disable-next-line unicorn/no-useless-undefined
     shutdownDeferred.resolve(undefined);
 
-    logger.warn(
+    logger(
       [
         `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
         'Check for timers or connections preventing Node from exiting.',
@@ -155,7 +95,7 @@ export const entrypoint = async (executor: Executor) => {
       process.exitCode = 1;
     }
 
-    logger.warn(
+    logger(
       [
         'The process will be terminated due to an unexpected exception',
         `The process will be forcibly terminated after ${config.gracefullyShutdownMs} ms.`,
@@ -173,9 +113,9 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on('uncaughtException', (error: Error, origin: NodeJS.UncaughtExceptionOrigin) => {
     if (shutdownReason === null) {
-      logger.fatal({ err: error, origin }, 'Uncaught exception');
+      console.error({ err: error, origin }, 'Uncaught exception');
     } else {
-      logger.error({ err: error, origin }, `Uncaught exception after ${shutdownReason}`);
+      console.error({ err: error, origin }, `Uncaught exception after ${shutdownReason}`);
     }
 
     shutdownByError(error);
@@ -183,31 +123,33 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on('unhandledRejection', (reason: unknown) => {
     if (shutdownReason === null) {
-      logger.fatal({ err: reason }, 'Unhandled promise rejection');
+      console.error({ err: reason }, 'Unhandled promise rejection');
     } else {
-      logger.error({ err: reason }, `Unhandled promise rejection after ${shutdownReason}`);
+      console.error({ err: reason }, `Unhandled promise rejection after ${shutdownReason}`);
     }
 
     shutdownByError(reason as Error);
   });
 
   process.on('warning', (warning: Error) => {
-    logger.warn({ err: warning }, 'Process warning');
+    logger('Process warning ‼️');
+    logger(JSON.stringify({ warning }, null, 2));
   });
 
-  logger.info({ config }, 'The application is being launched');
+  logger('The application is being launched 🚀');
+  logger(JSON.stringify({ config }, null, 2));
 
   try {
     await race(abortController.signal, (signal) => [
       abortable(signal, shutdownDeferred.promise),
-      spawn(signal, (signal, { fork, defer }) => executor({ signal, logger, config, fork, defer })),
+      spawn(signal, (signal, { fork, defer }) => executor({ signal, config, fork, defer })),
     ]);
 
-    logger.info("The application was interrupted by a signal from 'AbortController'");
+    debug("The application was interrupted by a signal from 'AbortController'");
   } catch (error: unknown) {
     // @TODO: Проверить, попадет ли ошибка из executor в uncaughtException и unhandledRejection
     // @TODO: Или останется в этом обработчике
-    logger.error({ err: error }, 'The application was interrupted with an error');
+    console.error({ err: error }, 'The application was interrupted with an error');
 
     shutdownByError(error as Error);
   }

@@ -1,4 +1,4 @@
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { RefreshSession } from '../../domain/refresh-session';
 import { CodeType, createCode } from '../../helpers/create-code';
@@ -6,15 +6,15 @@ import { ErrorType } from '../../helpers/error-type';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { UserOutput } from '../../ports/user-repository';
 
+const logger = debug('refresh-access-token');
+
 export type RefreshAccessToken = {
-  logger: Logger;
   refreshSessionRepository: IRefreshSessionRepository;
   fingerprint: string;
   refreshToken: string;
 };
 
 export const refreshAccessToken = async ({
-  logger,
   refreshSessionRepository,
   fingerprint,
   refreshToken,
@@ -26,12 +26,12 @@ export const refreshAccessToken = async ({
   }
 
   if (new Date() > refreshSession.expiresIn) {
-    logger.error('Failed to update a refresh session, because session expired 🚨');
+    logger('Failed to update a refresh session, because session expired 🚨');
 
     return new Error(ErrorType.INVALID_ARGUMENTS);
   }
 
-  const code = createCode(CodeType.REFRESH_TOKEN, logger);
+  const code = createCode(CodeType.REFRESH_TOKEN);
 
   if (code instanceof Error) {
     return code;

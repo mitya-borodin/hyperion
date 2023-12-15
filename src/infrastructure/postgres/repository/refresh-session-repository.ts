@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import debug from 'debug';
 import omit from 'lodash.omit';
-import { Logger } from 'pino';
 
 import { RefreshSession } from '../../../domain/refresh-session';
 import { ErrorType } from '../../../helpers/error-type';
@@ -8,17 +8,16 @@ import { CreateRefreshSession, IRefreshSessionRepository } from '../../../ports/
 import { UserOutput } from '../../../ports/user-repository';
 import { toDomainUser } from '../../mappers/user-mapper';
 
+const logger = debug('refresh-session-repository');
+
 export type RefreshSessionRepositoryParameters = {
-  logger: Logger;
   client: PrismaClient;
 };
 
 export class RefreshSessionRepository implements IRefreshSessionRepository {
-  private logger: Logger;
   private client: PrismaClient;
 
-  constructor({ logger, client }: RefreshSessionRepositoryParameters) {
-    this.logger = logger.child({ name: 'RefreshSessionRepository' });
+  constructor({ client }: RefreshSessionRepositoryParameters) {
     this.client = client;
   }
 
@@ -38,7 +37,8 @@ export class RefreshSessionRepository implements IRefreshSessionRepository {
 
       return { ...refreshSession, user: omit(toDomainUser(refreshSession.user), ['hash', 'salt']) };
     } catch (error) {
-      this.logger.error({ parameters, err: error }, 'The refresh session was not created 🚨');
+      logger('The refresh session was not created 🚨');
+      logger(JSON.stringify({ parameters, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -52,7 +52,8 @@ export class RefreshSessionRepository implements IRefreshSessionRepository {
         },
       });
     } catch (error) {
-      this.logger.error({ refreshToken, err: error }, 'The refresh session was not found by refreshToken 🚨');
+      logger('The refresh session was not found by refreshToken 🚨');
+      logger(JSON.stringify({ refreshToken, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -66,7 +67,8 @@ export class RefreshSessionRepository implements IRefreshSessionRepository {
         },
       });
     } catch (error) {
-      this.logger.error({ userId, err: error }, 'The refresh session was not found by user id 🚨');
+      logger('The refresh session was not found by user id 🚨');
+      logger(JSON.stringify({ userId, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -78,7 +80,8 @@ export class RefreshSessionRepository implements IRefreshSessionRepository {
         where: { refreshToken },
       });
     } catch (error) {
-      this.logger.error({ refreshToken, err: error }, 'The refresh session was not removed by refreshToken 🚨');
+      logger('The refresh session was not removed by refreshToken 🚨');
+      logger(JSON.stringify({ refreshToken, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }
@@ -90,7 +93,8 @@ export class RefreshSessionRepository implements IRefreshSessionRepository {
         where: { userId },
       });
     } catch (error) {
-      this.logger.error({ userId, err: error }, 'The refresh session was not removed by userId 🚨');
+      logger('The refresh session was not removed by userId 🚨');
+      logger(JSON.stringify({ userId, err: error }, null, 2));
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }

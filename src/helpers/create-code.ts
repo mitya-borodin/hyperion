@@ -1,8 +1,10 @@
 import { addDays, addHours } from 'date-fns';
-import { Logger } from 'pino';
+import debug from 'debug';
 import { v4 } from 'uuid';
 
 import { ErrorType } from './error-type';
+
+const logger = debug('create-code');
 
 export enum CodeType {
   EMAIL_CONFIRMATION = 'EMAIL_CONFIRMATION',
@@ -11,7 +13,7 @@ export enum CodeType {
   NEXT_EMAIL_CONFIRMATION = 'NEXT_EMAIL_CONFIRMATION',
 }
 
-export const createCode = (codeType: CodeType, logger: Logger) => {
+export const createCode = (codeType: CodeType) => {
   const value = v4();
   let expiresIn: Date;
 
@@ -37,7 +39,7 @@ export const createCode = (codeType: CodeType, logger: Logger) => {
       break;
     }
     default: {
-      logger.error('Failed to create expiresIn, case was not found 🚨');
+      logger('Failed to create expiresIn, case was not found 🚨');
 
       return new Error(ErrorType.INVALID_ARGUMENTS);
     }

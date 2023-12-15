@@ -1,20 +1,19 @@
+import debug from 'debug';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Logger } from 'pino';
 
-type RouterParameters = {
-  logger: Logger;
-};
+const logger = debug('get-health');
 
-export const getHealth = ({ logger }: RouterParameters) => {
+export const getHealth = () => {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    logger.trace('Health check started 🎰');
+    logger('Health check started 🎰');
 
     try {
-      logger.trace('Health is OK ✅');
+      logger('Health is OK ✅');
 
       return reply.code(200).send();
     } catch (error) {
-      logger.error(error, 'Health is not OK 🚨');
+      logger('Health is not OK 🚨');
+      logger(JSON.stringify({ error }, null, 2));
 
       return reply.code(500).send();
     }

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'node:events';
 
-import { Logger } from 'pino';
+import debug from 'debug';
 
 import { EventBus } from '../../../domain/event-bus';
 import { isJson } from '../../../helpers/is-json';
@@ -12,9 +12,10 @@ import { getMqttClient } from './get-mqtt-client';
 import { publishWirenboardMessage } from './publish-wirenboard-message';
 import { WirenboardDevice } from './wirenboard-device';
 
+const logger = debug('run-wirenboard');
+
 type RunWirenboard = {
   config: Config;
-  logger: Logger;
   eventBus: EventEmitter;
 };
 
@@ -32,8 +33,8 @@ const ROOT_TOPIC = '/devices/#';
 /**
  * ! https://github.com/wirenboard/conventions
  */
-export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
-  const client = await getMqttClient({ config, logger, rootTopic: ROOT_TOPIC });
+export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
+  const client = await getMqttClient({ config, rootTopic: ROOT_TOPIC });
 
   /**
    * ! Получение состояние контроллера
@@ -212,7 +213,8 @@ export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard)
           }
         }
       } catch (error) {
-        logger.error({ err: error, topic, message: message.toString() }, 'Could not get meta information 🚨');
+        logger('Could not get meta information 🚨');
+        logger(JSON.stringify({ error, topic, message: message.toString() }, null, 2));
       }
     }
 
@@ -249,7 +251,8 @@ export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard)
 
         eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
       } catch (error) {
-        logger.error({ err: error, topic, message: message.toString() }, 'Could not get controls value 🚨');
+        logger('Could not get controls value 🚨');
+        logger(JSON.stringify({ error, topic, message: message.toString() }, null, 2));
       }
     }
   });
@@ -258,7 +261,7 @@ export const runWirenboard = async ({ config, logger, eventBus }: RunWirenboard)
    * ! Изменение состояния контроллера
    */
   const publishMessage = ({ topic, message }: PublishWirenboardMessage) => {
-    publishWirenboardMessage({ logger, client, topic, message });
+    publishWirenboardMessage({ client, topic, message });
   };
 
   eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);

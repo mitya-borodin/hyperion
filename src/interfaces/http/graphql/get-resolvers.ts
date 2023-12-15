@@ -1,12 +1,12 @@
 /* eslint-disable unicorn/no-null */
 import EventEmitter from 'node:events';
 
+import debug from 'debug';
 import { FastifyInstance } from 'fastify';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import GraphQLUpload from 'graphql-upload';
 import { IResolvers, MercuriusContext } from 'mercurius';
-import { Logger } from 'pino';
 
 import { createUser } from '../../../application-services/security/create-user';
 import { deleteUser } from '../../../application-services/security/delete-user';
@@ -41,10 +41,11 @@ import { toGraphQlSubscriptionMacros } from './mappers/to-graphql-subscription-m
 import { toGraphQlUser } from './mappers/to-graphql-user';
 import { SubscriptionDeviceType, SubscriptionMacrosType, SubscriptionTopic } from './subscription';
 
+const logger = debug('get-resolvers');
+
 export type GetResolvers = {
   fastify: FastifyInstance;
   config: Config;
-  logger: Logger;
   eventBus: EventEmitter;
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
@@ -56,7 +57,6 @@ export type GetResolvers = {
 export const getResolvers = ({
   fastify,
   config,
-  logger,
   eventBus,
   userRepository,
   refreshSessionRepository,
@@ -68,7 +68,8 @@ export const getResolvers = ({
     Query: {
       getUser: async (parent, { input }, context: MercuriusContext, info) => {
         if (!input.id && !context.auth?.userId) {
-          logger.error({ context }, 'To get current use, you must have a user ID in the authentication context 🚨');
+          logger('To get current use, you must have a user ID in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
@@ -117,7 +118,6 @@ export const getResolvers = ({
       signIn: async (parent, { input }, context: MercuriusContext, info) => {
         const singInResult = await signIn({
           config,
-          logger,
           userRepository,
           captcha: input.captchaCheck,
           email: input.email,
@@ -164,14 +164,14 @@ export const getResolvers = ({
 
       signOut: async (parent, _, context: MercuriusContext, info) => {
         if (!context.auth?.refreshToken) {
-          logger.error({ context }, 'To sign out, you must have a "refreshToken" in the authentication context 🚨');
+          logger('To sign out, you must have a "refreshToken" in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         const signOutResult = signOut({
           refreshSessionRepository,
-          logger,
           refreshToken: context.auth?.refreshToken,
         });
 
@@ -184,7 +184,6 @@ export const getResolvers = ({
 
       createUser: async (parent, { input }, context, info) => {
         const createUserResult = await createUser({
-          logger,
           config,
           userRepository,
           email: input.email,
@@ -207,7 +206,6 @@ export const getResolvers = ({
 
       deleteUser: async (parent, { input }, context, info) => {
         const deleteUserResult = deleteUser({
-          logger,
           userRepository,
           userId: input.id,
         });
@@ -250,17 +248,14 @@ export const getResolvers = ({
 
       activateTwoFa: async (parent, _, context: MercuriusContext, info) => {
         if (!context.auth?.userId) {
-          logger.error(
-            { context: context.auth },
-            'To activate TwoFa, you must have a user ID in the authentication context 🚨',
-          );
+          logger('To activate TwoFa, you must have a user ID in the authentication context 🚨');
+          logger(JSON.stringify({ context: context.auth }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         const codes = await activateTwoFa({
           userRepository,
-          logger,
           userId: context.auth?.userId,
         });
 
@@ -276,16 +271,13 @@ export const getResolvers = ({
 
       confirmTwoFa: async (parent, { input }, context: MercuriusContext, info) => {
         if (!context.auth?.userId) {
-          logger.error(
-            { context: context.auth },
-            'To confirm TwoFa, you must have a user ID in the authentication context 🚨',
-          );
+          logger('To confirm TwoFa, you must have a user ID in the authentication context 🚨');
+          logger(JSON.stringify({ context: context.auth }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         const confirmation = await confirmTwoFa({
-          logger,
           userRepository,
           userId: context.auth?.userId,
           totp: input.totp,
@@ -300,7 +292,8 @@ export const getResolvers = ({
 
       verifyTwoFa: async (parent, { input }, context: MercuriusContext, info) => {
         if (!context.auth?.fingerprint) {
-          logger.error({ context }, 'To verify TwoFa, you must have a fingerprint in the authentication context 🚨');
+          logger('To verify TwoFa, you must have a fingerprint in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
@@ -308,7 +301,6 @@ export const getResolvers = ({
         const verifyTwoFaResult = await verifyTwoFa({
           userRepository,
           refreshSessionRepository,
-          logger,
           fingerprint: context.auth?.fingerprint,
           email: input.email,
           totp: input.totp,
@@ -339,13 +331,13 @@ export const getResolvers = ({
 
       deactivateTwoFa: async (parent, { input }, context: MercuriusContext, info) => {
         if (!context.auth?.userId) {
-          logger.error({ context }, 'To deactivate TwoFa, you must have a user ID in the authentication context 🚨');
+          logger('To deactivate TwoFa, you must have a user ID in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         const deactivateTwoFaResult = await deactivateTwoFa({
-          logger,
           userRepository,
           userId: context.auth?.userId,
           totp: input.totp,
@@ -360,25 +352,20 @@ export const getResolvers = ({
 
       refreshAccessToken: async (parent, _, context: MercuriusContext, info) => {
         if (!context.auth?.fingerprint) {
-          logger.error(
-            { context },
-            'To refresh access token, you must have a "fingerprint" in the authentication context 🚨',
-          );
+          logger('To refresh access token, you must have a "fingerprint" in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         if (!context.auth?.refreshToken) {
-          logger.error(
-            { context },
-            'To refresh access token, you must have a "refreshToken" in the authentication context 🚨',
-          );
+          logger('To refresh access token, you must have a "refreshToken" in the authentication context 🚨');
+          logger(JSON.stringify({ context }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
         const refreshResult = await refreshAccessToken({
-          logger,
           refreshSessionRepository,
           fingerprint: context.auth?.fingerprint,
           refreshToken: context.auth?.refreshToken,
@@ -424,19 +411,22 @@ export const getResolvers = ({
         const control = hyperionDevice.controls.find(({ id }) => id === input.controlId);
 
         if (!control) {
-          logger.error({ input, hyperionDevice }, 'Control not found 🚨');
+          logger('Control not found 🚨');
+          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
 
           return toGraphQlDevice(hyperionDevice);
         }
 
         if (control.readonly) {
-          logger.error({ input, hyperionDevice }, 'Control is readonly 🚨');
+          logger('Control is readonly 🚨');
+          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
 
           return toGraphQlDevice(hyperionDevice);
         }
 
         if (!control.topic) {
-          logger.error({ input, hyperionDevice }, 'Control is not readonly, but topic is empty 🚨');
+          logger('Control is not readonly, but topic is empty 🚨');
+          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
 
           return toGraphQlDevice(hyperionDevice);
         }
@@ -523,7 +513,8 @@ export const getResolvers = ({
       },
       destroyMacros: async (root, { input }, context) => {
         if (!input?.id) {
-          logger.error({ input }, 'To destroy the macro, you must specify the ID 🚨');
+          logger('To destroy the macro, you must specify the ID 🚨');
+          logger(JSON.stringify({ input }, null, 2));
 
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
