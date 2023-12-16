@@ -14,7 +14,7 @@ import { HyperionDevice } from '../hyperion-device';
 import { getControlId } from './get-control-id';
 import { Macros, MacrosAccept, MacrosType } from './macros';
 
-const logger = debug('lighting-macros');
+const logger = debug('hyperion-lighting-macros');
 
 export enum LightingLevel {
   HIGHT = 'HIGHT',
@@ -167,14 +167,14 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       if (!button) {
         logger('Button control not found 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
       if (button.type !== ControlType.SWITCH) {
         logger('Button control is not SWITCH 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -185,14 +185,14 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       if (!illumination) {
         logger('Illumination control not found 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
       if (illumination.type !== ControlType.ILLUMINATION) {
         logger('Illumination control is not ILLUMINATION 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -203,14 +203,14 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       if (!lighting) {
         logger('Illumination control not found 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
       if (lighting.type !== ControlType.SWITCH) {
         logger('Illumination control is not SWITCH 🚨');
-        logger(JSON.stringify({ setting }, null, 2));
+        logger(JSON.stringify({ name: this.name, setting }, null, 2));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -248,7 +248,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       }
       default: {
         logger('An incorrect state was received 🚨');
-        logger(JSON.stringify({ state }, null, 2));
+        logger(JSON.stringify({ name: this.name, state }, null, 2));
 
         return;
       }
@@ -304,7 +304,8 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
   };
 
   private execute = () => {
-    logger('Execute lighting macros 🚀 👷‍♂️ ⏭️');
+    // logger('Execute lighting macros 🚀 👷‍♂️ ⏭️');
+    // logger(JSON.stringify({ name: this.name }, null, 2));
 
     /**
      * ! FORCE ON LOGIC
@@ -325,7 +326,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       }
 
       logger('The forced state was determined 🫡 😡');
-      logger(JSON.stringify({ state: this.state, value }, null, 2));
+      logger(JSON.stringify({ name: this.name, state: this.state, value }, null, 2));
 
       this.computeNextControlState(value);
       this.sendMessages();
@@ -338,7 +339,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
      */
     if (this.hasButtonPress()) {
       logger('Button was pressed 🧯');
-      logger(JSON.stringify({ state: this.state }, null, 2));
+      logger(JSON.stringify({ name: this.name, state: this.state }, null, 2));
 
       /**
        * ! Использовать this.settings.illuminations, для включения подходящей зоны света:
@@ -350,7 +351,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
         this.computeNextControlState('0');
 
         logger('Next state will be 🧯');
-        logger(JSON.stringify({ nextState: this.state, nextControlState: this.nextControlState }, null, 2));
+        logger(
+          JSON.stringify({ name: this.name, nextState: this.state, nextControlState: this.nextControlState }, null, 2),
+        );
 
         this.sendMessages();
 
@@ -363,7 +366,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
         this.computeNextControlState('1');
 
         logger('Next state will be 🧯');
-        logger(JSON.stringify({ nextState: this.state, nextControlState: this.nextControlState }, null, 2));
+        logger(
+          JSON.stringify({ name: this.name, nextState: this.state, nextControlState: this.nextControlState }, null, 2),
+        );
 
         this.sendMessages();
 
@@ -378,7 +383,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
   };
 
   private checkOutputControlState = () => {
-    const isOn = this.settings.lightings.every((lighting) => {
+    const isOn = this.settings.lightings.some((lighting) => {
       const id = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
 
       const control = this.controls.get(id);
@@ -396,7 +401,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       this.state.switch = isOn ? 'ON' : 'OFF';
 
       logger('The internal state has been changed because all managed controls have changed state 👷‍♂️ 🍋 🧯');
-      logger(JSON.stringify({ state: this.state }, null, 2));
+      logger(JSON.stringify({ name: this.name, state: this.state }, null, 2));
     }
   };
 
@@ -412,21 +417,35 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       if (!control) {
         logger('The control specified in the settings was not found 🚨');
-        logger(JSON.stringify({ deviceId, controlId, controls: [...this.controls.values()] }, null, 2));
+        logger(
+          JSON.stringify({ name: this.name, deviceId, controlId, controls: [...this.controls.values()] }, null, 2),
+        );
 
         continue;
       }
 
       if (control.type !== type) {
         logger('The type of control does not match the settings 🚨');
-        logger(JSON.stringify({ deviceId, controlId, type, control, controls: [...this.controls.values()] }, null, 2));
+        logger(
+          JSON.stringify(
+            { name: this.name, deviceId, controlId, type, control, controls: [...this.controls.values()] },
+            null,
+            2,
+          ),
+        );
 
         continue;
       }
 
       if (!control.topic) {
         logger('The control object does not contain a topic for sending messages 🚨');
-        logger(JSON.stringify({ deviceId, controlId, type, control, controls: [...this.controls.values()] }, null, 2));
+        logger(
+          JSON.stringify(
+            { name: this.name, deviceId, controlId, type, control, controls: [...this.controls.values()] },
+            null,
+            2,
+          ),
+        );
 
         continue;
       }
@@ -458,7 +477,13 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
         logger('Incorrect data for sending messages 🚨');
-        logger(JSON.stringify({ lighting, hyperionDevice, hyperionControl, topic: hyperionControl?.topic }, null, 2));
+        logger(
+          JSON.stringify(
+            { name: this.name, lighting, hyperionDevice, hyperionControl, topic: hyperionControl?.topic },
+            null,
+            2,
+          ),
+        );
 
         continue;
       }
@@ -472,7 +497,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       const message = lighting.value;
 
       logger('A message will be sent to the WB 🚀 👷‍♂️ 🍟');
-      logger(JSON.stringify({ topic, message }, null, 2));
+      logger(JSON.stringify({ name: this.name, topic, message }, null, 2));
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
