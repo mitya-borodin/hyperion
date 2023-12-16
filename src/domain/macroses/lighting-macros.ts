@@ -5,6 +5,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { v4 } from 'uuid';
 
 import { ErrorType } from '../../helpers/error-type';
+import { stringify } from '../../helpers/json-stringify';
 import { emitWirenboardMessage } from '../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 // eslint-disable-next-line max-len
 import { ControlType } from '../control-type';
@@ -165,16 +166,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     for (const setting of this.settings.buttons) {
       const button = this.controls.get(getControlId(setting));
 
-      if (!button) {
-        logger('Button control not found 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
-
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
-      }
-
-      if (button.type !== ControlType.SWITCH) {
-        logger('Button control is not SWITCH 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
+      if (!button || button.type !== ControlType.SWITCH) {
+        logger('Button control not found or is not SWITCH 🚨');
+        logger(stringify({ name: this.name, setting, button }));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -183,16 +177,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     for (const setting of this.settings.illuminations) {
       const illumination = this.controls.get(getControlId(setting));
 
-      if (!illumination) {
-        logger('Illumination control not found 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
-
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
-      }
-
-      if (illumination.type !== ControlType.ILLUMINATION) {
-        logger('Illumination control is not ILLUMINATION 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
+      if (!illumination || illumination.type !== ControlType.ILLUMINATION) {
+        logger('Illumination control not found or is not ILLUMINATION 🚨');
+        logger(stringify({ name: this.name, setting, illumination }));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -201,16 +188,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     for (const setting of this.settings.lightings) {
       const lighting = this.controls.get(getControlId(setting));
 
-      if (!lighting) {
-        logger('Illumination control not found 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
-
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
-      }
-
-      if (lighting.type !== ControlType.SWITCH) {
-        logger('Illumination control is not SWITCH 🚨');
-        logger(JSON.stringify({ name: this.name, setting }, null, 2));
+      if (!lighting || lighting.type !== ControlType.SWITCH) {
+        logger('Illumination control not found or is not SWITCH 🚨');
+        logger(stringify({ name: this.name, setting, lighting }));
 
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -248,7 +228,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       }
       default: {
         logger('An incorrect state was received 🚨');
-        logger(JSON.stringify({ name: this.name, state }, null, 2));
+        logger(stringify({ name: this.name, state }));
 
         return;
       }
@@ -304,85 +284,121 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
   };
 
   private execute = () => {
-    // logger('Execute lighting macros 🚀 👷‍♂️ ⏭️');
-    // logger(JSON.stringify({ name: this.name }, null, 2));
-
     /**
-     * ! FORCE ON LOGIC
+     * ! UPDATE STATE BY FORCE
      */
-    if (this.state.force !== 'UNSPECIFIED') {
-      let value = '0';
+    let canGoForward = this.updateStateByForceState();
 
-      if (this.state.force === 'ON') {
-        this.state.switch = 'ON';
-
-        value = '1';
-      }
-
-      if (this.state.force === 'OFF') {
-        this.state.switch = 'OFF';
-
-        value = '0';
-      }
-
-      logger('The forced state was determined 🫡 😡');
-      logger(JSON.stringify({ name: this.name, state: this.state, value }, null, 2));
-
-      this.computeNextControlState(value);
-      this.sendMessages();
-
+    if (!canGoForward) {
       return;
     }
 
     /**
-     * ! BUTTON PRESS LOGIC
+     * ! UPDATE STATE BY BUTTON PRESS
      */
-    if (this.hasButtonPress()) {
-      logger('Button was pressed 🧯');
-      logger(JSON.stringify({ name: this.name, state: this.state }, null, 2));
+    canGoForward = this.updateStateByButtonPress();
 
-      /**
-       * ! Использовать this.settings.illuminations, для включения подходящей зоны света:
-       * ! основной, средний, низкий.
-       */
-      if (this.state.switch === 'ON') {
-        this.state.switch = 'OFF';
-
-        this.computeNextControlState('0');
-
-        logger('Next state will be 🧯');
-        logger(
-          JSON.stringify({ name: this.name, nextState: this.state, nextControlState: this.nextControlState }, null, 2),
-        );
-
-        this.sendMessages();
-
-        return;
-      }
-
-      if (this.state.switch === 'OFF') {
-        this.state.switch = 'ON';
-
-        this.computeNextControlState('1');
-
-        logger('Next state will be 🧯');
-        logger(
-          JSON.stringify({ name: this.name, nextState: this.state, nextControlState: this.nextControlState }, null, 2),
-        );
-
-        this.sendMessages();
-
-        return;
-      }
+    if (!canGoForward) {
+      return;
     }
 
     /**
-     * ! CHECK OUTPUT CONTROL STATE
+     * ! UPDATE STATE BY OUTPUT CONTROLS
      */
-    this.checkOutputControlState();
+    this.updateStateByOutputControls();
   };
 
-  private checkOutputControlState = () => {
+  private updateStateByForceState = () => {
+    if (this.state.force !== 'UNSPECIFIED') {
+      let nextSwitchState: 'ON' | 'OFF' = 'OFF';
+      let nextValue = '0';
+
+      if (this.state.force === 'ON') {
+        nextSwitchState = 'ON';
+        nextValue = '1';
+      }
+
+      if (this.state.force === 'OFF') {
+        nextSwitchState = 'OFF';
+        nextValue = '0';
+      }
+
+      this.computeNextControlState(nextValue);
+
+      if (this.nextControlState.lightings.length > 0) {
+        logger('The forced state was determined 🫡 😡');
+        logger(
+          stringify({
+            name: this.name,
+            currentState: this.state,
+            nextSwitchState,
+            nextValue,
+            nextControlState: this.nextControlState,
+          }),
+        );
+
+        this.state.switch = nextSwitchState;
+
+        this.sendMessages();
+      }
+
+      return false;
+    }
+
+    return true;
+  };
+
+  private updateStateByButtonPress = () => {
+    if (this.hasButtonPress()) {
+      logger('Button was pressed ⬇️');
+      logger(stringify({ name: this.name, currentState: this.state }));
+
+      /**
+       * ! Использование this.settings.illuminations будет актуально когда нужно будет выбирать уровень группы света:
+       * ! основной, средний, низкий.
+       */
+      let nextSwitchState: 'ON' | 'OFF' = 'OFF';
+      let nextValue = '0';
+
+      if (this.state.switch === 'ON') {
+        /**
+         * ! Если хотя бы один контрол из группы включен, то при первом клике, нужно включить все остальные, а
+         * ! при втором клике все выключаем.
+         */
+        const everyOn = this.settings.lightings.every((lighting) => {
+          return this.controls.get(getControlId(lighting))?.value === '1';
+        });
+
+        if (everyOn) {
+          nextSwitchState = 'OFF';
+          nextValue = '0';
+        } else {
+          nextSwitchState = 'ON';
+          nextValue = '1';
+        }
+      } else if (this.state.switch === 'OFF') {
+        nextSwitchState = 'ON';
+        nextValue = '1';
+      } else {
+        logger('No handler found for the current state 🚨');
+        logger(stringify({ name: this.name, currentState: this.state }));
+
+        nextSwitchState = 'OFF';
+        nextValue = '0';
+      }
+
+      this.state.switch = nextSwitchState;
+
+      this.computeNextControlState(nextValue);
+      this.sendMessages();
+
+      return false;
+    }
+
+    return true;
+  };
+
+  private updateStateByOutputControls = () => {
     const isOn = this.settings.lightings.some((lighting) => {
       const id = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
 
@@ -400,8 +416,8 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     if (this.state.switch !== nextState) {
       this.state.switch = isOn ? 'ON' : 'OFF';
 
-      logger('The internal state has been changed because all managed controls have changed state 👷‍♂️ 🍋 🧯');
-      logger(JSON.stringify({ name: this.name, state: this.state }, null, 2));
+      logger('The internal state has been changed because one of the managed controls has changed state 🍋');
+      logger(stringify({ name: this.name, state: this.state }));
     }
   };
 
@@ -415,46 +431,32 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
       const control = this.controls.get(getControlId({ deviceId, controlId }));
 
-      if (!control) {
-        logger('The control specified in the settings was not found 🚨');
+      if (!control || control.type !== type || !control.topic) {
+        logger('The control specified in the settings was not found, or matches the parameters 🚨');
         logger(
-          JSON.stringify({ name: this.name, deviceId, controlId, controls: [...this.controls.values()] }, null, 2),
-        );
-
-        continue;
-      }
-
-      if (control.type !== type) {
-        logger('The type of control does not match the settings 🚨');
-        logger(
-          JSON.stringify(
-            { name: this.name, deviceId, controlId, type, control, controls: [...this.controls.values()] },
-            null,
-            2,
-          ),
-        );
-
-        continue;
-      }
-
-      if (!control.topic) {
-        logger('The control object does not contain a topic for sending messages 🚨');
-        logger(
-          JSON.stringify(
-            { name: this.name, deviceId, controlId, type, control, controls: [...this.controls.values()] },
-            null,
-            2,
-          ),
+          stringify({
+            name: this.name,
+            deviceId,
+            controlId,
+            type,
+            controls: [...this.controls.values()],
+          }),
         );
 
         continue;
       }
 
       /**
+       * * Избавляемся от гипотетической рекурсии
+       *
        * ! Если не проверять на эквивалентность value, то когда WB вернет измененное состояние устройства
        * ! мы снова отправим сообщение, и WB нам его вернет как новое состояние, то мы попадем в рекурсию.
        *
-       * ! Не известно проверяет ли на это WB, скорее всего да, но нам не помешает проверить это самим.
+       * * Реализуем возможность запуска force режима
+       *
+       * ! Так же эта проверка позволяет понять, отличается ли текущее состояние, от того, которое требуется.
+       * ! Исходя из этой информации удобно делать force режим, если список пустой, то не нужно применять настройки
+       * ! force режима, так как прошлое изменение эти настройки были применены.
        */
       if (control.value !== value) {
         nextControlState.lightings.push({
@@ -466,23 +468,39 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     }
 
     this.nextControlState = nextControlState;
+
+    logger('The next state was computed ⏭️ 🍋');
+    logger(
+      stringify({
+        name: this.name,
+        nextState: this.state,
+        nextControlState: this.nextControlState,
+      }),
+    );
   };
 
   private sendMessages = () => {
     for (const lighting of this.nextControlState.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
-      const hyperionControl = this.controls.get(
-        getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId }),
-      );
+
+      const controlId = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
+
+      const hyperionControl = this.controls.get(controlId);
 
       if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
-        logger('Incorrect data for sending messages 🚨');
         logger(
-          JSON.stringify(
-            { name: this.name, lighting, hyperionDevice, hyperionControl, topic: hyperionControl?.topic },
-            null,
-            2,
-          ),
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger(
+          stringify({
+            name: this.name,
+            lighting,
+            hyperionDevice,
+            controlId,
+            hyperionControl,
+            topic: hyperionControl?.topic,
+          }),
         );
 
         continue;
@@ -496,8 +514,14 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       const { topic } = hyperionControl;
       const message = lighting.value;
 
-      logger('A message will be sent to the WB 🚀 👷‍♂️ 🍟');
-      logger(JSON.stringify({ name: this.name, topic, message }, null, 2));
+      logger('The message has been created and will be sent to the wirenboard controller ✅ 🚀');
+      logger(
+        stringify({
+          name: this.name,
+          topic,
+          message,
+        }),
+      );
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
