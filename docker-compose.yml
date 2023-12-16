@@ -15,7 +15,7 @@ services:
   hyperion:
     container_name: hyperion
     image: borodindmitriy/hyperion:${GITHUB_SHA}
-    command: 'DEBUG=hyperion-* node ./bin/hyperion'
+    command: 'node ./bin/hyperion'
     restart: unless-stopped
     env_file: .env
     environment:
@@ -23,6 +23,7 @@ services:
       - FASTIFY_HOST=0.0.0.0
       - FASTIFY_PORT=8080
       - NODE_ENV=development
+      - DEBUG=hyperion-*
     networks:
       - hyperion
 
