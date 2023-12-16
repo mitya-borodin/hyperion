@@ -31,7 +31,7 @@ import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repos
 import { getResolvers } from './graphql/get-resolvers';
 import { routerFastifyPlugin } from './router';
 
-const logger = debug('create-http-interface');
+const logger = debug('hyperion-create-http-interface');
 
 type CreateHttpInterfaceParameters = {
   config: Config;

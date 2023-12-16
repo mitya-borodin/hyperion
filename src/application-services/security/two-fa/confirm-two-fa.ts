@@ -4,7 +4,7 @@ import { ErrorType } from '../../../helpers/error-type';
 import { verifyTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
 import { IUserRepository } from '../../../ports/user-repository';
 
-const logger = debug('confirm-two-fa');
+const logger = debug('hyperion-confirm-two-fa');
 
 export type ConfirmTwoFa = {
   userRepository: IUserRepository;

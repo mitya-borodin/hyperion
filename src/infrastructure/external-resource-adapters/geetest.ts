@@ -8,7 +8,7 @@ import { stringify } from 'qs';
 import { ErrorType } from '../../helpers/error-type';
 import { Config } from '../config';
 
-const logger = debug('verify-geetest-captcha');
+const logger = debug('hyperion-verify-geetest-captcha');
 
 export type VerifyGeetestCaptchaParameters = {
   config: Config;

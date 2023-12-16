@@ -22,7 +22,7 @@ export const userSeed = async ({ config, userRepository }: UserSeed) => {
   }
 
   if (masterUser) {
-    debug('The master user already created ✅');
+    debug('hyperion-The master user already created ✅');
 
     return;
   }

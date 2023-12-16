@@ -3,7 +3,7 @@ import debug from 'debug';
 import { SettingType } from '../../../domain/settings';
 import { ISettingsRepository } from '../../../ports/settings-repository';
 
-const logger = debug('settings-seed');
+const logger = debug('hyperion-settings-seed');
 
 export type SettingsSeed = {
   settingsRepository: ISettingsRepository;

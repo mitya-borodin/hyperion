@@ -12,7 +12,7 @@ import { getMqttClient } from './get-mqtt-client';
 import { publishWirenboardMessage } from './publish-wirenboard-message';
 import { WirenboardDevice } from './wirenboard-device';
 
-const logger = debug('run-wirenboard');
+const logger = debug('hyperion-run-wirenboard');
 
 type RunWirenboard = {
   config: Config;

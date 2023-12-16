@@ -12,7 +12,7 @@ import { userSeed } from './user-seed';
 
 const config = new Config();
 
-const logger = debug('seed');
+const logger = debug('hyperion-seed');
 
 const seed = async () => {
   const prismaClient = new PrismaClient();

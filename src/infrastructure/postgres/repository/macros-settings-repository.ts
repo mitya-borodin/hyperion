@@ -5,7 +5,7 @@ import { ErrorType } from '../../../helpers/error-type';
 import { IMacrosSettingsRepository, MacrosSettings } from '../../../ports/macros-settings-repository';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';
 
-const logger = debug('macros-settings-repository');
+const logger = debug('hyperion-macros-settings-repository');
 
 export type MacrosSettingsRepositoryParameters = {
   client: PrismaClient;

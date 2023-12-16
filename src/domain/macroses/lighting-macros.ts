@@ -14,7 +14,7 @@ import { HyperionDevice } from '../hyperion-device';
 import { getControlId } from './get-control-id';
 import { Macros, MacrosAccept, MacrosType } from './macros';
 
-const logger = debug('hyperion-lighting-macros');
+const logger = debug('hyperion-hyperion-lighting-macros');
 
 export enum LightingLevel {
   HIGHT = 'HIGHT',

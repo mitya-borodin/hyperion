@@ -14,7 +14,7 @@ import { getControlId } from './get-control-id';
 import { LightingForce, LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
 import { MacrosType } from './macros';
 
-const logger = debug('macros-engine');
+const logger = debug('hyperion-macros-engine');
 
 /**
  * ! ADD_MACROS

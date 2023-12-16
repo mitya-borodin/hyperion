@@ -5,7 +5,7 @@ import { CodeType, createCode } from '../../helpers/create-code';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { UserOutput } from '../../ports/user-repository';
 
-const logger = debug('create-refresh-session');
+const logger = debug('hyperion-create-refresh-session');
 
 type CreateRefreshSessionParameters = {
   refreshSessionRepository: IRefreshSessionRepository;

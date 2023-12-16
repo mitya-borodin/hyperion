@@ -5,7 +5,7 @@ import { GeneratedSecret } from 'speakeasy';
 
 import { ErrorType } from '../../helpers/error-type';
 
-const logger = debug('two-fa');
+const logger = debug('hyperion-two-fa');
 
 export const createTwoFa = (): GeneratedSecret | Error => {
   try {

@@ -15,7 +15,7 @@ import {
 import { Config } from '../../config';
 import { toDomainUser } from '../../mappers/user-mapper';
 
-const logger = debug('user-repository');
+const logger = debug('hyperion-user-repository');
 
 export type UserRepositoryParameters = {
   config: Config;

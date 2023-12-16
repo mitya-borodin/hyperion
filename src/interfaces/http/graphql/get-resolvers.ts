@@ -41,7 +41,7 @@ import { toGraphQlSubscriptionMacros } from './mappers/to-graphql-subscription-m
 import { toGraphQlUser } from './mappers/to-graphql-user';
 import { SubscriptionDeviceType, SubscriptionMacrosType, SubscriptionTopic } from './subscription';
 
-const logger = debug('get-resolvers');
+const logger = debug('hyperion-get-resolvers');
 
 export type GetResolvers = {
   fastify: FastifyInstance;

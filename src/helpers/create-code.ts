@@ -4,7 +4,7 @@ import { v4 } from 'uuid';
 
 import { ErrorType } from './error-type';
 
-const logger = debug('create-code');
+const logger = debug('hyperion-create-code');
 
 export enum CodeType {
   EMAIL_CONFIRMATION = 'EMAIL_CONFIRMATION',

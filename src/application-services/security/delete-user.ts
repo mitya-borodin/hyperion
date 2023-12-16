@@ -4,7 +4,7 @@ import { UserStatus } from '../../domain/user';
 import { ErrorType } from '../../helpers/error-type';
 import { IUserRepository } from '../../ports/user-repository';
 
-const logger = debug('delete-user');
+const logger = debug('hyperion-delete-user');
 
 export type DeleteUser = {
   userRepository: IUserRepository;

@@ -3,7 +3,7 @@ import { MqttClient } from 'mqtt';
 
 import { ErrorType } from '../../../helpers/error-type';
 
-const logger = debug('publish-wirenboard-message');
+const logger = debug('hyperion-publish-wirenboard-message');
 
 type PublishWirenboardMessage = {
   client: MqttClient;

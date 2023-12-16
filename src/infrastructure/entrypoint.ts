@@ -11,7 +11,7 @@ type ExecutorParameters = {
 
 type Executor = (parameters: ExecutorParameters) => Promise<void>;
 
-const logger = debug('entrypoint');
+const logger = debug('hyperion-entrypoint');
 
 export const entrypoint = async (executor: Executor) => {
   const abortController = new AbortController();

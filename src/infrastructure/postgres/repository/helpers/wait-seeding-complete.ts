@@ -4,7 +4,7 @@ import debug from 'debug';
 
 import { SettingType } from '../../../../domain/settings';
 
-const logger = debug('wait-seeding-complete');
+const logger = debug('hyperion-wait-seeding-complete');
 
 type WaitPostgres = {
   signal: AbortSignal;

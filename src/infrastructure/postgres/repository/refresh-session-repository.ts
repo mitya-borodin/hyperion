@@ -8,7 +8,7 @@ import { CreateRefreshSession, IRefreshSessionRepository } from '../../../ports/
 import { UserOutput } from '../../../ports/user-repository';
 import { toDomainUser } from '../../mappers/user-mapper';
 
-const logger = debug('refresh-session-repository');
+const logger = debug('hyperion-refresh-session-repository');
 
 export type RefreshSessionRepositoryParameters = {
   client: PrismaClient;

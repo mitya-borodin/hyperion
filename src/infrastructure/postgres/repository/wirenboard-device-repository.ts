@@ -15,7 +15,7 @@ import { WirenboardDevice } from '../../external-resource-adapters/wirenboard/wi
 import { toDomainDevice } from '../../mappers/wirenboard-device-mapper';
 import { toPrismaWirenboardDevice } from '../../mappers/wirenboard-device-to-prisma-mapper';
 
-const logger = debug('wirenboard-device-repository');
+const logger = debug('hyperion-wirenboard-device-repository');
 
 type WirenboardDeviceRepositoryParameters = {
   client: PrismaClient;

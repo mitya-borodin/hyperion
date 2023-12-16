@@ -6,7 +6,7 @@ import { ErrorType } from '../../helpers/error-type';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { UserOutput } from '../../ports/user-repository';
 
-const logger = debug('refresh-access-token');
+const logger = debug('hyperion-refresh-access-token');
 
 export type RefreshAccessToken = {
   refreshSessionRepository: IRefreshSessionRepository;

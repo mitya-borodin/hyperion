@@ -1,7 +1,7 @@
 import debug from 'debug';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
-const logger = debug('get-health');
+const logger = debug('hyperion-get-health');
 
 export const getHealth = () => {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {

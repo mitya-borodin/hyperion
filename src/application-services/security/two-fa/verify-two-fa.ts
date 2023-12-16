@@ -7,7 +7,7 @@ import { IRefreshSessionRepository } from '../../../ports/refresh-session-reposi
 import { IUserRepository, UserOutput } from '../../../ports/user-repository';
 import { createRefreshSession } from '../create-refresh-session';
 
-const logger = debug('verify-two-fa');
+const logger = debug('hyperion-verify-two-fa');
 
 export type VerifyTwoFa = {
   userRepository: IUserRepository;

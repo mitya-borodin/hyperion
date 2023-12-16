@@ -5,7 +5,7 @@ import { ErrorType } from '../../../helpers/error-type';
 import { createTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
 import { IUserRepository } from '../../../ports/user-repository';
 
-const logger = debug('activate-two-fa');
+const logger = debug('hyperion-activate-two-fa');
 
 export type ActivateTwoFa = {
   userRepository: IUserRepository;

@@ -7,7 +7,7 @@ import { ErrorCode, ErrorMessage } from '../../helpers/error-type';
 import { Config } from '../../infrastructure/config';
 import { IUserRepository, UserOutput } from '../../ports/user-repository';
 
-const logger = debug('create-user');
+const logger = debug('hyperion-create-user');
 
 export type CreateUser = {
   config: Config;

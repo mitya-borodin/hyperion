@@ -3,7 +3,7 @@ import debug from 'debug';
 import { ErrorType } from '../../helpers/error-type';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 
-const logger = debug('sign-out');
+const logger = debug('hyperion-sign-out');
 
 export type SignOut = {
   refreshSessionRepository: IRefreshSessionRepository;

@@ -3,7 +3,7 @@ import { MqttClient, connect } from 'mqtt';
 
 import { Config } from '../../config';
 
-const logger = debug('get-mqtt-client');
+const logger = debug('hyperion-get-mqtt-client');
 
 type GetMqttClient = {
   config: Config;

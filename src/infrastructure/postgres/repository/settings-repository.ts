@@ -6,7 +6,7 @@ import { ErrorType } from '../../../helpers/error-type';
 import { CreateSettingParameters, ISettingsRepository } from '../../../ports/settings-repository';
 import { toDomainSettings } from '../../mappers/settings-mapper';
 
-const logger = debug('settings-repository');
+const logger = debug('hyperion-settings-repository');
 
 export type SettingsRepositoryParameters = {
   client: PrismaClient;

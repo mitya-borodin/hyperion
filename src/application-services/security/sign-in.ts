@@ -9,7 +9,7 @@ import { Config } from '../../infrastructure/config';
 import { verifyGeetestCaptcha } from '../../infrastructure/external-resource-adapters/geetest';
 import { IUserRepository, UserOutput } from '../../ports/user-repository';
 
-const logger = debug('sign-in');
+const logger = debug('hyperion-sign-in');
 
 export type SignIn = {
   config: Config;
