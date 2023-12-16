@@ -23,6 +23,7 @@ export type MacrosAccept = {
   devices: Map<string, HyperionDevice>;
   previous: Map<string, HyperionDeviceControl>;
   controls: Map<string, HyperionDeviceControl>;
+  device: HyperionDevice;
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

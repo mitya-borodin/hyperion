@@ -86,7 +86,7 @@ export class MacrosEngine {
     }
 
     for (const macros of this.macros.values()) {
-      macros.accept({ devices: this.devices, previous, controls: this.controls });
+      macros.accept({ devices: this.devices, previous, controls: this.controls, device });
     }
   };
 

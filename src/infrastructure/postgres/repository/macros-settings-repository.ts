@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import debug from 'debug';
-import { Logger } from 'pino';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { IMacrosSettingsRepository, MacrosSettings } from '../../../ports/macros-settings-repository';
@@ -39,6 +38,7 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
           id: parameters.id,
         },
         create: {
+          id: parameters.id,
           type: parameters.type,
           name: parameters.name,
           description: parameters.description,
