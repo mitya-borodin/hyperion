@@ -2,7 +2,7 @@ import EventEmitter from 'node:events';
 
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
-import throttle from 'lodash.throttle';
+import debounce from 'lodash.debounce';
 import { v4 } from 'uuid';
 
 import { ErrorType } from '../../helpers/error-type';
@@ -197,7 +197,13 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       }
     }
 
-    this.updateStateByOutputControls = throttle(this.updateStateByOutputControls.bind(this), 250);
+    /**
+     * ! Ждем 250 мс, между появлением сообщений от контроллера.
+     */
+    this.updateStateByOutputControls = debounce(this.updateStateByOutputControls.bind(this), 250, {
+      leading: false,
+      trailing: true,
+    });
   }
 
   toJS = () => {
@@ -427,20 +433,29 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
 
     const nextState = isSomeOn ? 'ON' : 'OFF';
 
-    if (this.state.switch !== nextState) {
-      this.state.switch = nextState;
+    const loggerContext = stringify({
+      name: this.name,
+      currentState: this.state,
+      lightings: this.settings.lightings.map((lighting) => {
+        return {
+          value: this.controls.get(getControlId(lighting))?.value,
+        };
+      }),
+      isSomeOn,
+      nextState,
+    });
 
-      logger('The internal state has been changed because one of the managed controls has changed state 🍋');
-      logger(
-        stringify({
-          name: this.name,
-          state: this.state,
-          lightings: this.settings.lightings.map((lighting) => this.controls.get(getControlId(lighting))),
-          isSomeOn,
-          nextState,
-        }),
-      );
+    if (this.state.switch === nextState) {
+      logger('The state of the macro corresponds to the state of the controller ✅');
+      logger(loggerContext);
+
+      return;
     }
+
+    logger('The internal state has been changed because one of the managed controls has changed state 🍋');
+    logger(loggerContext);
+
+    this.state.switch = nextState;
   }
 
   private computeNextControlState = (value: string) => {

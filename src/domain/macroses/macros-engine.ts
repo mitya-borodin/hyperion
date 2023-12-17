@@ -192,7 +192,7 @@ export class MacrosEngine {
         logger('The macro has been successfully installed ✅');
         logger(
           JSON.stringify(
-            { id: macros.id, type, name, description, labels, settings, appliedMAcrosSettings: macros.toJS() },
+            { id: macros.id, type, name, description, labels, settings, appliedMacrosSettings: macros.toJS() },
             null,
             2,
           ),
