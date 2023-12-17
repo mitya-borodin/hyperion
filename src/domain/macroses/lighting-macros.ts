@@ -2,6 +2,7 @@ import EventEmitter from 'node:events';
 
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
+import throttle from 'lodash.throttle';
 import { v4 } from 'uuid';
 
 import { ErrorType } from '../../helpers/error-type';
@@ -195,6 +196,8 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
         throw new Error(ErrorType.INVALID_ARGUMENTS);
       }
     }
+
+    this.updateStateByOutputControls = throttle(this.updateStateByOutputControls.bind(this), 250);
   }
 
   toJS = () => {
@@ -398,11 +401,22 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     return true;
   };
 
-  private updateStateByOutputControls = () => {
-    const isOn = this.settings.lightings.some((lighting) => {
-      const id = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
-
-      const control = this.controls.get(id);
+  /**
+   * * Определение состояния, по данным контроллера.
+   * * Нужно тротлить вызовы в диапазоне 100 - 500мс, для того, чтобы не видеть промежуточные состояния.
+   * * Часто промежуточные состояния видно в процессе выключения контролов, так как мы отправляем несколько
+   * * сообщение с value="0", и получаем сообщения от контроллера, что контрол переключился в состояние "0",
+   * * но у нас в моменте остались контролы в состоянии "1", мы переключаемся обратно в состояние "1", и
+   * * получается мы с агрились на промежуточное состояние.
+   *
+   * ! Процедура полезна в случаях:
+   * ! 1. Запуск процесса.
+   * ! 2. Изменение состояния контроллера другим макросом.
+   * ! 3. Изменение состояния контроллера прочими способами.
+   */
+  private updateStateByOutputControls() {
+    const isSomeOn = this.settings.lightings.some((lighting) => {
+      const control = this.controls.get(getControlId(lighting));
 
       if (control) {
         return control.value === '1';
@@ -411,15 +425,23 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
       return false;
     });
 
-    const nextState = isOn ? 'ON' : 'OFF';
+    const nextState = isSomeOn ? 'ON' : 'OFF';
 
     if (this.state.switch !== nextState) {
-      this.state.switch = isOn ? 'ON' : 'OFF';
+      this.state.switch = nextState;
 
       logger('The internal state has been changed because one of the managed controls has changed state 🍋');
-      logger(stringify({ name: this.name, state: this.state }));
+      logger(
+        stringify({
+          name: this.name,
+          state: this.state,
+          lightings: this.settings.lightings.map((lighting) => this.controls.get(getControlId(lighting))),
+          isSomeOn,
+          nextState,
+        }),
+      );
     }
-  };
+  }
 
   private computeNextControlState = (value: string) => {
     const nextControlState: LightingMacrosNextControlState = {
