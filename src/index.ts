@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/prefer-event-target */
 /* eslint-disable no-constant-condition */
 import EventEmitter from 'node:events';
+import { exit } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
 import { forever } from 'abort-controller-x';
@@ -34,7 +35,11 @@ export const run = () => {
     const macrosSettingsRepository = new MacrosSettingsRepository({ client: prismaClient });
     const macrosEngine = new MacrosEngine({ eventBus, wirenboardDeviceRepository, macrosSettingsRepository });
 
-    macrosEngine.start();
+    const engine = await macrosEngine.start();
+
+    if (engine instanceof Error) {
+      exit(1);
+    }
 
     defer(() => macrosEngine.stop());
 
