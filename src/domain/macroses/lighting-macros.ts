@@ -198,9 +198,9 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     }
 
     /**
-     * ! Ждем 250 мс, между появлением сообщений от контроллера.
+     * ! Ждем 500 мс, между появлением сообщений от контроллера.
      */
-    this.updateStateByOutputControls = debounce(this.updateStateByOutputControls.bind(this), 250, {
+    this.updateStateByOutputControls = debounce(this.updateStateByOutputControls.bind(this), 500, {
       leading: false,
       trailing: true,
     });
