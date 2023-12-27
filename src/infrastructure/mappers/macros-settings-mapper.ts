@@ -63,6 +63,10 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     type = MacrosType.MASTER_SWITCH;
   }
 
+  if (prismaMacros.type === MacrosType.UPS) {
+    type = MacrosType.UPS;
+  }
+
   return {
     id: prismaMacros.id,
     type,
