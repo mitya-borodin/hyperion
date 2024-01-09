@@ -12,6 +12,7 @@ import { MacrosEngine } from './domain/macroses/macros-engine';
 import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
+import { runZigbee2mqtt } from './infrastructure/external-resource-adapters/zigbe2mqtt';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
 import { MacrosSettingsRepository } from './infrastructure/postgres/repository/macros-settings-repository';
 import { RefreshSessionRepository } from './infrastructure/postgres/repository/refresh-session-repository';
@@ -46,6 +47,10 @@ export const run = () => {
     const wirenboard = await runWirenboard({ config, eventBus });
 
     defer(() => wirenboard.stop());
+
+    const zigbee2mqtt = await runZigbee2mqtt({ config, eventBus });
+
+    defer(() => zigbee2mqtt.stop());
 
     const stopCollectWirenboardDeviceData = runCollectWirenboardDeviceData({
       wirenboardDeviceRepository,
