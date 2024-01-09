@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { HardwareDevice } from '../domain/hardware-device';
 import { HyperionDevice } from '../domain/hyperion-device';
-import { WirenboardDevice } from '../infrastructure/external-resource-adapters/wirenboard/wirenboard-device';
 
-export type MarkupWirenboardDevice = {
+export type MarkupHyperionDevice = {
   deviceId: string;
 
   markup?: {
@@ -17,7 +17,7 @@ export type MarkupWirenboardDevice = {
   labels?: string[];
 };
 
-export type MarkupWirenboardControl = {
+export type MarkupHyperionControl = {
   deviceId: string;
   controlId: string;
 
@@ -40,14 +40,14 @@ export type SetControlValue = {
   value: string;
 };
 
-export interface IWirenboardDeviceRepository {
-  apply(wirenboardDevice: WirenboardDevice): Promise<Error | HyperionDevice>;
+export interface IHyperionDeviceRepository {
+  apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice>;
 
   getAll(): Promise<Error | HyperionDevice[]>;
 
-  markupDevice(parameters: MarkupWirenboardDevice): Promise<Error | HyperionDevice>;
+  markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionDevice>;
 
-  markupControl(parameters: MarkupWirenboardControl): Promise<Error | HyperionDevice>;
+  markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionDevice>;
 
   setControlValue(parameters: SetControlValue): Promise<Error | HyperionDevice>;
 }

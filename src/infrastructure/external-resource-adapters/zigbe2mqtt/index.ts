@@ -1,42 +1,64 @@
 /* eslint-disable unicorn/prefer-event-target */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'node:events';
-import { access } from 'node:fs';
 
 import debug from 'debug';
 
 import { EventBus } from '../../../domain/event-bus';
+import { HardwareDevice } from '../../../domain/hardware-device';
 import { isJson } from '../../../helpers/is-json';
 import { stringify } from '../../../helpers/json-stringify';
+import { IHyperionDeviceRepository } from '../../../ports/hyperion-device-repository';
 import { Config } from '../../config';
-import { getMqttClient } from '../wirenboard/get-mqtt-client';
+import { getMqttClient } from '../get-mqtt-client';
+import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
 import { decodeAccessBitMask } from './decode-access-bit-mask';
 
 const logger = debug('hyperion-run-zigbee2mqtt');
 
-type RunWirenboard = {
+type RunZigbee2mqtt = {
   config: Config;
   eventBus: EventEmitter;
+  hyperionDeviceRepository: IHyperionDeviceRepository;
 };
 
-type RunWirenboardResult = {
+type RunZigbee2mqttResult = {
   stop: () => void;
 };
 
-export type PublishZigbee2mqttMessage = {
-  topic: string;
-  message: string;
-};
+const ieeeAddressByFriendlyName = new Map<string, string>();
 
-const ROOT_TOPIC = 'zigbee2mqtt/#';
-
+const DRIVER = 'zigbee2mqtt';
 /**
  *
  * ! https://www.zigbee2mqtt.io
  */
-export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
-  const client = await getMqttClient({ config, rootTopic: ROOT_TOPIC });
+export const runZigbee2mqtt = async ({
+  config,
+  eventBus,
+  hyperionDeviceRepository,
+}: RunZigbee2mqtt): Promise<Error | RunZigbee2mqttResult> => {
+  /**
+   * ! Подготовка карты, для получения ieee_address по friendly_name,
+   * ! чтобы мы могли задавать любой FN любым способом, и не порождать артефакты.
+   */
+  const devices = await hyperionDeviceRepository.getAll();
+
+  if (devices instanceof Error) {
+    return devices;
+  }
+
+  for (const device of devices) {
+    if (device.driver === DRIVER) {
+      ieeeAddressByFriendlyName.set(device.meta?.friendly_name as string, device.id);
+    }
+  }
+
+  /**
+   * * PROCESSING STATE CHANGES OF END DEVICES
+   */
+  const client = await getMqttClient({ config, rootTopic: `${config.zigbee2mqtt.baseTopic}/#` });
 
   /**
    * ! Получение состояние zigbee-bridge
@@ -49,7 +71,7 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
      * * Optional: MQTT base topic for Zigbee2MQTT MQTT messages (default: zigbee2mqtt)
      * * base_topic: zigbee2mqtt
      */
-    if (!topic.startsWith('zigbee2mqtt')) {
+    if (!topic.startsWith(config.zigbee2mqtt.baseTopic)) {
       return;
     }
 
@@ -65,7 +87,7 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
     /**
      * ! https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-logging
      */
-    if (topic.startsWith('zigbee2mqtt/bridge/logging')) {
+    if (topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/logging`)) {
       logger('A log was received from zigbee2mqtt ⬇️  📑 🪵 ⬇️', stringify(JSON.parse(message)));
 
       return;
@@ -75,7 +97,7 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
      * ! https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-devices
      * ! Получаем полный список устройств подключенных к мосту
      */
-    if (topic.startsWith('zigbee2mqtt/bridge/devices')) {
+    if (topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/devices`)) {
       logger('Information about all zigbee devices has been received ⬇️  ✅ ⬇️');
 
       const devices = JSON.parse(message);
@@ -114,6 +136,14 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
           }),
         );
 
+        const deviceId = device.ieee_address;
+        const friendlyName = device.friendly_name;
+
+        /**
+         * ! UPDATE MAP FOR HANDLE CHANGES BY FRIENDLY NAME
+         */
+        ieeeAddressByFriendlyName.set(friendlyName, deviceId);
+
         for (const expose of device.definition.exposes) {
           const { canBeFoundInPublishedState, canBeSet, canBeGet } = decodeAccessBitMask(expose.access);
 
@@ -121,7 +151,38 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
            * ! GENERAL
            */
           if (expose.type === 'binary') {
-            logger('BINARY');
+            const wirenboardDevice: HardwareDevice = {
+              id: deviceId,
+              driver: DRIVER,
+              title: {
+                ru: friendlyName,
+                en: friendlyName,
+              },
+              error: undefined,
+              meta: device,
+              controls: {
+                [expose.property]: {
+                  id: expose.property,
+                  title: {
+                    ru: expose.label,
+                    en: expose.label,
+                  },
+                  order: undefined,
+                  readonly: !canBeSet,
+                  type: expose.type,
+                  units: expose.unit,
+                  max: expose.value_max,
+                  min: expose.value_min,
+                  precision: 2,
+                  value: undefined,
+                  topic: canBeSet
+                    ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.property}`
+                    : undefined,
+                  error: undefined,
+                  meta: expose,
+                },
+              },
+            };
           }
 
           if (expose.type === 'numeric') {
@@ -183,12 +244,19 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
      * ! онлайн или офлайн выполняется в процессе zigbee2mqtt.
      */
     if (topic.endsWith('/availability')) {
-      logger('Information about device availability was obtained from the zigbee2mqtt process ⬇️  🌍 ⬇️ ', message);
+      logger('Information about device availability was obtained from the zigbee2mqtt process ⬇️  🌍 ⬇️ ', {
+        topic,
+        ...JSON.parse(message),
+      });
 
       return;
     }
 
-    if (topic.startsWith('zigbee2mqtt/bridge') || topic.endsWith('/get') || topic.endsWith('/set')) {
+    if (
+      topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge`) ||
+      topic.endsWith('/get') ||
+      topic.endsWith('/set')
+    ) {
       return;
     }
 
@@ -202,21 +270,23 @@ export const runZigbee2mqtt = async ({ config, eventBus }: RunWirenboard): Promi
   });
 
   /**
-   * ! Изменение состояния zigbee устройств через mosquitto cloud -> mosquitto wb -> zigbee2mqtt -> zigbee hardware
+   * * CHANGING THE STATE OF TERMINAL DEVICES
+   *
+   * ! Изменение состояния zigbee устройств через
+   * ! mosquitto cloud -> mosquitto wb -> zigbee2mqtt -> zigbee hardware -> end device
    */
-  const publishMessage = ({ topic, message }: PublishZigbee2mqttMessage) => {
-    logger('Publish message');
-    logger(JSON.stringify({ topic, message }, null, 2));
+  const publishMessage = ({ topic, message }: MqttMessage) => {
+    publishMqttMessage({ client, topic, message });
   };
 
-  eventBus.on(EventBus.ZIGBEE_2_MQTT_PUBLISH_MESSAGE, publishMessage);
+  eventBus.on(EventBus.ZIGBEE_2_MQTT_SEND_MESSAGE, publishMessage);
 
   return {
     stop: () => {
-      eventBus.off(EventBus.ZIGBEE_2_MQTT_PUBLISH_MESSAGE, publishMessage);
+      eventBus.off(EventBus.ZIGBEE_2_MQTT_SEND_MESSAGE, publishMessage);
 
       client.removeAllListeners();
-      client.unsubscribe(ROOT_TOPIC);
+      client.unsubscribe(`${config.zigbee2mqtt.baseTopic}/#`);
       client.end();
     },
   };

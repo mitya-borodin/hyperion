@@ -1,6 +1,6 @@
-import { JsonObject, JsonValue } from '../../../helpers/json-types';
+import { JsonObject, JsonValue } from '../helpers/json-types';
 
-export type WirenboardDevice = {
+export type HardwareDevice = {
   id: string;
   driver?: string;
   title?: {
@@ -22,6 +22,9 @@ export type WirenboardDevice = {
       units?: string;
       max?: number;
       min?: number;
+      /**
+       * Точность, до какого знака скруглять, по-умолчанию 2
+       */
       precision?: number;
       value?: string;
       topic?: string;

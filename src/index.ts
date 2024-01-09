@@ -6,18 +6,18 @@ import { exit } from 'node:process';
 import { PrismaClient } from '@prisma/client';
 import { forever } from 'abort-controller-x';
 
-import { runCollectWirenboardDeviceData } from './application-services/apply-wirenboard-device';
+import { runCollectHardwareDevice } from './application-services/run-collect-hardware-device';
 import { EventBus } from './domain/event-bus';
 import { MacrosEngine } from './domain/macroses/macros-engine';
 import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
 import { runZigbee2mqtt } from './infrastructure/external-resource-adapters/zigbe2mqtt';
+import { HyperionDeviceRepository } from './infrastructure/postgres/repository/hardware-device-repository';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
 import { MacrosSettingsRepository } from './infrastructure/postgres/repository/macros-settings-repository';
 import { RefreshSessionRepository } from './infrastructure/postgres/repository/refresh-session-repository';
 import { UserRepository } from './infrastructure/postgres/repository/user-repository';
-import { WirenboardDeviceRepository } from './infrastructure/postgres/repository/wirenboard-device-repository';
 import { createHttpInterface } from './interfaces/http';
 
 EventEmitter.defaultMaxListeners = 100;
@@ -32,10 +32,13 @@ export const run = () => {
 
     const userRepository = new UserRepository({ config, client: prismaClient });
     const refreshSessionRepository = new RefreshSessionRepository({ client: prismaClient });
-    const wirenboardDeviceRepository = new WirenboardDeviceRepository({ client: prismaClient });
+    const hyperionDeviceRepository = new HyperionDeviceRepository({ client: prismaClient });
     const macrosSettingsRepository = new MacrosSettingsRepository({ client: prismaClient });
-    const macrosEngine = new MacrosEngine({ eventBus, wirenboardDeviceRepository, macrosSettingsRepository });
+    const macrosEngine = new MacrosEngine({ eventBus, hyperionDeviceRepository, macrosSettingsRepository });
 
+    /**
+     * ! RUN MACROS ENGINE
+     */
     const engine = await macrosEngine.start();
 
     if (engine instanceof Error) {
@@ -44,27 +47,40 @@ export const run = () => {
 
     defer(() => macrosEngine.stop());
 
+    /**
+     * ! RUN ZIGBEE_2_MQTT
+     */
+    const zigbee2mqtt = await runZigbee2mqtt({ config, eventBus, hyperionDeviceRepository });
+
+    if (zigbee2mqtt instanceof Error) {
+      exit(1);
+    }
+
+    defer(() => zigbee2mqtt.stop());
+
+    /**
+     * ! RUN WIRENBOARD
+     */
     const wirenboard = await runWirenboard({ config, eventBus });
 
     defer(() => wirenboard.stop());
 
-    const zigbee2mqtt = await runZigbee2mqtt({ config, eventBus });
-
-    defer(() => zigbee2mqtt.stop());
-
-    const stopCollectWirenboardDeviceData = runCollectWirenboardDeviceData({
-      wirenboardDeviceRepository,
+    /**
+     * ! RUN COLLECT HARDWARE DEVICE
+     */
+    const stopCollectHardwareDevice = runCollectHardwareDevice({
+      hyperionDeviceRepository,
       eventBus,
     });
 
-    defer(() => stopCollectWirenboardDeviceData());
+    defer(() => stopCollectHardwareDevice());
 
     const fastify = await createHttpInterface({
       config,
       eventBus,
       userRepository,
       refreshSessionRepository,
-      wirenboardDeviceRepository,
+      hyperionDeviceRepository,
       macrosEngine,
     });
 

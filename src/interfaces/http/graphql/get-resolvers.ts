@@ -28,9 +28,9 @@ import { JwtPayload } from '../../../domain/user';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../../helpers/error-type';
 import { Config } from '../../../infrastructure/config';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
+import { IHyperionDeviceRepository } from '../../../ports/hyperion-device-repository';
 import { IRefreshSessionRepository } from '../../../ports/refresh-session-repository';
 import { IUserRepository } from '../../../ports/user-repository';
-import { IWirenboardDeviceRepository } from '../../../ports/wirenboard-device-repository';
 
 import { emitGqlDeviceSubscriptionEvent } from './helpers/emit-gql-device-subscription-event';
 import { emitGqlMacrosSubscriptionEvent } from './helpers/emit-gql-macros-subscription-event';
@@ -49,7 +49,7 @@ export type GetResolvers = {
   eventBus: EventEmitter;
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
-  wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  hyperionDeviceRepository: IHyperionDeviceRepository;
   macrosEngine: MacrosEngine;
 };
 
@@ -60,7 +60,7 @@ export const getResolvers = ({
   eventBus,
   userRepository,
   refreshSessionRepository,
-  wirenboardDeviceRepository,
+  hyperionDeviceRepository,
   macrosEngine,
 }: GetResolvers): IResolvers => {
   return {
@@ -398,7 +398,7 @@ export const getResolvers = ({
        * ! HARDWARE
        */
       setControlValue: async (root, { input }, context) => {
-        const hyperionDevice = await wirenboardDeviceRepository.setControlValue({
+        const hyperionDevice = await hyperionDeviceRepository.setControlValue({
           deviceId: input.deviceId,
           controlId: input.controlId,
           value: input.value,
@@ -437,7 +437,7 @@ export const getResolvers = ({
         return toGraphQlDevice(hyperionDevice);
       },
       markupDevice: async (root, { input }, context) => {
-        const hyperionDevice = await wirenboardDeviceRepository.markupDevice({
+        const hyperionDevice = await hyperionDeviceRepository.markupDevice({
           deviceId: input.deviceId,
           labels: input.labels,
           markup: input.markup,
@@ -452,7 +452,7 @@ export const getResolvers = ({
         return toGraphQlDevice(hyperionDevice);
       },
       markupControl: async (root, { input }, context) => {
-        const hyperionDevice = await wirenboardDeviceRepository.markupControl({
+        const hyperionDevice = await hyperionDeviceRepository.markupControl({
           deviceId: input.deviceId,
           controlId: input.controlId,
           labels: input.labels,
@@ -550,7 +550,7 @@ export const getResolvers = ({
     Subscription: {
       device: {
         subscribe: async (root, _, { pubsub }) => {
-          const hyperionDevices = await wirenboardDeviceRepository.getAll();
+          const hyperionDevices = await hyperionDeviceRepository.getAll();
 
           if (hyperionDevices instanceof Error) {
             throw hyperionDevices;

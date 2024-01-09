@@ -3,38 +3,38 @@
 import { Control, PrismaClient } from '@prisma/client';
 import debug from 'debug';
 
+import { HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
 import {
-  IWirenboardDeviceRepository,
-  MarkupWirenboardControl,
-  MarkupWirenboardDevice,
+  IHyperionDeviceRepository,
+  MarkupHyperionControl,
+  MarkupHyperionDevice,
   SetControlValue,
-} from '../../../ports/wirenboard-device-repository';
-import { WirenboardDevice } from '../../external-resource-adapters/wirenboard/wirenboard-device';
-import { toDomainDevice } from '../../mappers/wirenboard-device-mapper';
-import { toPrismaWirenboardDevice } from '../../mappers/wirenboard-device-to-prisma-mapper';
+} from '../../../ports/hyperion-device-repository';
+import { toDomainDevice } from '../../mappers/hyperion-device-mapper';
+import { toPrismaWirenboardDevice } from '../../mappers/hyperion-device-to-prisma-mapper';
 
-const logger = debug('hyperion-wirenboard-device-repository');
+const logger = debug('hyperion-device-repository');
 
-type WirenboardDeviceRepositoryParameters = {
+type HyperionDeviceRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
+export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   private client: PrismaClient;
 
-  constructor({ client }: WirenboardDeviceRepositoryParameters) {
+  constructor({ client }: HyperionDeviceRepositoryParameters) {
     this.client = client;
   }
 
-  async apply(wirenboardDevice: WirenboardDevice): Promise<Error | HyperionDevice> {
-    const { device, controls } = toPrismaWirenboardDevice(wirenboardDevice);
+  async apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice> {
+    const { device, controls } = toPrismaWirenboardDevice(hardwareDevice);
 
     try {
       if (!device.id) {
-        logger('To apply the device information, you need to pass the identifier 🚨');
-        logger(JSON.stringify(wirenboardDevice, null, 2));
+        logger('To apply the hardware device information, you need to pass the identifier 🚨');
+        logger(JSON.stringify(hardwareDevice, null, 2));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -63,7 +63,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
       const prismaControls = await Promise.all(
         controls.map(async (control) => {
           if (!control.id) {
-            logger('To apply the device control information, you need to pass the identifier 🚨');
+            logger('To apply the hardware device control information, you need to pass the identifier 🚨');
             logger(JSON.stringify(control, null, 2));
 
             return new Error(ErrorType.INVALID_ARGUMENTS);
@@ -80,7 +80,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
               units: control.units,
               max: control.max,
               min: control.min,
-              precision: control.precision,
+              precision: control.precision ?? 2,
               value: control.value,
               topic: control.topic,
               error: control.error,
@@ -96,7 +96,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
               units: control.units,
               max: control.max,
               min: control.min,
-              precision: control.precision,
+              precision: control.precision ?? 2,
               value: control.value,
               topic: control.topic,
               error: control.error,
@@ -142,8 +142,8 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
       return hyperionDevice;
     } catch (error) {
-      logger('Unable to apply wirenboard device 🚨');
-      logger(JSON.stringify({ wirenboardDevice, device, controls, error }, null, 2));
+      logger('Unable to apply hardware device 🚨');
+      logger(JSON.stringify({ hardwareDevice, device, controls, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -159,17 +159,17 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
       return prismaDevices.map((prismaDevice) => toDomainDevice(prismaDevice));
     } catch (error) {
-      logger('Unable to markup wirenboard device 🚨');
+      logger('Unable to get all hardware devices 🚨');
       logger(JSON.stringify({ error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
   }
 
-  async markupDevice(parameters: MarkupWirenboardDevice): Promise<Error | HyperionDevice> {
+  async markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionDevice> {
     try {
       if (!parameters.markup && !parameters.labels) {
-        logger('To mark up the device, you need to pass the markup parameters 🚨');
+        logger('To mark up the hyperion device, you need to pass the markup parameters 🚨');
         logger(JSON.stringify({ parameters }, null, 2));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
@@ -190,17 +190,17 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
       return toDomainDevice(prismaDevice);
     } catch (error) {
-      logger('Unable to markup wirenboard device 🚨');
+      logger('Unable to markup hyperion device 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
   }
 
-  async markupControl(parameters: MarkupWirenboardControl): Promise<Error | HyperionDevice> {
+  async markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionDevice> {
     try {
       if (!parameters.markup && !parameters.labels) {
-        logger('To mark up the control, you need to pass the markup parameters 🚨');
+        logger('To mark up the hyperion control, you need to pass the markup parameters 🚨');
         logger(JSON.stringify({ parameters }, null, 2));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
@@ -224,7 +224,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
       return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
     } catch (error) {
-      logger('Unable to markup wirenboard control 🚨');
+      logger('Unable to markup hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
@@ -250,7 +250,7 @@ export class WirenboardDeviceRepository implements IWirenboardDeviceRepository {
 
       return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
     } catch (error) {
-      logger('Unable to markup wirenboard control 🚨');
+      logger('Unable to set value for hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);

@@ -15,7 +15,6 @@ export type HyperionDeviceControl = {
   max: number;
   min: number;
   precision: number;
-  possibleValues?: string[];
   value: string;
   topic?: string;
   error: string;

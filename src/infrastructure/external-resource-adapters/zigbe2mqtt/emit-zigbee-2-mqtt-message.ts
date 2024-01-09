@@ -9,8 +9,8 @@ type EmitMessage = {
   message: string;
 };
 
-export const emitWirenboardMessage = ({ eventBus, topic, message }: EmitMessage) => {
-  eventBus.emit(EventBus.WB_PUBLISH_MESSAGE, {
+export const emitZigbee2mqttMessage = ({ eventBus, topic, message }: EmitMessage) => {
+  eventBus.emit(EventBus.ZIGBEE_2_MQTT_SEND_MESSAGE, {
     topic,
     message,
   } as MqttMessage);

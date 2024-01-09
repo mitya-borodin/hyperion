@@ -61,6 +61,10 @@ export class Config {
     readonly password: string;
   };
 
+  public readonly zigbee2mqtt: {
+    readonly baseTopic: string;
+  };
+
   public readonly masterUser: {
     readonly email: string;
     readonly password: string;
@@ -114,6 +118,10 @@ export class Config {
       protocol: this.toMosquittoProtocol(process.env.MOSQUITTO_PORT ?? 'mqtt'),
       username: process.env.MOSQUITTO_USERNAME ?? 'wirenboard',
       password: process.env.MOSQUITTO_PASSWORD ?? 'password',
+    };
+
+    this.zigbee2mqtt = {
+      baseTopic: process.env.ZIGBEE_2_MQTT_BASE_TOPIC ?? 'zigbee2mqtt',
     };
 
     this.masterUser = {

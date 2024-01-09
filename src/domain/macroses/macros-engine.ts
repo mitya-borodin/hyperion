@@ -4,8 +4,8 @@ import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ErrorType } from '../../helpers/error-type';
+import { IHyperionDeviceRepository } from '../../ports/hyperion-device-repository';
 import { IMacrosSettingsRepository } from '../../ports/macros-settings-repository';
-import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -50,21 +50,21 @@ type Setup = {
 
 type MacrosEngineParameters = {
   eventBus: EventEmitter;
-  wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  hyperionDeviceRepository: IHyperionDeviceRepository;
   macrosSettingsRepository: IMacrosSettingsRepository;
 };
 
 export class MacrosEngine {
   readonly eventBus: EventEmitter;
-  readonly wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  readonly hyperionDeviceRepository: IHyperionDeviceRepository;
   readonly macrosSettingsRepository: IMacrosSettingsRepository;
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly macros: Map<string, M>;
 
-  constructor({ eventBus, wirenboardDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
+  constructor({ eventBus, hyperionDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
     this.eventBus = eventBus;
-    this.wirenboardDeviceRepository = wirenboardDeviceRepository;
+    this.hyperionDeviceRepository = hyperionDeviceRepository;
     this.macrosSettingsRepository = macrosSettingsRepository;
 
     this.devices = new Map();
@@ -91,7 +91,7 @@ export class MacrosEngine {
   };
 
   start = async () => {
-    const devices = await this.wirenboardDeviceRepository.getAll();
+    const devices = await this.hyperionDeviceRepository.getAll();
 
     if (devices instanceof Error) {
       return devices;
@@ -130,13 +130,13 @@ export class MacrosEngine {
       }),
     );
 
-    this.eventBus.on(EventBus.HD_APPEARED, this.accept);
+    this.eventBus.on(EventBus.HYPERION_DEVICE_APPEARED, this.accept);
 
     logger('The macros engine was run successful ✅ 🚀');
   };
 
   stop = () => {
-    this.eventBus.off(EventBus.HD_APPEARED, this.accept);
+    this.eventBus.off(EventBus.HYPERION_DEVICE_APPEARED, this.accept);
 
     logger('The macros engine was stopped 👷‍♂️ 🛑');
   };

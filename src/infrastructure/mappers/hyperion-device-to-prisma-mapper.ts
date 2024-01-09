@@ -1,22 +1,22 @@
 /* eslint-disable unicorn/no-array-reduce */
 
-import { WirenboardDevice } from '../external-resource-adapters/wirenboard/wirenboard-device';
+import { HardwareDevice } from '../../domain/hardware-device';
 
-export const toPrismaWirenboardDevice = (wirenboardDevice: WirenboardDevice) => {
+export const toPrismaWirenboardDevice = (hardwareDevice: HardwareDevice) => {
   const device = {
-    id: wirenboardDevice.id,
-    driver: wirenboardDevice.driver,
-    title: wirenboardDevice.title
+    id: hardwareDevice.id,
+    driver: hardwareDevice.driver,
+    title: hardwareDevice.title
       ? JSON.stringify({
-          ru: wirenboardDevice.title?.ru,
-          en: wirenboardDevice.title?.en,
+          ru: hardwareDevice.title?.ru,
+          en: hardwareDevice.title?.en,
         })
       : undefined,
-    error: wirenboardDevice.error ? JSON.stringify(wirenboardDevice.error) : undefined,
-    meta: wirenboardDevice.meta ? JSON.stringify(wirenboardDevice.meta) : undefined,
+    error: hardwareDevice.error ? JSON.stringify(hardwareDevice.error) : undefined,
+    meta: hardwareDevice.meta ? JSON.stringify(hardwareDevice.meta) : undefined,
   };
 
-  const controls = Object.values(wirenboardDevice.controls ?? {}).map((control) => {
+  const controls = Object.values(hardwareDevice.controls ?? {}).map((control) => {
     return {
       id: control.id,
       title: control.title

@@ -5,12 +5,11 @@ import { EventEmitter } from 'node:events';
 import debug from 'debug';
 
 import { EventBus } from '../../../domain/event-bus';
+import { HardwareDevice } from '../../../domain/hardware-device';
 import { isJson } from '../../../helpers/is-json';
 import { Config } from '../../config';
-
-import { getMqttClient } from './get-mqtt-client';
-import { publishWirenboardMessage } from './publish-wirenboard-message';
-import { WirenboardDevice } from './wirenboard-device';
+import { getMqttClient } from '../get-mqtt-client';
+import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
 const logger = debug('hyperion-run-wirenboard');
 
@@ -21,11 +20,6 @@ type RunWirenboard = {
 
 type RunWirenboardResult = {
   stop: () => void;
-};
-
-export type PublishWirenboardMessage = {
-  topic: string;
-  message: string;
 };
 
 const ROOT_TOPIC = '/devices/#';
@@ -84,7 +78,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (error !== 'error' && isJson(message)) {
             const { driver, title, ...meta } = JSON.parse(message);
 
-            const wirenboardDevice: WirenboardDevice = {
+            const hardwareDevice: HardwareDevice = {
               id: device,
               driver,
               title: {
@@ -94,7 +88,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               meta,
             };
 
-            eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
           }
 
           /**
@@ -113,19 +107,19 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
            */
           if (error === 'error') {
             if (isJson(message)) {
-              const wirenboardDevice: WirenboardDevice = {
+              const hardwareDevice: HardwareDevice = {
                 id: device,
                 error: JSON.parse(message),
               };
 
-              eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+              eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
             } else {
-              const wirenboardDevice: WirenboardDevice = {
+              const hardwareDevice: HardwareDevice = {
                 id: device,
                 error: message,
               };
 
-              eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+              eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
             }
           }
         }
@@ -154,7 +148,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (!error) {
             const { title, order, readonly, type, units, max, min, precision, ...meta } = JSON.parse(message);
 
-            const wirenboardDevice: WirenboardDevice = {
+            const hardwareDevice: HardwareDevice = {
               id: device,
               controls: {
                 [control]: {
@@ -176,7 +170,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               },
             };
 
-            eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
           }
 
           /**
@@ -199,7 +193,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
            * * Не использовать канал пока не получим сообщение из devices-meta и controls-meta
            */
           if (error === 'error') {
-            const wirenboardDevice: WirenboardDevice = {
+            const hardwareDevice: HardwareDevice = {
               id: device,
               controls: {
                 [control]: {
@@ -209,7 +203,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               },
             };
 
-            eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
           }
         }
       } catch (error) {
@@ -239,7 +233,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
          */
         const [device, type, control] = topic.replace('/devices/', '').split('/');
 
-        const wirenboardDevice: WirenboardDevice = {
+        const hardwareDevice: HardwareDevice = {
           id: device,
           controls: {
             [control]: {
@@ -249,7 +243,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           },
         };
 
-        eventBus.emit(EventBus.WB_APPEARED, wirenboardDevice);
+        eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
       } catch (error) {
         logger('Could not get controls value 🚨');
         logger(JSON.stringify({ error, topic, message: message.toString() }, null, 2));
@@ -260,8 +254,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
   /**
    * ! Изменение состояния контроллера
    */
-  const publishMessage = ({ topic, message }: PublishWirenboardMessage) => {
-    publishWirenboardMessage({ client, topic, message });
+  const publishMessage = ({ topic, message }: MqttMessage) => {
+    publishMqttMessage({ client, topic, message });
   };
 
   eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);

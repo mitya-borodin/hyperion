@@ -15,18 +15,17 @@ import { fastifyRawBody } from 'fastify-raw-body';
 import { GraphQLResolveInfo } from 'graphql';
 import HttpStatusCodes from 'http-status-codes';
 import Mercurius from 'mercurius';
-import MercuriusAuth, { MercuriusAuthContext } from 'mercurius-auth';
+import MercuriusAuth from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
-import { Logger } from 'pino';
 
 import { MacrosEngine } from '../../domain/macroses/macros-engine';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
+import { IHyperionDeviceRepository } from '../../ports/hyperion-device-repository';
 import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
 import { IUserRepository } from '../../ports/user-repository';
-import { IWirenboardDeviceRepository } from '../../ports/wirenboard-device-repository';
 
 import { getResolvers } from './graphql/get-resolvers';
 import { routerFastifyPlugin } from './router';
@@ -38,7 +37,7 @@ type CreateHttpInterfaceParameters = {
   eventBus: EventEmitter;
   userRepository: IUserRepository;
   refreshSessionRepository: IRefreshSessionRepository;
-  wirenboardDeviceRepository: IWirenboardDeviceRepository;
+  hyperionDeviceRepository: IHyperionDeviceRepository;
   macrosEngine: MacrosEngine;
 };
 
@@ -57,7 +56,7 @@ export const createHttpInterface = async ({
   eventBus,
   userRepository,
   refreshSessionRepository,
-  wirenboardDeviceRepository,
+  hyperionDeviceRepository,
   macrosEngine,
 }: CreateHttpInterfaceParameters): Promise<Promise<FastifyInstance>> => {
   const fastify = Fastify({
@@ -161,7 +160,7 @@ export const createHttpInterface = async ({
       eventBus,
       userRepository,
       refreshSessionRepository,
-      wirenboardDeviceRepository,
+      hyperionDeviceRepository,
       macrosEngine,
     }),
     graphiql: !config.isProduction,
