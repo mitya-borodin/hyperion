@@ -21,6 +21,7 @@ enum ControlType {
   SWITCH
   ILLUMINATION
   TEXT
+  ENUM
   VALUE
   VOLTAGE
   TEMPERATURE

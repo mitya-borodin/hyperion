@@ -12,10 +12,18 @@ export const toDomainDevice = (
 
   return {
     id: prismaHyperionDevice.deviceId,
-    driver: prismaHyperionDevice.driver,
+
     title: JSON.parse(prismaHyperionDevice.title),
+    order: prismaHyperionDevice.order,
+
+    driver: prismaHyperionDevice.driver,
+
     error: JSON.parse(prismaHyperionDevice.error),
+
     meta: JSON.parse(prismaHyperionDevice.meta),
+
+    labels: prismaHyperionDevice.labels,
+
     markup: {
       title: {
         ru: markup?.title?.ru ?? '',
@@ -25,7 +33,7 @@ export const toDomainDevice = (
       order: markup?.order ?? -1,
       color: markup?.color ?? '#FFFFFF',
     },
-    labels: prismaHyperionDevice.labels,
+
     controls: prismaHyperionDevice.controls
       .map<HyperionDeviceControl>((control) => {
         const markup = JSON.parse(control.markup);
@@ -45,6 +53,10 @@ export const toDomainDevice = (
 
         if (control.type === ControlType.TEXT) {
           type = ControlType.TEXT;
+        }
+
+        if (control.type === ControlType.ENUM) {
+          type = ControlType.ENUM;
         }
 
         if (control.type === ControlType.VALUE) {
@@ -85,18 +97,38 @@ export const toDomainDevice = (
 
         return {
           id: control.controlId,
+
           title: JSON.parse(control.title),
           order: control.order,
-          readonly: control.readonly,
+
           type,
+
+          readonly: control.readonly,
+
           units: control.units,
+
           max: control.max,
           min: control.min,
+          step: control.step,
           precision: control.precision,
+
+          on: control.on,
+          off: control.off,
+          toggle: control.toggle,
+
+          enum: control.enum,
+
           value: control.value,
+          presets: JSON.parse(control.presets),
+
           topic: control.topic,
+
           error: control.error,
+
           meta: JSON.parse(control.meta),
+
+          labels: control.labels,
+
           markup: {
             title: {
               ru: markup?.title?.ru ?? '',
@@ -106,7 +138,6 @@ export const toDomainDevice = (
             order: markup?.order ?? -1,
             color: markup?.color ?? '#FFFFFF',
           },
-          labels: control.labels,
         };
       })
       .sort((a, b) => {

@@ -4,13 +4,20 @@ import { HyperionDeviceControl } from './hyperion-control';
 
 export type HyperionDevice = {
   id: string;
-  driver: string;
+
   title: {
     ru: string;
     en: string;
   };
+  order: number;
+
+  driver: string;
+
   error: JsonValue;
+
   meta: JsonObject;
+
+  labels: string[];
 
   markup: {
     title: {
@@ -21,8 +28,6 @@ export type HyperionDevice = {
     order: number;
     color: string;
   };
-
-  labels: string[];
 
   controls: HyperionDeviceControl[];
 };

@@ -54,14 +54,18 @@ model RefreshSession {
 model Device {
   deviceId String @id
 
-  driver String @default("UNSPECIFIED")
-  title  String @default("{}")
-  error  String @default("{}")
-  meta   String @default("{}")
+  title String @default("{}")
+  order Int    @default(0)
 
-  markup String @default("{}")
+  driver String @default("UNSPECIFIED")
+
+  error String @default("{}")
+
+  meta String @default("{}")
 
   labels String[] @default([])
+
+  markup String @default("{}")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
@@ -71,27 +75,42 @@ model Device {
 }
 
 model Control {
-  device   Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
-  deviceId String
-
+  device    Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  deviceId  String
   controlId String
 
-  title     String  @default("{}")
-  order     Int     @default(0)
-  readonly  Boolean @default(true)
-  type      String  @default("UNSPECIFIED")
-  units     String  @default("UNSPECIFIED")
-  max       Float   @default(0)
-  min       Float   @default(0)
-  precision Float   @default(0)
-  value     String  @default("0")
-  topic     String  @default("UNSPECIFIED")
-  error     String  @default("UNSPECIFIED")
-  meta      String  @default("{}")
+  title String @default("{}")
+  order Int    @default(0)
 
-  markup String @default("{}")
+  type String @default("UNSPECIFIED")
+
+  readonly Boolean @default(true)
+
+  units String @default("UNSPECIFIED")
+
+  max       Float @default(0)
+  min       Float @default(0)
+  step      Float @default(0)
+  precision Float @default(0)
+
+  on     String @default("1")
+  off    String @default("0")
+  toggle String @default("UNSPECIFIED")
+
+  enum String[] @default([])
+
+  value   String @default("0")
+  presets String @default("{}")
+
+  topic String @default("UNSPECIFIED")
+
+  error String @default("UNSPECIFIED")
+
+  meta String @default("{}")
 
   labels String[] @default([])
+
+  markup String @default("{}")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
@@ -111,6 +130,7 @@ model History {
   controlId String
 
   value String @default("0")
+
   error String @default("UNSPECIFIED")
 
   createdAt DateTime @default(now())

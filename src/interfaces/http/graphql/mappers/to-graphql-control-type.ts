@@ -17,6 +17,10 @@ export const toGraphQLControlType = (type: DomainControlType): ControlType => {
     return ControlType.TEXT;
   }
 
+  if (type === DomainControlType.ENUM) {
+    return ControlType.ENUM;
+  }
+
   if (type === DomainControlType.VALUE) {
     return ControlType.VALUE;
   }

@@ -3,6 +3,7 @@
 import { Control, PrismaClient } from '@prisma/client';
 import debug from 'debug';
 
+import { ControlType } from '../../../domain/control-type';
 import { HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
@@ -13,7 +14,7 @@ import {
   SetControlValue,
 } from '../../../ports/hyperion-device-repository';
 import { toDomainDevice } from '../../mappers/hyperion-device-mapper';
-import { toPrismaWirenboardDevice } from '../../mappers/hyperion-device-to-prisma-mapper';
+import { toPrismaHardwareDevice } from '../../mappers/hyperion-device-to-prisma-mapper';
 
 const logger = debug('hyperion-device-repository');
 
@@ -29,7 +30,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   async apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice> {
-    const { device, controls } = toPrismaWirenboardDevice(hardwareDevice);
+    const { device, controls } = toPrismaHardwareDevice(hardwareDevice);
 
     try {
       if (!device.id) {
@@ -42,17 +43,28 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       const prismaDevice = await this.client.device.upsert({
         create: {
           deviceId: device.id,
-          driver: device.driver,
+
           title: device.title,
+          order: device.order,
+
+          driver: device.driver,
+
           error: device.error,
+
           meta: device.meta,
         },
         update: {
           deviceId: device.id,
-          driver: device.driver,
+
           title: device.title,
+          order: device.order,
+
+          driver: device.driver,
+
           error: device.error,
+
           meta: device.meta,
+
           updatedAt: new Date(),
         },
         where: {
@@ -69,38 +81,72 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
             return new Error(ErrorType.INVALID_ARGUMENTS);
           }
 
+          const max = control.type === ControlType.RANGE ? control.max ?? 10 ^ 9 : control.max;
+          const min = control.type === ControlType.RANGE ? control.min ?? 0 : control.min;
+
           const prismaControl = await this.client.control.upsert({
             create: {
               deviceId: device.id,
               controlId: control.id,
+
               title: control.title,
               order: control.order,
-              readonly: control.readonly,
+
               type: control.type,
+
+              readonly: control.readonly,
+
               units: control.units,
-              max: control.max,
-              min: control.min,
-              precision: control.precision ?? 2,
+
+              max,
+              min,
+              step: control.step,
+              precision: control.precision,
+
+              on: control.on,
+              off: control.off,
+              toggle: control.toggle,
+
               value: control.value,
+              presets: control.presets,
+
               topic: control.topic,
+
               error: control.error,
+
               meta: control.meta,
             },
             update: {
               deviceId: device.id,
               controlId: control.id,
+
               title: control.title,
               order: control.order,
-              readonly: control.readonly,
+
               type: control.type,
+
+              readonly: control.readonly,
+
               units: control.units,
-              max: control.max,
-              min: control.min,
-              precision: control.precision ?? 2,
+
+              max,
+              min,
+              step: control.step,
+              precision: control.precision,
+
+              on: control.on,
+              off: control.off,
+              toggle: control.toggle,
+
               value: control.value,
+              presets: control.presets,
+
               topic: control.topic,
+
               error: control.error,
+
               meta: control.meta,
+
               updatedAt: new Date(),
             },
             where: {

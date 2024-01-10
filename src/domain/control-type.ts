@@ -1,11 +1,12 @@
 /**
- * * CONTROL_TYPE_MAPPER
+ * Control's type. The type of control explains its functional purpose.
  */
 export enum ControlType {
   UNSPECIFIED = 'UNSPECIFIED',
   SWITCH = 'switch',
   ILLUMINATION = 'lux',
   TEXT = 'text',
+  ENUM = 'enum',
   VALUE = 'value',
   VOLTAGE = 'voltage',
   TEMPERATURE = 'temperature',

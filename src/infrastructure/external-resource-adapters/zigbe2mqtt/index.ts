@@ -144,96 +144,98 @@ export const runZigbee2mqtt = async ({
          */
         ieeeAddressByFriendlyName.set(friendlyName, deviceId);
 
-        for (const expose of device.definition.exposes) {
-          const { canBeFoundInPublishedState, canBeSet, canBeGet } = decodeAccessBitMask(expose.access);
+        logger(stringify(device));
 
-          /**
-           * ! GENERAL
-           */
-          if (expose.type === 'binary') {
-            const wirenboardDevice: HardwareDevice = {
-              id: deviceId,
-              driver: DRIVER,
-              title: {
-                ru: friendlyName,
-                en: friendlyName,
-              },
-              error: undefined,
-              meta: device,
-              controls: {
-                [expose.property]: {
-                  id: expose.property,
-                  title: {
-                    ru: expose.label,
-                    en: expose.label,
-                  },
-                  order: undefined,
-                  readonly: !canBeSet,
-                  type: expose.type,
-                  units: expose.unit,
-                  max: expose.value_max,
-                  min: expose.value_min,
-                  precision: 2,
-                  value: undefined,
-                  topic: canBeSet
-                    ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.property}`
-                    : undefined,
-                  error: undefined,
-                  meta: expose,
-                },
-              },
-            };
-          }
+        // for (const expose of device.definition.exposes) {
+        //   const { canBeFoundInPublishedState, canBeSet, canBeGet } = decodeAccessBitMask(expose.access);
 
-          if (expose.type === 'numeric') {
-            logger('NUMERIC');
-          }
+        //   /**
+        //    * ! GENERAL
+        //    */
+        //   if (expose.type === 'binary') {
+        //     const wirenboardDevice: HardwareDevice = {
+        //       id: deviceId,
+        //       driver: DRIVER,
+        //       title: {
+        //         ru: friendlyName,
+        //         en: friendlyName,
+        //       },
+        //       error: undefined,
+        //       meta: device,
+        //       controls: {
+        //         [expose.property]: {
+        //           id: expose.property,
+        //           title: {
+        //             ru: expose.label,
+        //             en: expose.label,
+        //           },
+        //           order: undefined,
+        //           readonly: !canBeSet,
+        //           type: expose.type,
+        //           units: expose.unit,
+        //           max: expose.value_max,
+        //           min: expose.value_min,
+        //           precision: 2,
+        //           value: undefined,
+        //           topic: canBeSet
+        //             ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.property}`
+        //             : undefined,
+        //           error: undefined,
+        //           meta: expose,
+        //         },
+        //       },
+        //     };
+        //   }
 
-          if (expose.type === 'enum') {
-            logger('ENUM');
-          }
+        //   if (expose.type === 'numeric') {
+        //     logger('NUMERIC');
+        //   }
 
-          if (expose.type === 'text') {
-            logger('TEXT');
-          }
+        //   if (expose.type === 'enum') {
+        //     logger('ENUM');
+        //   }
 
-          if (expose.type === 'composite') {
-            logger('COMPOSITE');
-          }
+        //   if (expose.type === 'text') {
+        //     logger('TEXT');
+        //   }
 
-          if (expose.type === 'list') {
-            logger('LIST');
-          }
+        //   if (expose.type === 'composite') {
+        //     logger('COMPOSITE');
+        //   }
 
-          /**
-           * ! SPECIFIC
-           */
-          if (expose.type === 'light') {
-            logger('LIGHT');
-          }
+        //   if (expose.type === 'list') {
+        //     logger('LIST');
+        //   }
 
-          if (expose.type === 'switch') {
-            logger('SWITCH');
-          }
+        //   /**
+        //    * ! SPECIFIC
+        //    */
+        //   if (expose.type === 'light') {
+        //     logger('LIGHT');
+        //   }
 
-          if (expose.type === 'fan') {
-            logger('FAN');
-          }
+        //   if (expose.type === 'switch') {
+        //     logger('SWITCH');
+        //   }
 
-          if (expose.type === 'cover') {
-            logger('COVER');
-          }
+        //   if (expose.type === 'fan') {
+        //     logger('FAN');
+        //   }
 
-          if (expose.type === 'lock') {
-            logger('LOCK');
-          }
+        //   if (expose.type === 'cover') {
+        //     logger('COVER');
+        //   }
 
-          if (expose.type === 'climate') {
-            logger('CLIMATE');
-          }
+        //   if (expose.type === 'lock') {
+        //     logger('LOCK');
+        //   }
 
-          logger(stringify({ expose, canBeFoundInPublishedState, canBeSet, canBeGet }));
-        }
+        //   if (expose.type === 'climate') {
+        //     logger('CLIMATE');
+        //   }
+
+        //   logger(stringify({ expose, canBeFoundInPublishedState, canBeSet, canBeGet }));
+        // }
       }
 
       return;
