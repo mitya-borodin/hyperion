@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable unicorn/prefer-event-target */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'node:events';
 
 import debug from 'debug';
 
+import { ControlType } from '../../../domain/control-type';
 import { EventBus } from '../../../domain/event-bus';
 import { HardwareDevice } from '../../../domain/hardware-device';
 import { isJson } from '../../../helpers/is-json';
@@ -40,8 +42,7 @@ export const runZigbee2mqtt = async ({
   hyperionDeviceRepository,
 }: RunZigbee2mqtt): Promise<Error | RunZigbee2mqttResult> => {
   /**
-   * ! Подготовка карты, для получения ieee_address по friendly_name,
-   * ! чтобы мы могли задавать любой FN любым способом, и не порождать артефакты.
+   * ! PREPARE ADDRESS MAP
    */
   const devices = await hyperionDeviceRepository.getAll();
 
@@ -56,22 +57,27 @@ export const runZigbee2mqtt = async ({
   }
 
   /**
-   * * PROCESSING STATE CHANGES OF END DEVICES
+   * ! PROCESSING STATE CHANGES OF END DEVICES
    */
   const client = await getMqttClient({ config, rootTopic: `${config.zigbee2mqtt.baseTopic}/#` });
 
-  /**
-   * ! Получение состояние zigbee-bridge
-   */
   client.on('message', (topic: string, messageBuffer: Buffer) => {
-    /**
-     * ! Общение происходит только с base_topic процесса zigbee2mqtt
-     * ! https://www.zigbee2mqtt.io/guide/configuration/mqtt.html#mqtt
-     *
-     * * Optional: MQTT base topic for Zigbee2MQTT MQTT messages (default: zigbee2mqtt)
-     * * base_topic: zigbee2mqtt
-     */
-    if (!topic.startsWith(config.zigbee2mqtt.baseTopic)) {
+    const isBaseTopic = topic.startsWith(config.zigbee2mqtt.baseTopic);
+    const isBridgeTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge`);
+    const isLoggingTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/logging`);
+    const isDevicesTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/devices`);
+    const isAvailabilityTopic = isBaseTopic && topic.endsWith('/availability');
+
+    if (!isBaseTopic) {
+      return;
+    }
+
+    if (
+      !isLoggingTopic &&
+      !isDevicesTopic &&
+      !isAvailabilityTopic &&
+      (isBridgeTopic || (isBaseTopic && topic.endsWith('/get')) || (isBaseTopic && topic.endsWith('/set')))
+    ) {
       return;
     }
 
@@ -85,19 +91,19 @@ export const runZigbee2mqtt = async ({
     }
 
     /**
-     * ! https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-logging
+     * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-logging
      */
-    if (topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/logging`)) {
-      logger('A log was received from zigbee2mqtt ⬇️  📑 🪵 ⬇️', stringify(JSON.parse(message)));
+    if (isLoggingTopic) {
+      // logger('A log was received from zigbee2mqtt ⬇️  📑 🪵 ⬇️');
+      // logger(stringify(JSON.parse(message)));
 
       return;
     }
 
     /**
-     * ! https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-devices
-     * ! Получаем полный список устройств подключенных к мосту
+     * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-devices
      */
-    if (topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/devices`)) {
+    if (isDevicesTopic) {
       logger('Information about all zigbee devices has been received ⬇️  ✅ ⬇️');
 
       const devices = JSON.parse(message);
@@ -115,167 +121,224 @@ export const runZigbee2mqtt = async ({
           continue;
         }
 
-        logger(topic);
-        logger(
-          'Device info 🍋',
-          stringify({
-            ieee_address: device.ieee_address,
-            friendly_name: device.friendly_name,
-            description: device.description,
-            power_source: device.power_source,
-            interviewing: device.interviewing,
-            interview_completed: device.interview_completed,
-          }),
-        );
-        logger(
-          'Definition info 🍟',
-          stringify({
+        const deviceId = device.ieee_address;
+        const friendlyName = device.friendly_name;
+
+        const deviceMeta = {
+          type: device.type,
+          ieee_address: device.ieee_address,
+          friendly_name: device.friendly_name,
+          description: device.description,
+          power_source: device.power_source,
+          interviewing: device.interviewing,
+          interview_completed: device.interview_completed,
+          definition: {
             vendor: device.definition.vendor,
             model: device.definition.model,
             description: device.definition.description,
-          }),
-        );
-
-        const deviceId = device.ieee_address;
-        const friendlyName = device.friendly_name;
+          },
+        };
 
         /**
          * ! UPDATE MAP FOR HANDLE CHANGES BY FRIENDLY NAME
          */
         ieeeAddressByFriendlyName.set(friendlyName, deviceId);
 
-        logger(stringify(device));
+        const exposes: any[] = [];
+        const stack: any[] = device.definition.exposes;
 
-        // for (const expose of device.definition.exposes) {
-        //   const { canBeFoundInPublishedState, canBeSet, canBeGet } = decodeAccessBitMask(expose.access);
+        while (stack.length > 0) {
+          const expose = stack.pop();
+          const { property, features, path, topic } = expose;
 
-        //   /**
-        //    * ! GENERAL
-        //    */
-        //   if (expose.type === 'binary') {
-        //     const wirenboardDevice: HardwareDevice = {
-        //       id: deviceId,
-        //       driver: DRIVER,
-        //       title: {
-        //         ru: friendlyName,
-        //         en: friendlyName,
-        //       },
-        //       error: undefined,
-        //       meta: device,
-        //       controls: {
-        //         [expose.property]: {
-        //           id: expose.property,
-        //           title: {
-        //             ru: expose.label,
-        //             en: expose.label,
-        //           },
-        //           order: undefined,
-        //           readonly: !canBeSet,
-        //           type: expose.type,
-        //           units: expose.unit,
-        //           max: expose.value_max,
-        //           min: expose.value_min,
-        //           precision: 2,
-        //           value: undefined,
-        //           topic: canBeSet
-        //             ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.property}`
-        //             : undefined,
-        //           error: undefined,
-        //           meta: expose,
-        //         },
-        //       },
-        //     };
-        //   }
+          if (features) {
+            stack.push(
+              ...features.map((item: any) => {
+                const label = expose.label ? `${expose.label} -> ${item.label}` : item.label;
 
-        //   if (expose.type === 'numeric') {
-        //     logger('NUMERIC');
-        //   }
+                if (topic) {
+                  return { ...item, label, path: `${path}.${property}`, topic: `${topic}/${property}` };
+                }
 
-        //   if (expose.type === 'enum') {
-        //     logger('ENUM');
-        //   }
+                return { ...item, label, path: property, topic: property };
+              }),
+            );
 
-        //   if (expose.type === 'text') {
-        //     logger('TEXT');
-        //   }
+            continue;
+          }
 
-        //   if (expose.type === 'composite') {
-        //     logger('COMPOSITE');
-        //   }
+          exposes.push({
+            ...expose,
+            topic: `${topic ? `${topic}/${property}` : property}`,
+            path: `${path ? `${path}.${property}` : property}`,
+          });
+        }
 
-        //   if (expose.type === 'list') {
-        //     logger('LIST');
-        //   }
+        for (const expose of exposes) {
+          const { canBeSet } = decodeAccessBitMask(expose.access);
 
-        //   /**
-        //    * ! SPECIFIC
-        //    */
-        //   if (expose.type === 'light') {
-        //     logger('LIGHT');
-        //   }
+          /**
+           * ! GENERAL
+           */
+          if (expose.type === 'binary') {
+            const hardwareDevice: HardwareDevice = {
+              id: deviceId,
+              title: {
+                ru: friendlyName,
+                en: friendlyName,
+              },
+              driver: DRIVER,
+              meta: deviceMeta,
+              controls: {
+                [expose.path]: {
+                  id: expose.path,
 
-        //   if (expose.type === 'switch') {
-        //     logger('SWITCH');
-        //   }
+                  title: {
+                    ru: expose.label,
+                    en: expose.label,
+                  },
 
-        //   if (expose.type === 'fan') {
-        //     logger('FAN');
-        //   }
+                  type: ControlType.SWITCH,
 
-        //   if (expose.type === 'cover') {
-        //     logger('COVER');
-        //   }
+                  readonly: !canBeSet,
 
-        //   if (expose.type === 'lock') {
-        //     logger('LOCK');
-        //   }
+                  on: expose.value_on,
+                  off: expose.value_off,
+                  toggle: expose.value_toggle,
 
-        //   if (expose.type === 'climate') {
-        //     logger('CLIMATE');
-        //   }
+                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                },
+              },
+            };
 
-        //   logger(stringify({ expose, canBeFoundInPublishedState, canBeSet, canBeGet }));
-        // }
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+          }
+
+          if (expose.type === 'numeric') {
+            const hardwareDevice: HardwareDevice = {
+              id: deviceId,
+              title: {
+                ru: friendlyName,
+                en: friendlyName,
+              },
+              driver: DRIVER,
+              meta: deviceMeta,
+              controls: {
+                [expose.path]: {
+                  id: expose.path,
+
+                  title: {
+                    ru: expose.label,
+                    en: expose.label,
+                  },
+
+                  type: ControlType.VALUE,
+
+                  readonly: !canBeSet,
+
+                  units: expose.unit,
+
+                  max: expose.value_max,
+                  min: expose.value_min,
+                  step: expose.value_step,
+
+                  presets: expose.presets,
+
+                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                },
+              },
+            };
+
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+          }
+
+          if (expose.type === 'enum') {
+            const hardwareDevice: HardwareDevice = {
+              id: deviceId,
+              title: {
+                ru: friendlyName,
+                en: friendlyName,
+              },
+              driver: DRIVER,
+              meta: deviceMeta,
+              controls: {
+                [expose.path]: {
+                  id: expose.path,
+
+                  title: {
+                    ru: expose.label,
+                    en: expose.label,
+                  },
+
+                  type: ControlType.ENUM,
+
+                  readonly: !canBeSet,
+
+                  enum: expose.values,
+
+                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                },
+              },
+            };
+
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+          }
+
+          if (expose.type === 'text') {
+            const hardwareDevice: HardwareDevice = {
+              id: deviceId,
+              title: {
+                ru: friendlyName,
+                en: friendlyName,
+              },
+              driver: DRIVER,
+              meta: deviceMeta,
+              controls: {
+                [expose.path]: {
+                  id: expose.path,
+
+                  title: {
+                    ru: expose.label,
+                    en: expose.label,
+                  },
+
+                  type: ControlType.TEXT,
+
+                  readonly: !canBeSet,
+
+                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                },
+              },
+            };
+
+            eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+          }
+
+          if (expose.type === 'list') {
+            logger('LIST');
+          }
+        }
       }
 
       return;
     }
 
-    /**
-     * ! Информация о доступности устройств на текущий момент, определение
-     * ! онлайн или офлайн выполняется в процессе zigbee2mqtt.
-     */
-    if (topic.endsWith('/availability')) {
-      logger('Information about device availability was obtained from the zigbee2mqtt process ⬇️  🌍 ⬇️ ', {
-        topic,
-        ...JSON.parse(message),
-      });
+    if (isAvailabilityTopic) {
+      logger('The device availability status has been received ⬇️ 📟 🛜 ⬇️');
+      logger(message);
 
       return;
     }
 
-    if (
-      topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge`) ||
-      topic.endsWith('/get') ||
-      topic.endsWith('/set')
-    ) {
-      return;
-    }
-
+    logger('The device state has been received ⬇️ ⛵️ 🌍 ⬇️');
     /**
-     * ! Данные устройств, идентификатор находится в топике, но его может там не быть, в зависимости от настройки.
-     * ! По этому нужно, чтобы в FRIENDLY_NAME был ieee_address, иначе при изменении имени, может пропасть
-     * ! связь с объектами hyperion.
-     * * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-friendly-name
+     * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-friendly-name
      */
     logger(topic, stringify(JSON.parse(message)));
   });
 
   /**
-   * * CHANGING THE STATE OF TERMINAL DEVICES
-   *
-   * ! Изменение состояния zigbee устройств через
-   * ! mosquitto cloud -> mosquitto wb -> zigbee2mqtt -> zigbee hardware -> end device
+   * * CHANGING THE STATE OF END DEVICES
    */
   const publishMessage = ({ topic, message }: MqttMessage) => {
     publishMqttMessage({ client, topic, message });

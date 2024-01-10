@@ -48,6 +48,16 @@ export const run = () => {
     defer(() => macrosEngine.stop());
 
     /**
+     * ! RUN COLLECT HARDWARE DEVICE
+     */
+    const stopCollectHardwareDevice = runCollectHardwareDevice({
+      hyperionDeviceRepository,
+      eventBus,
+    });
+
+    defer(() => stopCollectHardwareDevice());
+
+    /**
      * ! RUN ZIGBEE_2_MQTT
      */
     const zigbee2mqtt = await runZigbee2mqtt({ config, eventBus, hyperionDeviceRepository });
@@ -64,16 +74,6 @@ export const run = () => {
     const wirenboard = await runWirenboard({ config, eventBus });
 
     defer(() => wirenboard.stop());
-
-    /**
-     * ! RUN COLLECT HARDWARE DEVICE
-     */
-    const stopCollectHardwareDevice = runCollectHardwareDevice({
-      hyperionDeviceRepository,
-      eventBus,
-    });
-
-    defer(() => stopCollectHardwareDevice());
 
     const fastify = await createHttpInterface({
       config,
