@@ -93,13 +93,13 @@ model Control {
   step      Float @default(0)
   precision Float @default(0)
 
-  on     String @default("1")
-  off    String @default("0")
+  on     String @default("UNSPECIFIED")
+  off    String @default("UNSPECIFIED")
   toggle String @default("UNSPECIFIED")
 
   enum String[] @default([])
 
-  value   String @default("0")
+  value   String @default("UNSPECIFIED")
   presets String @default("{}")
 
   topic String @default("UNSPECIFIED")
@@ -134,7 +134,6 @@ model History {
   error String @default("UNSPECIFIED")
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
 }
 
 model Macros {

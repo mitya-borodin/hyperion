@@ -1,11 +1,14 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Control, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
 
 import { ControlType } from '../../../domain/control-type';
 import { HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDevice } from '../../../domain/hyperion-device';
+import { History } from '../../../domain/hystory';
+import { getControlId } from '../../../domain/macroses/get-control-id';
 import { ErrorType } from '../../../helpers/error-type';
 import {
   IHyperionDeviceRepository,
@@ -13,8 +16,8 @@ import {
   MarkupHyperionDevice,
   SetControlValue,
 } from '../../../ports/hyperion-device-repository';
+import { toPrismaHardwareDevice } from '../../mappers/hardware-device-to-prisma-mapper';
 import { toDomainDevice } from '../../mappers/hyperion-device-mapper';
-import { toPrismaHardwareDevice } from '../../mappers/hyperion-device-to-prisma-mapper';
 
 const logger = debug('hyperion-device-repository');
 
@@ -24,9 +27,13 @@ type HyperionDeviceRepositoryParameters = {
 
 export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   private client: PrismaClient;
+  private history: Map<string, History[]>;
+  private lastHistorySave: Date;
 
   constructor({ client }: HyperionDeviceRepositoryParameters) {
     this.client = client;
+    this.history = new Map();
+    this.lastHistorySave = new Date();
   }
 
   async apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice> {
@@ -40,7 +47,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
-      const prismaDevice = await this.client.device.upsert({
+      await this.client.device.upsert({
         create: {
           deviceId: device.id,
 
@@ -107,6 +114,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
               off: control.off,
               toggle: control.toggle,
 
+              enum: control.enum,
+
               value: control.value,
               presets: control.presets,
 
@@ -138,6 +147,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
               off: control.off,
               toggle: control.toggle,
 
+              enum: control.enum,
+
               value: control.value,
               presets: control.presets,
 
@@ -159,37 +170,49 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
             },
           });
 
-          await this.client.history.create({
-            data: {
-              deviceId: device.id,
-              controlId: control.id,
-              value: control.value,
-              error: control.error,
-            },
+          await this.addToHistory({
+            deviceId: device.id,
+            controlId: control.id,
+            value: control.value ?? '0',
+            error: control.error ?? 'UNSPECIFIED',
+            createdAt: new Date(),
           });
 
           return prismaControl;
         }),
       );
 
-      const prismaControlsWithOutError: Control[] = [];
-
       for (const prismaControl of prismaControls) {
         if (prismaControl instanceof Error) {
-          continue;
-        }
+          logger("Unable to apply hardware device's control 🚨");
+          logger(JSON.stringify({ hardwareDevice, device, controls }, null, 2));
 
-        prismaControlsWithOutError.push(prismaControl);
+          return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+        }
       }
-      const hyperionDevice = toDomainDevice({
-        ...prismaDevice,
-        controls: prismaControlsWithOutError,
+
+      const prismaHyperionDevice = await this.client.device.findFirst({
+        include: {
+          controls: true,
+        },
+        where: {
+          deviceId: device.id,
+        },
       });
 
-      return hyperionDevice;
+      if (!prismaHyperionDevice) {
+        logger('Unable to find hardware device 🚨');
+        logger(JSON.stringify({ hardwareDevice, device, controls }, null, 2));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      return toDomainDevice(prismaHyperionDevice);
     } catch (error) {
       logger('Unable to apply hardware device 🚨');
       logger(JSON.stringify({ hardwareDevice, device, controls, error }, null, 2));
+
+      console.error(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -206,7 +229,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       return prismaDevices.map((prismaDevice) => toDomainDevice(prismaDevice));
     } catch (error) {
       logger('Unable to get all hardware devices 🚨');
-      logger(JSON.stringify({ error }, null, 2));
+
+      console.error(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -238,6 +262,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     } catch (error) {
       logger('Unable to markup hyperion device 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
+
+      console.error(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -273,6 +299,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       logger('Unable to markup hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
 
+      console.error(error);
+
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
   }
@@ -299,7 +327,45 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       logger('Unable to set value for hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
 
+      console.error(error);
+
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  private async addToHistory(item: History) {
+    const historyId = getControlId({ deviceId: item.deviceId, controlId: item.controlId });
+    const history = this.history.get(historyId);
+
+    if (history) {
+      const last = history.at(-1);
+
+      if (!last) {
+        return;
+      }
+
+      if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
+        history.push(item);
+      } else if (last.value !== item.value) {
+        history.push(item);
+      }
+    } else {
+      this.history.set(historyId, [item]);
+    }
+
+    if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 20)) === 1) {
+      const history: History[] = [];
+
+      for (const item of this.history.values()) {
+        history.push(...item);
+      }
+
+      this.history.clear();
+      this.lastHistorySave = new Date();
+
+      logger('Save history ⬆️ 🛟', history.length);
+
+      await this.client.history.createMany({ data: history });
     }
   }
 }

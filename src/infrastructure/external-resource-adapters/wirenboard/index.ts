@@ -164,6 +164,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                   max,
                   min,
                   precision,
+                  on: '1',
+                  off: '0',
                   topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
                   meta,
                 },
