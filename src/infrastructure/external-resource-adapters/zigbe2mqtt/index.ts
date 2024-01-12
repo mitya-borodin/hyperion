@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'node:events';
 
+import { retry } from 'abort-controller-x';
+import { compareAsc, differenceInMilliseconds, subSeconds } from 'date-fns';
 import debug from 'debug';
 
 import { ControlType } from '../../../domain/control-type';
@@ -11,6 +13,7 @@ import { HardwareControl, HardwareDevice } from '../../../domain/hardware-device
 import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { getControlId } from '../../../domain/macroses/get-control-id';
+import { ErrorType } from '../../../helpers/error-type';
 import { isJson } from '../../../helpers/is-json';
 import { stringify } from '../../../helpers/json-stringify';
 import { IHyperionDeviceRepository } from '../../../ports/hyperion-device-repository';
@@ -23,6 +26,7 @@ import { decodeAccessBitMask } from './decode-access-bit-mask';
 const logger = debug('hyperion-run-zigbee2mqtt');
 
 type RunZigbee2mqtt = {
+  signal: AbortSignal;
   config: Config;
   eventBus: EventEmitter;
   hyperionDeviceRepository: IHyperionDeviceRepository;
@@ -31,6 +35,8 @@ type RunZigbee2mqtt = {
 type RunZigbee2mqttResult = {
   stop: () => void;
 };
+
+let lastHardwareDeviceAppeared = new Date();
 
 const hyperionDevices = new Map<string, HyperionDevice>();
 const hyperionControls = new Map<string, HyperionDeviceControl>();
@@ -45,22 +51,52 @@ const accept = (device: HyperionDevice) => {
 
 const ieeeAddressByFriendlyName = new Map<string, string>();
 
-const fillIeeeAddressByFriendlyName = async (hyperionDeviceRepository: IHyperionDeviceRepository) => {
-  const devices = await hyperionDeviceRepository.getAll();
+const fillIeeeAddressByFriendlyName = async (
+  signal: AbortSignal,
+  hyperionDeviceRepository: IHyperionDeviceRepository,
+) => {
+  return await retry(
+    signal,
+    async (signal: AbortSignal, attempt: number) => {
+      if (attempt >= 10) {
+        logger('Unable to get initial state of hyperion devices 🚨 🚨 🚨');
 
-  if (devices instanceof Error) {
-    return devices;
-  }
+        return new Error(ErrorType.ATTEMPTS_ENDED);
+      }
 
-  for (const device of devices) {
-    accept(device);
+      logger('Try to get initial state of hyperion devices ⬇️ ⛵️ ⛵️ ⛵️ ⬇️');
 
-    if (device.driver === DRIVER) {
-      ieeeAddressByFriendlyName.set(device.meta?.friendly_name as string, device.id);
-    }
-  }
+      const devices = await hyperionDeviceRepository.getAll();
 
-  logger('The initial state of hyperion devices has been obtained ⬇️ ✅ ⬇️');
+      if (devices instanceof Error) {
+        return devices;
+      }
+
+      if (devices.length === 0) {
+        throw new Error(ErrorType.DATA_HAS_NOT_BE_UPLOAD);
+      }
+
+      for (const device of devices) {
+        accept(device);
+
+        if (device.driver === DRIVER) {
+          ieeeAddressByFriendlyName.set(device.meta?.friendly_name as string, device.id);
+        }
+      }
+
+      logger('The initial state of hyperion devices has been obtained ⬇️ ✅ ⬇️');
+    },
+    {
+      baseMs: 5000,
+      maxAttempts: 10,
+      onError(error, attempt, delayMs) {
+        logger('An attempt to get initial state of hyperion devices failed 🚨');
+        logger(stringify({ attempt, delayMs }));
+
+        console.error(error);
+      },
+    },
+  );
 };
 
 const DRIVER = 'zigbee2mqtt';
@@ -69,16 +105,17 @@ const DRIVER = 'zigbee2mqtt';
  * ! https://www.zigbee2mqtt.io
  */
 export const runZigbee2mqtt = async ({
+  signal,
   config,
   eventBus,
   hyperionDeviceRepository,
 }: RunZigbee2mqtt): Promise<Error | RunZigbee2mqttResult> => {
-  logger('Run zigbee2mqtt converter 🏃🏼‍♀️ 🚀 🌍 ⛵️ 🧯');
+  logger('Run zigbee2mqtt converter ⛵️ ⛵️ ⛵️');
 
   /**
    * ! FILL ADDRESS MAP
    */
-  const filledIn = await fillIeeeAddressByFriendlyName(hyperionDeviceRepository);
+  const filledIn = await fillIeeeAddressByFriendlyName(signal, hyperionDeviceRepository);
 
   if (filledIn instanceof Error) {
     return filledIn;
@@ -149,7 +186,8 @@ export const runZigbee2mqtt = async ({
         }
 
         if (!device.supported) {
-          logger('Zigbee device is not supported 🚨', stringify(device));
+          logger('Zigbee device is not supported 🚨');
+          logger(stringify(device));
 
           continue;
         }
@@ -245,6 +283,8 @@ export const runZigbee2mqtt = async ({
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           if (expose.type === 'numeric') {
@@ -283,6 +323,8 @@ export const runZigbee2mqtt = async ({
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           if (expose.type === 'enum') {
@@ -315,6 +357,8 @@ export const runZigbee2mqtt = async ({
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           if (expose.type === 'text') {
@@ -345,6 +389,8 @@ export const runZigbee2mqtt = async ({
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           if (expose.type === 'list') {
@@ -365,8 +411,8 @@ export const runZigbee2mqtt = async ({
       const { state } = JSON.parse(message);
 
       if (ieeeAddress) {
-        logger('The device availability status has been received ⬇️ 📟 🛜 ⬇️');
-        logger(stringify({ topic, state, friendlyName, ieeeAddress }));
+        // logger('The device availability status has been received ⬇️ 📟 🛜 ⬇️');
+        // logger(stringify({ topic, state, friendlyName, ieeeAddress }));
 
         const hardwareDevice: HardwareDevice = {
           id: ieeeAddress,
@@ -394,6 +440,8 @@ export const runZigbee2mqtt = async ({
         };
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+        lastHardwareDeviceAppeared = new Date();
       }
 
       return;
@@ -402,7 +450,7 @@ export const runZigbee2mqtt = async ({
     /**
      * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-friendly-name
      */
-    logger('The device state has been received ⬇️ ⛵️ 🌍 ⬇️');
+    // logger('The device state has been received ⬇️ ⛵️ 🌍 ⬇️');
 
     const friendlyName = topic.replace(`${config.zigbee2mqtt.baseTopic}/`, '');
     const ieeeAddress = ieeeAddressByFriendlyName.get(friendlyName);
@@ -411,14 +459,14 @@ export const runZigbee2mqtt = async ({
     if (hyperionDevice) {
       const payload = JSON.parse(message);
 
-      logger(
-        stringify({
-          topic,
-          friendlyName,
-          ieeeAddress,
-          payload,
-        }),
-      );
+      // logger(
+      //   stringify({
+      //     topic,
+      //     friendlyName,
+      //     ieeeAddress,
+      //     payload,
+      //   }),
+      // );
 
       const { last_seen, motor_state } = payload;
 
@@ -451,6 +499,8 @@ export const runZigbee2mqtt = async ({
           };
 
           eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+          lastHardwareDeviceAppeared = new Date();
         }
       } else {
         logger('The current device does not contain the last_seen field, it must be in every device 🚨 🚨 🚨');
@@ -485,6 +535,8 @@ export const runZigbee2mqtt = async ({
         };
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+        lastHardwareDeviceAppeared = new Date();
       }
 
       const fields = new Set(Object.keys(payload));
@@ -506,6 +558,8 @@ export const runZigbee2mqtt = async ({
       };
 
       eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+      lastHardwareDeviceAppeared = new Date();
     } else {
       logger('Hyperion device was not found 🚨 🚨 🚨');
       stringify({
@@ -525,14 +579,29 @@ export const runZigbee2mqtt = async ({
 
   eventBus.on(EventBus.ZIGBEE_2_MQTT_SEND_MESSAGE, publishMessage);
 
+  const healthcheck = setInterval(() => {
+    logger('Last zigbee2mqtt device was appeared at ⛵️ ⛵️ ⛵️');
+    logger(
+      stringify({
+        isAlive: compareAsc(lastHardwareDeviceAppeared, subSeconds(new Date(), 10 * 60)) === 1,
+        lastHardwareDeviceAppeared,
+        diff: `${differenceInMilliseconds(new Date(), lastHardwareDeviceAppeared)} ms`,
+      }),
+    );
+  }, 10_000);
+
   return {
     stop: () => {
       eventBus.off(EventBus.ZIGBEE_2_MQTT_SEND_MESSAGE, publishMessage);
       eventBus.off(EventBus.HYPERION_DEVICE_APPEARED, accept);
 
+      clearInterval(healthcheck);
+
       client.removeAllListeners();
       client.unsubscribe(`${config.zigbee2mqtt.baseTopic}/#`);
       client.end();
+
+      logger('The zigbee2mqtt converter was stopped 👷‍♂️ 🛑');
     },
   };
 };

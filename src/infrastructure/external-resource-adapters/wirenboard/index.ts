@@ -2,11 +2,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'node:events';
 
+import { compareAsc, differenceInMilliseconds, subSeconds } from 'date-fns';
 import debug from 'debug';
 
 import { EventBus } from '../../../domain/event-bus';
 import { HardwareDevice } from '../../../domain/hardware-device';
 import { isJson } from '../../../helpers/is-json';
+import { stringify } from '../../../helpers/json-stringify';
 import { Config } from '../../config';
 import { getMqttClient } from '../get-mqtt-client';
 import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
@@ -24,10 +26,14 @@ type RunWirenboardResult = {
 
 const ROOT_TOPIC = '/devices/#';
 
+let lastHardwareDeviceAppeared = new Date();
+
 /**
  * ! https://github.com/wirenboard/conventions
  */
 export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
+  logger('Run wirenboard converter 📟 📟 📟');
+
   const client = await getMqttClient({ config, rootTopic: ROOT_TOPIC });
 
   /**
@@ -89,6 +95,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           /**
@@ -113,6 +121,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               };
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+              lastHardwareDeviceAppeared = new Date();
             } else {
               const hardwareDevice: HardwareDevice = {
                 id: device,
@@ -120,6 +130,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               };
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+              lastHardwareDeviceAppeared = new Date();
             }
           }
         }
@@ -173,6 +185,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
 
           /**
@@ -206,11 +220,15 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
             };
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+            lastHardwareDeviceAppeared = new Date();
           }
         }
       } catch (error) {
         logger('Could not get meta information 🚨');
-        logger(JSON.stringify({ error, topic, message: message.toString() }, null, 2));
+        logger(stringify({ topic, message: message.toString() }));
+
+        console.error(error);
       }
     }
 
@@ -246,9 +264,13 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
         };
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+        lastHardwareDeviceAppeared = new Date();
       } catch (error) {
         logger('Could not get controls value 🚨');
-        logger(JSON.stringify({ error, topic, message: message.toString() }, null, 2));
+        logger(stringify({ topic, message: message.toString() }));
+
+        console.error(error);
       }
     }
   });
@@ -262,13 +284,28 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
 
   eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);
 
+  const healthcheck = setInterval(() => {
+    logger('Last wirenboard device was appeared at 📟 📟 📟');
+    logger(
+      stringify({
+        isAlive: compareAsc(lastHardwareDeviceAppeared, subSeconds(new Date(), 30)) === 1,
+        lastHardwareDeviceAppeared,
+        diff: `${differenceInMilliseconds(new Date(), lastHardwareDeviceAppeared)} ms`,
+      }),
+    );
+  }, 10_000);
+
   return {
     stop: () => {
       eventBus.off(EventBus.WB_PUBLISH_MESSAGE, publishMessage);
 
+      clearInterval(healthcheck);
+
       client.removeAllListeners();
       client.unsubscribe(ROOT_TOPIC);
       client.end();
+
+      logger('The wirenboard converter was stopped 👷‍♂️ 🛑');
     },
   };
 };

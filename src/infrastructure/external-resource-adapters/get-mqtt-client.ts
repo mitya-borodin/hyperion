@@ -13,7 +13,7 @@ type GetMqttClient = {
 };
 
 export const getMqttClient = async ({ config, rootTopic }: GetMqttClient) => {
-  logger('Try to establish connection with mqtt broker 🚀');
+  logger('Try to establish connection with mqtt broker 🛜 🛜 🛜');
   logger(
     stringify({
       broker: `${config.mosquitto.protocol}://${config.mosquitto.host}:${config.mosquitto.port}`,
@@ -39,7 +39,7 @@ export const getMqttClient = async ({ config, rootTopic }: GetMqttClient) => {
           return reject(new Error(ErrorType.UNEXPECTED_BEHAVIOR));
         }
 
-        logger('The connection with mqtt broker was established ✅ 🚀 🛜');
+        logger('The connection with mqtt broker was established ✅ 🛜 🛜 🛜');
         logger(stringify({ rootTopic }));
 
         resolve(client);

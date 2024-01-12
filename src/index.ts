@@ -37,17 +37,6 @@ export const run = () => {
     const macrosEngine = new MacrosEngine({ eventBus, hyperionDeviceRepository, macrosSettingsRepository });
 
     /**
-     * ! RUN MACROS ENGINE
-     */
-    const engine = await macrosEngine.start();
-
-    if (engine instanceof Error) {
-      exit(1);
-    }
-
-    defer(() => macrosEngine.stop());
-
-    /**
      * ! RUN COLLECT HARDWARE DEVICE
      */
     const stopCollectHardwareDevice = runCollectHardwareDevice({
@@ -58,9 +47,16 @@ export const run = () => {
     defer(() => stopCollectHardwareDevice());
 
     /**
+     * ! RUN WIRENBOARD
+     */
+    const wirenboard = await runWirenboard({ config, eventBus });
+
+    defer(() => wirenboard.stop());
+
+    /**
      * ! RUN ZIGBEE_2_MQTT
      */
-    const zigbee2mqtt = await runZigbee2mqtt({ config, eventBus, hyperionDeviceRepository });
+    const zigbee2mqtt = await runZigbee2mqtt({ signal, config, eventBus, hyperionDeviceRepository });
 
     if (zigbee2mqtt instanceof Error) {
       exit(1);
@@ -69,11 +65,15 @@ export const run = () => {
     defer(() => zigbee2mqtt.stop());
 
     /**
-     * ! RUN WIRENBOARD
+     * ! RUN MACROS ENGINE
      */
-    const wirenboard = await runWirenboard({ config, eventBus });
+    const engine = await macrosEngine.start(signal);
 
-    defer(() => wirenboard.stop());
+    if (engine instanceof Error) {
+      exit(1);
+    }
+
+    defer(() => macrosEngine.stop());
 
     const fastify = await createHttpInterface({
       config,

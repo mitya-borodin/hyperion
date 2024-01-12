@@ -284,7 +284,7 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
         return false;
       }
 
-      if (previous.value !== control.value && control.value === '1') {
+      if (previous.value !== control.value && control.value === control.on) {
         return true;
       }
 
@@ -448,14 +448,14 @@ export class LightingMacros implements Macros<MacrosType.LIGHTING, LightingMacro
     });
 
     if (this.state.switch === nextState) {
-      logger('The state of the macro corresponds to the state of the controller ✅');
-      logger(loggerContext);
+      // logger('The state of the macro corresponds to the state of the controller ✅');
+      // logger(loggerContext);
 
       return;
     }
 
-    logger('The internal state has been changed because one of the managed controls has changed state 🍋');
-    logger(loggerContext);
+    // logger('The internal state has been changed because one of the managed controls has changed state 🍋');
+    // logger(loggerContext);
 
     this.state.switch = nextState;
   }
