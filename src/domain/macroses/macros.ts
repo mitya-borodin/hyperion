@@ -129,7 +129,11 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
 
   abstract setState(state: STATE): void;
 
-  abstract accept({ devices, previous, controls, device }: MacrosAccept): void;
+  accept({ devices, previous, controls }: MacrosAccept): void {
+    this.devices = devices;
+    this.previous = previous;
+    this.controls = controls;
+  }
 
   protected abstract execute(): void;
 

@@ -54,7 +54,7 @@ type LightingMacrosPrivateState = {
   switch: 'ON' | 'OFF';
 };
 
-type LightingMacrosPublicState = {
+export type LightingMacrosPublicState = {
   force: LightingForce;
 };
 
@@ -71,7 +71,11 @@ type LightingMacrosNextOutput = {
   }>;
 };
 
-type LightingMacrosParameters = MacrosParameters<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> & {
+type LightingMacrosParameters = MacrosParameters<
+  MacrosType.LIGHTING,
+  LightingMacrosSettings,
+  LightingMacrosPublicState
+> & {
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
   readonly state: LightingMacrosState;
@@ -156,9 +160,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   accept = ({ devices, previous, controls, device }: MacrosAccept): void => {
-    this.devices = devices;
-    this.previous = previous;
-    this.controls = controls;
+    super.accept({ devices, previous, controls, device });
 
     if (this.isControlValueHasBeenChanged(device)) {
       this.execute();
@@ -379,15 +381,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         continue;
       }
 
-      /**
-       * ! Отправка сообщений непосредственно из макроса, может привести к гонке состояний.
-       * ! Возможно в дальнейшем, мы сделаем отдельную службу которая будет выбирать в какое состояние
-       * ! переключиться в зависимости от тех или иных параметров в состоянии макросов.
-       */
       const { topic } = hyperionControl;
       const message = lighting.value;
 
-      logger('The message has been created and will be sent to the wirenboard controller ⬆️ ⬆️ ⬆️');
+      logger('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
       logger(
         stringify({
           name: this.name,
@@ -409,5 +406,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
   protected isSwitchHasBeenPress = (): boolean => {
     return super.isSwitchHasBeenPress(this.settings.buttons);
+  };
+
+  protected isSwitchHasBeenRelease = (): boolean => {
+    return super.isSwitchHasBeenRelease(this.settings.buttons);
   };
 }
