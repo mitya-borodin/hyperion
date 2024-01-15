@@ -588,7 +588,7 @@ export const runZigbee2mqtt = async ({
         diff: `${differenceInMilliseconds(new Date(), lastHardwareDeviceAppeared)} ms`,
       }),
     );
-  }, 10_000);
+  }, 60_000);
 
   return {
     stop: () => {

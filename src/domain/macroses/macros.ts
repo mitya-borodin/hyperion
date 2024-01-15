@@ -11,6 +11,9 @@ import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
 
+/**
+ * ! ADD_MACROS
+ */
 export enum MacrosType {
   LIGHTING = 'LIGHTING',
   CURTAINS_OPENING = 'CURTAINS_OPENING',
@@ -51,7 +54,7 @@ export type MacrosEject<TYPE extends MacrosType, SETTINGS extends JsonObject, ST
 export type MacrosParameters<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> = {
   readonly eventBus: EventEmitter;
 
-  readonly id: string;
+  readonly id?: string;
   readonly name: string;
   readonly description: string;
   readonly labels: string[];
@@ -81,16 +84,16 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
   /**
    * ! Общие параметры всех макросов
    */
-  protected readonly id: string;
-  protected readonly name: string;
-  protected readonly description: string;
-  protected readonly labels: string[];
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly labels: string[];
 
   /**
    * ! Уникальные параметры макроса
    */
-  protected readonly type: TYPE;
-  protected readonly settings: SETTINGS;
+  readonly type: TYPE;
+  readonly settings: SETTINGS;
   protected readonly state: STATE;
 
   constructor({
@@ -125,6 +128,8 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
       leading: false,
       trailing: true,
     });
+
+    this.applyOutputToState();
   }
 
   abstract setState(state: STATE): void;

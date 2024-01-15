@@ -293,7 +293,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
         diff: `${differenceInMilliseconds(new Date(), lastHardwareDeviceAppeared)} ms`,
       }),
     );
-  }, 10_000);
+  }, 60_000);
 
   return {
     stop: () => {

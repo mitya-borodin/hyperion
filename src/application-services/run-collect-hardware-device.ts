@@ -47,7 +47,7 @@ export const runCollectHardwareDevice = ({ hyperionDeviceRepository, eventBus }:
         diff: `${differenceInMilliseconds(new Date(), lastHardwareDeviceAppeared)} ms`,
       }),
     );
-  }, 10_000);
+  }, 60_000);
 
   eventBus.on(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDeviceHandler);
 

@@ -71,15 +71,13 @@ type LightingMacrosNextOutput = {
   }>;
 };
 
-type LightingMacrosParameters = MacrosParameters<
-  MacrosType.LIGHTING,
-  LightingMacrosSettings,
-  LightingMacrosPublicState
-> & {
-  readonly devices: Map<string, HyperionDevice>;
-  readonly controls: Map<string, HyperionDeviceControl>;
-  readonly state: LightingMacrosState;
-};
+type LightingMacrosParameters = Omit<
+  MacrosParameters<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosPublicState> & {
+    readonly devices: Map<string, HyperionDevice>;
+    readonly controls: Map<string, HyperionDeviceControl>;
+  },
+  'type'
+>;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private nextOutput: LightingMacrosNextOutput;
@@ -87,6 +85,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   constructor(parameters: LightingMacrosParameters) {
     super({
       ...parameters,
+      type: MacrosType.LIGHTING,
       state: {
         force: parameters.state.force,
         switch: 'OFF',
@@ -132,6 +131,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   }
 
   setState = (nextState: LightingMacrosPublicState): void => {
+    logger('The next state was appeared ⏭️ ⏭️ ⏭️');
+    logger(
+      stringify({
+        currentState: this.state,
+        nextState,
+      }),
+    );
+
     switch (nextState.force) {
       case LightingForce.ON: {
         this.state.force = LightingForce.ON;
@@ -155,6 +162,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         return;
       }
     }
+
+    logger('The next state was applied ⏭️ ✅ ⏭️');
+    logger(
+      stringify({
+        currentState: this.state,
+        nextState,
+      }),
+    );
 
     this.execute();
   };
@@ -201,7 +216,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       this.computeNextOutput(nextValue);
 
       if (this.nextOutput.lightings.length > 0) {
-        logger('The forced state was determined 🫡 😡');
+        logger('The force state was determined 🫡 😡 😤 🚀');
         logger(
           stringify({
             name: this.name,
@@ -228,10 +243,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       logger('Button has been pressed ⬇️');
       logger(stringify({ name: this.name, currentState: this.state }));
 
-      /**
-       * ! Использование this.settings.illuminations будет актуально когда нужно будет выбирать уровень группы света:
-       * ! основной, средний, низкий.
-       */
       let nextSwitchState: 'ON' | 'OFF' = 'OFF';
       let nextValue = '0';
 

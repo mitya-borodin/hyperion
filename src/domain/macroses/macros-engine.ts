@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import EventEmitter from 'node:events';
 
 import { retry } from 'abort-controller-x';
@@ -21,17 +22,17 @@ const logger = debug('hyperion-macros-engine');
 /**
  * ! ADD_MACROS
  */
-type M = LightingMacros;
+type MACROS = LightingMacros;
 
 /**
  * ! ADD_MACROS
  */
-type T = { [MacrosType.LIGHTING]: LightingMacrosPublicState };
+type STATE = { [MacrosType.LIGHTING]: LightingMacrosPublicState };
 
 /**
  * ! ADD_MACROS
  */
-type S = { [MacrosType.LIGHTING]: LightingMacrosSettings };
+type SETTINGS = { [MacrosType.LIGHTING]: LightingMacrosSettings };
 
 /**
  * ! ADD_MACROS
@@ -44,8 +45,8 @@ type Setup = {
   name: string;
   description: string;
   labels: string[];
-  settings: S;
-  state: T;
+  settings: SETTINGS;
+  state: STATE;
 
   save?: boolean;
 };
@@ -62,7 +63,7 @@ export class MacrosEngine {
   readonly macrosSettingsRepository: IMacrosSettingsRepository;
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
-  readonly macros: Map<string, M>;
+  readonly macros: Map<string, MACROS>;
 
   constructor({ eventBus, hyperionDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
     this.eventBus = eventBus;
@@ -114,7 +115,7 @@ export class MacrosEngine {
           this.accept(device);
         }
 
-        if (!this.hasDevices()) {
+        if (this.areDevicesMissing()) {
           throw new Error(ErrorType.DATA_HAS_NOT_BE_UPLOAD);
         }
 
@@ -175,18 +176,18 @@ export class MacrosEngine {
     logger('The macros engine was stopped 👷‍♂️ 🛑');
   };
 
-  setup = async (setup: Setup): Promise<Error | M> => {
+  setup = async (setup: Setup): Promise<Error | MACROS> => {
     const { id, type, name, description, labels, settings, state, save = true } = setup;
 
     try {
-      if (!this.hasDevices()) {
+      if (this.areDevicesMissing()) {
         logger('Before installing macros, you need to download device and control data 🚨');
         logger(stringify({ devices: this.devices.size, controls: this.controls.size, setup }));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
-      let macros: M | undefined;
+      let macros: MACROS | undefined;
 
       /**
        * ! ADD_MACROS
@@ -209,14 +210,7 @@ export class MacrosEngine {
 
       if (macros) {
         if (save) {
-          const macrosSettings = await this.macrosSettingsRepository.upsert({
-            id: macros.id,
-            type: macros.type,
-            name: macros.name,
-            description: macros.description,
-            settings: macros.settings,
-            labels: macros.labels,
-          });
+          const macrosSettings = await this.macrosSettingsRepository.upsert(macros.toJS());
 
           if (macrosSettings instanceof Error) {
             return macrosSettings;
@@ -225,7 +219,7 @@ export class MacrosEngine {
 
         this.macros.set(macros.id, macros);
 
-        logger('The macro has been successfully installed ✅');
+        logger('The macro has been successfully installed 🚀 ✅ 🚀');
         logger(
           stringify({
             id: macros.id,
@@ -270,7 +264,7 @@ export class MacrosEngine {
     return list;
   };
 
-  setState = (id: string, state: T) => {
+  setState = (id: string, state: STATE) => {
     const macros = this.macros.get(id);
 
     /**
@@ -307,7 +301,7 @@ export class MacrosEngine {
     return new Error(ErrorType.INVALID_ARGUMENTS);
   };
 
-  private hasDevices = () => {
-    return this.devices.size > 0 && this.controls.size > 0;
+  private areDevicesMissing = () => {
+    return this.devices.size === 0 || this.controls.size === 0;
   };
 }
