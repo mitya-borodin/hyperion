@@ -1,6 +1,15 @@
+import EventEmitter from 'node:events';
+
+import cloneDeep from 'lodash.clonedeep';
+import debounce from 'lodash.debounce';
+import { v4 } from 'uuid';
+
 import { JsonObject } from '../../helpers/json-types';
+import { ControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
+
+import { getControlId } from './get-control-id';
 
 export enum MacrosType {
   LIGHTING = 'LIGHTING',
@@ -27,25 +36,184 @@ export type MacrosAccept = {
   device: HyperionDevice;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export type Macros<TYPE extends MacrosType, STATE extends JsonObject, SETTINGS extends JsonObject> = {
+export type MacrosEject<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> = {
   id: string;
-  type: TYPE;
   name: string;
   description: string;
   labels: string[];
-  settings: SETTINGS;
-  state: STATE;
 
-  setState(state: STATE): void;
-  accept(parameters: MacrosAccept): void;
-  toJS(): {
-    id: string;
-    name: string;
-    description: string;
-    type: TYPE;
-    labels: string[];
-    settings: SETTINGS;
-    state: STATE;
-  };
+  type: TYPE;
+  settings: SETTINGS;
+
+  state: STATE;
 };
+
+export type MacrosParameters<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> = {
+  readonly eventBus: EventEmitter;
+
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly labels: string[];
+
+  readonly type: TYPE;
+  readonly settings: SETTINGS;
+
+  readonly devices: Map<string, HyperionDevice>;
+  readonly controls: Map<string, HyperionDeviceControl>;
+
+  readonly state: STATE;
+};
+
+export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> {
+  /**
+   * ! Общие зависимости всех макросов
+   */
+  protected readonly eventBus: EventEmitter;
+
+  /**
+   * ! Данные устройств
+   */
+  protected devices: Map<string, HyperionDevice>;
+  protected previous: Map<string, HyperionDeviceControl>;
+  protected controls: Map<string, HyperionDeviceControl>;
+
+  /**
+   * ! Общие параметры всех макросов
+   */
+  protected readonly id: string;
+  protected readonly name: string;
+  protected readonly description: string;
+  protected readonly labels: string[];
+
+  /**
+   * ! Уникальные параметры макроса
+   */
+  protected readonly type: TYPE;
+  protected readonly settings: SETTINGS;
+  protected readonly state: STATE;
+
+  constructor({
+    eventBus,
+    id,
+    name,
+    description,
+    labels,
+    type,
+    settings,
+    devices,
+    controls,
+    state,
+  }: MacrosParameters<TYPE, SETTINGS, STATE>) {
+    this.eventBus = eventBus;
+
+    this.devices = cloneDeep(devices);
+    this.previous = new Map();
+    this.controls = cloneDeep(controls);
+
+    this.id = id ?? v4();
+    this.name = name;
+    this.description = description;
+    this.labels = labels;
+
+    this.type = type;
+    this.settings = settings;
+
+    this.state = state;
+
+    this.applyOutputToState = debounce(this.applyOutputToState.bind(this), 500, {
+      leading: false,
+      trailing: true,
+    });
+  }
+
+  abstract setState(state: STATE): void;
+
+  abstract accept({ devices, previous, controls, device }: MacrosAccept): void;
+
+  protected abstract execute(): void;
+
+  protected abstract applyStateToOutput(): boolean;
+
+  protected abstract applyInputToState(): boolean;
+
+  protected abstract applyOutputToState(): void;
+
+  protected abstract computeNextOutput(value: string): void;
+
+  protected abstract applyNextOutput(): void;
+
+  toJS = (): MacrosEject<TYPE, SETTINGS, STATE> => {
+    return cloneDeep({
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      labels: this.labels,
+
+      type: this.type,
+      settings: this.settings,
+
+      state: this.state,
+    });
+  };
+
+  /**
+   * ! Реализации частных случаев.
+   */
+  protected isControlValueHasBeenChanged(
+    device: HyperionDevice,
+    controls: Array<{ deviceId: string; controlId: string }>,
+  ): boolean {
+    for (const control of device.controls) {
+      const touch = controls.find(({ deviceId, controlId }) => deviceId === device.id && controlId === control.id);
+
+      if (touch) {
+        const previous = this.previous.get(getControlId(touch));
+        const current = this.controls.get(getControlId(touch));
+
+        return previous?.value !== current?.value;
+      }
+    }
+
+    return false;
+  }
+
+  protected isSwitchHasBeenPress(switches: Array<{ deviceId: string; controlId: string }>): boolean {
+    return switches.some((item) => {
+      const previous = this.previous.get(getControlId(item));
+      const current = this.controls.get(getControlId(item));
+
+      if (!previous || !current) {
+        return false;
+      }
+
+      if (current.type === ControlType.SWITCH && previous.value !== current.value && current.value === current.on) {
+        return true;
+      }
+
+      return false;
+    });
+  }
+
+  protected isSwitchHasBeenRelease(switches: Array<{ deviceId: string; controlId: string }>): boolean {
+    return switches.some((item) => {
+      const previous = this.previous.get(getControlId(item));
+      const current = this.controls.get(getControlId(item));
+
+      if (!previous || !current) {
+        return false;
+      }
+
+      if (
+        current.type === ControlType.SWITCH &&
+        previous.value !== current.value &&
+        previous.value === current.on &&
+        current.value === current.off
+      ) {
+        return true;
+      }
+
+      return false;
+    });
+  }
+}
