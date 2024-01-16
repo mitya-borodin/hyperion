@@ -162,25 +162,23 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
 
             const hardwareDevice: HardwareDevice = {
               id: device,
-              controls: {
-                [control]: {
-                  id: control,
-                  title: {
-                    ru: title?.ru,
-                    en: title?.en,
-                  },
-                  order,
-                  readonly,
-                  type,
-                  units,
-                  max,
-                  min,
-                  precision,
-                  on: '1',
-                  off: '0',
-                  topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
-                  meta,
+              control: {
+                id: control,
+                title: {
+                  ru: title?.ru,
+                  en: title?.en,
                 },
+                order,
+                readonly,
+                type,
+                units,
+                max,
+                min,
+                precision,
+                on: '1',
+                off: '0',
+                topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
+                meta,
               },
             };
 
@@ -211,11 +209,9 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (error === 'error') {
             const hardwareDevice: HardwareDevice = {
               id: device,
-              controls: {
-                [control]: {
-                  id: control,
-                  error: message,
-                },
+              control: {
+                id: control,
+                error: message,
               },
             };
 
@@ -255,11 +251,9 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
 
         const hardwareDevice: HardwareDevice = {
           id: device,
-          controls: {
-            [control]: {
-              id: control,
-              value: message,
-            },
+          control: {
+            id: control,
+            value: message,
           },
         };
 

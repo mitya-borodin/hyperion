@@ -129,7 +129,5 @@ export type HardwareDevice = {
   /**
    * Information about the control of the device, which gives an idea of how the control can be used
    */
-  controls?: {
-    [id: string]: HardwareControl;
-  };
+  control?: HardwareControl;
 };

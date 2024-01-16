@@ -1,15 +1,20 @@
 import EventEmitter from 'node:events';
 
+import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
+import omit from 'lodash.omit';
 import { v4 } from 'uuid';
 
+import { stringify } from '../../helpers/json-stringify';
 import { JsonObject } from '../../helpers/json-types';
 import { ControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
+
+const logger = debug('hyperion-macros');
 
 /**
  * ! ADD_MACROS
@@ -174,13 +179,27 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
     controls: Array<{ deviceId: string; controlId: string }>,
   ): boolean {
     for (const control of device.controls) {
-      const touch = controls.find(({ deviceId, controlId }) => deviceId === device.id && controlId === control.id);
+      const isSuitableControl = controls.find(
+        ({ deviceId, controlId }) => deviceId === device.id && controlId === control.id,
+      );
 
-      if (touch) {
-        const previous = this.previous.get(getControlId(touch));
-        const current = this.controls.get(getControlId(touch));
+      if (isSuitableControl) {
+        const id = getControlId({ deviceId: device.id, controlId: control.id });
 
-        return previous?.value !== current?.value;
+        const previous = this.previous.get(id);
+        const current = this.controls.get(id);
+
+        if (previous?.value !== current?.value) {
+          logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
+          logger(
+            stringify({
+              macros: omit(this.toJS(), ['labels', 'settings']),
+              device: { id: device.id, controls: device.controls.map(({ id, value }) => ({ id, value })) },
+            }),
+          );
+
+          return true;
+        }
       }
     }
 

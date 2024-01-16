@@ -37,7 +37,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   async apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice> {
-    const { device, controls } = toPrismaHardwareDevice(hardwareDevice);
+    const { device, control } = toPrismaHardwareDevice(hardwareDevice);
 
     try {
       if (!device.id) {
@@ -47,7 +47,14 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
-      await this.client.device.upsert({
+      if (control && !control?.id) {
+        logger('To apply the hardware device control information, you need to pass the identifier 🚨');
+        logger(JSON.stringify(control, null, 2));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const prismaDevice = await this.client.device.upsert({
         create: {
           deviceId: device.id,
 
@@ -79,138 +86,104 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         },
       });
 
-      const prismaControls = await Promise.all(
-        controls.map(async (control) => {
-          if (!control.id) {
-            logger('To apply the hardware device control information, you need to pass the identifier 🚨');
-            logger(JSON.stringify(control, null, 2));
+      if (control) {
+        const max = control.type === ControlType.RANGE ? control.max ?? 10 ^ 9 : control.max;
+        const min = control.type === ControlType.RANGE ? control.min ?? 0 : control.min;
 
-            return new Error(ErrorType.INVALID_ARGUMENTS);
-          }
-
-          const max = control.type === ControlType.RANGE ? control.max ?? 10 ^ 9 : control.max;
-          const min = control.type === ControlType.RANGE ? control.min ?? 0 : control.min;
-
-          const prismaControl = await this.client.control.upsert({
-            create: {
-              deviceId: device.id,
-              controlId: control.id,
-
-              title: control.title,
-              order: control.order,
-
-              type: control.type,
-
-              readonly: control.readonly,
-
-              units: control.units,
-
-              max,
-              min,
-              step: control.step,
-              precision: control.precision,
-
-              on: control.on,
-              off: control.off,
-              toggle: control.toggle,
-
-              enum: control.enum,
-
-              value: control.value,
-              presets: control.presets,
-
-              topic: control.topic,
-
-              error: control.error,
-
-              meta: control.meta,
-            },
-            update: {
-              deviceId: device.id,
-              controlId: control.id,
-
-              title: control.title,
-              order: control.order,
-
-              type: control.type,
-
-              readonly: control.readonly,
-
-              units: control.units,
-
-              max,
-              min,
-              step: control.step,
-              precision: control.precision,
-
-              on: control.on,
-              off: control.off,
-              toggle: control.toggle,
-
-              enum: control.enum,
-
-              value: control.value,
-              presets: control.presets,
-
-              topic: control.topic,
-
-              error: control.error,
-
-              meta: control.meta,
-
-              updatedAt: new Date(),
-            },
-            where: {
-              deviceId: device.id,
-              controlId: control.id,
-              deviceId_controlId: {
-                deviceId: device.id,
-                controlId: control.id,
-              },
-            },
-          });
-
-          await this.addToHistory({
+        const prismaControl = await this.client.control.upsert({
+          create: {
             deviceId: device.id,
             controlId: control.id,
-            value: control.value ?? '0',
-            error: control.error ?? 'UNSPECIFIED',
-            createdAt: new Date(),
-          });
 
-          return prismaControl;
-        }),
-      );
+            title: control.title,
+            order: control.order,
 
-      for (const prismaControl of prismaControls) {
-        if (prismaControl instanceof Error) {
-          logger("Unable to apply hardware device's control 🚨");
-          logger(JSON.stringify({ hardwareDevice, device, controls }, null, 2));
+            type: control.type,
 
-          return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
-        }
-      }
+            readonly: control.readonly,
 
-      const prismaHyperionDevice = await this.client.device.findFirst({
-        include: {
-          controls: true,
-        },
-        where: {
+            units: control.units,
+
+            max,
+            min,
+            step: control.step,
+            precision: control.precision,
+
+            on: control.on,
+            off: control.off,
+            toggle: control.toggle,
+
+            enum: control.enum,
+
+            value: control.value,
+            presets: control.presets,
+
+            topic: control.topic,
+
+            error: control.error,
+
+            meta: control.meta,
+          },
+          update: {
+            deviceId: device.id,
+            controlId: control.id,
+
+            title: control.title,
+            order: control.order,
+
+            type: control.type,
+
+            readonly: control.readonly,
+
+            units: control.units,
+
+            max,
+            min,
+            step: control.step,
+            precision: control.precision,
+
+            on: control.on,
+            off: control.off,
+            toggle: control.toggle,
+
+            enum: control.enum,
+
+            value: control.value,
+            presets: control.presets,
+
+            topic: control.topic,
+
+            error: control.error,
+
+            meta: control.meta,
+
+            updatedAt: new Date(),
+          },
+          where: {
+            deviceId: device.id,
+            controlId: control.id,
+            deviceId_controlId: {
+              deviceId: device.id,
+              controlId: control.id,
+            },
+          },
+        });
+
+        await this.addToHistory({
           deviceId: device.id,
-        },
-      });
+          controlId: control.id,
+          value: control.value ?? '0',
+          error: control.error ?? 'UNSPECIFIED',
+          createdAt: new Date(),
+        });
 
-      if (!prismaHyperionDevice) {
-        logger('Unable to find hardware device 🚨');
-        logger(JSON.stringify({ hardwareDevice, device, controls }, null, 2));
-
-        return new Error(ErrorType.INVALID_ARGUMENTS);
+        return toDomainDevice({ ...prismaDevice, controls: [prismaControl] });
       }
 
-      return toDomainDevice(prismaHyperionDevice);
+      return toDomainDevice({ ...prismaDevice, controls: [] });
     } catch (error) {
       logger('Unable to apply hardware device 🚨');
-      logger(JSON.stringify({ hardwareDevice, device, controls, error }, null, 2));
+      logger(JSON.stringify({ hardwareDevice, device, control, error }, null, 2));
 
       console.error(error);
 

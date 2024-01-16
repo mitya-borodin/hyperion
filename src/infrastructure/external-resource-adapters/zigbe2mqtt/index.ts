@@ -42,10 +42,27 @@ const hyperionDevices = new Map<string, HyperionDevice>();
 const hyperionControls = new Map<string, HyperionDeviceControl>();
 
 const accept = (device: HyperionDevice) => {
-  hyperionDevices.set(device.id, device);
-
+  /**
+   * ! device - содержит только последний обновленный control.
+   */
   for (const control of device.controls) {
     hyperionControls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+  }
+
+  const hyperionDevice = hyperionDevices.get(device.id);
+
+  if (hyperionDevice) {
+    for (const control of device.controls) {
+      const index = hyperionDevice.controls.findIndex(({ id }) => id === control.id);
+
+      if (index > 0) {
+        hyperionDevice.controls[index] = control;
+      } else {
+        hyperionDevice.controls.push(control);
+      }
+    }
+  } else {
+    hyperionDevices.set(device.id, device);
   }
 };
 
@@ -260,25 +277,23 @@ export const runZigbee2mqtt = async ({
               },
               driver: DRIVER,
               meta: deviceMeta,
-              controls: {
-                [expose.path]: {
-                  id: expose.path,
+              control: {
+                id: expose.path,
 
-                  title: {
-                    ru: expose.label,
-                    en: expose.label,
-                  },
-
-                  type: ControlType.SWITCH,
-
-                  readonly: !canBeSet,
-
-                  on: expose.value_on,
-                  off: expose.value_off,
-                  toggle: expose.value_toggle,
-
-                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                title: {
+                  ru: expose.label,
+                  en: expose.label,
                 },
+
+                type: ControlType.SWITCH,
+
+                readonly: !canBeSet,
+
+                on: expose.value_on,
+                off: expose.value_off,
+                toggle: expose.value_toggle,
+
+                topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
               },
             };
 
@@ -296,29 +311,27 @@ export const runZigbee2mqtt = async ({
               },
               driver: DRIVER,
               meta: deviceMeta,
-              controls: {
-                [expose.path]: {
-                  id: expose.path,
+              control: {
+                id: expose.path,
 
-                  title: {
-                    ru: expose.label,
-                    en: expose.label,
-                  },
-
-                  type: ControlType.VALUE,
-
-                  readonly: !canBeSet,
-
-                  units: expose.unit,
-
-                  max: expose.value_max,
-                  min: expose.value_min,
-                  step: expose.value_step,
-
-                  presets: expose.presets,
-
-                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                title: {
+                  ru: expose.label,
+                  en: expose.label,
                 },
+
+                type: ControlType.VALUE,
+
+                readonly: !canBeSet,
+
+                units: expose.unit,
+
+                max: expose.value_max,
+                min: expose.value_min,
+                step: expose.value_step,
+
+                presets: expose.presets,
+
+                topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
               },
             };
 
@@ -336,23 +349,21 @@ export const runZigbee2mqtt = async ({
               },
               driver: DRIVER,
               meta: deviceMeta,
-              controls: {
-                [expose.path]: {
-                  id: expose.path,
+              control: {
+                id: expose.path,
 
-                  title: {
-                    ru: expose.label,
-                    en: expose.label,
-                  },
-
-                  type: ControlType.ENUM,
-
-                  readonly: !canBeSet,
-
-                  enum: expose.values,
-
-                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                title: {
+                  ru: expose.label,
+                  en: expose.label,
                 },
+
+                type: ControlType.ENUM,
+
+                readonly: !canBeSet,
+
+                enum: expose.values,
+
+                topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
               },
             };
 
@@ -370,21 +381,19 @@ export const runZigbee2mqtt = async ({
               },
               driver: DRIVER,
               meta: deviceMeta,
-              controls: {
-                [expose.path]: {
-                  id: expose.path,
+              control: {
+                id: expose.path,
 
-                  title: {
-                    ru: expose.label,
-                    en: expose.label,
-                  },
-
-                  type: ControlType.TEXT,
-
-                  readonly: !canBeSet,
-
-                  topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+                title: {
+                  ru: expose.label,
+                  en: expose.label,
                 },
+
+                type: ControlType.TEXT,
+
+                readonly: !canBeSet,
+
+                topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
               },
             };
 
@@ -421,21 +430,19 @@ export const runZigbee2mqtt = async ({
             en: friendlyName,
           },
           driver: DRIVER,
-          controls: {
-            availability: {
-              id: 'availability',
+          control: {
+            id: 'availability',
 
-              title: {
-                ru: 'Availability',
-                en: 'Availability',
-              },
-
-              type: ControlType.TEXT,
-
-              readonly: true,
-
-              value: state,
+            title: {
+              ru: 'Availability',
+              en: 'Availability',
             },
+
+            type: ControlType.TEXT,
+
+            readonly: true,
+
+            value: state,
           },
         };
 
@@ -480,21 +487,19 @@ export const runZigbee2mqtt = async ({
         if (!hyperionDevice.controls.some(({ id }) => id === 'last_seen')) {
           const hardwareDevice: HardwareDevice = {
             id: hyperionDevice.id,
-            controls: {
-              last_seen: {
-                id: 'last_seen',
+            control: {
+              id: 'last_seen',
 
-                title: {
-                  ru: 'Last seen',
-                  en: 'Last seen',
-                },
-
-                type: ControlType.TEXT,
-
-                readonly: true,
-
-                value: String(last_seen),
+              title: {
+                ru: 'Last seen',
+                en: 'Last seen',
               },
+
+              type: ControlType.TEXT,
+
+              readonly: true,
+
+              value: String(last_seen),
             },
           };
 
@@ -516,21 +521,19 @@ export const runZigbee2mqtt = async ({
 
         const hardwareDevice: HardwareDevice = {
           id: hyperionDevice.id,
-          controls: {
-            last_seen: {
-              id: 'motor_state',
+          control: {
+            id: 'motor_state',
 
-              title: {
-                ru: 'Motor state',
-                en: 'Motor state',
-              },
-
-              type: ControlType.TEXT,
-
-              readonly: true,
-
-              value: String(motor_state),
+            title: {
+              ru: 'Motor state',
+              en: 'Motor state',
             },
+
+            type: ControlType.TEXT,
+
+            readonly: true,
+
+            value: String(motor_state),
           },
         };
 
@@ -541,23 +544,19 @@ export const runZigbee2mqtt = async ({
 
       const fields = new Set(Object.keys(payload));
 
-      const controls: { [key: string]: HardwareControl } = {};
-
       for (const control of hyperionDevice.controls) {
         if (fields.has(control.id)) {
-          controls[control.id] = {
-            id: control.id,
-            value: payload[control.id],
+          const hardwareDevice: HardwareDevice = {
+            id: hyperionDevice.id,
+            control: {
+              id: control.id,
+              value: payload[control.id],
+            },
           };
+
+          eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
         }
       }
-
-      const hardwareDevice: HardwareDevice = {
-        id: hyperionDevice.id,
-        controls,
-      };
-
-      eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
       lastHardwareDeviceAppeared = new Date();
     } else {
