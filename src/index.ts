@@ -67,11 +67,7 @@ export const run = () => {
     /**
      * ! RUN MACROS ENGINE
      */
-    const engine = await macrosEngine.start(signal);
-
-    if (engine instanceof Error) {
-      exit(1);
-    }
+    await macrosEngine.start();
 
     defer(() => macrosEngine.stop());
 

@@ -3,17 +3,7 @@ export enum EventBus {
 
   WB_PUBLISH_MESSAGE = 'WB_PUBLISH_MESSAGE',
 
-  /**
-   * ! В этом канале публикуются HyperionDevice, который содержит
-   * ! единственный изменившейся контрол.
-   *
-   * ! В процессе появления контролов, данные наслаиваются в БД, и образуют
-   * ! список контролов для каждого HyperionDevice.
-   *
-   * ! Благодаря тому, что отправляется всегда 1 контрол, мы можем понять, что именно он
-   * ! является последним состоянием устройства.
-   */
-  HYPERION_DEVICE_APPEARED = 'HYPERION_DEVICE_APPEARED',
+  HYPERION_STATE = 'HYPERION_STATE',
 
   GQL_PUBLISH_SUBSCRIPTION_EVENT = 'GQL_PUBLISH_SUBSCRIPTION_EVENT',
 

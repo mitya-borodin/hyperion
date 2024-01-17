@@ -38,13 +38,16 @@ export enum MacrosType {
 }
 
 export type MacrosAccept = {
-  devices: Map<string, HyperionDevice>;
   previous: Map<string, HyperionDeviceControl>;
+  current: HyperionDevice;
+  devices: Map<string, HyperionDevice>;
   controls: Map<string, HyperionDeviceControl>;
-  device: HyperionDevice;
 };
 
-export type MacrosEject<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SettingsBase = { [key: string]: Array<{ [key: string]: any; deviceId?: string; controlId?: string }> };
+
+export type MacrosEject<TYPE extends MacrosType, SETTINGS extends SettingsBase, STATE extends JsonObject> = {
   id: string;
   name: string;
   description: string;
@@ -56,7 +59,7 @@ export type MacrosEject<TYPE extends MacrosType, SETTINGS extends JsonObject, ST
   state: STATE;
 };
 
-export type MacrosParameters<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> = {
+export type MacrosParameters<SETTINGS extends SettingsBase, STATE extends JsonObject> = {
   readonly eventBus: EventEmitter;
 
   readonly id?: string;
@@ -64,16 +67,20 @@ export type MacrosParameters<TYPE extends MacrosType, SETTINGS extends JsonObjec
   readonly description: string;
   readonly labels: string[];
 
-  readonly type: TYPE;
   readonly settings: SETTINGS;
+
+  readonly state: STATE;
 
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
-
-  readonly state: STATE;
 };
 
-export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObject, STATE extends JsonObject> {
+type PrivateMacrosParameters<TYPE extends MacrosType> = {
+  readonly type: TYPE;
+  readonly controlTypes: { [key: string]: ControlType };
+};
+
+export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsBase, STATE extends JsonObject> {
   /**
    * ! Общие зависимости всех макросов
    */
@@ -100,6 +107,7 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
   readonly type: TYPE;
   readonly settings: SETTINGS;
   protected readonly state: STATE;
+  protected readonly controlTypes: { [key: string]: ControlType };
 
   constructor({
     eventBus,
@@ -109,15 +117,14 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
     labels,
     type,
     settings,
-    devices,
-    controls,
     state,
-  }: MacrosParameters<TYPE, SETTINGS, STATE>) {
+    controlTypes,
+  }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.eventBus = eventBus;
 
-    this.devices = cloneDeep(devices);
     this.previous = new Map();
-    this.controls = cloneDeep(controls);
+    this.devices = new Map();
+    this.controls = new Map();
 
     this.id = id ?? v4();
     this.name = name;
@@ -129,6 +136,8 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
 
     this.state = state;
 
+    this.controlTypes = controlTypes;
+
     this.applyOutputToState = debounce(this.applyOutputToState.bind(this), 500, {
       leading: false,
       trailing: true,
@@ -139,9 +148,9 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
 
   abstract setState(state: STATE): void;
 
-  accept({ devices, previous, controls }: MacrosAccept): void {
-    this.devices = devices;
+  accept({ previous, devices, controls }: MacrosAccept): void {
     this.previous = previous;
+    this.devices = devices;
     this.controls = controls;
   }
 
@@ -243,5 +252,38 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends JsonObjec
 
       return false;
     });
+  }
+
+  protected isDevicesReady(): boolean {
+    const isDevicesReady = Object.keys(this.settings).every((key) => {
+      const settings = this.settings[key];
+
+      return settings.every(({ deviceId, controlId }) => {
+        if (typeof deviceId === 'string' && typeof controlId === 'string') {
+          const control = this.controls.get(getControlId({ deviceId, controlId }));
+
+          if (control?.type !== this.controlTypes[key]) {
+            logger({
+              deviceId,
+              controlId,
+              controlType: control?.type,
+              settingsControlType: this.controlTypes[key],
+              control: control ?? 'NOT FOUND',
+            });
+          }
+
+          return control?.type === this.controlTypes[key];
+        } else {
+          return true;
+        }
+      });
+    });
+
+    if (!isDevicesReady) {
+      logger('The devices are not ready for use in this macro 🚨 🚨 🚨');
+      logger({ name: this.name, labels: this.labels, devices: this.devices.size, controls: this.controls.size });
+    }
+
+    return isDevicesReady;
   }
 }

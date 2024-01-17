@@ -39,7 +39,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
   /**
    * ! Получение состояние контроллера
    */
-  client.on('message', (topic: string, messageBuffer: Buffer) => {
+  client.on('message', (topic: string, messageBuffer: Buffer) => { 
     /**
      * ! В рамках нашей системы, не рассматриваются другие топики.
      */
@@ -94,6 +94,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               meta,
             };
 
+            // logger('The wirenboard device was appeared 📟 📟 📟');
+
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
             lastHardwareDeviceAppeared = new Date();
@@ -120,6 +122,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 error: JSON.parse(message),
               };
 
+              // logger('The wirenboard device was appeared 📟 📟 📟');
+
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
               lastHardwareDeviceAppeared = new Date();
@@ -128,6 +132,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 id: device,
                 error: message,
               };
+
+              // logger('The wirenboard device was appeared 📟 📟 📟');
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -162,25 +168,29 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
 
             const hardwareDevice: HardwareDevice = {
               id: device,
-              control: {
-                id: control,
-                title: {
-                  ru: title?.ru,
-                  en: title?.en,
+              controls: {
+                [control]: {
+                  id: control,
+                  title: {
+                    ru: title?.ru,
+                    en: title?.en,
+                  },
+                  order,
+                  readonly,
+                  type,
+                  units,
+                  max,
+                  min,
+                  precision,
+                  on: '1',
+                  off: '0',
+                  topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
+                  meta,
                 },
-                order,
-                readonly,
-                type,
-                units,
-                max,
-                min,
-                precision,
-                on: '1',
-                off: '0',
-                topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
-                meta,
               },
             };
+
+            // logger('The wirenboard device was appeared 📟 📟 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -209,11 +219,15 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (error === 'error') {
             const hardwareDevice: HardwareDevice = {
               id: device,
-              control: {
-                id: control,
-                error: message,
+              controls: {
+                [control]: {
+                  id: control,
+                  error: message,
+                },
               },
             };
+
+            // logger('The wirenboard device was appeared 📟 📟 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -251,11 +265,15 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
 
         const hardwareDevice: HardwareDevice = {
           id: device,
-          control: {
-            id: control,
-            value: message,
+          controls: {
+            [control]: {
+              id: control,
+              value: message,
+            },
           },
         };
+
+        // logger('The wirenboard device was appeared 📟 📟 📟');
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 

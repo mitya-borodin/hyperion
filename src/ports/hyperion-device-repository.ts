@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { HardwareDevice } from '../domain/hardware-device';
+import { HyperionDeviceControl } from '../domain/hyperion-control';
 import { HyperionDevice } from '../domain/hyperion-device';
 
 export type MarkupHyperionDevice = {
@@ -40,14 +41,27 @@ export type SetControlValue = {
   value: string;
 };
 
+export type HyperionStateUpdate = {
+  previous: Map<string, HyperionDeviceControl>;
+  current: HyperionDevice;
+
+  devices: Map<string, HyperionDevice>;
+  controls: Map<string, HyperionDeviceControl>;
+};
+
+export type HyperionState = {
+  devices: Map<string, HyperionDevice>;
+  controls: Map<string, HyperionDeviceControl>;
+};
+
 export interface IHyperionDeviceRepository {
-  apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice>;
+  apply(hardwareDevice: HardwareDevice): Error | HyperionStateUpdate;
 
-  getAll(): Promise<Error | HyperionDevice[]>;
+  getHyperionState(): Promise<HyperionState>;
 
-  markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionDevice>;
+  markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionStateUpdate>;
 
-  markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionDevice>;
+  markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionStateUpdate>;
 
-  setControlValue(parameters: SetControlValue): Promise<Error | HyperionDevice>;
+  setControlValue(parameters: SetControlValue): Promise<Error | HyperionStateUpdate>;
 }

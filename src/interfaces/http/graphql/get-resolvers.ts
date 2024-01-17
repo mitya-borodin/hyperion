@@ -8,6 +8,7 @@ import { FastifyInstance } from 'fastify';
 import GraphQLUpload from 'graphql-upload';
 import { IResolvers, MercuriusContext } from 'mercurius';
 
+import { emitHyperionStateUpdate } from '../../../application-services/helpers/emit-hyperion-state-update';
 import { createUser } from '../../../application-services/security/create-user';
 import { deleteUser } from '../../../application-services/security/delete-user';
 import { refreshAccessToken } from '../../../application-services/security/refresh-access-token';
@@ -20,6 +21,7 @@ import { confirmTwoFa } from '../../../application-services/security/two-fa/conf
 import { deactivateTwoFa } from '../../../application-services/security/two-fa/deactivate-two-fa';
 import { verifyTwoFa } from '../../../application-services/security/two-fa/verify-two-fa';
 import { EventBus } from '../../../domain/event-bus';
+import { getControlId } from '../../../domain/macroses/get-control-id';
 import { LightingMacros } from '../../../domain/macroses/lighting-macros';
 import { MacrosType } from '../../../domain/macroses/macros';
 import { MacrosEngine } from '../../../domain/macroses/macros-engine';
@@ -398,74 +400,104 @@ export const getResolvers = ({
        * ! HARDWARE
        */
       setControlValue: async (root, { input }, context) => {
-        const hyperionDevice = await hyperionDeviceRepository.setControlValue({
+        const hyperionStateUpdate = await hyperionDeviceRepository.setControlValue({
           deviceId: input.deviceId,
           controlId: input.controlId,
           value: input.value,
         });
 
-        if (hyperionDevice instanceof Error) {
-          throw hyperionDevice;
+        if (hyperionStateUpdate instanceof Error) {
+          throw hyperionStateUpdate;
         }
 
-        const control = hyperionDevice.controls.find(({ id }) => id === input.controlId);
+        const { devices, controls } = hyperionStateUpdate;
+
+        const device = devices.get(input.deviceId);
+
+        if (!device) {
+          logger('Device not found 🚨');
+          logger(JSON.stringify({ input }, null, 2));
+
+          throw new Error(ErrorType.INVALID_ARGUMENTS);
+        }
+
+        const control = controls.get(getControlId(input));
 
         if (!control) {
           logger('Control not found 🚨');
-          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
+          logger(JSON.stringify({ input, device }, null, 2));
 
-          return toGraphQlDevice(hyperionDevice);
+          return toGraphQlDevice(device);
         }
 
         if (control.readonly) {
           logger('Control is readonly 🚨');
-          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
+          logger(JSON.stringify({ input, device }, null, 2));
 
-          return toGraphQlDevice(hyperionDevice);
+          return toGraphQlDevice(device);
         }
 
         if (!control.topic) {
           logger('Control is not readonly, but topic is empty 🚨');
-          logger(JSON.stringify({ input, hyperionDevice }, null, 2));
+          logger(JSON.stringify({ input, device }, null, 2));
 
-          return toGraphQlDevice(hyperionDevice);
+          return toGraphQlDevice(device);
         }
 
+        emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
         emitWirenboardMessage({ eventBus, topic: control.topic, message: input.value });
-        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.VALUE_IS_SET });
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice: device, type: SubscriptionDeviceType.VALUE_IS_SET });
 
-        return toGraphQlDevice(hyperionDevice);
+        return toGraphQlDevice(device);
       },
       markupDevice: async (root, { input }, context) => {
-        const hyperionDevice = await hyperionDeviceRepository.markupDevice({
+        const hyperionStateUpdate = await hyperionDeviceRepository.markupDevice({
           deviceId: input.deviceId,
           labels: input.labels,
           markup: input.markup,
         });
 
-        if (hyperionDevice instanceof Error) {
-          throw hyperionDevice;
+        if (hyperionStateUpdate instanceof Error) {
+          throw hyperionStateUpdate;
         }
 
-        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.MARKED_UP });
+        const device = hyperionStateUpdate.devices.get(input.deviceId);
 
-        return toGraphQlDevice(hyperionDevice);
+        if (!device) {
+          throw new Error(ErrorType.INVALID_ARGUMENTS);
+        }
+
+        emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
+        emitGqlDeviceSubscriptionEvent({
+          eventBus,
+          hyperionDevice: device,
+          type: SubscriptionDeviceType.MARKED_UP,
+        });
+
+        return toGraphQlDevice(device);
       },
       markupControl: async (root, { input }, context) => {
-        const hyperionDevice = await hyperionDeviceRepository.markupControl({
+        const hyperionStateUpdate = await hyperionDeviceRepository.markupControl({
           deviceId: input.deviceId,
           controlId: input.controlId,
           labels: input.labels,
           markup: input.markup,
         });
 
-        if (hyperionDevice instanceof Error) {
-          throw hyperionDevice;
+        if (hyperionStateUpdate instanceof Error) {
+          throw hyperionStateUpdate;
         }
 
-        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice, type: SubscriptionDeviceType.MARKED_UP });
+        const device = hyperionStateUpdate.devices.get(input.deviceId);
 
-        return toGraphQlDevice(hyperionDevice);
+        if (!device) {
+          throw new Error(ErrorType.INVALID_ARGUMENTS);
+        }
+
+        emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
+        emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice: device, type: SubscriptionDeviceType.MARKED_UP });
+
+        return toGraphQlDevice(device);
       },
 
       /**
@@ -550,10 +582,10 @@ export const getResolvers = ({
     Subscription: {
       device: {
         subscribe: async (root, _, { pubsub }) => {
-          const hyperionDevices = await hyperionDeviceRepository.getAll();
+          const hyperionState = await hyperionDeviceRepository.getHyperionState();
 
-          if (hyperionDevices instanceof Error) {
-            throw hyperionDevices;
+          if (hyperionState instanceof Error) {
+            throw hyperionState;
           }
 
           const subscribe = await pubsub.subscribe(SubscriptionTopic.DEVICE);
@@ -561,7 +593,7 @@ export const getResolvers = ({
           eventBus.emit(
             EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
             toGraphQlSubscriptionDevice({
-              devices: hyperionDevices,
+              devices: [...hyperionState.devices.values()],
               type: SubscriptionDeviceType.CONNECTION_ESTABLISHED,
               error: {
                 code: ErrorCode.ALL_RIGHT,

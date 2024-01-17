@@ -10,6 +10,8 @@ import { emitGqlDeviceSubscriptionEvent } from '../interfaces/http/graphql/helpe
 import { SubscriptionDeviceType } from '../interfaces/http/graphql/subscription';
 import { IHyperionDeviceRepository } from '../ports/hyperion-device-repository';
 
+import { emitHyperionStateUpdate } from './helpers/emit-hyperion-state-update';
+
 const logger = debug('hyperion-run-collect-hardware-device');
 
 type RunCollectHardwareDevice = {
@@ -21,17 +23,16 @@ let lastHardwareDeviceAppeared: Date = new Date();
 
 export const runCollectHardwareDevice = ({ hyperionDeviceRepository, eventBus }: RunCollectHardwareDevice) => {
   const hardwareDeviceHandler = async (hardwareDevice: HardwareDevice) => {
-    const hyperionDevice = await hyperionDeviceRepository.apply(hardwareDevice);
+    const hyperionStateUpdate = hyperionDeviceRepository.apply(hardwareDevice);
 
-    if (hyperionDevice instanceof Error) {
-      return hyperionDevice;
+    if (hyperionStateUpdate instanceof Error) {
+      return hyperionStateUpdate;
     }
 
-    eventBus.emit(EventBus.HYPERION_DEVICE_APPEARED, hyperionDevice);
-
+    emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
     emitGqlDeviceSubscriptionEvent({
       eventBus,
-      hyperionDevice,
+      hyperionDevice: hyperionStateUpdate.current,
       type: SubscriptionDeviceType.APPEARED,
     });
 

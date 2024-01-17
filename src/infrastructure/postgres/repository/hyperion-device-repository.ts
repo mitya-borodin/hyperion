@@ -3,21 +3,25 @@
 import { PrismaClient } from '@prisma/client';
 import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
+import cloneDeep from 'lodash.clonedeep';
 
-import { ControlType } from '../../../domain/control-type';
 import { HardwareDevice } from '../../../domain/hardware-device';
+import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { History } from '../../../domain/hystory';
 import { getControlId } from '../../../domain/macroses/get-control-id';
 import { ErrorType } from '../../../helpers/error-type';
+import { stringify } from '../../../helpers/json-stringify';
 import {
+  HyperionState,
+  HyperionStateUpdate,
   IHyperionDeviceRepository,
   MarkupHyperionControl,
   MarkupHyperionDevice,
   SetControlValue,
 } from '../../../ports/hyperion-device-repository';
-import { toPrismaHardwareDevice } from '../../mappers/hardware-device-to-prisma-mapper';
-import { toDomainDevice } from '../../mappers/hyperion-device-mapper';
+import { fromPrismaToHyperionDevice } from '../../mappers/from-prisma-to-hyperion-device-mapper';
+import { toHyperionDevice } from '../../mappers/to-hyperion-device-mapper';
 
 const logger = debug('hyperion-device-repository');
 
@@ -27,193 +31,136 @@ type HyperionDeviceRepositoryParameters = {
 
 export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   private client: PrismaClient;
+
   private history: Map<string, History[]>;
   private lastHistorySave: Date;
 
+  private devices: Map<string, HyperionDevice>;
+  private controls: Map<string, HyperionDeviceControl>;
+  private lastDeviceSave: Date;
+
   constructor({ client }: HyperionDeviceRepositoryParameters) {
     this.client = client;
+
     this.history = new Map();
     this.lastHistorySave = new Date();
+
+    this.devices = new Map();
+    this.controls = new Map();
+    this.lastDeviceSave = new Date();
   }
 
-  async apply(hardwareDevice: HardwareDevice): Promise<Error | HyperionDevice> {
-    const { device, control } = toPrismaHardwareDevice(hardwareDevice);
+  apply(hardwareDevice: HardwareDevice): Error | HyperionStateUpdate {
+    const deviceId = hardwareDevice.id;
+    const hyperionDevice = this.devices.get(deviceId);
 
-    try {
-      if (!device.id) {
-        logger('To apply the hardware device information, you need to pass the identifier 🚨');
-        logger(JSON.stringify(hardwareDevice, null, 2));
+    if (hyperionDevice) {
+      this.devices.set(deviceId, toHyperionDevice({ hardwareDevice, hyperionDevice, fill: true }));
+    } else {
+      this.devices.set(deviceId, toHyperionDevice({ hardwareDevice, fill: true }));
+    }
 
-        return new Error(ErrorType.INVALID_ARGUMENTS);
+    const device = this.devices.get(deviceId);
+
+    if (!device) {
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+
+    const previous = new Map();
+
+    for (const control of device.controls) {
+      const controlId = getControlId({ deviceId, controlId: control.id });
+
+      previous.set(controlId, cloneDeep(this.controls.get(controlId)));
+
+      this.controls.set(controlId, control);
+    }
+
+    for (const { id, value, error } of Object.values(hardwareDevice.controls ?? {})) {
+      if (value === undefined && error === undefined) {
+        continue;
       }
 
-      if (control && !control?.id) {
-        logger('To apply the hardware device control information, you need to pass the identifier 🚨');
-        logger(JSON.stringify(control, null, 2));
-
-        return new Error(ErrorType.INVALID_ARGUMENTS);
-      }
-
-      const prismaDevice = await this.client.device.upsert({
-        create: {
-          deviceId: device.id,
-
-          title: device.title,
-          order: device.order,
-
-          driver: device.driver,
-
-          error: device.error,
-
-          meta: device.meta,
-        },
-        update: {
-          deviceId: device.id,
-
-          title: device.title,
-          order: device.order,
-
-          driver: device.driver,
-
-          error: device.error,
-
-          meta: device.meta,
-
-          updatedAt: new Date(),
-        },
-        where: {
-          deviceId: device.id,
-        },
+      this.addToHistory({
+        deviceId,
+        controlId: id,
+        value: value ?? '',
+        error: error ?? '',
+        createdAt: new Date(),
       });
+    }
 
-      if (control) {
-        const max = control.type === ControlType.RANGE ? control.max ?? 10 ^ 9 : control.max;
-        const min = control.type === ControlType.RANGE ? control.min ?? 0 : control.min;
+    this.saveDevices();
 
-        const prismaControl = await this.client.control.upsert({
-          create: {
-            deviceId: device.id,
-            controlId: control.id,
+    return {
+      previous,
+      current: toHyperionDevice({ hardwareDevice, hyperionDevice, fill: false }),
+      devices: this.devices,
+      controls: this.controls,
+    };
+  }
 
-            title: control.title,
-            order: control.order,
-
-            type: control.type,
-
-            readonly: control.readonly,
-
-            units: control.units,
-
-            max,
-            min,
-            step: control.step,
-            precision: control.precision,
-
-            on: control.on,
-            off: control.off,
-            toggle: control.toggle,
-
-            enum: control.enum,
-
-            value: control.value,
-            presets: control.presets,
-
-            topic: control.topic,
-
-            error: control.error,
-
-            meta: control.meta,
-          },
-          update: {
-            deviceId: device.id,
-            controlId: control.id,
-
-            title: control.title,
-            order: control.order,
-
-            type: control.type,
-
-            readonly: control.readonly,
-
-            units: control.units,
-
-            max,
-            min,
-            step: control.step,
-            precision: control.precision,
-
-            on: control.on,
-            off: control.off,
-            toggle: control.toggle,
-
-            enum: control.enum,
-
-            value: control.value,
-            presets: control.presets,
-
-            topic: control.topic,
-
-            error: control.error,
-
-            meta: control.meta,
-
-            updatedAt: new Date(),
-          },
-          where: {
-            deviceId: device.id,
-            controlId: control.id,
-            deviceId_controlId: {
-              deviceId: device.id,
-              controlId: control.id,
-            },
+  async getHyperionState(): Promise<HyperionState> {
+    try {
+      if (this.devices.size === 0 || this.controls.size === 0) {
+        const prismaDevices = await this.client.device.findMany({
+          include: {
+            controls: true,
           },
         });
 
-        await this.addToHistory({
-          deviceId: device.id,
-          controlId: control.id,
-          value: control.value ?? '0',
-          error: control.error ?? 'UNSPECIFIED',
-          createdAt: new Date(),
-        });
+        const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
 
-        return toDomainDevice({ ...prismaDevice, controls: [prismaControl] });
+        for (const device of hyperionDevices) {
+          this.devices.set(device.id, device);
+
+          for (const control of device.controls) {
+            this.controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+          }
+        }
       }
 
-      return toDomainDevice({ ...prismaDevice, controls: [] });
+      return {
+        devices: this.devices,
+        controls: this.controls,
+      };
     } catch (error) {
-      logger('Unable to apply hardware device 🚨');
-      logger(JSON.stringify({ hardwareDevice, device, control, error }, null, 2));
+      logger('Unable to get hyperion state 🚨');
 
       console.error(error);
 
-      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+      return {
+        devices: this.devices,
+        controls: this.controls,
+      };
     }
   }
 
-  async getAll(): Promise<Error | HyperionDevice[]> {
-    try {
-      const prismaDevices = await this.client.device.findMany({
-        include: {
-          controls: true,
-        },
-      });
-
-      return prismaDevices.map((prismaDevice) => toDomainDevice(prismaDevice));
-    } catch (error) {
-      logger('Unable to get all hardware devices 🚨');
-
-      console.error(error);
-
-      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
-    }
-  }
-
-  async markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionDevice> {
+  async markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionStateUpdate> {
     try {
       if (!parameters.markup && !parameters.labels) {
         logger('To mark up the hyperion device, you need to pass the markup parameters 🚨');
         logger(JSON.stringify({ parameters }, null, 2));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const previous = new Map<string, HyperionDeviceControl>();
+      const device = this.devices.get(parameters.deviceId);
+
+      if (device) {
+        for (const control of device.controls) {
+          previous.set(getControlId({ deviceId: device.id, controlId: control.id }), cloneDeep(control));
+        }
+
+        device.labels = parameters.labels ?? device.labels;
+        device.markup.title.ru = parameters.markup?.title?.ru ?? device.markup.title.ru;
+        device.markup.title.en = parameters.markup?.title?.en ?? device.markup.title.en;
+        device.markup.order = parameters.markup?.order ?? device.markup.order;
+        device.markup.color = parameters.markup?.color ?? device.markup.color;
+      } else {
+        logger('The hyperion device was not found 🚨 🚨 🚨');
+        logger(stringify(parameters));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -231,7 +178,12 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         },
       });
 
-      return toDomainDevice(prismaDevice);
+      return {
+        previous,
+        current: fromPrismaToHyperionDevice(prismaDevice),
+        devices: this.devices,
+        controls: this.controls,
+      };
     } catch (error) {
       logger('Unable to markup hyperion device 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
@@ -242,11 +194,34 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     }
   }
 
-  async markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionDevice> {
+  async markupControl(parameters: MarkupHyperionControl): Promise<Error | HyperionStateUpdate> {
     try {
       if (!parameters.markup && !parameters.labels) {
         logger('To mark up the hyperion control, you need to pass the markup parameters 🚨');
         logger(JSON.stringify({ parameters }, null, 2));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const controlId = getControlId(parameters);
+      const previous = new Map<string, HyperionDeviceControl>();
+      const control = this.controls.get(controlId);
+
+      if (control) {
+        previous.set(controlId, cloneDeep(control));
+
+        control.labels = parameters.labels ?? control.labels;
+        control.markup.title.ru = parameters.markup?.title?.ru ?? control.markup.title.ru;
+        control.markup.title.en = parameters.markup?.title?.en ?? control.markup.title.en;
+        control.markup.order = parameters.markup?.order ?? control.markup.order;
+        control.markup.color = parameters.markup?.color ?? control.markup.color;
+
+        /**
+         * TODO проверить, обновляются ли данные контролов в this.devices.
+         */
+      } else {
+        logger('The hyperion control was not found 🚨 🚨 🚨');
+        logger(stringify(parameters));
 
         return new Error(ErrorType.INVALID_ARGUMENTS);
       }
@@ -267,7 +242,12 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         },
       });
 
-      return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
+      return {
+        previous,
+        current: fromPrismaToHyperionDevice({ ...prismaControl.device, controls: [prismaControl] }),
+        devices: this.devices,
+        controls: this.controls,
+      };
     } catch (error) {
       logger('Unable to markup hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
@@ -278,8 +258,26 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     }
   }
 
-  async setControlValue(parameters: SetControlValue): Promise<Error | HyperionDevice> {
+  async setControlValue(parameters: SetControlValue): Promise<Error | HyperionStateUpdate> {
     try {
+      const controlId = getControlId(parameters);
+      const previous = new Map<string, HyperionDeviceControl>();
+      const control = this.controls.get(controlId);
+
+      if (control) {
+        previous.set(controlId, cloneDeep(control));
+
+        control.value = parameters.value;
+        /**
+         * TODO проверить, обновляются ли данные контролов в this.devices.
+         */
+      } else {
+        logger('The hyperion control was not found 🚨 🚨 🚨');
+        logger(stringify(parameters));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
       const prismaControl = await this.client.control.update({
         include: {
           device: true,
@@ -295,7 +293,12 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         },
       });
 
-      return toDomainDevice({ ...prismaControl.device, controls: [prismaControl] });
+      return {
+        previous,
+        current: fromPrismaToHyperionDevice({ ...prismaControl.device, controls: [prismaControl] }),
+        devices: this.devices,
+        controls: this.controls,
+      };
     } catch (error) {
       logger('Unable to set value for hyperion control 🚨');
       logger(JSON.stringify({ parameters, error }, null, 2));
@@ -307,8 +310,16 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private async addToHistory(item: History) {
-    const historyId = getControlId({ deviceId: item.deviceId, controlId: item.controlId });
-    const history = this.history.get(historyId);
+    const controlId = getControlId({ deviceId: item.deviceId, controlId: item.controlId });
+    const history = this.history.get(controlId);
+
+    const parsed: History = {
+      deviceId: String(item.deviceId),
+      controlId: String(item.controlId),
+      value: String(item.value),
+      error: String(item.error),
+      createdAt: item.createdAt,
+    };
 
     if (history) {
       const last = history.at(-1);
@@ -318,12 +329,12 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       }
 
       if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
-        history.push(item);
+        history.push(parsed);
       } else if (last.value !== item.value) {
-        history.push(item);
+        history.push(parsed);
       }
     } else {
-      this.history.set(historyId, [item]);
+      this.history.set(controlId, [parsed]);
     }
 
     if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 20)) === 1) {
@@ -336,9 +347,110 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       this.history.clear();
       this.lastHistorySave = new Date();
 
-      logger('Save history ⬆️ 🛟', history.length);
+      logger('Try to save history ⬆️ 🛟 ', history.length);
 
-      await this.client.history.createMany({ data: history });
+      this.client.history
+        .createMany({ data: history })
+        .then(() => {
+          logger('The history was saved ⬆️ 🛟 ✅');
+        })
+        .catch((error) => {
+          logger('The history was not saved 🚨 🚨 🚨');
+
+          console.error(error);
+        });
+    }
+  }
+
+  private async saveDevices() {
+    if (compareDesc(this.lastDeviceSave, subSeconds(new Date(), 10)) === 1) {
+      const devices: Array<{
+        deviceId: string;
+        title?: string;
+        order?: number;
+        driver?: string;
+        error?: string;
+        meta?: string;
+        labels?: string[];
+        markup?: string;
+        updatedAt?: Date | string;
+      }> = [];
+      const controls: Array<{
+        deviceId: string;
+        controlId: string;
+        title?: string;
+        order?: number;
+        type?: string;
+        readonly?: boolean;
+        units?: string;
+        max?: number;
+        min?: number;
+        step?: number;
+        precision?: number;
+        on?: string;
+        off?: string;
+        toggle?: string;
+        enum?: string[];
+        value?: string;
+        presets?: string;
+        topic?: string;
+        error?: string;
+        meta?: string;
+        labels?: string[];
+        markup?: string;
+        updatedAt?: Date | string;
+      }> = [];
+
+      for (const device of this.devices.values()) {
+        devices.push({
+          deviceId: device.id,
+          title: JSON.stringify(device.title),
+          order: Number(device.order),
+          driver: String(device.driver),
+          error: JSON.stringify(device.error),
+          meta: JSON.stringify(device.meta),
+          labels: device.labels.map(String),
+          markup: JSON.stringify(device.markup),
+          updatedAt: new Date(),
+        });
+
+        for (const control of device.controls) {
+          controls.push({
+            deviceId: device.id,
+            controlId: control.id,
+            title: JSON.stringify(control.title),
+            order: Number(control.order),
+            type: String(control.type),
+            readonly: Boolean(control.readonly),
+            units: String(control.units),
+            max: Number(control.max),
+            min: Number(control.min),
+            step: Number(control.step),
+            precision: Number(control.precision),
+            on: String(control.on),
+            off: String(control.off),
+            toggle: String(control.toggle),
+            enum: control.enum.map(String),
+            value: String(control.value),
+            presets: JSON.stringify(control.presets),
+            topic: String(control.topic),
+            error: String(control.error),
+            meta: JSON.stringify(control.meta),
+            labels: control.labels.map(String),
+            markup: JSON.stringify(control.markup),
+            updatedAt: new Date(),
+          });
+        }
+      }
+
+      this.lastDeviceSave = new Date();
+
+      logger('Save devices and controls ⬆️ 🛟 ', devices.length, controls.length);
+
+      // await this.client.$transaction([
+      //   this.client.device.createMany({ data: devices }),
+      //   this.client.control.createMany({ data: controls }),
+      // ]);
     }
   }
 }

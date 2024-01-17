@@ -1,6 +1,6 @@
 import { Macros as PrismaMacros } from '@prisma/client';
 
-import { MacrosType } from '../../domain/macroses/macros';
+import { MacrosType, SettingsBase } from '../../domain/macroses/macros';
 import { JsonObject } from '../../helpers/json-types';
 import { MacrosSettings } from '../../ports/macros-settings-repository';
 
@@ -73,6 +73,6 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     name: prismaMacros.name,
     description: prismaMacros.description,
     labels: prismaMacros.labels,
-    settings: prismaMacros.settings as JsonObject,
+    settings: prismaMacros.settings as SettingsBase,
   };
 };

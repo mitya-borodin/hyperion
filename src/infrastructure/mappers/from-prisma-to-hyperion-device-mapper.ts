@@ -5,7 +5,7 @@ import { ControlType } from '../../domain/control-type';
 import { HyperionDeviceControl } from '../../domain/hyperion-control';
 import { HyperionDevice } from '../../domain/hyperion-device';
 
-export const toDomainDevice = (
+export const fromPrismaToHyperionDevice = (
   prismaHyperionDevice: DevicePrisma & { controls: DeviceControlPrisma[] },
 ): HyperionDevice => {
   const markup = JSON.parse(prismaHyperionDevice.markup);

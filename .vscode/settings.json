@@ -78,7 +78,7 @@
 
   "yaml.format.singleQuote": true,
 
-  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.ignoreTrimWhitespace": false,
   "diffEditor.wordWrap": "off",
 
   "html.format.indentHandlebars": true,
