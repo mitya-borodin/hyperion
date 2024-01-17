@@ -39,7 +39,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
   /**
    * ! Получение состояние контроллера
    */
-  client.on('message', (topic: string, messageBuffer: Buffer) => { 
+  client.on('message', (topic: string, messageBuffer: Buffer) => {
     /**
      * ! В рамках нашей системы, не рассматриваются другие топики.
      */
