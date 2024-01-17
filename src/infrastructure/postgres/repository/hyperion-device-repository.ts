@@ -337,7 +337,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       this.history.set(controlId, [parsed]);
     }
 
-    if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 20)) === 1) {
+    if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
       const history: History[] = [];
 
       for (const item of this.history.values()) {
@@ -363,7 +363,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private async saveDevices() {
-    if (compareDesc(this.lastDeviceSave, subSeconds(new Date(), 10)) === 1) {
+    if (compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
       const devices: Array<{
         deviceId: string;
         title?: string;
@@ -445,12 +445,32 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
       this.lastDeviceSave = new Date();
 
-      logger('Save devices and controls ⬆️ 🛟 ', devices.length, controls.length);
+      logger('Try to save devices and controls ⬆️ 🛟 ', devices.length, controls.length);
 
-      // await this.client.$transaction([
-      //   this.client.device.createMany({ data: devices }),
-      //   this.client.control.createMany({ data: controls }),
-      // ]);
+      for (const device of devices) {
+        await this.client.device.upsert({
+          where: {
+            deviceId: device.deviceId,
+          },
+          create: device,
+          update: device,
+        });
+      }
+
+      for (const control of controls) {
+        await this.client.control.upsert({
+          where: {
+            deviceId_controlId: {
+              deviceId: control.deviceId,
+              controlId: control.controlId,
+            },
+          },
+          create: control,
+          update: control,
+        });
+      }
+
+      logger('The devices and controls was saved ⬆️ 🛟 ✅ ');
     }
   }
 }
