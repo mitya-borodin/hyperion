@@ -5,7 +5,7 @@ import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 
-import { HardwareDevice } from '../../../domain/hardware-device';
+import { HardwareControl, HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { History } from '../../../domain/hystory';
@@ -102,7 +102,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
   async getHyperionState(): Promise<HyperionState> {
     try {
-      if (this.devices.size === 0 || this.controls.size === 0) {
+      if (this.devices.size === 0 && this.controls.size === 0) {
+        logger('Try to get hyperion state from db 🧯');
+
         const prismaDevices = await this.client.device.findMany({
           include: {
             controls: true,
@@ -111,13 +113,59 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
         const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
 
-        for (const device of hyperionDevices) {
-          this.devices.set(device.id, device);
+        if (this.devices.size > 0 || this.controls.size > 0) {
+          for (const device of hyperionDevices) {
+            const hardwareDevice: HardwareDevice = {
+              id: device.id,
+              title: device.title,
+              order: device.order,
+              driver: device.driver,
+              error: device.error,
+              meta: device.meta,
+              controls: {},
+            };
 
-          for (const control of device.controls) {
-            this.controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+            const controls: { [key: string]: HardwareControl } = {};
+
+            for (const control of device.controls) {
+              const hardwareControl: HardwareControl = {
+                id: control.id,
+                title: control.title,
+                order: control.order,
+                type: control.type,
+                readonly: control.readonly,
+                units: control.units,
+                max: control.max,
+                min: control.min,
+                step: control.step,
+                precision: control.precision,
+                on: control.on,
+                off: control.off,
+                toggle: control.toggle,
+                enum: control.enum,
+                value: control.value,
+                presets: control.presets,
+                topic: control.topic,
+                error: control.error,
+                meta: control.meta,
+              };
+
+              controls[control.id] = hardwareControl;
+            }
+
+            this.apply({ ...hardwareDevice, controls });
+          }
+        } else {
+          for (const device of hyperionDevices) {
+            this.devices.set(device.id, device);
+
+            for (const control of device.controls) {
+              this.controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+            }
           }
         }
+
+        logger('The hyperion state from db was obtained ✅');
       }
 
       return {

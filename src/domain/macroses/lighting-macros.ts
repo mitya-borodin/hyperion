@@ -3,7 +3,6 @@ import debug from 'debug';
 import { stringify } from '../../helpers/json-stringify';
 import { emitWirenboardMessage } from '../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { ControlType } from '../control-type';
-import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';

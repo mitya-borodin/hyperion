@@ -38,12 +38,10 @@ type RunZigbee2mqttResult = {
 let lastHardwareDeviceAppeared = new Date();
 
 let hyperionDevices = new Map<string, HyperionDevice>();
-let hyperionControls = new Map<string, HyperionDeviceControl>();
 const ieeeAddressByFriendlyName = new Map<string, string>();
 
 const accept = (hyperionState: HyperionStateUpdate) => {
   hyperionDevices = hyperionState.devices;
-  hyperionControls = hyperionState.controls;
 };
 
 const fillIeeeAddressByFriendlyName = async (
@@ -70,7 +68,6 @@ const fillIeeeAddressByFriendlyName = async (
       }
 
       hyperionDevices = hyperionState.devices;
-      hyperionControls = hyperionState.controls;
 
       logger('The initial state of hyperion devices has been obtained ⬇️ ✅ ⬇️');
     },
