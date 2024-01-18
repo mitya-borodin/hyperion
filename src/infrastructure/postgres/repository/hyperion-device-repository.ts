@@ -397,6 +397,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
       logger('Try to save history ⬆️ 🛟 ', history.length);
 
+      await this.saveDevices(true);
+
       this.client.history
         .createMany({ data: history })
         .then(() => {
@@ -410,8 +412,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     }
   }
 
-  private async saveDevices() {
-    if (compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
+  private async saveDevices(force: boolean = false) {
+    if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
+      logger('Try to save devices and controls ⬆️ 🛟 ');
       const devices: Array<{
         deviceId: string;
         title?: string;
@@ -493,8 +496,6 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
       this.lastDeviceSave = new Date();
 
-      logger('Try to save devices and controls ⬆️ 🛟 ', devices.length, controls.length);
-
       for (const device of devices) {
         await this.client.device.upsert({
           where: {
@@ -518,7 +519,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         });
       }
 
-      logger('The devices and controls was saved ⬆️ 🛟 ✅ ');
+      logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
     }
   }
 }
