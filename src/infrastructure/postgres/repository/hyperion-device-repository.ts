@@ -399,7 +399,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
       await this.saveDevices(true);
 
-      this.client.history
+      await this.client.history
         .createMany({ data: history })
         .then(() => {
           logger('The history was saved ⬆️ 🛟 ✅');
