@@ -2,27 +2,9 @@
 
 Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.
 
-## Roadmap
-
-1. Реализовать подписку на устройства ✅
-2. Реализовать АПИ для разметки устройств ✅
-3. Реализовать АПИ для изменения значения устройства ✅
-4. Инициализировать FE 👷‍♂️
-5. Реализовать список устройств, где под каждый тип свой вариант виджета
-6. Реализовать страницу редактирования устройства,где под каждый тип свой вариант редактирования
-7. Реализовать возможность размечать устройства
-8. Реализовать возможность изменять значений которые можно изменять
-9. Реализовать Макрос для групп света
-10. Реализовать АПИ для сетапа и настройки и удаления макроса
-11. Реализовать АПИ для изменения состояния Макроса
-12. Реализовать витрину макросов
-13. Реализовать Страницу сетапа для каждого типа Макросов
-14. Реализовать список запущенных Макросов
-15. Реализовать страницу работы с Макросом, для каждого макроса своя страница.
-
 ## Environment
 
-- Required `Node@18.12.1` `npm@8.19.2`
+- Required `Node@18.16.0` `npm@9.5.1`
 - Required `Yarn 1.22.19`
 - Required `Docker version 20.10.21, build baeda1f`
 
@@ -37,7 +19,7 @@ Automation of all engineering systems of a private house based on low-level soft
 
 ### Установка node в ручном режиме
 
-Самый простой вариант начать, это установить `Node@18.12.1` `npm@8.19.2` [отсюда](https://nodejs.org/download/release/v18.12.1/).
+Самый простой вариант начать, это установить `Node@18.16.0` `npm@9.5.1` [отсюда](https://nodejs.org/download/release/v18.16.0/).
 
 ### Настройка NVM и установка node в автоматизированном режиме
 
@@ -81,8 +63,8 @@ Automation of all engineering systems of a private house based on low-level soft
 - Увидеть что-то подобное, только будет указана версия взятая из вашего `.nvmrc`.
 
   ```text
-  Found '~/programming/collaborative-data/.nvmrc' with version <v18.12.1>
-  Now using node v18.12.1 (npm v8.19.2)
+  Found '~/programming/collaborative-data/.nvmrc' with version <v18.16.0>
+  Now using node v18.16.0 (npm v9.5.1)
   ```
 
 - В случае если нужная версия `node` не установлено вы увидите предложение установить её.
@@ -97,24 +79,12 @@ Automation of all engineering systems of a private house based on low-level soft
 npm i -g yarn
 ```
 
-#### Установить общие инструменты проекта
+#### Установить зависимости и определите переменные окружения
 
 ```bash
-yarn
-```
-
-#### Установить зависимости в каждом проекте
-
-```bash
-cd rayner
-
 yarn
 
 cp .env.example .env
-
-cd ../mett
-
-yarn
 ```
 
 #### Запуск БД
@@ -125,21 +95,32 @@ yarn
 docker compose up -d
 ```
 
-### Регулярные действия
-
-В первой консоли:
+Накатим миграции:
 
 ```bash
-cd rayner
-
-yarn start
+yarn prisma:migrate:dev
 ```
 
-Во второй консоли:
+Накатим сидинг:
+
+Перед тем как катить сидинг, стоит изменить часть переменных на свои значения:
+
+```text
+## Master User
+#
+MASTER_USER_EMAIL=dmitriy@borodin.site
+MASTER_USER_PASSWORD='1234'
+MASTER_USER_NAME="Dmitriy Borodin"
+
+```
 
 ```bash
-cd mett
+yarn prisma:seed
+```
 
+### Регулярные действия
+
+```bash
 yarn start
 ```
 
@@ -156,13 +137,16 @@ yarn start
 
 ### Backend
 
-- [NodeJS](https://nodejs.org/en/)
-- [Pino](https://github.com/pinojs/pino)
-- [Pino-pretty](https://github.com/pinojs/pino-pretty)
-- [Nodemon](https://nodemon.io)
-- [MongoDB](https://www.mongodb.com)
-- [MQTT](https://www.npmjs.com/package/mqtt)
+- [Domain-driven-hexagon](https://github.com/Sairyss/domain-driven-hexagon)
 - [Mosquitto](https://mosquitto.org)
+- [MQTT](https://www.npmjs.com/package/mqtt)
+- [NodeJS](https://nodejs.org/en/)
+- [Nodemon](https://nodemon.io)
+- [Debug](https://github.com/debug-js/debug#readme)
+- [Fastify](https://fastify.dev)
+- [Mercurius](https://mercurius.dev/#/)
+- [GraphQL](https://graphql.org)
+- [SQLlite]([https://www.mongodb.com](https://www.prisma.io/docs/orm/overview/databases/sqlite))
 - [Docker compose](https://docs.docker.com/language/nodejs/develop/)
 - [Compose-file](https://docs.docker.com/compose/compose-file/)
 

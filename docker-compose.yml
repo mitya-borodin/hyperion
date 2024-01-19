@@ -3,39 +3,47 @@ version: '3.8'
 volumes:
   postgres-data:
 
+networks:
+  hyperion_pg_db:
+    name: nginx_network
+    external: true
+  hyperion:
+    name: nginx_network
+    external: true
+
 services:
-  postgres:
+  hyperion:
+    container_name: hyperion
+    image: borodindmitriy/hyperion:${GITHUB_SHA}
+    command: 'node ./bin/hyperion'
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - PRISMA_PG_DATABASE_URL=postgresql://hyperion:hyperion@hyperion_pg_db:5432/hyperion?schema=public
+      - FASTIFY_HOST=0.0.0.0
+      - FASTIFY_PORT=8080
+      - NODE_ENV=development
+      # - DEBUG=hyperion-*
+    networks:
+      - hyperion
+
+  hyperion_pg_db:
+    container_name: hyperion_pg_db
     image: postgres:14
     environment:
       POSTGRES_DB: hyperion
       POSTGRES_USER: hyperion
       POSTGRES_PASSWORD: hyperion
-    ports:
-      - '127.0.0.1:5436:5432'
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5566:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U hyperion -d hyperion']
       interval: 30s
       timeout: 10s
       retries: 10
       start_period: 10s
-
-  # rayner:
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./rayner
-  #   image: registry.gitlab.com/hyperion/rayner-local:latest
-  #   command: 'yarn start'
-  #   restart: unless-stopped
-  #   env_file: ./rayner/.env
-  #   environment:
-  #     - PRISMA_PG_DATABASE_URL=postgresql://hyperion:hyperion@postgres:5432/hyperion?schema=public
-  #     - FASTIFY_HOST=0.0.0.0
-  #   volumes:
-  #     - ./rayner:/app
-  #     - /app/node_modules
-  #   ports:
-  #     - '127.0.0.1:8080:8080'
-  #     - '127.0.0.1:9229:9229'
+    networks:
+      - hyperion_pg_db

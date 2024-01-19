@@ -1,0 +1,39 @@
+input LightingMacrosSetupState {
+  force: LightingForce!
+}
+
+input LightingMacrosSetupSettingButton {
+  deviceId: String!
+  controlId: String!
+  trigger: String!
+}
+
+input LightingMacrosSetupSettingIllumination {
+  deviceId: String!
+  controlId: String!
+  trigger: String!
+}
+
+input LightingMacrosSetupSettingLighting {
+  deviceId: String!
+  controlId: String!
+  level: LightingLevel!
+}
+
+input LightingMacrosSetupSettings {
+  buttons: [LightingMacrosSetupSettingButton!]!
+  illuminations: [LightingMacrosSetupSettingIllumination!]!
+  lightings: [LightingMacrosSetupSettingLighting!]!
+}
+
+input LightingMacrosSetup {
+  id: ID
+
+  name: String!
+  description: String!
+
+  labels: [String!]!
+
+  settings: LightingMacrosSetupSettings!
+  state: LightingMacrosSetupState!
+}

@@ -1,7 +1,0 @@
-node_modules
-dist
-.eslintrc.js
-webpack
-vite
-# don't ever lint GraphQl generated file
-graphql-types.ts

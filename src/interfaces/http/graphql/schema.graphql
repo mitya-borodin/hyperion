@@ -1,0 +1,270 @@
+enum MacrosType {
+  LIGHTING
+  CURTAINS_OPENING
+  HEATING
+  WATER_SUPPLY
+  HEATED_TOWEL_RAILS
+  VENTILATION
+  HUMIDIFICATION
+  CONDITIONING
+  HEATING_CABLE
+  GATE_OPENING
+  SECURITY
+  UPS
+  ACCOUNTING
+  AUTOMATIC_RESERVE_ENTRY
+  MASTER_SWITCH
+}
+
+enum ControlType {
+  UNSPECIFIED
+  SWITCH
+  ILLUMINATION
+  TEXT
+  ENUM
+  VALUE
+  VOLTAGE
+  TEMPERATURE
+  RANGE
+  PUSH_BUTTON
+  PRESSURE
+  SOUND_LEVEL
+  REL_HUMIDITY
+  ATMOSPHERIC_PRESSURE
+}
+
+enum LightingLevel {
+  HIGHT
+  MIDDLE
+  LOW
+  ACCIDENT
+}
+
+enum SubscriptionDeviceType {
+  CONNECTION_ESTABLISHED
+  APPEARED
+  MARKED_UP
+  VALUE_IS_SET
+}
+
+enum SubscriptionMacrosType {
+  CONNECTION_ESTABLISHED
+  SETUP
+  UPDATE
+  DESTROY
+  OUTPUT_APPEARED
+}
+
+directive @auth(requires: [UserRole!]!) on OBJECT | FIELD_DEFINITION
+
+scalar Upload
+
+type DefaultOutput {
+  message: String
+}
+
+type Error {
+  code: Int!
+  message: String!
+}
+
+input PaginationInput {
+  page: Int = 1
+  limit: Int = 25
+}
+
+type PaginationOutput {
+  total: Int!
+  page: Int!
+  limit: Int!
+}
+
+input TitleInput {
+  ru: String!
+  en: String!
+}
+
+type TitleOutput {
+  ru: String!
+  en: String!
+}
+
+input MarkupInput {
+  title: TitleInput!
+  description: String!
+  order: Int!
+  color: String!
+}
+
+type MarkupOutput {
+  title: TitleOutput!
+  description: String!
+  order: Int!
+  color: String!
+}
+
+input MarkupDevice {
+  deviceId: ID!
+
+  labels: [String!]!
+
+  markup: MarkupInput!
+}
+
+input MarkupControl {
+  deviceId: ID!
+  controlId: ID!
+
+  labels: [String!]!
+
+  markup: MarkupInput!
+}
+
+type Control {
+  id: ID!
+
+  title: TitleOutput!
+  order: Int!
+  readonly: Boolean!
+  type: ControlType!
+  units: String!
+  max: Float!
+  min: Float!
+  precision: Float!
+  value: String!
+  topic: String
+  error: String!
+  meta: String!
+
+  labels: [String!]!
+
+  markup: MarkupOutput!
+}
+
+type Device {
+  id: ID!
+
+  driver: String!
+  title: TitleOutput!
+
+  error: String!
+  meta: String!
+
+  labels: [String!]!
+
+  markup: MarkupOutput!
+
+  controls: [Control!]!
+}
+
+input SetControlValue {
+  deviceId: String!
+  controlId: String!
+
+  value: String!
+}
+
+## MacrosShowcase
+# Используется только как витрина доступных макросов для установки.
+# Возможность установки нескольких макросов одного типа
+# задается реализацией макроса.
+#
+# Список хардкодится в реализации, и новые MacrosShowcase, добавляются
+# по средством разработки.
+#
+type MacrosShowcase {
+  type: ID!
+  name: String!
+  description: String!
+}
+
+## MacrosSetup
+# Задает интерфейс добавления макроса, для каждого макроса он уникальный.
+# union не может быть использован как input type, по этому будем использовать
+# список не обязательных полей.
+# ! ADD_MACROS
+input MacrosSetup {
+  lighting: LightingMacrosSetup
+}
+
+## Macros
+# Задает интерфейс установленного макроса, для каждого макроса он уникален.
+# Как оказалось использовать union не так уж и удобно, сильно проще использовать
+# список не обязательных полей.
+# ! ADD_MACROS
+type Macros {
+  lighting: LightingMacros
+}
+
+type MacrosOutput {
+  value: Macros
+  error: Error!
+}
+
+input DestroyMacrosInput {
+  id: ID!
+}
+
+type DestroyMacrosOutput {
+  error: Error!
+}
+
+type DeviceSubscriptionEvent {
+  items: [Device!]!
+  type: SubscriptionDeviceType!
+  error: Error!
+}
+
+type MacrosSubscriptionEvent {
+  macros: [Macros!]!
+  type: SubscriptionMacrosType!
+  error: Error!
+}
+
+type Query {
+  ## Authentication and Access
+  #
+  getUser(input: GetUserInput!): UserOutput @auth(requires: [ADMIN])
+  getUsers(input: GetUsersInput!): GetUsersOutput @auth(requires: [ADMIN])
+
+  ## Hardware
+  #
+  getMacrosShowcase: [MacrosShowcase!]! @auth(requires: [ADMIN, OPERATOR, VIEWER])
+}
+
+type Mutation {
+  ## Authentication and Access
+  #
+  signIn(input: SignInInput!): SignInOutput
+  signOut: DefaultOutput @auth(requires: [ADMIN, OPERATOR, VIEWER])
+
+  createUser(input: CreateUserInput!): CreateUserOutput @auth(requires: [ADMIN])
+  deleteUser(input: DeleteUserInput!): DefaultOutput @auth(requires: [ADMIN])
+
+  setPassword(input: SetPasswordInput!): DefaultOutput @auth(requires: [ADMIN])
+  setRole(input: SetRoleInput!): DefaultOutput @auth(requires: [ADMIN])
+
+  activateTwoFa: ActivateTwoFaOutput @auth(requires: [ADMIN, OPERATOR, VIEWER])
+  confirmTwoFa(input: ConfirmTwoFaInput!): DefaultOutput @auth(requires: [ADMIN, OPERATOR, VIEWER])
+  verifyTwoFa(input: VerifyTwoFaInput!): TwoFaOtpOutput
+  deactivateTwoFa(input: DeactivateTwoFaInput!): DefaultOutput @auth(requires: [ADMIN, OPERATOR, VIEWER])
+
+  refreshAccessToken: RefreshAccessTokenOutput
+
+  ## Hardware
+  #
+  setControlValue(input: SetControlValue!): Device! @auth(requires: [ADMIN, OPERATOR])
+
+  markupDevice(input: MarkupDevice!): Device! @auth(requires: [ADMIN, OPERATOR])
+  markupControl(input: MarkupControl!): Device! @auth(requires: [ADMIN, OPERATOR])
+
+  setupMacros(input: MacrosSetup!): MacrosOutput!
+  destroyMacros(input: DestroyMacrosInput!): DestroyMacrosOutput! @auth(requires: [ADMIN, OPERATOR])
+}
+
+type Subscription {
+  ## Hardware
+  #
+  device: DeviceSubscriptionEvent!
+  macros: MacrosSubscriptionEvent!
+}

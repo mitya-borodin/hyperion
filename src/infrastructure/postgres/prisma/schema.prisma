@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_PG_DATABASE_URL")
+}
+
+model Settings {
+  name  String @unique
+  value String
+
+  @@map("_settings")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  email  String @unique
+  name   String
+  role   String
+  status String @default("ACTIVE")
+
+  salt String?
+  hash String?
+
+  isTwoFaActivated Boolean @default(false)
+  twoFaSecret      String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  refreshSessions RefreshSession[]
+}
+
+model RefreshSession {
+  id Int @id @default(autoincrement())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  refreshToken String   @unique
+  fingerprint  String
+  expiresIn    DateTime
+
+  createdAt DateTime @default(now())
+}
+
+model Device {
+  deviceId String @id
+
+  title String @default("{}")
+  order Int    @default(0)
+
+  driver String @default("UNSPECIFIED")
+
+  error String @default("{}")
+
+  meta String @default("{}")
+
+  labels String[] @default([])
+
+  markup String @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  controls Control[]
+  history  History[]
+}
+
+model Control {
+  device    Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  deviceId  String
+  controlId String
+
+  title String @default("{}")
+  order Int    @default(0)
+
+  type String @default("UNSPECIFIED")
+
+  readonly Boolean @default(true)
+
+  units String @default("UNSPECIFIED")
+
+  max       Float @default(0)
+  min       Float @default(0)
+  step      Float @default(0)
+  precision Float @default(0)
+
+  on     String @default("UNSPECIFIED")
+  off    String @default("UNSPECIFIED")
+  toggle String @default("UNSPECIFIED")
+
+  enum String[] @default([])
+
+  value   String @default("UNSPECIFIED")
+  presets String @default("{}")
+
+  topic String @default("UNSPECIFIED")
+
+  error String @default("UNSPECIFIED")
+
+  meta String @default("{}")
+
+  labels String[] @default([])
+
+  markup String @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  history History[]
+
+  @@unique([deviceId, controlId])
+}
+
+model History {
+  id String @id @default(uuid())
+
+  device   Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  deviceId String
+
+  control   Control @relation(fields: [deviceId, controlId], references: [deviceId, controlId], onDelete: Cascade)
+  controlId String
+
+  value String @default("0")
+
+  error String @default("UNSPECIFIED")
+
+  createdAt DateTime @default(now())
+}
+
+model Macros {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  type        String
+  labels      String[]
+  settings    Json
+}

@@ -26,10 +26,10 @@
   "editor.accessibilitySupport": "off",
   "editor.wordWrap": "on",
   "editor.codeActionsOnSave": {
-    "source.organizeImports": false,
-    "source.fixAll.eslint": true,
-    "source.fixAll": true,
-    "source.fixAll.stylelint": true
+    "source.organizeImports": "never",
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll": "explicit",
+    "source.fixAll.stylelint": "explicit"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[dotenv]": {
@@ -78,7 +78,7 @@
 
   "yaml.format.singleQuote": true,
 
-  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.ignoreTrimWhitespace": false,
   "diffEditor.wordWrap": "off",
 
   "html.format.indentHandlebars": true,
@@ -166,9 +166,32 @@
     }
   ],
   "cSpell.words": [
+    "автокомплита",
+    "агрились",
+    "дебонсить",
+    "захардкоженная",
+    "коммуницирует",
+    "контрол",
     "контрола",
+    "контролам",
+    "контролами",
+    "контролах",
+    "контролом",
+    "контролу",
+    "легаси",
+    "лейблам",
+    "лейблов",
+    "Лейблу",
+    "Лейблы",
     "мапим",
+    "Пресет",
+    "пресета",
     "пресетах",
+    "пресетов",
+    "рантайме",
+    "рендере",
+    "сетапа",
+    "хардкодить",
     "abortable",
     "Dmitriy",
     "EBUS",
@@ -183,6 +206,7 @@
     "inet",
     "Mett",
     "mitya",
+    "modbus",
     "MOSQUITTO",
     "MRPS",
     "MRWL",
@@ -200,6 +224,7 @@
     "WBIO",
     "wireframe",
     "Wireframes",
-    "wirenboard"
+    "wirenboard",
+    "Zigbee"
   ]
 }
