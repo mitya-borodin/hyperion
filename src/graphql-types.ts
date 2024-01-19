@@ -2,16 +2,24 @@ import type { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } f
 import type { MercuriusContext } from 'mercurius';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
 export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
   info: GraphQLResolveInfo,
 ) => Promise<import('mercurius-codegen').DeepPartial<TResult>> | import('mercurius-codegen').DeepPartial<TResult>;
-export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
+export type RequireFields<T, K extends keyof T> = Omit<T, K> & {
+  [P in K]-?: NonNullable<T[P]>;
+};
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -736,7 +744,8 @@ export type LightingMacrosStateResolvers<
 
 export type LightingMacrosSettingButtonResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['LightingMacrosSettingButton'] = ResolversParentTypes['LightingMacrosSettingButton'],
+  ParentType extends
+    ResolversParentTypes['LightingMacrosSettingButton'] = ResolversParentTypes['LightingMacrosSettingButton'],
 > = {
   deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -746,7 +755,8 @@ export type LightingMacrosSettingButtonResolvers<
 
 export type LightingMacrosSettingIlluminationResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['LightingMacrosSettingIllumination'] = ResolversParentTypes['LightingMacrosSettingIllumination'],
+  ParentType extends
+    ResolversParentTypes['LightingMacrosSettingIllumination'] = ResolversParentTypes['LightingMacrosSettingIllumination'],
 > = {
   deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -756,7 +766,8 @@ export type LightingMacrosSettingIlluminationResolvers<
 
 export type LightingMacrosSettingLightingResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['LightingMacrosSettingLighting'] = ResolversParentTypes['LightingMacrosSettingLighting'],
+  ParentType extends
+    ResolversParentTypes['LightingMacrosSettingLighting'] = ResolversParentTypes['LightingMacrosSettingLighting'],
 > = {
   deviceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   controlId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -849,7 +860,8 @@ export type TwoFaOtpOutputResolvers<
 
 export type RefreshAccessTokenOutputResolvers<
   ContextType = MercuriusContext,
-  ParentType extends ResolversParentTypes['RefreshAccessTokenOutput'] = ResolversParentTypes['RefreshAccessTokenOutput'],
+  ParentType extends
+    ResolversParentTypes['RefreshAccessTokenOutput'] = ResolversParentTypes['RefreshAccessTokenOutput'],
 > = {
   accessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -1166,7 +1178,11 @@ export type LoaderResolver<TReturn, TObj, TParams, TContext> =
         cache?: boolean;
       };
     };
-export interface Loaders<TContext = import('mercurius').MercuriusContext & { reply: import('fastify').FastifyReply }> {
+export interface Loaders<
+  TContext = import('mercurius').MercuriusContext & {
+    reply: import('fastify').FastifyReply;
+  },
+> {
   LightingMacrosState?: {
     force?: LoaderResolver<LightingForce, LightingMacrosState, {}, TContext>;
   };

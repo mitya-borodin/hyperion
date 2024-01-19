@@ -8,8 +8,8 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "strict": true
+    "strict": true,
   },
   "exclude": ["node_modules", "bin", "ecosystem.config.js"],
-  "include": ["src/**/*", "test/**/*", ".eslintrc.js"]
+  "include": ["src/**/*", "test/**/*", ".eslintrc.js"],
 }

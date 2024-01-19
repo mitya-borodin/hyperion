@@ -1,3 +1,1 @@
-export const toHistory = () => {
-    
-}
+export const toHistory = () => {};
