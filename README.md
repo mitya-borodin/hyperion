@@ -146,7 +146,7 @@ yarn start
 - [Fastify](https://fastify.dev)
 - [Mercurius](https://mercurius.dev/#/)
 - [GraphQL](https://graphql.org)
-- [SQLlite](<[https://www.mongodb.com](https://www.prisma.io/docs/orm/overview/databases/sqlite)>)
+- [SQLlite](https://www.prisma.io/docs/orm/overview/databases/sqlite)
 - [Docker compose](https://docs.docker.com/language/nodejs/develop/)
 - [Compose-file](https://docs.docker.com/compose/compose-file/)
 
