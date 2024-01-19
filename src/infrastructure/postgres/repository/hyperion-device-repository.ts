@@ -5,7 +5,7 @@ import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 
-import { HardwareControl, HardwareDevice } from '../../../domain/hardware-device';
+import { HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { History } from '../../../domain/hystory';
@@ -22,6 +22,7 @@ import {
 } from '../../../ports/hyperion-device-repository';
 import { fromHardwareToHyperionDevice } from '../../mappers/from-hardware-to-hyperion-device-mapper';
 import { fromHyperionToPrisma } from '../../mappers/from-hyperion-to-prisma-mapper';
+import { fromPrismaToHardwareDevice } from '../../mappers/from-prisma-to-hardware-device-mapper';
 import { fromPrismaToHyperionDevice } from '../../mappers/from-prisma-to-hyperion-device-mapper';
 
 const logger = debug('hyperion-device-repository');
@@ -101,51 +102,13 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
           },
         });
 
-        const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
-
         if (this.devices.size > 0 || this.controls.size > 0) {
-          for (const device of hyperionDevices) {
-            const hardwareDevice: HardwareDevice = {
-              id: device.id,
-              title: device.title,
-              order: device.order,
-              driver: device.driver,
-              error: device.error,
-              meta: device.meta,
-              controls: {},
-            };
-
-            const controls: { [key: string]: HardwareControl } = {};
-
-            for (const control of device.controls) {
-              const hardwareControl: HardwareControl = {
-                id: control.id,
-                title: control.title,
-                order: control.order,
-                type: control.type,
-                readonly: control.readonly,
-                units: control.units,
-                max: control.max,
-                min: control.min,
-                step: control.step,
-                precision: control.precision,
-                on: control.on,
-                off: control.off,
-                toggle: control.toggle,
-                enum: control.enum,
-                value: control.value,
-                presets: control.presets,
-                topic: control.topic,
-                error: control.error,
-                meta: control.meta,
-              };
-
-              controls[control.id] = hardwareControl;
-            }
-
-            this.apply({ ...hardwareDevice, controls });
+          for (const device of prismaDevices) {
+            this.apply(fromPrismaToHardwareDevice(device));
           }
         } else {
+          const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
+
           for (const device of hyperionDevices) {
             this.devices.set(device.id, device);
 
