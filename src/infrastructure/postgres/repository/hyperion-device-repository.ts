@@ -20,8 +20,9 @@ import {
   MarkupHyperionDevice,
   SetControlValue,
 } from '../../../ports/hyperion-device-repository';
+import { fromHardwareToHyperionDevice } from '../../mappers/from-hardware-to-hyperion-device-mapper';
+import { fromHyperionToPrisma } from '../../mappers/from-hyperion-to-prisma-mapper';
 import { fromPrismaToHyperionDevice } from '../../mappers/from-prisma-to-hyperion-device-mapper';
-import { toHyperionDevice } from '../../mappers/to-hyperion-device-mapper';
 
 const logger = debug('hyperion-device-repository');
 
@@ -55,9 +56,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     const hyperionDevice = this.devices.get(deviceId);
 
     if (hyperionDevice) {
-      this.devices.set(deviceId, toHyperionDevice({ hardwareDevice, hyperionDevice, fill: true }));
+      this.devices.set(deviceId, fromHardwareToHyperionDevice({ hardwareDevice, hyperionDevice, fill: true }));
     } else {
-      this.devices.set(deviceId, toHyperionDevice({ hardwareDevice, fill: true }));
+      this.devices.set(deviceId, fromHardwareToHyperionDevice({ hardwareDevice, fill: true }));
     }
 
     const device = this.devices.get(deviceId);
@@ -76,25 +77,14 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       this.controls.set(controlId, control);
     }
 
-    for (const { id, value, error } of Object.values(hardwareDevice.controls ?? {})) {
-      if (value === undefined && error === undefined) {
-        continue;
-      }
-
-      this.addToHistory({
-        deviceId,
-        controlId: id,
-        value: value ?? '',
-        error: error ?? '',
-        createdAt: new Date(),
-      });
-    }
+    const current = fromHardwareToHyperionDevice({ hardwareDevice, hyperionDevice, fill: false });
 
     this.saveDevices();
+    this.addToHistory(current);
 
     return {
       previous,
-      current: toHyperionDevice({ hardwareDevice, hyperionDevice, fill: false }),
+      current: fromHardwareToHyperionDevice({ hardwareDevice, hyperionDevice, fill: false }),
       devices: this.devices,
       controls: this.controls,
     };
@@ -357,142 +347,74 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     }
   }
 
-  private async addToHistory(item: History) {
-    const controlId = getControlId({ deviceId: item.deviceId, controlId: item.controlId });
-    const history = this.history.get(controlId);
+  private addToHistory(device: HyperionDevice) {
+    for (const control of device.controls) {
+      const history: History = {
+        deviceId: String(device.id),
+        controlId: String(control.id),
+        value: String(control.value),
+        error: String(control.error),
+        createdAt: new Date(),
+      };
 
-    const parsed: History = {
-      deviceId: String(item.deviceId),
-      controlId: String(item.controlId),
-      value: String(item.value),
-      error: String(item.error),
-      createdAt: item.createdAt,
-    };
+      const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
+      const histories = this.history.get(controlId);
 
-    if (history) {
-      const last = history.at(-1);
+      if (histories) {
+        const last = histories.at(-1);
 
-      if (!last) {
-        return;
+        if (!last) {
+          return;
+        }
+
+        if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
+          histories.push(history);
+        } else if (last.value !== history.value) {
+          histories.push(history);
+        }
+      } else {
+        this.history.set(controlId, [history]);
       }
 
-      if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
-        history.push(parsed);
-      } else if (last.value !== item.value) {
-        history.push(parsed);
+      if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
+        const history: History[] = [];
+
+        for (const item of this.history.values()) {
+          history.push(...item);
+        }
+
+        this.history.clear();
+        this.lastHistorySave = new Date();
+
+        logger('Try to save history ⬆️ 🛟 ', history.length);
+
+        this.saveDevices(true)
+          .then(() => {
+            this.client.history
+              .createMany({ data: history })
+              .then(() => {
+                logger('The history was saved ⬆️ 🛟 ✅');
+              })
+              .catch((error) => {
+                logger('The history was not saved 🚨 🚨 🚨');
+
+                console.error(error);
+              });
+          })
+          .catch((error) => {
+            logger('The devices was not saved 🚨 🚨 🚨');
+
+            console.error(error);
+          });
       }
-    } else {
-      this.history.set(controlId, [parsed]);
-    }
-
-    if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
-      const history: History[] = [];
-
-      for (const item of this.history.values()) {
-        history.push(...item);
-      }
-
-      this.history.clear();
-      this.lastHistorySave = new Date();
-
-      logger('Try to save history ⬆️ 🛟 ', history.length);
-
-      await this.saveDevices(true);
-
-      await this.client.history
-        .createMany({ data: history })
-        .then(() => {
-          logger('The history was saved ⬆️ 🛟 ✅');
-        })
-        .catch((error) => {
-          logger('The history was not saved 🚨 🚨 🚨');
-
-          console.error(error);
-        });
     }
   }
 
   private async saveDevices(force: boolean = false) {
     if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
       logger('Try to save devices and controls ⬆️ 🛟 ');
-      const devices: Array<{
-        deviceId: string;
-        title?: string;
-        order?: number;
-        driver?: string;
-        error?: string;
-        meta?: string;
-        labels?: string[];
-        markup?: string;
-        updatedAt?: Date | string;
-      }> = [];
-      const controls: Array<{
-        deviceId: string;
-        controlId: string;
-        title?: string;
-        order?: number;
-        type?: string;
-        readonly?: boolean;
-        units?: string;
-        max?: number;
-        min?: number;
-        step?: number;
-        precision?: number;
-        on?: string;
-        off?: string;
-        toggle?: string;
-        enum?: string[];
-        value?: string;
-        presets?: string;
-        topic?: string;
-        error?: string;
-        meta?: string;
-        labels?: string[];
-        markup?: string;
-        updatedAt?: Date | string;
-      }> = [];
 
-      for (const device of this.devices.values()) {
-        devices.push({
-          deviceId: device.id,
-          title: JSON.stringify(device.title),
-          order: Number(device.order),
-          driver: String(device.driver),
-          error: JSON.stringify(device.error),
-          meta: JSON.stringify(device.meta),
-          labels: device.labels.map(String),
-          markup: JSON.stringify(device.markup),
-          updatedAt: new Date(),
-        });
-
-        for (const control of device.controls) {
-          controls.push({
-            deviceId: device.id,
-            controlId: control.id,
-            title: JSON.stringify(control.title),
-            order: Number(control.order),
-            type: String(control.type),
-            readonly: Boolean(control.readonly),
-            units: String(control.units),
-            max: Number(control.max),
-            min: Number(control.min),
-            step: Number(control.step),
-            precision: Number(control.precision),
-            on: String(control.on),
-            off: String(control.off),
-            toggle: String(control.toggle),
-            enum: control.enum.map(String),
-            value: String(control.value),
-            presets: JSON.stringify(control.presets),
-            topic: String(control.topic),
-            error: String(control.error),
-            meta: JSON.stringify(control.meta),
-            labels: control.labels.map(String),
-            markup: JSON.stringify(control.markup),
-            updatedAt: new Date(),
-          });
-        }
-      }
+      const { devices, controls } = fromHyperionToPrisma(this.devices.values());
 
       this.lastDeviceSave = new Date();
 

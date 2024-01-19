@@ -15,7 +15,11 @@ type ToHyperionDevice = {
   fill: boolean;
 };
 
-export const toHyperionDevice = ({ hardwareDevice, hyperionDevice, fill }: ToHyperionDevice): HyperionDevice => {
+export const fromHardwareToHyperionDevice = ({
+  hardwareDevice,
+  hyperionDevice,
+  fill,
+}: ToHyperionDevice): HyperionDevice => {
   /**
    * ! Список имеющихся hyperion контролов, нужен для того:
    * ! 1. Чтобы наслаивать полученные данные, на данные контрола полученные ранее.
