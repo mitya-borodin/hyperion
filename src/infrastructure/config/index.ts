@@ -8,6 +8,7 @@ import type { Level } from 'pino';
 const rootDirection = path.resolve(__dirname, '../../..');
 
 if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line import/no-named-as-default-member
   dotenv.config({ path: path.resolve(rootDirection, '.env'), debug: true });
 }
 

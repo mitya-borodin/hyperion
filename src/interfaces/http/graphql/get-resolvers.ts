@@ -3,9 +3,7 @@ import EventEmitter from 'node:events';
 
 import debug from 'debug';
 import { FastifyInstance } from 'fastify';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import GraphQLUpload from 'graphql-upload';
+import { GraphQLUpload } from 'graphql-upload-minimal';
 import { IResolvers, MercuriusContext } from 'mercurius';
 
 import { emitHyperionStateUpdate } from '../../../application-services/helpers/emit-hyperion-state-update';

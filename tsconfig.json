@@ -1,6 +1,6 @@
 {
   // see https://github.com/tsconfig/bases to better understand @tsconfig/node16
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "@tsconfig/node20/tsconfig.json",
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
   "compilerOptions": {
     "baseUrl": "src",
@@ -8,8 +8,8 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "strict": true,
+    "strict": true
   },
   "exclude": ["node_modules", "bin", "ecosystem.config.js"],
-  "include": ["src/**/*", "test/**/*", ".eslintrc.js"],
+  "include": ["src/**/*", "test/**/*", ".eslintrc.js"]
 }
