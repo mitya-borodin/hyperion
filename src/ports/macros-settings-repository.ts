@@ -1,5 +1,4 @@
-import { Macros, SettingsBase } from '../domain/macroses/macros';
-import { MacrosType } from '../graphql-types';
+import { Macros, MacrosType, SettingsBase } from '../domain/macroses/macros';
 import { JsonObject } from '../helpers/json-types';
 
 export type MacrosSettings = Pick<

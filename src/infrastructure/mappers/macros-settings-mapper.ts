@@ -10,20 +10,8 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     type = MacrosType.LIGHTING;
   }
 
-  if (prismaMacros.type === MacrosType.CURTAINS_OPENING) {
-    type = MacrosType.CURTAINS_OPENING;
-  }
-
   if (prismaMacros.type === MacrosType.HEATING) {
     type = MacrosType.HEATING;
-  }
-
-  if (prismaMacros.type === MacrosType.WATER_SUPPLY) {
-    type = MacrosType.WATER_SUPPLY;
-  }
-
-  if (prismaMacros.type === MacrosType.HEATED_TOWEL_RAILS) {
-    type = MacrosType.HEATED_TOWEL_RAILS;
   }
 
   if (prismaMacros.type === MacrosType.VENTILATION) {
@@ -38,12 +26,28 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     type = MacrosType.CONDITIONING;
   }
 
+  if (prismaMacros.type === MacrosType.WATER_SUPPLY) {
+    type = MacrosType.WATER_SUPPLY;
+  }
+
+  if (prismaMacros.type === MacrosType.SNOW_MELTING) {
+    type = MacrosType.SNOW_MELTING;
+  }
+
+  if (prismaMacros.type === MacrosType.SWIMMING_POOL) {
+    type = MacrosType.SWIMMING_POOL;
+  }
+
+  if (prismaMacros.type === MacrosType.COVER_OPENING) {
+    type = MacrosType.COVER_OPENING;
+  }
+
   if (prismaMacros.type === MacrosType.HEATING_CABLE) {
     type = MacrosType.HEATING_CABLE;
   }
 
-  if (prismaMacros.type === MacrosType.GATE_OPENING) {
-    type = MacrosType.GATE_OPENING;
+  if (prismaMacros.type === MacrosType.MASTER_SWITCH) {
+    type = MacrosType.MASTER_SWITCH;
   }
 
   if (prismaMacros.type === MacrosType.SECURITY) {
@@ -54,16 +58,12 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     type = MacrosType.ACCOUNTING;
   }
 
-  if (prismaMacros.type === MacrosType.AUTOMATIC_RESERVE_ENTRY) {
-    type = MacrosType.AUTOMATIC_RESERVE_ENTRY;
-  }
-
-  if (prismaMacros.type === MacrosType.MASTER_SWITCH) {
-    type = MacrosType.MASTER_SWITCH;
-  }
-
   if (prismaMacros.type === MacrosType.UPS) {
     type = MacrosType.UPS;
+  }
+
+  if (prismaMacros.type === MacrosType.AUTOMATIC_RESERVE_ENTRY) {
+    type = MacrosType.AUTOMATIC_RESERVE_ENTRY;
   }
 
   return {
