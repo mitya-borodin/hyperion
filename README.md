@@ -1,6 +1,6 @@
 # Hyperion
 
-Automation of all engineering systems of a private house based on low-level software and hardware from Wirenboard.
+Автоматизация инжененрных ситсем без легаси на всегда.
 
 ## Environment
 
