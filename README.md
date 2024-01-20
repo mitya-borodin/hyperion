@@ -4,9 +4,9 @@ Automation of all engineering systems of a private house based on low-level soft
 
 ## Environment
 
-- Required `Node@18.16.0` `npm@9.5.1`
-- Required `Yarn 1.22.19`
-- Required `Docker version 20.10.21, build baeda1f`
+- Required `Node@20.11.0` `npm@10.2.4`
+- Required `Yarn 1.22.21`
+- Required `Docker version 24.0.7, build afdd53b`
 
 ## IDE
 
