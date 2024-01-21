@@ -2,6 +2,8 @@ import { abortable, race, spawn, SpawnEffects } from 'abort-controller-x';
 import debug from 'debug';
 import defer from 'defer-promise';
 
+import { stringify } from '../helpers/json-stringify';
+
 import { Config } from './config';
 
 type ExecutorParameters = {
@@ -113,9 +115,11 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on('uncaughtException', (error: Error, origin: NodeJS.UncaughtExceptionOrigin) => {
     if (shutdownReason === null) {
-      console.error({ err: error, origin }, 'Uncaught exception');
+      logger(stringify({ origin }), 'Uncaught exception 🚨 🚨 🚨');
+      logger(error);
     } else {
-      console.error({ err: error, origin }, `Uncaught exception after ${shutdownReason}`);
+      logger(stringify({ origin, shutdownReason }), 'Uncaught exception with shutdown reason 🚨 🚨 🚨');
+      logger(error);
     }
 
     shutdownByError(error);
@@ -123,9 +127,9 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on('unhandledRejection', (reason: unknown) => {
     if (shutdownReason === null) {
-      console.error({ err: reason }, 'Unhandled promise rejection');
+      logger(stringify({ reason }), 'Unhandled promise rejection');
     } else {
-      console.error({ err: reason }, `Unhandled promise rejection after ${shutdownReason}`);
+      logger(stringify({ reason, shutdownReason }), 'Unhandled promise rejection with shutdown reason');
     }
 
     shutdownByError(reason as Error);
@@ -133,11 +137,11 @@ export const entrypoint = async (executor: Executor) => {
 
   process.on('warning', (warning: Error) => {
     logger('Process warning ‼️');
-    logger(JSON.stringify({ warning }, null, 2));
+    logger(stringify({ warning }));
   });
 
   logger('The application is being launched 🚀');
-  logger(JSON.stringify({ config }, null, 2));
+  logger(stringify({ config }));
 
   try {
     await race(abortController.signal, (signal) => [
@@ -149,7 +153,8 @@ export const entrypoint = async (executor: Executor) => {
   } catch (error: unknown) {
     // @TODO: Проверить, попадет ли ошибка из executor в uncaughtException и unhandledRejection
     // @TODO: Или останется в этом обработчике
-    console.error({ err: error }, 'The application was interrupted with an error');
+    logger('The application was interrupted with an error 🚨 🚨 🚨');
+    logger(error);
 
     shutdownByError(error as Error);
   }

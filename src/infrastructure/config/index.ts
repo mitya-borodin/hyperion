@@ -50,10 +50,6 @@ export class Config {
     readonly apiUrl: string;
   };
 
-  public readonly redis: {
-    readonly url: string;
-  };
-
   public readonly mosquitto: {
     readonly host: string;
     readonly port: number;
@@ -107,10 +103,6 @@ export class Config {
       captchaId: process.env.GEETEST_CAPTCHA_ID ?? '',
       captchaKey: process.env.GEETEST_CAPTCHA_KEY ?? '',
       apiUrl: `${process.env.GEETEST_BASE_URL ?? ''}/validate`,
-    };
-
-    this.redis = {
-      url: process.env.REDIS_URL ?? 'redis://localhost:6379',
     };
 
     this.mosquitto = {

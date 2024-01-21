@@ -127,8 +127,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       };
     } catch (error) {
       logger('Unable to get hyperion state 🚨');
-
-      console.error(error);
+      logger(error);
 
       return {
         devices: this.devices,
@@ -187,9 +186,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       };
     } catch (error) {
       logger('Unable to markup hyperion device 🚨');
-      logger(JSON.stringify({ parameters, error }, null, 2));
-
-      console.error(error);
+      logger(stringify({ parameters, error }));
+      logger(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -251,9 +249,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       };
     } catch (error) {
       logger('Unable to markup hyperion control 🚨');
-      logger(JSON.stringify({ parameters, error }, null, 2));
-
-      console.error(error);
+      logger(stringify({ parameters }));
+      logger(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -302,9 +299,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       };
     } catch (error) {
       logger('Unable to set value for hyperion control 🚨');
-      logger(JSON.stringify({ parameters, error }, null, 2));
-
-      console.error(error);
+      logger(stringify({ parameters, error }));
+      logger(error);
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
@@ -360,14 +356,12 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
               })
               .catch((error) => {
                 logger('The history was not saved 🚨 🚨 🚨');
-
-                console.error(error);
+                logger(error);
               });
           })
           .catch((error) => {
             logger('The devices was not saved 🚨 🚨 🚨');
-
-            console.error(error);
+            logger(error);
           });
       }
     }

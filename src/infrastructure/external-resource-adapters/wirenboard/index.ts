@@ -237,8 +237,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
       } catch (error) {
         logger('Could not get meta information 🚨');
         logger(stringify({ topic, message: message.toString() }));
-
-        console.error(error);
+        logger(error);
       }
     }
 
@@ -281,8 +280,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
       } catch (error) {
         logger('Could not get controls value 🚨');
         logger(stringify({ topic, message: message.toString() }));
-
-        console.error(error);
+        logger(error);
       }
     }
   });

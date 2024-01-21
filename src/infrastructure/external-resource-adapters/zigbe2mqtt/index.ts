@@ -77,8 +77,7 @@ const fillIeeeAddressByFriendlyName = async (
       onError(error, attempt, delayMs) {
         logger('An attempt to get initial state of hyperion devices failed 🚨');
         logger(stringify({ attempt, delayMs }));
-
-        console.error(error);
+        logger(error);
       },
     },
   );
