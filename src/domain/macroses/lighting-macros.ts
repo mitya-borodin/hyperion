@@ -31,6 +31,11 @@ export type LightingMacrosSettings = {
     readonly controlId: string;
     readonly trigger: string;
   }>;
+  // readonly motions: Array<{
+  //   readonly deviceId: string;
+  //   readonly controlId: string;
+  //   readonly trigger: string;
+  // }>;
   readonly lightings: Array<{
     readonly deviceId: string;
     readonly controlId: string;
