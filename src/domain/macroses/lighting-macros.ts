@@ -14,33 +14,155 @@ const logger = debug('hyperion-lighting-macros');
  * ! SETTINGS
  */
 export enum LightingLevel {
+  UNSPECIFIED = 'UNSPECIFIED',
   HIGHT = 'HIGHT',
   MIDDLE = 'MIDDLE',
   LOW = 'LOW',
   ACCIDENT = 'ACCIDENT',
 }
+export enum LightingLevelDetection {
+  MAX = 'MAX',
+  MIN = 'MIN',
+  AVG = 'AVG',
+}
 
+/**
+ * ! Сценарии
+ * 1. Изменение состояния через switchers, по значению "1" (в момент нажатия кнопки).
+ *  1.2. Если в lightings есть хотя бы один включенный светильник, то при реакции на switchers, произойдет включение
+ *   отключенных светильников, иначе все светильники выключатся.
+ *  1.3. В зависимости от illuminations определяется значение LightingLevel.
+ *   1.3.1. Можно указать какое значение брать, максимальное, минимальное хотя бы у одного, среднее между всеми.
+ *   1.3.2. Можно указать, при каком LightingLevel включать все lightings.
+ * 2. Если движение поднимается выше порога, происходит включение всех lightings в рамках макроса.
+ *  2.1. Работает в заданном диапазоне времени, если не задано, то работает все время.
+ * 3. Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
+ * 4. Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.
+ */
 export type LightingMacrosSettings = {
-  readonly buttons: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly trigger: string;
-  }>;
-  readonly illuminations: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly trigger: string;
-  }>;
-  // readonly motions: Array<{
-  //   readonly deviceId: string;
-  //   readonly controlId: string;
-  //   readonly trigger: string;
-  // }>;
-  readonly lightings: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly level: LightingLevel;
-  }>;
+  /**
+   * Список устройств которые участвую в макросе
+   */
+  devices: {
+    readonly switchers: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+    }>;
+    readonly illuminations: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+    }>;
+    readonly motion: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+    }>;
+    readonly noise: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+    }>;
+    readonly lightings: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+    }>;
+  };
+  /**
+   * Настройки макроса
+   */
+  properties: {
+    switcher: {
+      /**
+       * Позволяет отключить функционал до включения выключенных lightings.
+       */
+      everyOn: boolean;
+    };
+
+    illumination: {
+      /**
+       * Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть 
+       * какие значения дают датчики в нужных местах в разное время суток.
+       */
+      [LightingLevel.HIGHT]: number;
+      [LightingLevel.MIDDLE]: number;
+      [LightingLevel.LOW]: number;
+      /**
+       * Правило определения значения освещения
+       * MAX - берем максимальное среди всех
+       * MIN - берем минимальное среди всех
+       * AVG - берем среднее среди всех
+       */
+      detection: LightingLevelDetection;
+    };
+
+    autoOn: {
+      /**
+       * Автоматическое включение по освещенности.
+       * Если указано UNSPECIFIED, автоматическое включение по освещенности выключено.
+       * Если указаны другие значения, то автоматическое включение всех lightings включено по выбранному уровню.
+       */
+      illumination: LightingLevel;
+
+      /**
+       * Автоматическое включение по движению.
+       */
+      motion: {
+        /**
+         * Указывается значение движения в моменте, при достижении которого будут включены все lightings.
+         * Если указать 0, то включение по движению отключается.
+         */
+        trigger: number;
+
+        /**
+         * Диапазон времени, когда работает включение по движению.
+         * Если указать нули, то работает все время.
+         */
+        active: {
+          /**
+           * 0...24
+           */
+          form: number;
+
+          /**
+           * 0...24
+           */
+          to: number;
+        };
+      };
+    };
+
+    /**
+     * Автоматическое выключение по движению, шуму, заданному времени.
+     */
+    autoOff: {
+      /**
+       * Если значение движения ниже motion, считаем, что движения нет, если указать 0, то движение не учитывается.
+       */
+      motion: number;
+
+      /**
+       * Если значение шума ниже noise, считаем, что шума нет, если указать 0, то шум не учитывается.
+       */
+      noise: number;
+
+      /**
+       * Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
+       * Если указать 0, то автоматическое отключение по движению и шуму отключается.
+       */
+      motionAndNoiseTimerMin: number;
+
+      /**
+       * Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.
+       * Если указать 0, то автоматическое отключение по шуму отключается.
+       */
+      onlyNoiseTimerMin: number;
+
+      /**
+       * В это время все lightings будут выключены. Событие случается единоразово.
+       * 0...24
+       * Если указать -1, то автоматическое отключение по таймеру отключается.
+       */
+      time: number;
+    };
+  };
 };
 
 /**
@@ -87,7 +209,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         switch: 'OFF',
       },
       controlTypes: {
-        buttons: ControlType.SWITCH,
+        switchers: ControlType.SWITCH,
         illuminations: ControlType.ILLUMINATION,
         lightings: ControlType.SWITCH,
       },
@@ -380,14 +502,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * ! Реализации частных случаев.
    */
   protected isControlValueHasBeenChanged = (device: HyperionDevice): boolean => {
-    return super.isControlValueHasBeenChanged(device, [...this.settings.buttons, ...this.settings.lightings]);
+    return super.isControlValueHasBeenChanged(device, [...this.settings.switchers, ...this.settings.lightings]);
   };
 
   protected isSwitchHasBeenPress = (): boolean => {
-    return super.isSwitchHasBeenPress(this.settings.buttons);
+    return super.isSwitchHasBeenPress(this.settings.switchers);
   };
 
   protected isSwitchHasBeenRelease = (): boolean => {
-    return super.isSwitchHasBeenRelease(this.settings.buttons);
+    return super.isSwitchHasBeenRelease(this.settings.switchers);
   };
 }
