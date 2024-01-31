@@ -13,14 +13,25 @@ const logger = debug('hyperion-lighting-macros');
 /**
  * ! SETTINGS
  */
+
+/**
+ * Уровни освещенности который определил макрос по всем имеющимся датчикам в соответствии с
+ * правилом определения
+ */
 export enum LightingLevel {
   UNSPECIFIED = 'UNSPECIFIED',
   HIGHT = 'HIGHT',
   MIDDLE = 'MIDDLE',
   LOW = 'LOW',
-  ACCIDENT = 'ACCIDENT',
 }
-export enum LightingLevelDetection {
+
+/**
+ * Правило определения числового значения по нескольким датчикам
+ * MAX - берем максимальное среди всех
+ * MIN - берем минимальное среди всех
+ * AVG - берем среднее среди всех
+ */
+export enum LevelDetection {
   MAX = 'MAX',
   MIN = 'MIN',
   AVG = 'AVG',
@@ -28,16 +39,23 @@ export enum LightingLevelDetection {
 
 /**
  * ! Сценарии
- * 1. Изменение состояния через switchers, по значению "1" (в момент нажатия кнопки).
+ *
+ * 1. Изменение состояния через switchers, по умолчанию "UP" (в момент нажатия кнопки).
+ *  1.1. Значение реакции на переключатель можно настраивать,
+ *   UP (контакт переключателя замкнут),
+ *   DOWN (контакт переключателя разомкнут, после того как был замкнут)
  *  1.2. Если в lightings есть хотя бы один включенный светильник, то при реакции на switchers, произойдет включение
  *   отключенных светильников, иначе все светильники выключатся.
+ *    1.2.1. Функциональность можно отключать, и переключение будет происходить по внутреннему состоянию макроса.
  *  1.3. В зависимости от illuminations определяется значение LightingLevel.
- *   1.3.1. Можно указать какое значение брать, максимальное, минимальное хотя бы у одного, среднее между всеми.
+ *   1.3.1. Можно указать какое значение брать: (максимальное, минимальное_ хотя бы у одного, среднее между всеми.
  *   1.3.2. Можно указать, при каком LightingLevel включать все lightings.
  * 2. Если движение поднимается выше порога, происходит включение всех lightings в рамках макроса.
  *  2.1. Работает в заданном диапазоне времени, если не задано, то работает все время.
- * 3. Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
- * 4. Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.
+ * 3. Если освещение станет ниже установленного порога, включатся все lightings в рамках макроса.
+ * 4. Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
+ * 5. Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.ё
+ * 6. Если задано время отключения, то при достижении этого времени, все lightings выключаются.
  */
 export type LightingMacrosSettings = {
   /**
@@ -47,6 +65,7 @@ export type LightingMacrosSettings = {
     readonly switchers: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly trigger: 'UP' | 'DOWN';
     }>;
     readonly illuminations: Array<{
       readonly deviceId: string;
@@ -78,26 +97,22 @@ export type LightingMacrosSettings = {
 
     illumination: {
       /**
-       * Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть 
+       * Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть
        * какие значения дают датчики в нужных местах в разное время суток.
        */
       [LightingLevel.HIGHT]: number;
       [LightingLevel.MIDDLE]: number;
       [LightingLevel.LOW]: number;
-      /**
-       * Правило определения значения освещения
-       * MAX - берем максимальное среди всех
-       * MIN - берем минимальное среди всех
-       * AVG - берем среднее среди всех
-       */
-      detection: LightingLevelDetection;
+
+      detection: LevelDetection;
     };
 
     autoOn: {
       /**
        * Автоматическое включение по освещенности.
        * Если указано UNSPECIFIED, автоматическое включение по освещенности выключено.
-       * Если указаны другие значения, то автоматическое включение всех lightings включено по выбранному уровню.
+       * Если указаны другие значения, то автоматически включатся все lightings
+       *  когда освещение буже ниже указанного уровня.
        */
       illumination: LightingLevel;
 
@@ -105,6 +120,8 @@ export type LightingMacrosSettings = {
        * Автоматическое включение по движению.
        */
       motion: {
+        detection: LevelDetection;
+
         /**
          * Указывается значение движения в моменте, при достижении которого будут включены все lightings.
          * Если указать 0, то включение по движению отключается.
@@ -133,6 +150,8 @@ export type LightingMacrosSettings = {
      * Автоматическое выключение по движению, шуму, заданному времени.
      */
     autoOff: {
+      detection: LevelDetection;
+
       /**
        * Если значение движения ниже motion, считаем, что движения нет, если указать 0, то движение не учитывается.
        */
@@ -168,16 +187,33 @@ export type LightingMacrosSettings = {
 /**
  * ! STATE
  */
+/**
+ * Внутреннее состояние макроса, которое не может изменить пользователь.
+ * Оно нужно для реализации внутреннего устройства макроса.
+ */
+type LightingMacrosPrivateState = {
+  switch: 'ON' | 'OFF';
+  illumination: number;
+  lightingLevel: LightingLevel;
+  motion: number;
+  noise: number;
+  timeAfterNoiseDisappearedMin: number;
+  timeAfterMotionDisappearedMin: number;
+  /**
+   * Время в часах на текущие сутки 0...24
+   */
+  time: number;
+};
+
 export enum LightingForce {
   ON = 'ON',
   OFF = 'OFF',
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
-type LightingMacrosPrivateState = {
-  switch: 'ON' | 'OFF';
-};
-
+/**
+ * Состояние макроса которое может изменить пользователь
+ */
 export type LightingMacrosPublicState = {
   force: LightingForce;
 };
@@ -186,6 +222,9 @@ type LightingMacrosState = LightingMacrosPrivateState & LightingMacrosPublicStat
 
 /**
  * ! OUTPUT
+ */
+/**
+ * Будущее состояние контроллера
  */
 type LightingMacrosNextOutput = {
   readonly lightings: Array<{
