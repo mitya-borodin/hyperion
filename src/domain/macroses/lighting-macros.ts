@@ -246,10 +246,19 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       state: {
         force: parameters.state.force,
         switch: 'OFF',
+        illumination: 0,
+        lightingLevel: LightingLevel.UNSPECIFIED,
+        motion: 0,
+        noise: 0,
+        timeAfterNoiseDisappearedMin: 10,
+        timeAfterMotionDisappearedMin: 5,
+        time: 1,
       },
       controlTypes: {
         switchers: ControlType.SWITCH,
         illuminations: ControlType.ILLUMINATION,
+        motion: ControlType.VALUE,
+        noise: ControlType.VALUE,
         lightings: ControlType.SWITCH,
       },
     });
@@ -368,7 +377,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   protected applyInputToState = () => {
-    if (this.isSwitchHasBeenPress()) {
+    if (this.isSwitchHasBeenUp()) {
       logger('Button has been pressed ⬇️');
       logger(stringify({ name: this.name, currentState: this.state }));
 
@@ -541,14 +550,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * ! Реализации частных случаев.
    */
   protected isControlValueHasBeenChanged = (device: HyperionDevice): boolean => {
-    return super.isControlValueHasBeenChanged(device, [...this.settings.switchers, ...this.settings.lightings]);
+    return super.isControlValueHasBeenChanged(device);
   };
 
-  protected isSwitchHasBeenPress = (): boolean => {
-    return super.isSwitchHasBeenPress(this.settings.switchers);
+  protected isSwitchHasBeenUp = (): boolean => {
+    return super.isSwitchHasBeenUp(this.settings.devices.switchers);
   };
 
-  protected isSwitchHasBeenRelease = (): boolean => {
-    return super.isSwitchHasBeenRelease(this.settings.switchers);
+  protected isSwitchHasBeenDown = (): boolean => {
+    return super.isSwitchHasBeenDown(this.settings.devices.switchers);
   };
 }

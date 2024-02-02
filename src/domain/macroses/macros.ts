@@ -45,7 +45,10 @@ export type MacrosAccept = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SettingsBase = { [key: string]: Array<{ [key: string]: any; deviceId?: string; controlId?: string }> };
+export type SettingsBase = {
+  devices: { [key: string]: Array<{ deviceId: string; controlId: string }> };
+  properties: { [key: string]: unknown };
+};
 
 export type MacrosEject<TYPE extends MacrosType, SETTINGS extends SettingsBase, STATE extends JsonObject> = {
   id: string;
@@ -106,6 +109,7 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
    */
   readonly type: TYPE;
   readonly settings: SETTINGS;
+  readonly controlIds: Set<string>;
   protected readonly state: STATE;
   protected readonly controlTypes: { [key: string]: ControlType };
 
@@ -133,6 +137,13 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
 
     this.type = type;
     this.settings = settings;
+    this.controlIds = new Set();
+
+    for (const name in this.settings.devices) {
+      for (const item of this.settings.devices[name]) {
+        this.controlIds.add(getControlId(item));
+      }
+    }
 
     this.state = state;
 
@@ -183,18 +194,15 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
   /**
    * ! Реализации частных случаев.
    */
-  protected isControlValueHasBeenChanged(
-    device: HyperionDevice,
-    controls: Array<{ deviceId: string; controlId: string }>,
-  ): boolean {
+  /**
+   * Возвращает истину, когда получено устройство в котором изменился контрол участвующий в работе макроса
+   */
+  protected isControlValueHasBeenChanged(device: HyperionDevice): boolean {
     for (const control of device.controls) {
-      const isSuitableControl = controls.find(
-        ({ deviceId, controlId }) => deviceId === device.id && controlId === control.id,
-      );
+      const id = getControlId({ deviceId: device.id, controlId: control.id });
+      const isSuitableControl = this.controlIds.has(id);
 
       if (isSuitableControl) {
-        const id = getControlId({ deviceId: device.id, controlId: control.id });
-
         const previous = this.previous.get(id);
         const current = this.controls.get(id);
 
@@ -215,7 +223,10 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     return false;
   }
 
-  protected isSwitchHasBeenPress(switches: Array<{ deviceId: string; controlId: string }>): boolean {
+  /**
+   * UP - означает получен верхний уровень, "1", "true", что то переводимое в истину, включено, контакты замкнуты
+   */
+  protected isSwitchHasBeenUp(switches: Array<{ deviceId: string; controlId: string }>): boolean {
     return switches.some((item) => {
       const previous = this.previous.get(getControlId(item));
       const current = this.controls.get(getControlId(item));
@@ -232,7 +243,10 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     });
   }
 
-  protected isSwitchHasBeenRelease(switches: Array<{ deviceId: string; controlId: string }>): boolean {
+  /**
+   * DOWN - означает получен низкий уровень, "0", "false", что то переводимое в лож, выключено, контакты разомкнуты
+   */
+  protected isSwitchHasBeenDown(switches: Array<{ deviceId: string; controlId: string }>): boolean {
     return switches.some((item) => {
       const previous = this.previous.get(getControlId(item));
       const current = this.controls.get(getControlId(item));
@@ -255,8 +269,8 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
   }
 
   protected isDevicesReady(): boolean {
-    const isDevicesReady = Object.keys(this.settings).every((key) => {
-      const settings = this.settings[key];
+    const isDevicesReady = Object.keys(this.settings.devices).every((key) => {
+      const settings = this.settings.devices[key];
 
       return settings.every(({ deviceId, controlId }) => {
         if (typeof deviceId === 'string' && typeof controlId === 'string') {

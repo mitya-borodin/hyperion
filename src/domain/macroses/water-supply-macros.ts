@@ -274,11 +274,11 @@ export class LightingMacros extends Macros<MacrosType.WATER_SUPPLY, WaterSupplyM
     return super.isControlValueHasBeenChanged(device, [...this.settings.leaks]);
   };
 
-  protected isSwitchHasBeenPress = (): boolean => {
-    return super.isSwitchHasBeenPress(this.settings.leaks);
+  protected isSwitchHasBeenUp = (): boolean => {
+    return super.isSwitchHasBeenUp(this.settings.leaks);
   };
 
-  protected isSwitchHasBeenRelease = (): boolean => {
-    return super.isSwitchHasBeenRelease(this.settings.leaks);
+  protected isSwitchHasBeenDown = (): boolean => {
+    return super.isSwitchHasBeenDown(this.settings.leaks);
   };
 }
