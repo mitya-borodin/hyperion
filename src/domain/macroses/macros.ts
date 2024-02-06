@@ -1,5 +1,6 @@
 import EventEmitter from 'node:events';
 
+import { addHours } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
@@ -149,34 +150,81 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
 
     this.controlTypes = controlTypes;
 
-    this.applyOutputToState = debounce(this.applyOutputToState.bind(this), 500, {
+    this.applyExternalToState = debounce(this.applyExternalToState.bind(this), 500, {
       leading: false,
       trailing: true,
     });
 
-    this.applyOutputToState();
+    this.applyExternalToState();
   }
 
   abstract setState(state: STATE): void;
 
-  accept({ previous, devices, controls }: MacrosAccept): void {
+  accept({ previous, current, devices, controls }: MacrosAccept): void {
     this.previous = previous;
     this.devices = devices;
     this.controls = controls;
+
+    if (this.isDevicesReady() && this.isControlValueHasBeenChanged(current)) {
+      this.execute();
+    }
   }
 
-  protected abstract execute(): void;
+  /**
+   * Метод который запускается после получения сообщения от контроллера.
+   * Внутри него мы проверяем, относится ли событие к текущему экземпляру макроса, исходя из настроек.
+   */
+  protected execute = () => {
+    let stop = this.applyStateToOutput();
 
+    if (stop) {
+      return;
+    }
+
+    stop = this.applyInputToState();
+
+    if (stop) {
+      return;
+    }
+
+    this.applyExternalToState();
+  };
+
+  /**
+   * Метод предназначен для применения части локального состояния макроса, за частую это различные force состояния.
+   * В случае попадания в обработчик force состояния, так выполнения должен прекратиться и будущее состояние контролов,
+   * должно быть отправлено контроллеру.
+   */
   protected abstract applyStateToOutput(): boolean;
 
+  /**
+   * Метод предназначен для реакции на новое состояние контрола которое участвует в логике макроса. В результате может
+   * измениться состояние контролов и если оно изменилось, отправлено контроллеру. В случае вычисления нового состояния
+   * контролов, такт обработки должен завершиться.
+   */
   protected abstract applyInputToState(): boolean;
 
-  protected abstract applyOutputToState(): void;
+  /**
+   * Метод предназначен для применения нового состояния контрола к состоянию макроса. Это нужно для того, чтобы макросы
+   * имели возможность обновить состояние, когда отслеживаемые контролы меняют состояния через другие макросы, WEB GUI
+   * от wirenboard, каким либо другим способом.
+   * Метод вызывается после applyStateToOutput и applyInputToState, и не порождает следующее состояние контролов.
+   */
+  protected abstract applyExternalToState(): void;
 
+  /**
+   * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
+   */
   protected abstract computeNextOutput(value: string): void;
 
+  /**
+   * Метод предназначен отправлять будущее состояние контролов контроллеру.
+   */
   protected abstract applyNextOutput(): void;
 
+  /**
+   * Метод предназначен вернуть из макроса всю информацию, которую нужно хранить в БД.
+   */
   toJS = (): MacrosEject<TYPE, SETTINGS, STATE> => {
     return cloneDeep({
       id: this.id,
@@ -191,9 +239,6 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     });
   };
 
-  /**
-   * ! Реализации частных случаев.
-   */
   /**
    * Возвращает истину, когда получено устройство в котором изменился контрол участвующий в работе макроса
    */
@@ -268,6 +313,10 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     });
   }
 
+  /**
+   * Метод предотвращает выполнение кода макроса, если не все контролы доступны.
+   * Контролы появляются с разной скоростью, если прежде они небыли добавлены в БД.
+   */
   protected isDevicesReady(): boolean {
     const isDevicesReady = Object.keys(this.settings.devices).every((key) => {
       const settings = this.settings.devices[key];
@@ -299,5 +348,24 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     }
 
     return isDevicesReady;
+  }
+
+  /**
+   * Метод определяет попадает ли текущее в диапазон часов в сутках
+   */
+  protected hasHourOverlap(from: number, to: number) {
+    if (to <= from) {
+      to = to + 24;
+    }
+
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth();
+    const date = new Date().getDate();
+
+    const fromMs = addHours(new Date(year, month, date), from).getTime();
+    const toMs = addHours(new Date(year, month, date), to).getTime();
+    const nowMs = Date.now();
+
+    return nowMs >= fromMs && nowMs <= toMs;
   }
 }

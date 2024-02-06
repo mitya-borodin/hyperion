@@ -233,7 +233,7 @@ export class LightingMacros extends Macros<MacrosType.WATER_SUPPLY, WaterSupplyM
       return;
     }
 
-    this.applyOutputToState();
+    this.applyExternalToState();
   };
 
   protected applyStateToOutput = () => {
@@ -244,7 +244,7 @@ export class LightingMacros extends Macros<MacrosType.WATER_SUPPLY, WaterSupplyM
     return false;
   };
 
-  protected applyOutputToState() {}
+  protected applyExternalToState() {}
 
   protected computeNextOutput = (value: string) => {
     const nextOutput: WaterSupplyMacrosNextOutput = {
