@@ -1,4 +1,4 @@
-import { compareAsc, subDays } from 'date-fns';
+import { addHours, compareAsc, subDays } from 'date-fns';
 import debug from 'debug';
 
 import { stringify } from '../../helpers/json-stringify';
@@ -472,10 +472,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         nextValue = control.on;
       }
 
-      this.state.switch = nextSwitchState;
+      if (this.state.switch !== nextSwitchState) {
+        this.block.autoOn.illumination = addHours(new Date(), 12);
 
-      this.computeNextOutput(nextValue);
-      this.applyNextOutput();
+        this.state.switch = nextSwitchState;
+
+        this.computeNextOutput(nextValue);
+        this.applyNextOutput();
+      }
 
       return true;
     }

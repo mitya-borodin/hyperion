@@ -14,7 +14,7 @@ import metricsPlugin from 'fastify-metrics';
 import { fastifyRawBody } from 'fastify-raw-body';
 import { GraphQLResolveInfo } from 'graphql';
 import HttpStatusCodes from 'http-status-codes';
-import Mercurius from 'mercurius';
+import Mercurius, { MercuriusContext } from 'mercurius';
 import MercuriusAuth from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
@@ -130,7 +130,7 @@ export const createHttpInterface = async ({
     config,
   });
 
-  fastify.register(MercuriusGQLUpload, {});
+  fastify.register(MercuriusGQLUpload, { maxFiles: 10, maxFileSize: 50_000_000 });
 
   fastify.register(Mercurius, {
     /**
@@ -165,10 +165,30 @@ export const createHttpInterface = async ({
     }),
     graphiql: !config.isProduction,
     subscription: true,
+    errorHandler(error, request, reply) {
+      logger(
+        {
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          params: request.params,
+          query: request.query,
+          body: request.body,
+          err: error,
+        },
+        'Unexpected graphql error 🚨',
+      );
+
+      reply.code(HttpStatusCodes.INTERNAL_SERVER_ERROR).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Unexpected error',
+      });
+    },
   });
 
   fastify.register(MercuriusAuth, {
-    authContext: (context): AuthContext => {
+    authContext: (context: MercuriusContext): AuthContext => {
       const { app, reply } = context;
       const { authorization = '', fingerprint = '' } = reply.request.headers;
       const { refreshToken } = reply.request.cookies;
@@ -214,9 +234,7 @@ export const createHttpInterface = async ({
     authDirective: 'auth',
   });
 
-  await codegenMercurius(fastify, {
-    targetPath: './src/graphql-types.ts',
-  });
+  await codegenMercurius(fastify, { targetPath: './src/graphql-types.ts' });
 
   return fastify;
 };

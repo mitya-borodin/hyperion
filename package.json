@@ -17,7 +17,7 @@
     "prettier:check": "yarn prettier:base --check",
     "prettier:write": "yarn prettier:base --write",
     "eslint:check": "eslint --ext .js,.jsx,.ts,.tsx src",
-    "eslint:fix": "eslint --fix --ext .js,.jsx,.ts,.tsx src",
+    "eslint:write": "eslint --fix --ext .js,.jsx,.ts,.tsx src",
     "ncu:outdated": "npm-check-updates",
     "ncu:upgrade": "npm-check-updates -u --target minor"
   },
