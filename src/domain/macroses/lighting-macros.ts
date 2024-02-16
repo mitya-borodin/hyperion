@@ -907,7 +907,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   private tic = () => {
     const now = Date.now();
     const hours = new Date().getHours();
+
     const [from, to] = this.block.autoOff.day;
+
     const { time } = this.settings.properties.autoOff;
 
     if (from.getTime() >= now && now <= to.getTime() && time === hours) {
@@ -918,7 +920,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       if (this.state.switch !== nextSwitchState) {
         this.state.switch = nextSwitchState;
 
-        logger('The switch state was changed by timer 🪄');
+        logger('The switch state was changed by clock 🪄');
         logger(stringify(this.state));
 
         this.computeNextOutput();
