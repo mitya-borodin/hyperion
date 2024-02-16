@@ -175,19 +175,22 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
    * Внутри него мы проверяем, относится ли событие к текущему экземпляру макроса, исходя из настроек.
    */
   protected execute = () => {
-    let stop = this.applyStateToOutput();
-
-    if (stop) {
-      return;
-    }
-
-    stop = this.applyInputToState();
-
-    if (stop) {
-      return;
-    }
-
+    /**
+     * Не запускает вычисление нового состояния контролов, по этому может запускаться первой,
+     *  обновлять текущее состояние, после чего оно может быть переопределено следующими стадиями.
+     */
     this.applyExternalToState();
+
+    /**
+     * Применяет состояние макроса которое не посредственно влияет на состояние контролов
+     */
+    const stop = this.applyStateToOutput();
+
+    if (stop) {
+      return;
+    }
+
+    this.applyInputToState();
   };
 
   /**
@@ -221,6 +224,8 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
    * Метод предназначен отправлять будущее состояние контролов контроллеру.
    */
   protected abstract applyNextOutput(): void;
+
+  protected abstract destroy(): void;
 
   /**
    * Метод предназначен вернуть из макроса всю информацию, которую нужно хранить в БД.
@@ -362,8 +367,8 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     const month = new Date().getMonth();
     const date = new Date().getDate();
 
-    const fromMs = addHours(new Date(year, month, date), from).getTime();
-    const toMs = addHours(new Date(year, month, date), to).getTime();
+    const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
+    const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
     const nowMs = Date.now();
 
     return nowMs >= fromMs && nowMs <= toMs;

@@ -1,4 +1,4 @@
-import { addHours, compareAsc, subDays } from 'date-fns';
+import { addDays, addHours, addMinutes, compareAsc, subDays } from 'date-fns';
 import debug from 'debug';
 
 import { stringify } from '../../helpers/json-stringify';
@@ -57,6 +57,9 @@ export enum LevelDetection {
  * 4. Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
  * 5. Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.ё
  * 6. Если задано время отключения, то при достижении этого времени, все lightings выключаются.
+ * 7. Если задано время блокировки autoOn по освещенности, то при выключении такой группы, автоматическое включение по
+ *  освещению заблокируется на заданное кол-во часов.
+ * 8. Если задано время блокировки autoOff по освещенности, то при включении такой группы в момент когда освещенность
  */
 export type LightingMacrosSettings = {
   /**
@@ -136,7 +139,7 @@ export type LightingMacrosSettings = {
       motion: {
         /**
          * Указывается значение движения в моменте, при достижении которого будут включены все lightings.
-         * Если указать 0, то включение по движению отключается.
+         * Если указать <= 0, то включение по движению отключается.
          */
         trigger: number;
 
@@ -155,6 +158,23 @@ export type LightingMacrosSettings = {
            */
           to: number;
         };
+      };
+
+      /**
+       * Позволяет блокировать автоматическое включение
+       */
+      block: {
+        /**
+         * Время блокировки autoOn по освещенности.
+         * Если задано 0, то блокировка не будет включаться.
+         *
+         * Это нужно, чтобы была возможность вручную выключить группу,
+         *  в случае когда для неё выполняется autoOn по освещенности.
+         *
+         * Иначе правило autoOn всегда будет перебивать ручное выключение и
+         *  получится так, что кнопка нажимается, а свет продолжает гореть.
+         */
+        illuminationHours: number;
       };
     };
 
@@ -181,23 +201,43 @@ export type LightingMacrosSettings = {
       noise: number;
 
       /**
-       * Если движение и шум отсутствует в течении заданного времени, lightings выключаются.
-       * Если указать 0, то автоматическое отключение по движению и шуму отключается.
+       * Если движение отсутствует в течении заданного времени, lightings выключаются.
+       * Если указать <= 0, то autoOff по движению отключается.
        */
-      motionAndNoiseTimerMin: number;
+      motionMin: number;
 
       /**
-       * Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.
-       * Если указать 0, то автоматическое отключение по шуму отключается.
+       * Если шум отсутствует, в течении заданного времени, lightings выключаются.
+       * Если указать <= 0, то autoOff по шуму отключается.
        */
-      onlyNoiseTimerMin: number;
+      noiseMin: number;
+
+      /**
+       * Если > 0, то в случае отсутствия шума и движения группа выключится через заданное время.
+       * Если указать <= 0, то autoOff по шуму отключается.
+       */
+      silenceMin: number;
 
       /**
        * В это время все lightings будут выключены. Событие случается единоразово.
        * 0...23
-       * Если указать -1, то автоматическое отключение по таймеру отключается.
+       * Если указать -1 или меньше, то автоматическое отключение по таймеру отключается.
        */
       time: number;
+
+      /**
+       * Позволяет блокировать автоматическое выключение
+       */
+      block: {
+        /**
+         * Время блокировки autoOff по освещенности.
+         * Если задано 0, то блокировка не будет включаться.
+         *
+         * Причина такая же как и для autoOn, нужно иметь возможность включить группу
+         *  в момент когда этому противоречит правило по освещению.
+         */
+        illuminationHours: number;
+      };
     };
   };
 };
@@ -205,6 +245,7 @@ export type LightingMacrosSettings = {
 /**
  * ! STATE
  */
+
 /**
  * Внутреннее состояние макроса, которое не может изменить пользователь.
  * Оно нужно для реализации внутреннего устройства макроса.
@@ -241,8 +282,9 @@ type LightingMacrosState = LightingMacrosPrivateState & LightingMacrosPublicStat
 /**
  * ! OUTPUT
  */
+
 /**
- * Будущее состояние контроллера
+ * Будущее состояние контролов, передается в контроллер по средством MQTT
  */
 type LightingMacrosNextOutput = {
   readonly lightings: Array<{
@@ -262,8 +304,12 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     };
     autoOff: {
       illumination: Date;
+      day: [Date, Date];
     };
   };
+  private lastMotionDetected = new Date();
+  private lastNoseDetected = new Date();
+  private clock: NodeJS.Timeout;
 
   constructor(parameters: LightingMacrosParameters) {
     super({
@@ -299,8 +345,13 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       },
       autoOff: {
         illumination: subDays(new Date(), 1),
+        day: [new Date(), new Date()],
       },
     };
+
+    this.setupAutoOffTime();
+
+    this.clock = setInterval(this.tic, 60 * 1000);
   }
 
   setState = (nextState: LightingMacrosPublicState): void => {
@@ -358,19 +409,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
 
       let nextSwitchState: 'ON' | 'OFF' = 'OFF';
-      let nextValue = control.off;
 
       if (this.state.force === 'ON') {
         nextSwitchState = 'ON';
-        nextValue = control.on;
       }
 
       if (this.state.force === 'OFF') {
         nextSwitchState = 'OFF';
-        nextValue = control.off;
       }
 
-      this.computeNextOutput(nextValue);
+      this.computeNextOutput();
 
       if (this.nextOutput.lightings.length > 0) {
         logger('The force state was determined 🫡 😡 😤 🚀');
@@ -379,7 +427,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
             name: this.name,
             currentState: this.state,
             nextSwitchState,
-            nextValue,
             nextOutput: this.nextOutput,
           }),
         );
@@ -399,8 +446,17 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const stop = this.applyInputSwitchState();
 
     if (!stop) {
+      const currentSwitchState = this.state.switch;
+
       this.applyAutoOn();
       this.applyAutoOff();
+
+      if (currentSwitchState !== this.state.switch) {
+        this.computeNextOutput();
+        this.applyNextOutput();
+
+        return true;
+      }
     }
 
     return stop;
@@ -436,7 +492,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       logger(stringify({ name: this.name, currentState: this.state, on: control.on, off: control.off }));
 
       let nextSwitchState: 'ON' | 'OFF' = 'OFF';
-      let nextValue = control.off;
 
       if (this.state.switch === 'ON') {
         if (this.settings.properties.switcher.everyOn) {
@@ -450,34 +505,42 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
             return control?.value === control?.on;
           });
 
-          if (everyOn) {
-            nextSwitchState = 'OFF';
-            nextValue = control.off;
-          } else {
-            nextSwitchState = 'ON';
-            nextValue = control.on;
-          }
+          nextSwitchState = everyOn ? 'OFF' : 'ON';
         } else {
           nextSwitchState = 'OFF';
-          nextValue = control.off;
         }
       } else if (this.state.switch === 'OFF') {
         nextSwitchState = 'ON';
-        nextValue = control.on;
       } else {
         logger('No handler found for the current state 🚨');
         logger(stringify({ name: this.name, currentState: this.state }));
 
         nextSwitchState = 'OFF';
-        nextValue = control.on;
       }
 
       if (this.state.switch !== nextSwitchState) {
-        this.block.autoOn.illumination = addHours(new Date(), 12);
+        /**
+         * В случае если включена функциональность autoOn по датчику освещенности,
+         * мы не сможем выключить освещение, для того, чтобы дать возможность выключить
+         * освещение в ручном режиме, нужно добавить блокировку autoOn на какое-то время.
+         */
+        if (nextSwitchState === 'OFF') {
+          this.block.autoOn.illumination = addHours(
+            new Date(),
+            this.settings.properties.autoOn.block.illuminationHours,
+          );
+        }
+
+        if (nextSwitchState === 'ON') {
+          this.block.autoOff.illumination = addHours(
+            new Date(),
+            this.settings.properties.autoOff.block.illuminationHours,
+          );
+        }
 
         this.state.switch = nextSwitchState;
 
-        this.computeNextOutput(nextValue);
+        this.computeNextOutput();
         this.applyNextOutput();
       }
 
@@ -488,27 +551,31 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private applyAutoOn = () => {
-    const { illumination, motion } = this.settings.properties.autoOn;
-
     let nextSwitchState = this.state.switch;
 
+    const { illumination, motion } = this.settings.properties.autoOn;
+
+    /**
+     * AutoOn по датчикам освещенности.
+     */
     if (
       illumination !== LightingLevel.UNSPECIFIED &&
-      this.state.lightingLevel <= illumination &&
-      /**
-       * Блокировка включения по освещению
-       */
+      this.state.lightingLevel < illumination &&
       compareAsc(this.block.autoOn.illumination, new Date()) === -1
     ) {
       nextSwitchState = 'ON';
     }
 
-    if (motion.trigger > 0 && this.state.motion >= motion.trigger) {
-      const partTime =
-        motion.active.from >= 0 && motion.active.from <= 23 && motion.active.to >= 0 && motion.active.to <= 23;
+    /**
+     * AutoOn по датчикам движения.
+     */
+    const { trigger, active } = motion;
 
-      if (partTime) {
-        if (this.hasHourOverlap(motion.active.from, motion.active.to)) {
+    if (trigger > 0 && this.state.motion >= trigger) {
+      const isPartTimeActive = active.from >= 0 && active.from <= 23 && active.to >= 0 && active.to <= 23;
+
+      if (isPartTimeActive) {
+        if (this.hasHourOverlap(active.from, active.to)) {
           nextSwitchState = 'ON';
         }
       } else {
@@ -517,12 +584,50 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     if (nextSwitchState !== this.state.switch) {
-      // ! Нужно вычислить следующее состояние контроллера
+      logger('The auto on change state 🪄');
+      logger(stringify({ illumination, motion, state: this.state }));
+
+      this.state.switch = nextSwitchState;
     }
   };
 
   private applyAutoOff = () => {
-    const { motion, noise, motionAndNoiseTimerMin, onlyNoiseTimerMin, time } = this.settings.properties.autoOff;
+    const { illumination, motionMin, noiseMin, silenceMin } = this.settings.properties.autoOff;
+
+    let nextSwitchState = this.state.switch;
+
+    /**
+     * AutoOff по датчикам освещенности
+     */
+    if (
+      illumination !== LightingLevel.UNSPECIFIED &&
+      this.state.lightingLevel >= illumination &&
+      compareAsc(this.block.autoOff.illumination, new Date()) === -1
+    ) {
+      nextSwitchState = 'OFF';
+    }
+
+    /**
+     * AutoOff по датчикам движения и звука
+     */
+    const isSilence =
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(this.lastMotionDetected, silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(this.lastNoseDetected, silenceMin));
+
+    const isNoMovement = motionMin > 0 && compareAsc(new Date(), addMinutes(this.lastMotionDetected, motionMin)) === 1;
+    const isNoNoise = noiseMin > 0 && compareAsc(new Date(), addMinutes(this.lastNoseDetected, noiseMin)) === 1;
+
+    if (isSilence || isNoMovement || isNoNoise) {
+      nextSwitchState = 'OFF';
+    }
+
+    if (nextSwitchState !== this.state.switch) {
+      logger('The auto off change state 🪄');
+      logger(stringify({ isSilence, isNoMovement, isNoNoise, state: this.state }));
+
+      this.state.switch = nextSwitchState;
+    }
   };
 
   protected applyExternalToState() {
@@ -602,13 +707,21 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       this.settings.devices.motion,
       this.settings.properties.motion.detection,
     );
+
+    if (this.state.motion >= this.settings.properties.autoOff.motion) {
+      this.lastMotionDetected = new Date();
+    }
   };
 
   private applyExternalNoiseSate = () => {
     this.state.noise = this.getValueByDetection(this.settings.devices.noise, this.settings.properties.noise.detection);
+
+    if (this.state.noise >= this.settings.properties.autoOff.noise) {
+      this.lastMotionDetected = new Date();
+    }
   };
 
-  protected computeNextOutput(value: string) {
+  protected computeNextOutput() {
     const nextOutput: LightingMacrosNextOutput = {
       lightings: [],
     };
@@ -631,6 +744,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         );
 
         continue;
+      }
+
+      let value = control.off;
+
+      if (this.state.switch === 'ON') {
+        value = control.on;
+      }
+
+      if (this.state.switch === 'OFF') {
+        value = control.off;
       }
 
       if (control.value !== value) {
@@ -697,6 +820,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   }
 
+  protected destroy() {
+    clearInterval(this.clock);
+  }
+
   protected isSwitchHasBeenUp(): boolean {
     return super.isSwitchHasBeenUp(this.settings.devices.switchers);
   }
@@ -752,6 +879,50 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       if (control) {
         return control;
+      }
+    }
+  };
+
+  private setupAutoOffTime = () => {
+    const { time } = this.settings.properties.autoOff;
+
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth();
+    const date = new Date().getDate();
+    const hours = new Date().getHours();
+
+    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 24, 0, 0, 0)];
+
+    if (time >= 0 && hours > time) {
+      const [from, to] = this.block.autoOff.day;
+
+      this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
+    }
+  };
+
+  /**
+   * Обработчик счетчика часов, в рамках этого обработчика, будут случаться
+   * все действия связанные с течением времени.
+   */
+  private tic = () => {
+    const now = Date.now();
+    const hours = new Date().getHours();
+    const [from, to] = this.block.autoOff.day;
+    const { time } = this.settings.properties.autoOff;
+
+    if (from.getTime() >= now && now <= to.getTime() && time === hours) {
+      this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
+
+      const nextSwitchState = 'OFF';
+
+      if (this.state.switch !== nextSwitchState) {
+        this.state.switch = nextSwitchState;
+
+        logger('The switch state was changed by timer 🪄');
+        logger(stringify(this.state));
+
+        this.computeNextOutput();
+        this.applyNextOutput();
       }
     }
   };
