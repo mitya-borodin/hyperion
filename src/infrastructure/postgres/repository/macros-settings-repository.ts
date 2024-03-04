@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
+import { JsonValue } from '../../../helpers/json-types';
 import { IMacrosSettingsRepository, MacrosSettings } from '../../../ports/macros-settings-repository';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';
 
@@ -20,9 +21,9 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
 
   async getAll(): Promise<MacrosSettings[]> {
     try {
-      const prismaMacrosSettings = await this.client.macros.findMany();
+      const prismaMacrosEject = await this.client.macros.findMany();
 
-      return prismaMacrosSettings.map((prismaMacrosSetting) => toDomainMacrosSettings(prismaMacrosSetting));
+      return prismaMacrosEject.map((prismaMacrosEject) => toDomainMacrosSettings(prismaMacrosEject));
     } catch (error) {
       logger('Failed to get all macros settings 🚨');
       logger(JSON.stringify({ error }, null, 2));
@@ -38,20 +39,24 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
           id: parameters.id,
         },
         create: {
-          id: parameters.id,
           type: parameters.type,
+
+          id: parameters.id,
           name: parameters.name,
           description: parameters.description,
           labels: parameters.labels,
-          settings: parameters.settings,
+
+          settings: parameters.settings as JsonValue,
         },
         update: {
-          id: parameters.id,
           type: parameters.type,
+
+          id: parameters.id,
           name: parameters.name,
           description: parameters.description,
           labels: parameters.labels,
-          settings: parameters.settings,
+
+          settings: parameters.settings as JsonValue,
         },
       });
 

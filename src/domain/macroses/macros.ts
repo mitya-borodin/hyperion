@@ -14,29 +14,9 @@ import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
+import { MacrosType } from './macros-showcase';
 
 const logger = debug('hyperion-macros');
-
-/**
- * ! ADD_MACROS
- */
-export enum MacrosType {
-  LIGHTING = 'LIGHTING',
-  HEATING = 'HEATING',
-  VENTILATION = 'VENTILATION',
-  HUMIDIFICATION = 'HUMIDIFICATION',
-  CONDITIONING = 'CONDITIONING',
-  WATER_SUPPLY = 'WATER_SUPPLY',
-  SNOW_MELTING = 'SNOW_MELTING',
-  SWIMMING_POOL = 'SWIMMING_POOL',
-  COVER_OPENING = 'COVER_OPENING',
-  HEATING_CABLE = 'HEATING_CABLE',
-  MASTER_SWITCH = 'MASTER_SWITCH',
-  SECURITY = 'SECURITY',
-  ACCOUNTING = 'ACCOUNTING',
-  UPS = 'UPS',
-  AUTOMATIC_RESERVE_ENTRY = 'AUTOMATIC_RESERVE_ENTRY',
-}
 
 export type MacrosAccept = {
   previous: Map<string, HyperionDeviceControl>;
@@ -45,25 +25,25 @@ export type MacrosAccept = {
   controls: Map<string, HyperionDeviceControl>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SettingsBase = {
   devices: { [key: string]: Array<{ deviceId: string; controlId: string }> };
   properties: { [key: string]: unknown };
 };
 
-export type MacrosEject<TYPE extends MacrosType, SETTINGS extends SettingsBase, STATE extends JsonObject> = {
+export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE extends JsonObject = JsonObject> = {
+  type: MacrosType;
+
   id: string;
   name: string;
   description: string;
   labels: string[];
 
-  type: TYPE;
   settings: SETTINGS;
 
   state: STATE;
 };
 
-export type MacrosParameters<SETTINGS extends SettingsBase, STATE extends JsonObject> = {
+export type MacrosParameters<SETTINGS, STATE> = {
   readonly eventBus: EventEmitter;
 
   readonly id?: string;
@@ -84,7 +64,11 @@ type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly controlTypes: { [key: string]: ControlType };
 };
 
-export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsBase, STATE extends JsonObject> {
+export abstract class Macros<
+  TYPE extends MacrosType = MacrosType,
+  SETTINGS extends SettingsBase = SettingsBase,
+  STATE extends JsonObject = JsonObject,
+> {
   /**
    * ! Общие зависимости всех макросов
    */
@@ -138,6 +122,10 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
 
     this.type = type;
     this.settings = settings;
+    this.state = state;
+
+    this.controlTypes = controlTypes;
+
     this.controlIds = new Set();
 
     for (const name in this.settings.devices) {
@@ -145,10 +133,6 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
         this.controlIds.add(getControlId(item));
       }
     }
-
-    this.state = state;
-
-    this.controlTypes = controlTypes;
 
     this.applyExternalToState = debounce(this.applyExternalToState.bind(this), 500, {
       leading: false,
@@ -158,7 +142,7 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
     this.applyExternalToState();
   }
 
-  abstract setState(state: STATE): void;
+  abstract setState(nextStateJson: string): void;
 
   accept({ previous, current, devices, controls }: MacrosAccept): void {
     this.previous = previous;
@@ -230,14 +214,15 @@ export abstract class Macros<TYPE extends MacrosType, SETTINGS extends SettingsB
   /**
    * Метод предназначен вернуть из макроса всю информацию, которую нужно хранить в БД.
    */
-  toJS = (): MacrosEject<TYPE, SETTINGS, STATE> => {
+  toJS = (): MacrosEject<SETTINGS, STATE> => {
     return cloneDeep({
+      type: this.type,
+
       id: this.id,
       name: this.name,
       description: this.description,
       labels: this.labels,
 
-      type: this.type,
       settings: this.settings,
 
       state: this.state,

@@ -164,7 +164,9 @@ input SetControlValue {
   value: String!
 }
 
+"""
 ## MacrosShowcase
+#
 # Используется только как витрина доступных макросов для установки.
 # Возможность установки нескольких макросов одного типа
 # задается реализацией макроса.
@@ -172,32 +174,67 @@ input SetControlValue {
 # Список хардкодится в реализации, и новые MacrosShowcase, добавляются
 # по средством разработки.
 #
+# Каждый MacrosShowcase содержит json schema для state и settings, исходя из этих схем,
+# FE стоит UI на лету.
+#
+# Если BE меняет реализацию, то FE код не изменится.
+#
+"""
 type MacrosShowcase {
   type: ID!
   name: String!
   description: String!
+
+  state: String!
+  settings: String!
 }
 
-## MacrosSetup
-# Задает интерфейс добавления макроса, для каждого макроса он уникальный.
-# union не может быть использован как input type, по этому будем использовать
-# список не обязательных полей.
-# ! ADD_MACROS
+"""
+MacrosSetup
+
+Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
+Узнать json schema конкретного макроса можно в MacrosShowcase, отправляется state и settings.
+
+По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+"""
 input MacrosSetup {
-  lighting: LightingMacrosSetup
+  type: MacrosType!
+
+  id: ID!
+
+  name: String!
+  description: String!
+
+  labels: [String!]!
+
+  state: String!
+  settings: String!
 }
 
-## Macros
-# Задает интерфейс установленного макроса, для каждого макроса он уникален.
-# Как оказалось использовать union не так уж и удобно, сильно проще использовать
-# список не обязательных полей.
-# ! ADD_MACROS
+"""
+Macros
+
+Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
+Узнать json schema конкретного макроса можно в MacrosShowcase, в соответствии со схемой, отправляется state и settings.
+
+По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+"""
 type Macros {
-  lighting: LightingMacros
+  type: MacrosType!
+
+  id: ID!
+
+  name: String!
+  description: String!
+
+  labels: [String!]!
+
+  state: String!
+  settings: String!
 }
 
 type MacrosOutput {
-  value: Macros
+  macros: Macros!
   error: Error!
 }
 
@@ -210,14 +247,14 @@ type DestroyMacrosOutput {
 }
 
 type DeviceSubscriptionEvent {
-  items: [Device!]!
   type: SubscriptionDeviceType!
+  items: [Device!]!
   error: Error!
 }
 
 type MacrosSubscriptionEvent {
-  macros: [Macros!]!
   type: SubscriptionMacrosType!
+  macros: [Macros!]!
   error: Error!
 }
 

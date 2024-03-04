@@ -15,4 +15,4 @@ export type JsonArray = Array<JsonValue>;
  * From https://github.com/sindresorhus/type-fest/
  * Matches any valid JSON value.
  */
-export type JsonValue = string | number | boolean | JsonObject | JsonArray | null;
+export type JsonValue = string | number | boolean | JsonObject | JsonArray;

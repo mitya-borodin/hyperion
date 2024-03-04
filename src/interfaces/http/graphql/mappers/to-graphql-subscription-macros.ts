@@ -1,11 +1,11 @@
-import { MacrosOptions } from '../../../../domain/macroses/macros-engine';
+import { MacrosEject } from '../../../../domain/macroses/macros';
 import { Error as GraphQlError, MacrosSubscriptionEvent } from '../../../../graphql-types';
 import { SubscriptionMacrosType, SubscriptionTopic } from '../subscription';
 
 import { toGraphQlMacros } from './to-graphql-macros';
 
 type ToGraphQlSubscriptionDevice = {
-  macros: MacrosOptions[];
+  macros: MacrosEject[];
   type: SubscriptionMacrosType;
   error: GraphQlError;
 };
@@ -24,8 +24,8 @@ export const toGraphQlSubscriptionMacros = ({
     topic: SubscriptionTopic.MACROS,
     payload: {
       macros: {
-        macros: macros.map((element) => toGraphQlMacros(element)),
         type,
+        macros: macros.map((element) => toGraphQlMacros(element)),
         error,
       },
     },

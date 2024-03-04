@@ -1,5 +1,119 @@
-import { MacrosType } from './macros';
+import { LightingMacros } from './lighting-macros';
 
+/**
+ * ! ADD_MACROS - Добавить тип макроса
+ */
+export enum MacrosType {
+  LIGHTING = 'LIGHTING',
+  HEATING = 'HEATING',
+  VENTILATION = 'VENTILATION',
+  HUMIDIFICATION = 'HUMIDIFICATION',
+  CONDITIONING = 'CONDITIONING',
+  WATER_SUPPLY = 'WATER_SUPPLY',
+  SNOW_MELTING = 'SNOW_MELTING',
+  SWIMMING_POOL = 'SWIMMING_POOL',
+  COVER_OPENING = 'COVER_OPENING',
+  HEATING_CABLE = 'HEATING_CABLE',
+  MASTER_SWITCH = 'MASTER_SWITCH',
+  SECURITY = 'SECURITY',
+  ACCOUNTING = 'ACCOUNTING',
+  UPS = 'UPS',
+  AUTOMATIC_RESERVE_ENTRY = 'AUTOMATIC_RESERVE_ENTRY',
+}
+
+export const toDomainMacrosType = (input: unknown) => {
+  /**
+   * ! ADD_MACROS - Добавить тип макроса
+   */
+  let type = MacrosType.LIGHTING;
+
+  if (input === MacrosType.LIGHTING) {
+    type = MacrosType.LIGHTING;
+  }
+
+  if (input === MacrosType.HEATING) {
+    type = MacrosType.HEATING;
+  }
+
+  if (input === MacrosType.VENTILATION) {
+    type = MacrosType.VENTILATION;
+  }
+
+  if (input === MacrosType.HUMIDIFICATION) {
+    type = MacrosType.HUMIDIFICATION;
+  }
+
+  if (input === MacrosType.CONDITIONING) {
+    type = MacrosType.CONDITIONING;
+  }
+
+  if (input === MacrosType.WATER_SUPPLY) {
+    type = MacrosType.WATER_SUPPLY;
+  }
+
+  if (input === MacrosType.SNOW_MELTING) {
+    type = MacrosType.SNOW_MELTING;
+  }
+
+  if (input === MacrosType.SWIMMING_POOL) {
+    type = MacrosType.SWIMMING_POOL;
+  }
+
+  if (input === MacrosType.COVER_OPENING) {
+    type = MacrosType.COVER_OPENING;
+  }
+
+  if (input === MacrosType.HEATING_CABLE) {
+    type = MacrosType.HEATING_CABLE;
+  }
+
+  if (input === MacrosType.MASTER_SWITCH) {
+    type = MacrosType.MASTER_SWITCH;
+  }
+
+  if (input === MacrosType.SECURITY) {
+    type = MacrosType.SECURITY;
+  }
+
+  if (input === MacrosType.ACCOUNTING) {
+    type = MacrosType.ACCOUNTING;
+  }
+
+  if (input === MacrosType.UPS) {
+    type = MacrosType.UPS;
+  }
+
+  if (input === MacrosType.AUTOMATIC_RESERVE_ENTRY) {
+    type = MacrosType.AUTOMATIC_RESERVE_ENTRY;
+  }
+
+  return type;
+};
+
+/**
+ * ! ADD_MACROS - Добавить конструктор макроса
+ */
+export const macrosMap = {
+  [MacrosType.LIGHTING]: LightingMacros,
+  [MacrosType.HEATING]: LightingMacros,
+  [MacrosType.VENTILATION]: LightingMacros,
+  [MacrosType.HUMIDIFICATION]: LightingMacros,
+  [MacrosType.CONDITIONING]: LightingMacros,
+  [MacrosType.WATER_SUPPLY]: LightingMacros,
+  [MacrosType.SNOW_MELTING]: LightingMacros,
+  [MacrosType.SWIMMING_POOL]: LightingMacros,
+  [MacrosType.COVER_OPENING]: LightingMacros,
+  [MacrosType.HEATING_CABLE]: LightingMacros,
+  [MacrosType.MASTER_SWITCH]: LightingMacros,
+  [MacrosType.SECURITY]: LightingMacros,
+  [MacrosType.ACCOUNTING]: LightingMacros,
+  [MacrosType.UPS]: LightingMacros,
+  [MacrosType.AUTOMATIC_RESERVE_ENTRY]: LightingMacros,
+};
+
+/**
+ * ! ADD_MACROS - Добавить описание макроса на витрину
+ */
 export const macrosShowcase = {
   [MacrosType.LIGHTING]: {
     name: 'Освещение',

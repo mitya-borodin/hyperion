@@ -1,16 +1,14 @@
-import { LightingMacros } from '../../../../domain/macroses/lighting-macros';
-import { MacrosOptions } from '../../../../domain/macroses/macros-engine';
+import { MacrosEject } from '../../../../domain/macroses/macros';
 import { Macros as GraphQlMacros } from '../../../../graphql-types';
 
-export const toGraphQlMacros = (macros: MacrosOptions): GraphQlMacros => {
-  /**
-   * ! ADD_MACROS
-   */
-  if (macros.lighting instanceof LightingMacros) {
-    return {
-      lighting: macros.lighting.toJS(),
-    };
-  }
-
-  return {};
+export const toGraphQlMacros = (macros: MacrosEject): GraphQlMacros => {
+  return {
+    type: macros.type,
+    id: macros.id,
+    name: macros.name,
+    description: macros.description,
+    labels: macros.labels,
+    settings: JSON.stringify(macros.settings),
+    state: JSON.stringify(macros.state),
+  };
 };

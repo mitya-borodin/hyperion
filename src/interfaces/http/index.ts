@@ -133,18 +133,7 @@ export const createHttpInterface = async ({
   fastify.register(MercuriusGQLUpload, { maxFiles: 10, maxFileSize: 50_000_000 });
 
   fastify.register(Mercurius, {
-    /**
-     * ! ADD_MACROS
-     */
     schema: [
-      gql`
-        ${await readFile(resolve(__dirname, './graphql/macros-setup/lighting-macros-setup.graphql'), {
-          encoding: 'utf8',
-        })}
-      `,
-      gql`
-        ${await readFile(resolve(__dirname, './graphql/macros/lighting-macros.graphql'), { encoding: 'utf8' })}
-      `,
       gql`
         ${await readFile(resolve(__dirname, './graphql/authentication-and-access-control.graphql'), {
           encoding: 'utf8',

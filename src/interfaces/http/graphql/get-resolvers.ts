@@ -20,8 +20,6 @@ import { deactivateTwoFa } from '../../../application-services/security/two-fa/d
 import { verifyTwoFa } from '../../../application-services/security/two-fa/verify-two-fa';
 import { EventBus } from '../../../domain/event-bus';
 import { getControlId } from '../../../domain/macroses/get-control-id';
-import { LightingMacros } from '../../../domain/macroses/lighting-macros';
-import { MacrosType } from '../../../domain/macroses/macros';
 import { MacrosEngine } from '../../../domain/macroses/macros-engine';
 import { macrosShowcase } from '../../../domain/macroses/macros-showcase';
 import { JwtPayload } from '../../../domain/user';
@@ -501,45 +499,28 @@ export const getResolvers = ({
       /**
        * ! MACROS
        */
-      setupMacros: async (root, { input: { lighting } }, context) => {
-        /**
-         * ! ADD_MACROS
-         */
-        if (lighting) {
-          const macros = await macrosEngine.setup({
-            id: lighting.id ?? undefined,
-            type: MacrosType.LIGHTING,
-            name: lighting.name,
-            description: lighting.description,
-            labels: lighting.labels,
-            settings: {
-              [MacrosType.LIGHTING]: lighting.settings,
-            },
-            state: {
-              [MacrosType.LIGHTING]: lighting.state,
-            },
-          });
+      setupMacros: async (root, { input }, context) => {
+        const macros = await macrosEngine.setup(input);
 
-          if (macros instanceof Error) {
-            throw macros;
-          }
-
-          emitGqlMacrosSubscriptionEvent({
-            eventBus,
-            macros: { lighting: macros },
-            type: lighting.id ? SubscriptionMacrosType.UPDATE : SubscriptionMacrosType.SETUP,
-          });
-
-          return {
-            value: toGraphQlMacros({ lighting: macros }),
-            error: {
-              code: ErrorCode.ALL_RIGHT,
-              message: ErrorMessage.ALL_RIGHT,
-            },
-          };
+        if (macros instanceof Error) {
+          throw macros;
         }
 
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
+        emitGqlMacrosSubscriptionEvent({
+          eventBus,
+          type: input.id ? SubscriptionMacrosType.UPDATE : SubscriptionMacrosType.SETUP,
+          macros,
+        });
+
+        const error = {
+          code: ErrorCode.ALL_RIGHT,
+          message: ErrorMessage.ALL_RIGHT,
+        };
+
+        return {
+          macros: toGraphQlMacros(macros),
+          error,
+        };
       },
       destroyMacros: async (root, { input }, context) => {
         if (!input?.id) {
@@ -549,32 +530,24 @@ export const getResolvers = ({
           throw new Error(ErrorType.INVALID_ARGUMENTS);
         }
 
-        const macros = macrosEngine.destroy(input.id);
+        const macros = await macrosEngine.destroy(input.id);
 
         if (macros instanceof Error) {
           throw macros;
         }
 
-        /**
-         * ! ADD_MACROS - переделать на макрос
-         */
-        if (macros instanceof LightingMacros) {
-          emitGqlMacrosSubscriptionEvent({
-            eventBus,
-            macros: { lighting: macros },
-            type: SubscriptionMacrosType.DESTROY,
-          });
+        emitGqlMacrosSubscriptionEvent({
+          eventBus,
+          macros,
+          type: SubscriptionMacrosType.DESTROY,
+        });
 
-          return {
-            value: toGraphQlMacros({ lighting: macros }),
-            error: {
-              code: ErrorCode.ALL_RIGHT,
-              message: ErrorMessage.ALL_RIGHT,
-            },
-          };
-        }
+        const error = {
+          code: ErrorCode.ALL_RIGHT,
+          message: ErrorMessage.ALL_RIGHT,
+        };
 
-        throw new Error(ErrorType.INVALID_ARGUMENTS);
+        return { error };
       },
     },
     Subscription: {
@@ -610,7 +583,7 @@ export const getResolvers = ({
           eventBus.emit(
             EventBus.GQL_PUBLISH_SUBSCRIPTION_EVENT,
             toGraphQlSubscriptionMacros({
-              macros: macrosEngine.getMarcosList(),
+              macros: macrosEngine.getList(),
               type: SubscriptionMacrosType.CONNECTION_ESTABLISHED,
               error: {
                 code: ErrorCode.ALL_RIGHT,

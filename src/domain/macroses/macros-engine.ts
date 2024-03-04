@@ -11,30 +11,10 @@ import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
-import { LightingForce, LightingMacros, LightingMacrosPublicState, LightingMacrosSettings } from './lighting-macros';
-import { MacrosType } from './macros';
+import { Macros, MacrosEject } from './macros';
+import { MacrosType, macrosMap } from './macros-showcase';
 
 const logger = debug('hyperion-macros-engine');
-
-/**
- * ! ADD_MACROS
- */
-type MACROS = LightingMacros;
-
-/**
- * ! ADD_MACROS
- */
-type STATE = { [MacrosType.LIGHTING]: LightingMacrosPublicState };
-
-/**
- * ! ADD_MACROS
- */
-type SETTINGS = { [MacrosType.LIGHTING]: LightingMacrosSettings };
-
-/**
- * ! ADD_MACROS
- */
-export type MacrosOptions = { lighting?: LightingMacros };
 
 type Setup = {
   id?: string;
@@ -42,8 +22,17 @@ type Setup = {
   name: string;
   description: string;
   labels: string[];
-  settings: SETTINGS;
-  state: STATE;
+
+  /**
+   * Settings & state должны приходить в формате json text, который будет
+   * распарсен, каждым макросом в соответствии со своей json schema.
+   */
+  settings: string;
+  /**
+   * Settings & state должны приходить в формате json text, который будет
+   * распарсен, каждым макросом в соответствии со своей json schema.
+   */
+  state?: string;
 
   save?: boolean;
 };
@@ -60,7 +49,7 @@ export class MacrosEngine {
   private readonly macrosSettingsRepository: IMacrosSettingsRepository;
   private devices: Map<string, HyperionDevice>;
   private controls: Map<string, HyperionDeviceControl>;
-  private readonly macros: Map<string, MACROS>;
+  private readonly macros: Map<string, Macros>;
 
   constructor({ eventBus, hyperionDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
     this.eventBus = eventBus;
@@ -94,33 +83,34 @@ export class MacrosEngine {
     this.devices = devices;
     this.controls = controls;
 
-    const macrosSettings = await this.macrosSettingsRepository.getAll();
+    const allMacrosSettings = await this.macrosSettingsRepository.getAll();
 
-    for (const macrosSetting of macrosSettings) {
-      /**
-       * ! ADD_MACROS
-       */
-      if (macrosSetting.type === MacrosType.LIGHTING) {
-        const macros = await this.setup({
-          id: macrosSetting.id,
-          type: macrosSetting.type,
-          name: macrosSetting.name,
-          description: macrosSetting.description,
-          labels: macrosSetting.labels,
-          settings: {
-            [MacrosType.LIGHTING]: macrosSetting.settings as LightingMacrosSettings,
-          },
-          state: {
-            [MacrosType.LIGHTING]: {
-              force: LightingForce.UNSPECIFIED,
-            },
-          },
-          save: false,
-        });
+    for (const macrosSettings of allMacrosSettings) {
+      const macros = await this.setup({
+        type: macrosSettings.type,
 
-        if (macros instanceof Error) {
-          throw new TypeError(ErrorType.UNEXPECTED_BEHAVIOR);
-        }
+        id: macrosSettings.id,
+        name: macrosSettings.name,
+        description: macrosSettings.description,
+        labels: macrosSettings.labels,
+
+        /**
+         * Удовлетворение контракта метода setup, так как фронт отдает данные всегда
+         * в виде JSON text, который в последствии проверяется.
+         */
+        settings: JSON.stringify(macrosSettings.settings),
+
+        /**
+         * Состояние не хранится в БД, каждый макрос знает своё дефолтное
+         * публичное состояние.
+         */
+        state: undefined,
+
+        save: false,
+      });
+
+      if (macros instanceof Error) {
+        throw new TypeError(ErrorType.UNEXPECTED_BEHAVIOR);
       }
     }
 
@@ -135,25 +125,26 @@ export class MacrosEngine {
     logger('The macros engine was stopped 👷‍♂️ 🛑');
   };
 
-  setup = async (setup: Setup): Promise<Error | MACROS> => {
+  setup = async (setup: Setup): Promise<Error | MacrosEject> => {
     const { id, type, name, description, labels, settings, state, save = true } = setup;
 
     try {
-      let macros: MACROS | undefined;
+      const Macros = macrosMap[type];
 
-      /**
-       * ! ADD_MACROS
-       */
-      if (type === MacrosType.LIGHTING) {
-        macros = new LightingMacros({
+      let macros: Macros | undefined;
+
+      if (Macros) {
+        macros = new Macros({
           eventBus: this.eventBus,
 
           id,
           name,
           description,
           labels,
-          settings: settings[type],
-          state: state[type],
+
+          settings,
+
+          state,
 
           /**
            * ! Для горячего старта, чтобы не ждать появления всех устройств и контролов.
@@ -161,14 +152,19 @@ export class MacrosEngine {
           devices: this.devices,
           controls: this.controls,
         });
+      } else {
+        logger('The macro constructor is unavailable 🚨');
+        logger(stringify(setup));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
       }
 
       if (macros) {
         if (save) {
-          const macrosSettings = await this.macrosSettingsRepository.upsert(macros.toJS());
+          const result = await this.macrosSettingsRepository.upsert(macros);
 
-          if (macrosSettings instanceof Error) {
-            return macrosSettings;
+          if (result instanceof Error) {
+            return result;
           }
         }
 
@@ -177,7 +173,7 @@ export class MacrosEngine {
         logger('The macro has been successfully installed 🚀 ✅ 🚀');
         logger(stringify({ id: macros.id, type: macros.type, name: macros.name }));
 
-        return macros;
+        return macros.toJS();
       }
 
       logger('Failed to install the macros 🚨');
@@ -194,31 +190,15 @@ export class MacrosEngine {
     }
   };
 
-  getMarcosList = () => {
-    const list: MacrosOptions[] = [];
-
-    for (const macros of this.macros.values()) {
-      /**
-       * ! ADD_MACROS - переделать на маппер
-       */
-      if (macros instanceof LightingMacros) {
-        list.push({
-          lighting: macros,
-        });
-      }
-    }
-
-    return list;
+  getList = () => {
+    return Array.from(this.macros.values(), (macros) => macros.toJS());
   };
 
-  setState = (id: string, state: STATE) => {
+  setState = (id: string, state: string) => {
     const macros = this.macros.get(id);
 
-    /**
-     * ! ADD_MACROS
-     */
-    if (macros instanceof LightingMacros) {
-      macros.setState(state[macros?.type]);
+    if (macros) {
+      macros.setState(state);
     }
 
     return macros;
@@ -239,7 +219,7 @@ export class MacrosEngine {
       logger('The macros was delete by ID successfully ✅');
       logger(stringify({ id }));
 
-      return macros;
+      return macros.toJS();
     }
 
     logger('Failed to delete macro by ID 🚨');

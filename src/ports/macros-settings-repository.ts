@@ -1,10 +1,6 @@
-import { Macros, MacrosType, SettingsBase } from '../domain/macroses/macros';
-import { JsonObject } from '../helpers/json-types';
+import { Macros } from '../domain/macroses/macros';
 
-export type MacrosSettings = Pick<
-  Macros<MacrosType, SettingsBase, JsonObject>,
-  'id' | 'type' | 'name' | 'description' | 'labels' | 'settings'
->;
+export type MacrosSettings = Pick<Macros, 'id' | 'type' | 'name' | 'description' | 'labels' | 'settings'>;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMacrosSettingsRepository {
