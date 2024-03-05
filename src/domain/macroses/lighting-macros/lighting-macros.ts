@@ -1,14 +1,13 @@
 import { addDays, addHours, addMinutes, compareAsc, subDays } from 'date-fns';
 import debug from 'debug';
 
-import { stringify } from '../../helpers/json-stringify';
-import { emitWirenboardMessage } from '../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
-import { ControlType } from '../control-type';
-import { HyperionDeviceControl } from '../hyperion-control';
-
-import { getControlId } from './get-control-id';
-import { Macros, MacrosParameters } from './macros';
-import { MacrosType } from './macros-showcase';
+import { stringify } from '../../../helpers/json-stringify';
+import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
+import { ControlType } from '../../control-type';
+import { HyperionDeviceControl } from '../../hyperion-control';
+import { getControlId } from '../get-control-id';
+import { Macros, MacrosParameters } from '../macros';
+import { MacrosType } from '../macros-showcase';
 
 const logger = debug('hyperion-lighting-macros');
 

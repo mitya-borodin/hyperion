@@ -1,4 +1,4 @@
-import { LightingMacros } from './lighting-macros';
+import { LightingMacros } from './lighting-macros/lighting-macros';
 
 /**
  * ! ADD_MACROS - Добавить тип макроса

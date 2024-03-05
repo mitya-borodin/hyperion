@@ -1,0 +1,357 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/LightingMacrosSettings",
+  "definitions": {
+    "LightingMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "object",
+          "properties": {
+            "switchers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "controlId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "illuminations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "controlId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "motion": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "controlId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "noise": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "controlId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "lightings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "controlId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "switchers",
+            "illuminations",
+            "motion",
+            "noise",
+            "lightings"
+          ],
+          "additionalProperties": false,
+          "description": "Список устройств которые участвую в макросе"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "switcher": {
+              "type": "object",
+              "properties": {
+                "trigger": {
+                  "$ref": "#/definitions/Trigger",
+                  "description": "Переключает реакцию на положение переключателя UP - переключатель нажали/замкнули DOWN - переключатель отпустили/разомкнули"
+                },
+                "everyOn": {
+                  "type": "boolean",
+                  "description": "Позволяет отключить функционал до включения выключенных lightings."
+                }
+              },
+              "required": [
+                "trigger",
+                "everyOn"
+              ],
+              "additionalProperties": false
+            },
+            "illumination": {
+              "type": "object",
+              "properties": {
+                "HIGHT": {
+                  "type": "number",
+                  "description": "Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть какие значения дают датчики в нужных местах в разное время суток."
+                },
+                "MIDDLE": {
+                  "type": "number"
+                },
+                "LOW": {
+                  "type": "number"
+                },
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
+              },
+              "required": [
+                "HIGHT",
+                "MIDDLE",
+                "LOW",
+                "detection"
+              ],
+              "additionalProperties": false
+            },
+            "motion": {
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
+              },
+              "required": [
+                "detection"
+              ],
+              "additionalProperties": false
+            },
+            "noise": {
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
+              },
+              "required": [
+                "detection"
+              ],
+              "additionalProperties": false
+            },
+            "autoOn": {
+              "type": "object",
+              "properties": {
+                "illumination": {
+                  "$ref": "#/definitions/LightingLevel",
+                  "description": "Автоматическое включение по освещенности. Если указано UNSPECIFIED, автоматическое включение по освещенности выключено. Если указаны другие значения, то автоматически включатся все lightings  когда освещение буже ниже или равно указанному уровню."
+                },
+                "motion": {
+                  "type": "object",
+                  "properties": {
+                    "trigger": {
+                      "type": "number",
+                      "description": "Указывается значение движения в моменте, при достижении которого будут включены все lightings. Если указать <= 0, то включение по движению отключается."
+                    },
+                    "active": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "number",
+                          "description": "0...23"
+                        },
+                        "to": {
+                          "type": "number",
+                          "description": "0...23"
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Диапазон времени, когда работает включение по движению. Если указать нули, то работает все время."
+                    }
+                  },
+                  "required": [
+                    "trigger",
+                    "active"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Автоматическое включение по движению."
+                },
+                "block": {
+                  "type": "object",
+                  "properties": {
+                    "illuminationHours": {
+                      "type": "number",
+                      "description": "Время блокировки autoOn по освещенности. Если задано 0, то блокировка не будет включаться.\n\nЭто нужно, чтобы была возможность вручную выключить группу,  в случае когда для неё выполняется autoOn по освещенности.\n\nИначе правило autoOn всегда будет перебивать ручное выключение и  получится так, что кнопка нажимается, а свет продолжает гореть."
+                    }
+                  },
+                  "required": [
+                    "illuminationHours"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Позволяет блокировать автоматическое включение"
+                }
+              },
+              "required": [
+                "illumination",
+                "motion",
+                "block"
+              ],
+              "additionalProperties": false
+            },
+            "autoOff": {
+              "type": "object",
+              "properties": {
+                "illumination": {
+                  "$ref": "#/definitions/LightingLevel",
+                  "description": "Автоматическое выключение по освещенности. Если указано UNSPECIFIED, автоматическое выключение по освещенности выключено. Если указаны другие значения, то автоматически выключатся все lightings  когда освещение буже выше указанного уровня."
+                },
+                "motion": {
+                  "type": "number",
+                  "description": "Если значение движения ниже motion, считаем, что движения нет, если указать 0, то движение не учитывается."
+                },
+                "noise": {
+                  "type": "number",
+                  "description": "Если значение шума ниже noise, считаем, что шума нет, если указать 0, то шум не учитывается."
+                },
+                "motionMin": {
+                  "type": "number",
+                  "description": "Если движение отсутствует в течении заданного времени, lightings выключаются. Если указать <= 0, то autoOff по движению отключается."
+                },
+                "noiseMin": {
+                  "type": "number",
+                  "description": "Если шум отсутствует, в течении заданного времени, lightings выключаются. Если указать <= 0, то autoOff по шуму отключается."
+                },
+                "silenceMin": {
+                  "type": "number",
+                  "description": "Если > 0, то в случае отсутствия шума и движения группа выключится через заданное время. Если указать <= 0, то autoOff по шуму отключается."
+                },
+                "time": {
+                  "type": "number",
+                  "description": "В это время все lightings будут выключены. Событие случается единоразово. 0...23 Если указать -1 или меньше, то автоматическое отключение по таймеру отключается."
+                },
+                "block": {
+                  "type": "object",
+                  "properties": {
+                    "illuminationHours": {
+                      "type": "number",
+                      "description": "Время блокировки autoOff по освещенности. Если задано 0, то блокировка не будет включаться.\n\nПричина такая же как и для autoOn, нужно иметь возможность включить группу  в момент когда этому противоречит правило по освещению."
+                    }
+                  },
+                  "required": [
+                    "illuminationHours"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Позволяет блокировать автоматическое выключение"
+                }
+              },
+              "required": [
+                "illumination",
+                "motion",
+                "noise",
+                "motionMin",
+                "noiseMin",
+                "silenceMin",
+                "time",
+                "block"
+              ],
+              "additionalProperties": false,
+              "description": "Автоматическое выключение по движению, шуму, заданному времени."
+            }
+          },
+          "required": [
+            "switcher",
+            "illumination",
+            "motion",
+            "noise",
+            "autoOn",
+            "autoOff"
+          ],
+          "additionalProperties": false,
+          "description": "Настройки макроса"
+        }
+      },
+      "required": [
+        "devices",
+        "properties"
+      ],
+      "additionalProperties": false,
+      "description": "! Сценарии\n\n1. Изменение состояния через switchers, по умолчанию \"UP\" (в момент нажатия кнопки).  1.1. Значение реакции на переключатель можно настраивать,   UP (контакт переключателя замкнут),   DOWN (контакт переключателя разомкнут, после того как был замкнут)  1.2. Если в lightings есть хотя бы один включенный светильник, то при реакции на switchers, произойдет включение   отключенных светильников, иначе все светильники выключатся.    1.2.1. Функциональность можно отключать, и переключение будет происходить по внутреннему состоянию макроса.  1.3. В зависимости от illuminations определяется значение LightingLevel.   1.3.1. Можно указать какое значение брать: (максимальное, минимальное_ хотя бы у одного, среднее между всеми.   1.3.2. Можно указать, при каком LightingLevel включать все lightings. 2. Если движение поднимается выше порога, происходит включение всех lightings в рамках макроса.  2.1. Работает в заданном диапазоне времени, если не задано, то работает все время. 3. Если освещение станет ниже установленного порога, включатся все lightings в рамках макроса. 4. Если движение и шум отсутствует в течении заданного времени, lightings выключаются. 5. Если движение отсутствует, но шум присутствует в течении заданного времени все lightings выключаются.ё 6. Если задано время отключения, то при достижении этого времени, все lightings выключаются. 7. Если задано время блокировки autoOn по освещенности, то при выключении такой группы, автоматическое включение по  освещению заблокируется на заданное кол-во часов. 8. Если задано время блокировки autoOff по освещенности, то при включении такой группы в момент когда освещенность"
+    },
+    "Trigger": {
+      "type": "string",
+      "enum": [
+        "UP",
+        "DOWN"
+      ],
+      "description": "Определяет по верхнему (\"1\", +5, true) или по нижнему (\"0\", 0, false) уровню случится реакция."
+    },
+    "LevelDetection": {
+      "type": "string",
+      "enum": [
+        "MAX",
+        "MIN",
+        "AVG"
+      ],
+      "description": "Правило определения числового значения по нескольким датчикам MAX - берем максимальное среди всех MIN - берем минимальное среди всех AVG - берем среднее среди всех"
+    },
+    "LightingLevel": {
+      "type": "number",
+      "enum": [
+        2,
+        1,
+        0,
+        -1
+      ],
+      "description": "Уровни освещенности который определил макрос по всем имеющимся датчикам в соответствии с правилом определения"
+    }
+  }
+}

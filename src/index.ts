@@ -67,9 +67,9 @@ export const run = () => {
     /**
      * ! RUN MACROS ENGINE
      */
-    // await macrosEngine.start();
+    await macrosEngine.start();
 
-    // defer(() => macrosEngine.stop());
+    defer(() => macrosEngine.stop());
 
     const fastify = await createHttpInterface({
       config,
