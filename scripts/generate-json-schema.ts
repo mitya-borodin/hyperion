@@ -1,4 +1,6 @@
+/* eslint-disable unicorn/prefer-top-level-await */
 /* eslint-disable unicorn/prefer-module */
+
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -23,19 +25,34 @@ const generate = async (config: Config) => {
   logger(JSON.stringify({ config }, null, 2));
 };
 
-const basePath = resolve(__dirname, '../src/domain/macroses');
+const basePath = resolve(__dirname, '../src/domain/macros');
 
 Promise.all([
+  /**
+   * ! LIGHTING MACROS
+   */
   generate({
     type: 'LightingMacrosSettings',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'lighting-macros/lighting-macros.ts'),
-    output: resolve(basePath, 'lighting-macros/settings.json'),
+    path: resolve(basePath, 'lighting/index.ts'),
+    output: resolve(basePath, 'lighting/settings.json'),
   }),
   generate({
     type: 'LightingMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'lighting-macros/lighting-macros.ts'),
-    output: resolve(basePath, 'lighting-macros/state.json'),
+    path: resolve(basePath, 'lighting/index.ts'),
+    output: resolve(basePath, 'lighting/state.json'),
   }),
-]);
+
+  /**
+   * ! WATER-SUPPLY MACROS
+   */
+])
+  .then(() => {
+    logger('All schemas was builded ✅');
+  })
+  .catch((error) => {
+    logger('Unable to build all schemas 🚨');
+
+    console.error(error);
+  });

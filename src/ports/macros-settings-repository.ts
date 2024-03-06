@@ -1,4 +1,4 @@
-import { Macros } from '../domain/macroses/macros';
+import { Macros } from '../domain/macros/macros';
 
 export type MacrosSettings = Pick<Macros, 'id' | 'type' | 'name' | 'description' | 'labels' | 'settings'>;
 

@@ -19,9 +19,9 @@ import { confirmTwoFa } from '../../../application-services/security/two-fa/conf
 import { deactivateTwoFa } from '../../../application-services/security/two-fa/deactivate-two-fa';
 import { verifyTwoFa } from '../../../application-services/security/two-fa/verify-two-fa';
 import { EventBus } from '../../../domain/event-bus';
-import { getControlId } from '../../../domain/macroses/get-control-id';
-import { MacrosEngine } from '../../../domain/macroses/macros-engine';
-import { macrosShowcase } from '../../../domain/macroses/macros-showcase';
+import { getControlId } from '../../../domain/macros/get-control-id';
+import { MacrosEngine } from '../../../domain/macros/engine';
+import { macrosShowcase } from '../../../domain/macros/showcase';
 import { JwtPayload } from '../../../domain/user';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../../helpers/error-type';
 import { Config } from '../../../infrastructure/config';

@@ -1,4 +1,14 @@
-import { LightingMacros } from './lighting-macros/lighting-macros';
+import { LightingMacros } from './lighting';
+
+/**
+ * Витрина позволяет фронту:
+ * 1. Узнать какие есть макросы
+ * 2. Узнать json schema для settings и state
+ *
+ * Витрина позволяет бэку:
+ * 1. Преобразовывать тип макросса в доменное представление
+ * 2. Получать ссылку на конструктор макроса по типу
+ */
 
 /**
  * ! ADD_MACROS - Добавить тип макроса
@@ -195,3 +205,9 @@ export const macrosShowcase = {
       'через потребляемую мощность и паспортные данные генератора.',
   },
 };
+
+/**
+ * ! ADD_MACROS - Добавить экспорт json схемы
+ */
+export { default as lightingMacrosSettingsSchema } from './lighting/settings.json';
+export { default as lightingMacrosStateSchema } from './lighting/state.json';

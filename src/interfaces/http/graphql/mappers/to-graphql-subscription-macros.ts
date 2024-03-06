@@ -1,4 +1,4 @@
-import { MacrosEject } from '../../../../domain/macroses/macros';
+import { MacrosEject } from '../../../../domain/macros/macros';
 import { Error as GraphQlError, MacrosSubscriptionEvent } from '../../../../graphql-types';
 import { SubscriptionMacrosType, SubscriptionTopic } from '../subscription';
 

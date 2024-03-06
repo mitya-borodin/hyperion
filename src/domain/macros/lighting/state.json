@@ -21,7 +21,8 @@
         "ON",
         "OFF",
         "UNSPECIFIED"
-      ]
+      ],
+      "description": "! PUBLIC STATE"
     }
   }
 }

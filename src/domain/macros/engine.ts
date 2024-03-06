@@ -12,7 +12,7 @@ import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { Macros, MacrosEject } from './macros';
-import { MacrosType, macrosMap } from './macros-showcase';
+import { MacrosType, macrosMap } from './showcase';
 
 const logger = debug('hyperion-macros-engine');
 

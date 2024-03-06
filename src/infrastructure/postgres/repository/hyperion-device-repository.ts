@@ -9,7 +9,7 @@ import { HardwareDevice } from '../../../domain/hardware-device';
 import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { History } from '../../../domain/hystory';
-import { getControlId } from '../../../domain/macroses/get-control-id';
+import { getControlId } from '../../../domain/macros/get-control-id';
 import { ErrorType } from '../../../helpers/error-type';
 import { stringify } from '../../../helpers/json-stringify';
 import {

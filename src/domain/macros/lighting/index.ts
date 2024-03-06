@@ -7,7 +7,7 @@ import { ControlType } from '../../control-type';
 import { HyperionDeviceControl } from '../../hyperion-control';
 import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
-import { MacrosType } from '../macros-showcase';
+import { MacrosType } from '../showcase';
 
 const logger = debug('hyperion-lighting-macros');
 
@@ -263,6 +263,10 @@ export type LightingMacrosSettings = {
  */
 
 /**
+ * ! PRIVATE STATE
+ */
+
+/**
  * Внутреннее состояние макроса, которое не может изменить пользователь.
  * Оно нужно для реализации внутреннего устройства макроса.
  */
@@ -280,6 +284,10 @@ type LightingMacrosPrivateState = {
   time: number;
 };
 
+/**
+ * ! PUBLIC STATE
+ */
+
 export enum LightingForce {
   ON = 'ON',
   OFF = 'OFF',
@@ -292,6 +300,10 @@ export enum LightingForce {
 export type LightingMacrosPublicState = {
   force: LightingForce;
 };
+
+/**
+ * ! FULL STATE
+ */
 
 type LightingMacrosState = LightingMacrosPrivateState & LightingMacrosPublicState;
 

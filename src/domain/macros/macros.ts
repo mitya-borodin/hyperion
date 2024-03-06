@@ -14,33 +14,19 @@ import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
-import { MacrosType } from './macros-showcase';
+import { MacrosType } from './showcase';
 
 const logger = debug('hyperion-macros');
 
-export type MacrosAccept = {
-  previous: Map<string, HyperionDeviceControl>;
-  current: HyperionDevice;
-  devices: Map<string, HyperionDevice>;
-  controls: Map<string, HyperionDeviceControl>;
-};
+/**
+ * Создание базового класса макроса было мотивировано:
+ * 1. Желанием унифицировать структуру и жизненные циклы макроса
+ * 2. Реализовывать общие 
+ */
 
 export type SettingsBase = {
   devices: { [key: string]: Array<{ deviceId: string; controlId: string }> };
   properties: { [key: string]: unknown };
-};
-
-export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE extends JsonObject = JsonObject> = {
-  type: MacrosType;
-
-  id: string;
-  name: string;
-  description: string;
-  labels: string[];
-
-  settings: SETTINGS;
-
-  state: STATE;
 };
 
 export type MacrosParameters<SETTINGS, STATE> = {
@@ -62,6 +48,26 @@ export type MacrosParameters<SETTINGS, STATE> = {
 type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly type: TYPE;
   readonly controlTypes: { [key: string]: ControlType };
+};
+
+export type MacrosAccept = {
+  previous: Map<string, HyperionDeviceControl>;
+  current: HyperionDevice;
+  devices: Map<string, HyperionDevice>;
+  controls: Map<string, HyperionDeviceControl>;
+};
+
+export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE extends JsonObject = JsonObject> = {
+  type: MacrosType;
+
+  id: string;
+  name: string;
+  description: string;
+  labels: string[];
+
+  settings: SETTINGS;
+
+  state: STATE;
 };
 
 export abstract class Macros<

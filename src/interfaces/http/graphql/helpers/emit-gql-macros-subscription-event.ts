@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 
 import { EventBus } from '../../../../domain/event-bus';
-import { MacrosEject } from '../../../../domain/macroses/macros';
+import { MacrosEject } from '../../../../domain/macros/macros';
 import { ErrorCode, ErrorMessage } from '../../../../helpers/error-type';
 import { toGraphQlSubscriptionMacros } from '../mappers/to-graphql-subscription-macros';
 import { SubscriptionMacrosType } from '../subscription';

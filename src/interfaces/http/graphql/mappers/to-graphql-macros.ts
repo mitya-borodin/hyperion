@@ -1,4 +1,4 @@
-import { MacrosEject } from '../../../../domain/macroses/macros';
+import { MacrosEject } from '../../../../domain/macros/macros';
 import { Macros as GraphQlMacros } from '../../../../graphql-types';
 
 export const toGraphQlMacros = (macros: MacrosEject): GraphQlMacros => {

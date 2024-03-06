@@ -19,7 +19,7 @@ import MercuriusAuth from 'mercurius-auth';
 import { codegenMercurius, gql } from 'mercurius-codegen';
 import MercuriusGQLUpload from 'mercurius-upload';
 
-import { MacrosEngine } from '../../domain/macroses/macros-engine';
+import { MacrosEngine } from '../../domain/macros/engine';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';

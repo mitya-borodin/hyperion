@@ -8,7 +8,7 @@ import { forever } from 'abort-controller-x';
 
 import { runCollectHardwareDevice } from './application-services/run-collect-hardware-device';
 import { EventBus } from './domain/event-bus';
-import { MacrosEngine } from './domain/macroses/macros-engine';
+import { MacrosEngine } from './domain/macros/engine';
 import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
@@ -67,9 +67,9 @@ export const run = () => {
     /**
      * ! RUN MACROS ENGINE
      */
-    await macrosEngine.start();
+    // await macrosEngine.start();
 
-    defer(() => macrosEngine.stop());
+    // defer(() => macrosEngine.stop());
 
     const fastify = await createHttpInterface({
       config,

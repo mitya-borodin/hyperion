@@ -5,7 +5,7 @@
     "start": "nodemon --config nodemon.json cmd/hyperion.ts | pino-pretty -c",
     "test": "jest --config jest.config.js --no-cache --runInBand",
     "build:check": "tsc --project ./tsconfig.json",
-    "build": "del-cli build && tsc --project ./tsconfig.build.json && copyfiles -V './**/*.graphql' build/",
+    "build": "del-cli build && tsc --project ./tsconfig.build.json && copyfiles --up 1 -V './src/**/*.graphql' build/ && copyfiles --up 1 -V './src/**/*.json' build/",
     "build:schema": "DEBUG=generate-json-schema ts-node ./scripts/generate-json-schema.ts",
     "prisma:generate": "prisma generate --schema ./src/infrastructure/postgres/prisma/schema.prisma",
     "prisma:migrate:dev": "prisma migrate dev --schema ./src/infrastructure/postgres/prisma/schema.prisma --skip-seed",
