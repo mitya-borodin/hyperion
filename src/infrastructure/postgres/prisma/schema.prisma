@@ -143,4 +143,5 @@ model Macros {
   type        String
   labels      String[]
   settings    Json
+  version     Int      @default(0)
 }

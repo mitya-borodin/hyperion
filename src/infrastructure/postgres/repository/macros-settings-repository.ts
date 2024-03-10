@@ -1,9 +1,12 @@
+import { exit } from 'node:process';
+
 import { PrismaClient } from '@prisma/client';
 import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
+import { stringify } from '../../../helpers/json-stringify';
 import { JsonValue } from '../../../helpers/json-types';
-import { IMacrosSettingsRepository, MacrosSettings } from '../../../ports/macros-settings-repository';
+import { IMacrosSettingsPort, MacrosSettings } from '../../../ports/macros-settings-port';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';
 
 const logger = debug('hyperion-macros-settings-repository');
@@ -12,7 +15,7 @@ export type MacrosSettingsRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class MacrosSettingsRepository implements IMacrosSettingsRepository {
+export class MacrosSettingsRepository implements IMacrosSettingsPort {
   private client: PrismaClient;
 
   constructor({ client }: MacrosSettingsRepositoryParameters) {
@@ -47,6 +50,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
           labels: parameters.labels,
 
           settings: parameters.settings as JsonValue,
+
+          version: parameters.version,
         },
         update: {
           type: parameters.type,
@@ -57,6 +62,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsRepository {
           labels: parameters.labels,
 
           settings: parameters.settings as JsonValue,
+
+          version: parameters.version,
         },
       });
 

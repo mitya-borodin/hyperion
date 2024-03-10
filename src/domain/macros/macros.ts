@@ -21,7 +21,7 @@ const logger = debug('hyperion-macros');
 /**
  * Создание базового класса макроса было мотивировано:
  * 1. Желанием унифицировать структуру и жизненные циклы макроса
- * 2. Реализовывать общие 
+ * 2. Реализовывать общие
  */
 
 export type SettingsBase = {
@@ -41,6 +41,14 @@ export type MacrosParameters<SETTINGS, STATE> = {
 
   readonly state: STATE;
 
+  /**
+   * Версия это целое число, нужна чтобы понимать, есть ли брейкинги в макросе.
+   * Позволяет на основе версий делать миграции для settings.
+   * Версия указывается в конструкторе конкретного макроса, и должна быть увеличина если в макросе есть брейкиг,
+   *  а так же должна быть написана процедура перехода структуры settings из одной версии в другую.
+   */
+  readonly version?: number;
+
   readonly devices: Map<string, HyperionDevice>;
   readonly controls: Map<string, HyperionDeviceControl>;
 };
@@ -48,6 +56,8 @@ export type MacrosParameters<SETTINGS, STATE> = {
 type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly type: TYPE;
   readonly controlTypes: { [key: string]: ControlType };
+
+  readonly version: number;
 };
 
 export type MacrosAccept = {
@@ -100,6 +110,7 @@ export abstract class Macros<
    */
   readonly type: TYPE;
   readonly settings: SETTINGS;
+  readonly version: number;
   readonly controlIds: Set<string>;
   protected readonly state: STATE;
   protected readonly controlTypes: { [key: string]: ControlType };
@@ -112,6 +123,7 @@ export abstract class Macros<
     labels,
     type,
     settings,
+    version,
     state,
     controlTypes,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
@@ -129,6 +141,7 @@ export abstract class Macros<
     this.type = type;
     this.settings = settings;
     this.state = state;
+    this.version = version;
 
     this.controlTypes = controlTypes;
 
@@ -248,13 +261,13 @@ export abstract class Macros<
         const current = this.controls.get(id);
 
         if (previous?.value !== current?.value) {
-          logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
-          logger(
-            stringify({
-              macros: omit(this.toJS(), ['labels', 'settings']),
-              device: { id: device.id, controls: device.controls.map(({ id, value }) => ({ id, value })) },
-            }),
-          );
+          // logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
+          // logger(
+          //   stringify({
+          //     macros: omit(this.toJS(), ['labels', 'settings']),
+          //     device: { id: device.id, controls: device.controls.map(({ id, value }) => ({ id, value })) },
+          //   }),
+          // );
 
           return true;
         }

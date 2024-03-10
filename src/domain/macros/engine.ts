@@ -6,7 +6,7 @@ import debug from 'debug';
 import { ErrorType } from '../../helpers/error-type';
 import { stringify } from '../../helpers/json-stringify';
 import { HyperionStateUpdate, IHyperionDeviceRepository } from '../../ports/hyperion-device-repository';
-import { IMacrosSettingsRepository } from '../../ports/macros-settings-repository';
+import { IMacrosSettingsPort } from '../../ports/macros-settings-port';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -34,19 +34,19 @@ type Setup = {
    */
   state?: string;
 
-  save?: boolean;
+  version?: number;
 };
 
 type MacrosEngineParameters = {
   eventBus: EventEmitter;
   hyperionDeviceRepository: IHyperionDeviceRepository;
-  macrosSettingsRepository: IMacrosSettingsRepository;
+  macrosSettingsRepository: IMacrosSettingsPort;
 };
 
 export class MacrosEngine {
   private readonly eventBus: EventEmitter;
   private readonly hyperionDeviceRepository: IHyperionDeviceRepository;
-  private readonly macrosSettingsRepository: IMacrosSettingsRepository;
+  private readonly macrosSettingsRepository: IMacrosSettingsPort;
   private devices: Map<string, HyperionDevice>;
   private controls: Map<string, HyperionDeviceControl>;
   private readonly macros: Map<string, Macros>;
@@ -106,7 +106,7 @@ export class MacrosEngine {
          */
         state: undefined,
 
-        save: false,
+        version: macrosSettings.version,
       });
 
       if (macros instanceof Error) {
@@ -126,7 +126,7 @@ export class MacrosEngine {
   };
 
   setup = async (setup: Setup): Promise<Error | MacrosEject> => {
-    const { id, type, name, description, labels, settings, state, save = true } = setup;
+    const { id, type, name, description, labels, settings, state, version } = setup;
 
     try {
       const Macros = macrosMap[type];
@@ -146,6 +146,8 @@ export class MacrosEngine {
 
           state,
 
+          version,
+
           /**
            * ! Для горячего старта, чтобы не ждать появления всех устройств и контролов.
            */
@@ -160,12 +162,10 @@ export class MacrosEngine {
       }
 
       if (macros) {
-        if (save) {
-          const result = await this.macrosSettingsRepository.upsert(macros);
+        const result = await this.macrosSettingsRepository.upsert(macros);
 
-          if (result instanceof Error) {
-            return result;
-          }
+        if (result instanceof Error) {
+          return result;
         }
 
         this.macros.set(macros.id, macros);

@@ -2,7 +2,7 @@ import { Macros as PrismaMacros } from '@prisma/client';
 
 import { SettingsBase } from '../../domain/macros/macros';
 import { toDomainMacrosType } from '../../domain/macros/showcase';
-import { MacrosSettings } from '../../ports/macros-settings-repository';
+import { MacrosSettings } from '../../ports/macros-settings-port';
 
 export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettings => {
   return {
@@ -14,5 +14,7 @@ export const toDomainMacrosSettings = (prismaMacros: PrismaMacros): MacrosSettin
     labels: prismaMacros.labels,
 
     settings: prismaMacros.settings as SettingsBase,
+
+    version: prismaMacros.version,
   };
 };
