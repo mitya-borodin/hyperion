@@ -746,6 +746,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       logger('The AUTO ON change state 🪄');
       logger(
         stringify({
+          name: this.name,
+
           isAutoOnBlocked,
           lightingLevelState: this.state.lightingLevel,
           lightingLevel,
@@ -832,6 +834,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       logger('The AUTO OFF change state 🪄');
       logger(
         stringify({
+          name: this.name,
+
           isAutoOffBlocked,
           isAlreadyOff,
           isLightingLevelDefined,
@@ -1155,6 +1159,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const [from, to] = this.block.autoOff.day;
 
     const { time } = this.settings.properties.autoOff;
+
+    logger({
+      name: this.name,
+      message: 'Tic tac ⏱️',
+      time,
+      from,
+      to,
+      now,
+      hours,
+    });
 
     if (from.getTime() >= now && now <= to.getTime() && time === hours) {
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
