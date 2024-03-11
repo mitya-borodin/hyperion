@@ -9,19 +9,13 @@
           "$ref": "#/definitions/LightingForce"
         }
       },
-      "required": [
-        "force"
-      ],
+      "required": ["force"],
       "additionalProperties": false,
       "description": "Состояние макроса которое может изменить пользователь"
     },
     "LightingForce": {
       "type": "string",
-      "enum": [
-        "ON",
-        "OFF",
-        "UNSPECIFIED"
-      ],
+      "enum": ["ON", "OFF", "UNSPECIFIED"],
       "description": "! PUBLIC STATE"
     }
   }
