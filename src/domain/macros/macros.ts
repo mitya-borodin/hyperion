@@ -4,10 +4,8 @@ import { addHours } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
-import omit from 'lodash.omit';
 import { v4 } from 'uuid';
 
-import { stringify } from '../../helpers/json-stringify';
 import { JsonObject } from '../../helpers/json-types';
 import { ControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';

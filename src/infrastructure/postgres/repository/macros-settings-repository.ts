@@ -1,10 +1,7 @@
-import { exit } from 'node:process';
-
 import { PrismaClient } from '@prisma/client';
 import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
-import { stringify } from '../../../helpers/json-stringify';
 import { JsonValue } from '../../../helpers/json-types';
 import { IMacrosSettingsPort, MacrosSettings } from '../../../ports/macros-settings-port';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';

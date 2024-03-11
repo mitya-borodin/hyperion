@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-empty-file */
 // import debug from 'debug';
 
 // import { stringify } from '../../helpers/json-stringify';
