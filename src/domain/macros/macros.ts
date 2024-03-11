@@ -339,6 +339,7 @@ export abstract class Macros<
               deviceId,
               controlId,
               controlType: control?.type,
+              key,
               settingsControlType: this.controlTypes[key],
               control: control ?? 'NOT FOUND',
             });

@@ -130,7 +130,7 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
       autoOn: {
         lightingLevel: LightingLevel.LOW,
         motion: {
-          trigger: 50,
+          trigger: 30,
           active: {
             from: 15,
             to: 0,
@@ -142,10 +142,10 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
       },
       autoOff: {
         lightingLevel: LightingLevel.HIGHT,
-        motion: 50,
-        noise: 50,
-        motionMin: 5,
-        noiseMin: 10,
+        motion: 40,
+        noise: 60,
+        noiseMin: 5,
+        motionMin: 2,
         silenceMin: 1,
         time: 1,
         block: {

@@ -396,7 +396,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         switchers: ControlType.SWITCH,
         illuminations: ControlType.ILLUMINATION,
         motion: ControlType.VALUE,
-        noise: ControlType.VALUE,
+        noise: ControlType.SOUND_LEVEL,
         lightings: ControlType.SWITCH,
       },
 
@@ -682,38 +682,53 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private applyAutoOn = () => {
+    /**
+     * ! Pre flight check
+     */
     const isAutoOnBlocked = compareAsc(this.block.autoOn.illumination, new Date()) === 1;
+    const isAlreadyOn = this.state.switch === Switch.ON;
+    const isLightingLevelDefined = this.state.lightingLevel !== LightingLevel.UNSPECIFIED;
 
-    if (isAutoOnBlocked || this.state.switch === Switch.ON || this.state.lightingLevel === LightingLevel.UNSPECIFIED) {
+    if (isAutoOnBlocked || isAlreadyOn || !isLightingLevelDefined) {
       return;
     }
 
+    /**
+     * ! Devices
+     */
+    const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
+    const hasMotionAndNoiseDevice = this.settings.devices.motion.length > 0;
+
+    /**
+     * ! Settings
+     */
     const { lightingLevel, motion } = this.settings.properties.autoOn;
 
     let nextSwitchState: Switch = this.state.switch;
 
     /**
-     * AutoOn по датчикам освещенности
+     * ! AutoOn по датчикам освещенности.
+     *
+     * * При наличии датчиков движения, освещенность становится фактором блокировки включения,
+     * * то есть пока не потемнеет, группа не будет включена даже если есть движение.
      */
-    const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
-
     const autoOnByIllumination =
-      hasIlluminationDevice && lightingLevel !== LightingLevel.UNSPECIFIED && this.state.lightingLevel <= lightingLevel;
+      hasIlluminationDevice && isLightingLevelDefined && this.state.lightingLevel <= lightingLevel;
 
-    logger(autoOnByIllumination);
-
-    if (autoOnByIllumination) {
+    if (!hasMotionAndNoiseDevice && autoOnByIllumination) {
       nextSwitchState = Switch.ON;
     }
 
     /**
-     * AutoOn по датчикам движения
+     * ! AutoOn по датчикам движения
      */
+    if (!hasMotionAndNoiseDevice) {
+      return;
+    }
+
     const { trigger, active } = motion;
 
-    const hasMotionAndNoiseDevice = this.settings.devices.motion.length > 0 && this.settings.devices.noise.length > 0;
-
-    const autoOnByMotion = hasMotionAndNoiseDevice && trigger > 0 && this.state.motion >= trigger;
+    const autoOnByMotion = autoOnByIllumination && trigger > 0 && this.state.motion >= trigger;
 
     const isPartTimeActive = active.from >= 0 && active.from <= 23 && active.to >= 0 && active.to <= 23;
 
@@ -753,46 +768,61 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private applyAutoOff = () => {
+    /**
+     * ! Pre flight check
+     */
     const isAutoOffBlocked = compareAsc(this.block.autoOff.illumination, new Date()) === 1;
+    const isAlreadyOff = this.state.switch === Switch.OFF;
+    const isLightingLevelDefined = this.state.lightingLevel !== LightingLevel.UNSPECIFIED;
 
-    if (
-      isAutoOffBlocked ||
-      this.state.switch === Switch.OFF ||
-      this.state.lightingLevel === LightingLevel.UNSPECIFIED
-    ) {
+    if (isAutoOffBlocked || isAlreadyOff || !isLightingLevelDefined) {
       return;
     }
 
-    const { lightingLevel, motionMin, noiseMin, silenceMin } = this.settings.properties.autoOff;
+    /**
+     * ! Devices
+     */
+    const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
+    const hasMotionAndNoiseDevice = this.settings.devices.motion.length > 0 && this.settings.devices.noise.length > 0;
+
+    /**
+     * ! Settings
+     */
+    const { lightingLevel, noiseMin, motionMin, silenceMin } = this.settings.properties.autoOff;
 
     let nextSwitchState: Switch = this.state.switch;
 
     /**
-     * AutoOff по датчикам освещенности
+     * ! AutoOff по датчикам освещенности
      */
-    const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
-
     const autoOffByIllumination =
-      lightingLevel !== LightingLevel.UNSPECIFIED && this.state.lightingLevel >= lightingLevel && hasIlluminationDevice;
+      isLightingLevelDefined && hasIlluminationDevice && this.state.lightingLevel >= lightingLevel;
 
     if (autoOffByIllumination) {
       nextSwitchState = Switch.OFF;
     }
 
     /**
-     * AutoOff по датчикам движения и звука
+     * ! AutoOff по датчикам движения и звука
+     *
+     * Шум и движение работают вместе, так как движения может уже не быть,
+     *  но шум остается, и пока есть шум, свет будет работать
      */
-    const hasMotionAndNoiseDevice = this.settings.devices.motion.length > 0 && this.settings.devices.noise.length > 0;
+    const isNoNoise =
+      noiseMin > 0 && compareAsc(new Date(), addMinutes(new Date(this.lastNoseDetected.getTime()), noiseMin)) === 1;
 
+    const isNoMovement =
+      motionMin > 0 && compareAsc(new Date(), addMinutes(new Date(this.lastMotionDetected.getTime()), motionMin)) === 1;
+
+    /**
+     * isSilence - означает полную тишину, нет ни звука ни движения, значит выключить свет можно гораздо быстрее.
+     */
     const isSilence =
       silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(this.lastMotionDetected, silenceMin)) === 1 &&
-      compareAsc(new Date(), addMinutes(this.lastNoseDetected, silenceMin)) === 1;
+      compareAsc(new Date(), addMinutes(new Date(this.lastMotionDetected.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.lastNoseDetected.getTime()), silenceMin)) === 1;
 
-    const isNoMovement = motionMin > 0 && compareAsc(new Date(), addMinutes(this.lastMotionDetected, motionMin)) === 1;
-    const isNoNoise = noiseMin > 0 && compareAsc(new Date(), addMinutes(this.lastNoseDetected, noiseMin)) === 1;
-
-    const autoOffByMovementAndNoise = (isSilence || isNoMovement || isNoNoise) && hasMotionAndNoiseDevice;
+    const autoOffByMovementAndNoise = hasMotionAndNoiseDevice && ((isNoNoise && isNoMovement) || isSilence);
 
     if (autoOffByMovementAndNoise) {
       nextSwitchState = Switch.OFF;
@@ -803,20 +833,26 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       logger(
         stringify({
           isAutoOffBlocked,
-          lightingLevelState: this.state.lightingLevel,
-          lightingLevel,
+          isAlreadyOff,
+          isLightingLevelDefined,
           hasIlluminationDevice,
+          hasMotionAndNoiseDevice,
+
+          lightingLevelSettings: lightingLevel,
+          lightingLevelState: this.state.lightingLevel,
+
           autoOffByIllumination,
+          lastMotionDetected: this.lastMotionDetected,
+          lastNoseDetected: this.lastNoseDetected,
+
           silenceMin,
           isSilence,
+
           motionMin,
-          lastMotionDetected: this.lastMotionDetected,
           isNoMovement,
-          noiseMin,
-          lastNoseDetected: this.lastNoseDetected,
-          isNoNoise,
-          hasMotionAndNoiseDevice,
+
           autoOffByMovementAndNoise,
+
           nextSwitchState,
           state: this.state,
         }),
@@ -925,7 +961,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.state.noise = this.getValueByDetection(this.settings.devices.noise, this.settings.properties.noise.detection);
 
     if (this.state.noise >= this.settings.properties.autoOff.noise) {
-      this.lastMotionDetected = new Date();
+      this.lastNoseDetected = new Date();
     }
   };
 
