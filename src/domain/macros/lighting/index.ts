@@ -737,13 +737,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * ! AutoOn по датчикам движения
      */
-    if (!hasMotionAndNoiseDevice) {
-      return;
-    }
-
     const { trigger, active } = motion;
 
-    const autoOnByMotion = autoOnByIllumination && trigger > 0 && this.state.motion >= trigger;
+    const autoOnByMotion =
+      hasMotionAndNoiseDevice && autoOnByIllumination && trigger > 0 && this.state.motion >= trigger;
 
     const isPartTimeActive = active.from >= 0 && active.from <= 23 && active.to >= 0 && active.to <= 23;
 
@@ -757,9 +754,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
     }
 
-    if (this.name === 'Освещение хозяйственной') {
+    if (this.name === 'Освещение крыльца') {
       logger({
         name: this.name,
+        autoOnByIllumination,
         autoOnByMotion,
         isPartTimeActive,
         hasHourOverlap: this.hasHourOverlap(active.from, active.to, true),
