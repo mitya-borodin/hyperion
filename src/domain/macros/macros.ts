@@ -1,12 +1,14 @@
 import EventEmitter from 'node:events';
 
 import { addHours } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
 import { v4 } from 'uuid';
 
 import { JsonObject } from '../../helpers/json-types';
+import { config } from '../../infrastructure/config';
 import { ControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -372,7 +374,17 @@ export abstract class Macros<
 
     const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
     const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
-    const nowMs = Date.now();
+    const nowInClientTz = utcToZonedTime(new Date(), config.client.timeZone);
+    const nowInUTC = new Date(
+      nowInClientTz.getFullYear(),
+      nowInClientTz.getMonth(),
+      nowInClientTz.getDate(),
+      nowInClientTz.getHours(),
+      nowInClientTz.getMinutes(),
+      nowInClientTz.getSeconds(),
+      nowInClientTz.getMilliseconds(),
+    );
+    const nowMs = nowInUTC.getDate();
 
     if (debug) {
       logger({
@@ -383,6 +395,8 @@ export abstract class Macros<
         to,
         fromMs,
         toMs,
+        nowInClientTz,
+        nowInUTC,
         nowMs,
         hasHourOverlap: nowMs >= fromMs && nowMs <= toMs,
       });

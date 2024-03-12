@@ -68,6 +68,10 @@ export class Config {
     readonly name: string;
   };
 
+  public readonly client: {
+    readonly timeZone: string;
+  };
+
   constructor() {
     this.appName = process.env.APP_NAME ?? os.hostname();
     this.gracefullyShutdownMs = this.toInt(process.env.GRACEFULLY_SHUTDOWN_MS ?? '', 5000);
@@ -121,6 +125,10 @@ export class Config {
       email: process.env.MASTER_USER_EMAIL ?? 'dmitriy@borodin.site',
       password: process.env.MASTER_USER_PASSWORD ?? 'password',
       name: process.env.MASTER_USER_NAME ?? 'Dmitriy Borodin',
+    };
+
+    this.client = {
+      timeZone: process.env.CLIENT_TIME_ZONE ?? 'Europe/Moscow',
     };
   }
 
