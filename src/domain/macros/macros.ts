@@ -1,6 +1,7 @@
 import EventEmitter from 'node:events';
 
 import { addHours } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
@@ -366,13 +367,15 @@ export abstract class Macros<
       to = to + 24;
     }
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth();
-    const date = new Date().getDate();
+    const tz = 'Europe/Moscow';
 
-    const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
-    const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
-    const nowMs = addHours(new Date(), 0).getTime();
+    const year = zonedTimeToUtc(new Date(), tz).getFullYear();
+    const month = zonedTimeToUtc(new Date(), tz).getMonth();
+    const date = zonedTimeToUtc(new Date(), tz).getDate();
+
+    const fromMs = addHours(zonedTimeToUtc(new Date(year, month, date, 0, 0, 0, 0), tz), from).getTime();
+    const toMs = addHours(zonedTimeToUtc(new Date(year, month, date, 0, 0, 0, 0), tz), to).getTime();
+    const nowMs = zonedTimeToUtc(new Date(), tz).getTime();
 
     if (debug) {
       logger({
