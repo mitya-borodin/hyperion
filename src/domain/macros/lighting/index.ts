@@ -1223,6 +1223,15 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         logger('The switch state was changed by clock 🪄');
         logger(stringify(this.state));
 
+        this.block.autoOn.illumination = addHours(new Date(), this.settings.properties.autoOn.block.illuminationHours);
+
+        logger('The auto ON block was activated ✅');
+        logger(
+          stringify({
+            autoOnBlockedFor: format(this.block.autoOn.illumination, 'yyyy.MM.dd HH:mm:ss OOOO'),
+          }),
+        );
+
         this.computeNextOutput();
         this.applyNextOutput();
       }
