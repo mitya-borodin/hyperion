@@ -384,7 +384,7 @@ export abstract class Macros<
       nowInClientTz.getSeconds(),
       nowInClientTz.getMilliseconds(),
     );
-    const nowMs = nowInUTC.getDate();
+    const nowMs = nowInUTC.getTime();
 
     if (debug) {
       logger({
