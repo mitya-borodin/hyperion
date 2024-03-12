@@ -372,7 +372,7 @@ export abstract class Macros<
 
     const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
     const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
-    const nowMs = Date.now();
+    const nowMs = addHours(new Date(), 0).getTime();
 
     if (debug) {
       logger({
