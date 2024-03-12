@@ -754,17 +754,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
     }
 
-    if (this.name === 'Освещение крыльца') {
-      logger({
-        name: this.name,
-        autoOnByIllumination,
-        autoOnByMotion,
-        isPartTimeActive,
-        hasHourOverlap: this.hasHourOverlap(active.from, active.to, true),
-        active,
-      });
-    }
-
     if (nextSwitchState !== this.state.switch) {
       logger('The AUTO ON change state 🪄');
       logger(
