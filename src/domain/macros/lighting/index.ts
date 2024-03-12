@@ -762,7 +762,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         name: this.name,
         autoOnByMotion,
         isPartTimeActive,
-        hasHourOverlap: this.hasHourOverlap(active.from, active.to),
+        hasHourOverlap: this.hasHourOverlap(active.from, active.to, true),
         active,
       });
     }

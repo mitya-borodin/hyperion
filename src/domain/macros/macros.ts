@@ -361,7 +361,7 @@ export abstract class Macros<
   /**
    * Метод определяет попадает ли текущее в диапазон часов в сутках
    */
-  protected hasHourOverlap(from: number, to: number) {
+  protected hasHourOverlap(from: number, to: number, debug = false) {
     if (to <= from) {
       to = to + 24;
     }
@@ -373,6 +373,19 @@ export abstract class Macros<
     const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
     const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
     const nowMs = Date.now();
+
+    if (debug) {
+      logger({
+        name: this.name,
+        message: 'hasHourOverlap',
+        from,
+        to,
+        fromMs,
+        toMs,
+        nowMs,
+        hasHourOverlap: nowMs >= fromMs && nowMs <= toMs,
+      });
+    }
 
     return nowMs >= fromMs && nowMs <= toMs;
   }
