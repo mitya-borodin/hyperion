@@ -367,15 +367,13 @@ export abstract class Macros<
       to = to + 24;
     }
 
-    const tz = 'Europe/Moscow';
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth();
+    const date = new Date().getDate();
 
-    const year = zonedTimeToUtc(new Date(), tz).getFullYear();
-    const month = zonedTimeToUtc(new Date(), tz).getMonth();
-    const date = zonedTimeToUtc(new Date(), tz).getDate();
-
-    const fromMs = addHours(zonedTimeToUtc(new Date(year, month, date, 0, 0, 0, 0), tz), from).getTime();
-    const toMs = addHours(zonedTimeToUtc(new Date(year, month, date, 0, 0, 0, 0), tz), to).getTime();
-    const nowMs = zonedTimeToUtc(new Date(), tz).getTime();
+    const fromMs = addHours(new Date(Date.UTC(year, month, date, 0, 0, 0, 0)), from).getTime();
+    const toMs = addHours(new Date(Date.UTC(year, month, date, 0, 0, 0, 0)), to).getTime();
+    const nowMs = Date.now();
 
     if (debug) {
       logger({
