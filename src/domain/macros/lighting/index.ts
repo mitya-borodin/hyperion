@@ -353,6 +353,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     };
     autoOff: {
       illumination: Date;
+      /**
+       * Настройка этих параметров происходит в методе setupAutoOffTime
+       */
       day: [Date, Date];
     };
   };
@@ -368,7 +371,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       eventBus: parameters.eventBus,
 
       type: MacrosType.LIGHTING,
+
       id: parameters.id,
+
       name: parameters.name,
       description: parameters.description,
       labels: parameters.labels,
@@ -639,6 +644,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
          * В случае если включена функциональность autoOn по датчику освещенности,
          * мы не сможем выключить освещение, для того, чтобы дать возможность выключить
          * освещение в ручном режиме, нужно добавить блокировку autoOn на какое-то время.
+         *
+         * Блокировку можно выключить установив значение 0
          */
         if (nextSwitchState === Switch.OFF) {
           this.block.autoOn.illumination = addHours(
@@ -668,6 +675,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
             }),
           );
         }
+
+        /**
+         * ! Считаем, что если включили руками, то светить должно по дольше
+         * TODO Перетащить в настройки
+         * TODO Продумать сценарий с открыванием дверей
+         */
+        this.lastMotionDetected = addMinutes(new Date(), 5);
+        this.lastNoseDetected = addMinutes(new Date(), 5);
 
         this.state.switch = nextSwitchState;
 
@@ -1131,17 +1146,36 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
+  /**
+   * Настройка this.block.autoOff.day
+   */
   private setupAutoOffTime = () => {
     const { time } = this.settings.properties.autoOff;
+
+    if (time < 0 || time > 23) {
+      return;
+    }
 
     const year = new Date().getFullYear();
     const month = new Date().getMonth();
     const date = new Date().getDate();
     const hours = new Date().getHours();
 
-    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 24, 0, 0, 0)];
+    /**
+     * Задаются текущие сутки, от 00:00 до 23:59:59
+     */
+    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 23, 59, 59, 0)];
 
-    if (time >= 0 && hours > time) {
+    /**
+     * Если в момент старта сервиса 15 часов, а time установлен как 13, то нужно передвинуть диапазон на сутки вперед,
+     * и событие по отключению произойдет на следующие сутки в 13 часов.
+     *
+     * Если в момент старта сервиса 15 часов, а time установлен на 23 часа, то останутся текущие сутки.
+     *
+     * Если в момент старта сервиса 15 часов, а time установлен на 0, то нужно передвинуть диапазон на сутки вперед,
+     * и событие по отключению произойдет на следующие сутки в 0 часов.
+     */
+    if (hours > time) {
       const [from, to] = this.block.autoOff.day;
 
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
@@ -1163,14 +1197,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     logger({
       name: this.name,
       message: 'Tic tac ⏱️',
-      time,
       from,
       to,
       now,
       hours,
+      time,
     });
 
-    if (from.getTime() >= now && now <= to.getTime() && time === hours) {
+    if (time === hours && from.getTime() >= now && now <= to.getTime()) {
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
 
       const nextSwitchState = Switch.OFF;
