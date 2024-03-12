@@ -1,7 +1,6 @@
 import EventEmitter from 'node:events';
 
 import { addHours } from 'date-fns';
-import { zonedTimeToUtc } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
@@ -373,17 +372,22 @@ export abstract class Macros<
 
     const fromMs = addHours(new Date(Date.UTC(year, month, date, 0, 0, 0, 0)), from).getTime();
     const toMs = addHours(new Date(Date.UTC(year, month, date, 0, 0, 0, 0)), to).getTime();
-    const nowMs = Date.now();
+    const now = new Date(new Date().toUTCString());
+    const nowMs = now.getTime();
+    const timeZoneOffset = now.getTimezoneOffset();
 
     if (debug) {
       logger({
         name: this.name,
         message: 'hasHourOverlap',
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         from,
         to,
         fromMs,
         toMs,
+        now,
         nowMs,
+        timeZoneOffset,
         hasHourOverlap: nowMs >= fromMs && nowMs <= toMs,
       });
     }
