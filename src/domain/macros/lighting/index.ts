@@ -757,6 +757,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
     }
 
+    if (this.name === 'Освещение хозяйственной') {
+      logger({
+        name: this.name,
+        autoOnByMotion,
+        isPartTimeActive,
+        hasHourOverlap: this.hasHourOverlap(active.from, active.to),
+        active,
+      });
+    }
+
     if (nextSwitchState !== this.state.switch) {
       logger('The AUTO ON change state 🪄');
       logger(
