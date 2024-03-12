@@ -374,17 +374,7 @@ export abstract class Macros<
 
     const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
     const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
-    const nowInClientTz = utcToZonedTime(new Date(), config.client.timeZone);
-    const nowInUTC = new Date(
-      nowInClientTz.getFullYear(),
-      nowInClientTz.getMonth(),
-      nowInClientTz.getDate(),
-      nowInClientTz.getHours(),
-      nowInClientTz.getMinutes(),
-      nowInClientTz.getSeconds(),
-      nowInClientTz.getMilliseconds(),
-    );
-    const nowMs = nowInUTC.getTime();
+    const nowMs = utcToZonedTime(new Date(), config.client.timeZone).getTime();
 
     if (debug) {
       logger({
@@ -395,8 +385,6 @@ export abstract class Macros<
         to,
         fromMs,
         toMs,
-        nowInClientTz,
-        nowInUTC,
         nowMs,
         hasHourOverlap: nowMs >= fromMs && nowMs <= toMs,
       });
