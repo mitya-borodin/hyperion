@@ -1174,9 +1174,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       return;
     }
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth();
-    const date = new Date().getDate();
+    const now = utcToZonedTime(new Date(), config.client.timeZone);
+
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const date = now.getDate();
     /**
      * Устанавливаем время клиентской временной зоны, оставаясь в UTC
      */
@@ -1185,10 +1187,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * Задаются текущие сутки, от 00:00 до 23:59:59 во временной зоне UTC
      */
-    this.block.autoOff.day = [
-      utcToZonedTime(new Date(year, month, date, 0, 0, 0, 0), config.client.timeZone),
-      utcToZonedTime(new Date(year, month, date, 23, 59, 59, 0), config.client.timeZone),
-    ];
+    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 23, 59, 59, 0)];
 
     /**
      * Если в момент старта сервиса 15 часов, а time установлен как 13, то нужно передвинуть диапазон на сутки вперед,
