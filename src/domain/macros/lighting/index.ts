@@ -1187,10 +1187,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * Задаются текущие сутки, от 00:00 до 23:59:59 во временной зоне UTC
      */
-    this.block.autoOff.day = [
-      utcToZonedTime(new Date(year, month, date, 0, 0, 0, 0), config.client.timeZone),
-      utcToZonedTime(new Date(year, month, date, 23, 59, 59, 0), config.client.timeZone),
-    ];
+    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 23, 59, 59, 0)];
 
     logger({
       name: this.name,
