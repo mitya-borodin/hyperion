@@ -1228,23 +1228,30 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      */
     const { time } = this.settings.properties.autoOff;
 
+    const timeHasCome = hours === time;
+    const hasOverlapMomentAndDay = from.getTime() >= now.getTime() && now.getTime() <= to.getTime();
+
     logger({
       name: this.name,
       message: 'Tic tac ⏱️',
       from,
+      fromMs: from.getTime(),
       to,
+      toMs: to.getTime(),
       now,
+      nowMs: now.getTime(),
       hours,
       time,
+      timeHasCome,
+      hasOverlapMomentAndDay,
+      state: this.state,
     });
 
-    if (hours === time && from.getTime() >= now.getTime() && now.getTime() <= to.getTime()) {
+    if (timeHasCome && hasOverlapMomentAndDay) {
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
 
-      const nextSwitchState = Switch.OFF;
-
-      if (this.state.switch !== nextSwitchState) {
-        this.state.switch = nextSwitchState;
+      if (this.state.switch === Switch.ON) {
+        this.state.switch = Switch.OFF;
 
         logger('The switch state was changed by clock 🪄');
         logger(stringify(this.state));
