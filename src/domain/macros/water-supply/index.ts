@@ -282,7 +282,7 @@
 //       return;
 //     }
 
-//     this.applyExternalValue();
+//     this.applyExternalToState();
 //   };
 
 //   protected applyPublicState = () => {
@@ -293,7 +293,7 @@
 //     return false;
 //   };
 
-//   protected applyExternalValue() {}
+//   protected applyExternalToState() {}
 
 //   protected computeOutput = (value: string) => {
 //     const nextOutput: WaterSupplyMacrosNextOutput = {
@@ -314,7 +314,7 @@
 //     );
 //   };
 
-//   protected applyOutput = () => {};
+//   protected applyNextOutput = () => {};
 
 //   /**
 //    * ! Реализации частных случаев.

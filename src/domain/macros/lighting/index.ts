@@ -933,31 +933,28 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private applyExternalIlluminationSate = () => {
-    const illumination = this.getValueByDetection(
-      this.settings.devices.illuminations,
-      this.settings.properties.illumination.detection,
-    );
+    const { LOW, MIDDLE, HIGHT, detection } = this.settings.properties.illumination;
+
+    const illumination = this.getValueByDetection(this.settings.devices.illuminations, detection);
 
     let lightingLevel = LightingLevel.UNSPECIFIED;
 
-    if (illumination >= this.settings.properties.illumination.HIGHT) {
-      lightingLevel = LightingLevel.HIGHT;
+    if (illumination <= LOW) {
+      lightingLevel = LightingLevel.LOW;
     }
 
-    if (
-      illumination < this.settings.properties.illumination.HIGHT &&
-      illumination >= this.settings.properties.illumination.MIDDLE
-    ) {
+    if (illumination > LOW && illumination <= MIDDLE) {
       lightingLevel = LightingLevel.MIDDLE;
     }
 
-    if (illumination < this.settings.properties.illumination.MIDDLE) {
-      lightingLevel = LightingLevel.LOW;
+    if (illumination > MIDDLE || illumination > HIGHT) {
+      lightingLevel = LightingLevel.HIGHT;
     }
 
     if (lightingLevel === LightingLevel.UNSPECIFIED) {
       logger(
         stringify({
+          name: this.name,
           settings: {
             illumination: this.settings.properties.illumination,
           },
