@@ -1229,7 +1229,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const { time } = this.settings.properties.autoOff;
 
     const timeHasCome = hours === time;
-    const hasOverlapMomentAndDay = from.getTime() >= now.getTime() && now.getTime() <= to.getTime();
+    const hasOverlapMomentAndDay = now.getTime() >= from.getTime() && now.getTime() <= to.getTime();
 
     logger({
       name: this.name,
