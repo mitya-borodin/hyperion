@@ -1187,7 +1187,24 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * Задаются текущие сутки, от 00:00 до 23:59:59 во временной зоне UTC
      */
-    this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 23, 59, 59, 0)];
+    this.block.autoOff.day = [
+      utcToZonedTime(new Date(year, month, date, 0, 0, 0, 0), config.client.timeZone),
+      utcToZonedTime(new Date(year, month, date, 23, 59, 59, 0), config.client.timeZone),
+    ];
+
+    logger({
+      name: this.name,
+      message: 'Setup tic tak ⏱️',
+      now,
+      year,
+      month,
+      date,
+
+      day: this.block.autoOff.day,
+
+      time,
+      hours,
+    });
 
     /**
      * Если в момент старта сервиса 15 часов, а time установлен как 13, то нужно передвинуть диапазон на сутки вперед,
