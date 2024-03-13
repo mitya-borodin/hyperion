@@ -1,8 +1,10 @@
 /* eslint-disable unicorn/no-array-reduce */
 import { addDays, addHours, addMinutes, compareAsc, format, subDays } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 
 import { stringify } from '../../../helpers/json-stringify';
+import { config } from '../../../infrastructure/config';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { ControlType } from '../../control-type';
 import { HyperionDeviceControl } from '../../hyperion-control';
@@ -696,6 +698,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
+  /**
+   * ! AUTO_ON
+   */
   private applyAutoOn = () => {
     /**
      * ! Pre flight check
@@ -781,6 +786,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
+  /**
+   * ! AUTO_OFF
+   */
   private applyAutoOff = () => {
     /**
      * ! Pre flight check
@@ -1150,16 +1158,22 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const { time } = this.settings.properties.autoOff;
 
     if (time < 0 || time > 23) {
+      logger('The auto off by hours, was not initialized 🚨');
+      logger(stringify({ time }));
+
       return;
     }
 
     const year = new Date().getFullYear();
     const month = new Date().getMonth();
     const date = new Date().getDate();
-    const hours = new Date().getHours();
+    /**
+     * Устанавливаем время клиентской временной зоны, оставаясь в UTC
+     */
+    const hours = utcToZonedTime(new Date(), config.client.timeZone).getHours();
 
     /**
-     * Задаются текущие сутки, от 00:00 до 23:59:59
+     * Задаются текущие сутки, от 00:00 до 23:59:59 во временной зоне UTC
      */
     this.block.autoOff.day = [new Date(year, month, date, 0, 0, 0, 0), new Date(year, month, date, 23, 59, 59, 0)];
 
@@ -1184,11 +1198,21 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * все действия связанные с течением времени.
    */
   private tic = () => {
-    const now = Date.now();
-    const hours = new Date().getHours();
+    /**
+     * Устанавливаем время клиентской временной зоны, оставаясь в UTC
+     */
+    const now = utcToZonedTime(new Date(), config.client.timeZone);
+    const hours = utcToZonedTime(new Date(), config.client.timeZone).getHours();
 
+    /**
+     * from, to - находятся во временной зоне UTC, и время там жестко задано
+     *  от 00:00 до 23:59:59
+     */
     const [from, to] = this.block.autoOff.day;
 
+    /**
+     * time - количество часов указано в временной зоне клиента
+     */
     const { time } = this.settings.properties.autoOff;
 
     logger({
@@ -1201,7 +1225,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       time,
     });
 
-    if (time === hours && from.getTime() >= now && now <= to.getTime()) {
+    if (hours === time && from.getTime() >= now.getTime() && now.getTime() <= to.getTime()) {
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
 
       const nextSwitchState = Switch.OFF;
