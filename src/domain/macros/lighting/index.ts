@@ -1167,7 +1167,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
     if (time < 0 || time > 23) {
       logger('The auto off by hours, was not initialized 🚨');
-      logger(stringify({ time }));
+      logger(stringify({ name: this.name, time }));
 
       return;
     }
