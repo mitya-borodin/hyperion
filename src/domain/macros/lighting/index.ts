@@ -512,7 +512,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.execute();
   };
 
-  protected applyStateToOutput = () => {
+  /**
+   * ! PUBLIC STATE
+   */
+  protected applyPublicState = () => {
     if (this.state.force !== 'UNSPECIFIED') {
       const control = this.getFirstLightingControl();
 
@@ -532,7 +535,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         nextSwitchState = Switch.OFF;
       }
 
-      this.computeNextOutput();
+      this.computeOutput();
 
       if (this.nextOutput.lightings.length > 0) {
         logger('The force state was determined 🫡 😡 😤 🚀');
@@ -547,7 +550,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
         this.state.switch = nextSwitchState;
 
-        this.applyNextOutput();
+        this.applyOutput();
       }
 
       return true;
@@ -556,30 +559,32 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  protected applyInputToState() {
-    const stop = this.applyInputSwitchState();
+  /**
+   * ! INPUT
+   */
+  protected applyInput() {
+    const currentSwitchState = this.state.switch;
 
-    if (!stop) {
-      const currentSwitchState = this.state.switch;
+    this.applySwitch();
+    this.applyAutoOn();
+    this.applyAutoOff();
 
-      this.applyAutoOn();
-      this.applyAutoOff();
+    if (currentSwitchState !== this.state.switch) {
+      this.computeOutput();
+      this.applyOutput();
 
-      if (currentSwitchState !== this.state.switch) {
-        this.computeNextOutput();
-        this.applyNextOutput();
-
-        return true;
-      }
+      return true;
     }
 
-    return stop;
+    return false;
   }
 
   /**
+   * ! SWITCH
+   *
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
-  private applyInputSwitchState = () => {
+  private applySwitch = () => {
     let isSwitchHasBeenChange = false;
     let trigger: Trigger = Trigger.UP;
 
@@ -609,7 +614,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       if (!control) {
         logger('Not a single lamp will be found 🚨');
 
-        return false;
+        return;
       }
 
       logger(stringify({ name: this.name, currentState: this.state, on: control.on, off: control.off }));
@@ -687,15 +692,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         this.lastNoseDetected = addMinutes(new Date(), 5);
 
         this.state.switch = nextSwitchState;
-
-        this.computeNextOutput();
-        this.applyNextOutput();
       }
-
-      return true;
     }
-
-    return false;
   };
 
   /**
@@ -886,7 +884,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  protected applyExternalToState() {
+  /**
+   * ! EXTERNAL_VALUE
+   */
+  protected applyExternalValue() {
     this.applyExternalSwitchersState();
     this.applyExternalIlluminationSate();
     this.applyExternalMotionSate();
@@ -989,7 +990,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  protected computeNextOutput() {
+  /**
+   * ! COMPUTE
+   */
+  protected computeOutput() {
     const nextOutput: LightingMacrosNextOutput = {
       lightings: [],
     };
@@ -1045,7 +1049,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     );
   }
 
-  protected applyNextOutput() {
+  /**
+   * ! APPLY
+   */
+  protected applyOutput() {
     for (const lighting of this.nextOutput.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
 
@@ -1091,6 +1098,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   protected destroy() {
     clearInterval(this.clock);
   }
+
+  /**
+   * ! INTERNAL_IMPLEMENTATION
+   */
 
   protected isSwitchHasBeenUp(): boolean {
     return super.isSwitchHasBeenUp(this.settings.devices.switchers);
@@ -1245,8 +1256,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           }),
         );
 
-        this.computeNextOutput();
-        this.applyNextOutput();
+        this.computeOutput();
+        this.applyOutput();
       }
     }
   };

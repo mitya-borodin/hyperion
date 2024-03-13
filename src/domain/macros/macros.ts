@@ -153,12 +153,12 @@ export abstract class Macros<
       }
     }
 
-    this.applyExternalToState = debounce(this.applyExternalToState.bind(this), 500, {
+    this.applyExternalValue = debounce(this.applyExternalValue.bind(this), 500, {
       leading: false,
       trailing: true,
     });
 
-    this.applyExternalToState();
+    this.applyExternalValue();
   }
 
   abstract setState(nextStateJson: string): void;
@@ -182,18 +182,18 @@ export abstract class Macros<
      * Не запускает вычисление нового состояния контролов, по этому может запускаться первой,
      *  обновлять текущее состояние, после чего оно может быть переопределено следующими стадиями.
      */
-    this.applyExternalToState();
+    this.applyExternalValue();
 
     /**
      * Применяет состояние макроса которое не посредственно влияет на состояние контролов
      */
-    const stop = this.applyStateToOutput();
+    const interrupt = this.applyPublicState();
 
-    if (stop) {
+    if (interrupt) {
       return;
     }
 
-    this.applyInputToState();
+    this.applyInput();
   };
 
   /**
@@ -201,32 +201,32 @@ export abstract class Macros<
    * В случае попадания в обработчик force состояния, так выполнения должен прекратиться и будущее состояние контролов,
    * должно быть отправлено контроллеру.
    */
-  protected abstract applyStateToOutput(): boolean;
+  protected abstract applyPublicState(): boolean;
 
   /**
    * Метод предназначен для реакции на новое состояние контрола которое участвует в логике макроса. В результате может
    * измениться состояние контролов и если оно изменилось, отправлено контроллеру. В случае вычисления нового состояния
    * контролов, такт обработки должен завершиться.
    */
-  protected abstract applyInputToState(): boolean;
+  protected abstract applyInput(): boolean;
 
   /**
    * Метод предназначен для применения нового состояния контрола к состоянию макроса. Это нужно для того, чтобы макросы
    * имели возможность обновить состояние, когда отслеживаемые контролы меняют состояния через другие макросы, WEB GUI
    * от wirenboard, каким либо другим способом.
-   * Метод вызывается после applyStateToOutput и applyInputToState, и не порождает следующее состояние контролов.
+   * Метод вызывается после applyPublicState и applyInput, и не порождает следующее состояние контролов.
    */
-  protected abstract applyExternalToState(): void;
+  protected abstract applyExternalValue(): void;
 
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
    */
-  protected abstract computeNextOutput(value: string): void;
+  protected abstract computeOutput(value: string): void;
 
   /**
    * Метод предназначен отправлять будущее состояние контролов контроллеру.
    */
-  protected abstract applyNextOutput(): void;
+  protected abstract applyOutput(): void;
 
   protected abstract destroy(): void;
 
