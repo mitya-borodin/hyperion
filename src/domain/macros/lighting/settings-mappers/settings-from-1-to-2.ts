@@ -21,6 +21,7 @@ enum Trigger {
 }
 
 enum LightingLevel {
+  MAX = 3,
   HIGHT = 2,
   MIDDLE = 1,
   LOW = 0,
@@ -137,19 +138,19 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
           },
         },
         block: {
-          illuminationHours: 12,
+          illuminationHours: 0,
         },
       },
       autoOff: {
-        lightingLevel: LightingLevel.HIGHT,
+        lightingLevel: LightingLevel.MAX,
         motion: 40,
-        noise: 60,
-        noiseMin: 5,
-        motionMin: 2,
+        noise: 50,
+        noiseMin: 10,
+        motionMin: 5,
         silenceMin: 1,
         time: 1,
         block: {
-          illuminationHours: 12,
+          illuminationHours: 0,
         },
       },
     },

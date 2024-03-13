@@ -42,6 +42,7 @@ export enum Trigger {
  * правилом определения
  */
 export enum LightingLevel {
+  MAX = 3,
   HIGHT = 2,
   MIDDLE = 1,
   LOW = 0,
@@ -947,8 +948,12 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       lightingLevel = LightingLevel.MIDDLE;
     }
 
-    if (illumination > MIDDLE || illumination > HIGHT) {
+    if (illumination > MIDDLE) {
       lightingLevel = LightingLevel.HIGHT;
+    }
+
+    if (illumination > HIGHT) {
+      lightingLevel = LightingLevel.MAX;
     }
 
     if (lightingLevel === LightingLevel.UNSPECIFIED) {
