@@ -12,13 +12,11 @@
 //  * ! SETTINGS
 //  */
 // export type WaterSupplyMacrosSettings = {
-//   /**
-//    * Список устройств которые участвую в макросе
-//    */
 //   readonly devices: {
 //     /**
-//      * Счетчик холодной воды, почти всегда будет один,
-//      *  но можно добавить несколько и вести учет по нескольким линиям.
+//      * Счетчик холодной воды.
+//      *
+//      * Допустимо использовать нескольких счетчиков.
 //      */
 //     readonly coldWaterCounter: Array<{
 //       readonly deviceId: string;
@@ -26,8 +24,11 @@
 //     }>;
 
 //     /**
-//      * Реле питание насоса водоснабжения, почти всегда будет одно,
-//      *  но если используется несколько насосов то можно выключить их все.
+//      * Реле питание насоса водоснабжения.
+//      *
+//      * Позволяет отключать питание насоса в случае протечки.
+//      *
+//      * Допустимо использование нескольких насосов.
 //      *
 //      * Рекомендуется использовать НО (нормально открытое) реле,
 //      *  чтобы при пропадании питания реле переключилось в открытое положение.
@@ -38,83 +39,7 @@
 //     }>;
 
 //     /**
-//      * Счетчик горячей воды, почти всегда будет один, но можно добавить несколько и вести учет по нескольким линиям.
-//      */
-//     readonly hotWaterCounter: Array<{
-//       readonly deviceId: string;
-//       readonly controlId: string;
-//     }>;
-
-//     /**
-//      * Датчик температуры бойлера или бойлеров, если их несколько.
-//      *
-//      * Если температура ниже hotWaterTemperature в WaterSupplyMacrosPublicState на каком либо датчике,
-//      * то включится загрузка бойлера.
-//      *
-//      * Включится boilerPump, и в макросе отопления будет оформлен запрос на температуру.
-//      */
-//     readonly hotWaterTemperature: Array<{
-//       readonly deviceId: string;
-//       readonly controlId: string;
-//     }>;
-//     /**
-//      * Насос загрузки бойлера или возможно будет несколько насосов для загрузки нескольких бойлеров.
-//      *
-//      * Включается когда активируется режим загрузки бойлера.
-//      */
-//     readonly boilerLoadPump: Array<{
-//       readonly deviceId: string;
-//       readonly controlId: string;
-//     }>;
-
-//     /**
-//      * Насос рециркуляции ГВС, чаще всего он будет один, но можно управлять несколькими
-//      */
-//     readonly recycling: Array<{
-//       readonly deviceId: string;
-//       readonly controlId: string;
-//       /**
-//        * Если указан один из датчиков, и хотя бы один срабатывает то циркуляция включается.
-//        *
-//        * Если не указаны, то будет включен постоянно.
-//        *
-//        * Отключается при протечке указанных датчиков, либо если не указан ни один датчик
-//        * протечки, при срабатывании любого датчика.
-//        */
-//       readonly switcher: Array<{
-//         readonly deviceId: string;
-//         readonly controlId: string;
-//         readonly trigger: string;
-//       }>;
-//       readonly motion: Array<{
-//         readonly deviceId: string;
-//         readonly controlId: string;
-//         readonly trigger: number;
-//       }>;
-//       readonly noise: Array<{
-//         readonly deviceId: string;
-//         readonly controlId: string;
-//         readonly trigger: number;
-//       }>;
-//       readonly leaks: Array<{
-//         readonly deviceId: string;
-//         readonly controlId: string;
-//       }>;
-//       /**
-//        * Если задано расписание и не заданы переключатели, то циркуляция будет включаться
-//        * во время ON и выключаться во время OFF.
-//        *
-//        * Время задается в формате 0-24 часа.
-//        * Временные интервалы могут пересекаться, учитываются все интервалы в сумме.
-//        */
-//       readonly schedule: Array<{
-//         on: string;
-//         off: string;
-//       }>;
-//     }>;
-
-//     /**
-//      * Датчики протечки, почти всегда их будет несколько.
+//      * Датчики протечки.
 //      */
 //     readonly leaks: Array<{
 //       readonly deviceId: string;
@@ -122,49 +47,141 @@
 //     }>;
 
 //     /**
-//      * Сигналы от кранов, для определения положения открыто, закрыто, в процессе переключения.
+//      * Сигналы положения кранов.
 //      */
-//     readonly signals: Array<{
+//     readonly positions: Array<{
 //       readonly deviceId: string;
 //       readonly controlId: string;
 //     }>;
 
 //     /**
-//      * Двух-трех позиционное или аналоговое управление запорной арматурой.
-//      *
-//      * Устройств может быть несколько, и они могут быть связаны с
-//      *  конкретными датчиками протечки.
-//      *
-//      * Запорная арматура может быть:
-//      * 1. Кран с фазным управлением, без сигнальных линий
-//      * 2. Кран с фазным управлением, с сигнальными линиями
-//      * 3. Кран с порционном управлением 0-10В
+//      * Краны защиты от протечки.
 //      */
 //     readonly valve: Array<{
 //       readonly deviceId: string;
 //       readonly controlId: string;
-//       readonly device: 'PHASE' | 'PHASE_AND_SIGNAL' | 'ANALOG';
-//       readonly functionality: 'OPENING' | 'CLOSING' | 'POWER' | 'SIGNAL' | 'POSITION';
+//       readonly type: 'PHASE' | 'ANALOG';
 
 //       /**
-//        * Сигналы от крана, для определения положения открыто, закрыто, в процессе переключения.
-//        */
-//       readonly signals: Array<{
-//         readonly deviceId: string;
-//         readonly controlId: string;
-//       }>;
-
-//       /**
-//        * Можно связать краны с датчиками протечки, чтобы не перекрывать всю воду.
-//        *
-//        * Если список пустой, то кран работает по сигналу всех датчиков протечки.
+//        * Датчики протечки.
 //        */
 //       readonly leaks: Array<{
 //         readonly deviceId: string;
 //         readonly controlId: string;
 //       }>;
+
+//       /**
+//        * Сигналы положения кранов.
+//        *
+//        * Если type: 'PHASE' то должно быть два сигнала один ON другой OFF.
+//        */
+//       readonly positions: Array<{
+//         readonly deviceId: string;
+//         readonly controlId: string;
+//         readonly state: 'ON' | 'OFF';
+//       }>;
+//     }>;
+
+//     /**
+//      * Счетчик горячей воды.
+//      *
+//      * Допустимо использовать нескольких счетчиков.
+//      */
+//     readonly hotWaterCounter: Array<{
+//       readonly deviceId: string;
+//       readonly controlId: string;
+//     }>;
+
+//     /**
+//      * Датчик температуры бойлера.
+//      */
+//     readonly boilerTemperature: Array<{
+//       readonly deviceId: string;
+//       readonly controlId: string;
+//     }>;
+
+//     /**
+//      * Насос загрузки бойлера.
+//      *
+//      * Допустимо использовать несколько насосов, что соответствует нескольким бойлерам.
+//      *
+//      * Реализует функцию параллельной загрузки бойлера.
+//      */
+//     readonly boilerPump: Array<{
+//       readonly deviceId: string;
+//       readonly controlId: string;
+
+//       /**
+//        * Уникальный идентификатор источника тепла, в
+//        * котором нужно будет запросить тепло для загрузки бойлера.
+//        */
+//       readonly heatSources: string[];
+//     }>;
+
+//     /**
+//      * Насос рециркуляции ГВС.
+//      *
+//      * Допустимо использовать несколько насосов.
+//      */
+//     readonly recyclingPump: Array<{
+//       readonly deviceId: string;
+//       readonly controlId: string;
+
+//       /**
+//        * В случае реакции на переключатель запускается рециркуляция на delayMin
+//        */
+//       readonly switcher: Array<{
+//         readonly deviceId: string;
+//         readonly controlId: string;
+//         readonly trigger: string;
+//         readonly delayMin: number;
+//       }>;
+
+//       /**
+//        * В случае реакции на движение запускается рециркуляция на delayMin
+//        */
+//       readonly motion: Array<{
+//         readonly deviceId: string;
+//         readonly controlId: string;
+//         readonly trigger: number;
+//         readonly delayMin: number;
+//       }>;
+
+//       /**
+//        * В случае реакции на шум запускается рециркуляция на delayMin
+//        */
+//       readonly noise: Array<{
+//         readonly deviceId: string;
+//         readonly controlId: string;
+//         readonly trigger: number;
+//         readonly delayMin: number;
+//       }>;
+
+//       /**
+//        * При возникновении протечки, рециркуляция отключается.
+//        */
+//       readonly leaks: Array<{
+//         readonly deviceId: string;
+//         readonly controlId: string;
+//       }>;
+
+//       /**
+//        * Расписание включения рециркуляции.
+//        *
+//        * Если список пустой, то рециркуляция активная все время.
+//        *
+//        * Если указаны диапазоны времени, то все они складываются и в результирующих диапазонах
+//        *  рециркуляция активна.
+//        *
+//        * Требуется указание даты в формате ISO '2024-03-16T07:31:20.331Z'.
+//        */
+//       readonly schedule: Array<{
+//         from: string;
+//         to: string;
+//       }>;
 //     }>;
 //   };
+
 //   readonly properties: {
 //     readonly coldWaterCounter: {
 //       readonly ticBy: 'FRONT' | 'BACK' | 'BOTH';
