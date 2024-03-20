@@ -1270,21 +1270,21 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const timeHasCome = hours === time;
     const hasOverlapMomentAndDay = now.getTime() >= from.getTime() && now.getTime() <= to.getTime();
 
-    logger({
-      name: this.name,
-      message: 'Tic tac ⏱️',
-      from,
-      fromMs: from.getTime(),
-      to,
-      toMs: to.getTime(),
-      now,
-      nowMs: now.getTime(),
-      hours,
-      time,
-      timeHasCome,
-      hasOverlapMomentAndDay,
-      state: this.state,
-    });
+    // logger({
+    //   name: this.name,
+    //   message: 'Tic tac ⏱️',
+    //   from,
+    //   fromMs: from.getTime(),
+    //   to,
+    //   toMs: to.getTime(),
+    //   now,
+    //   nowMs: now.getTime(),
+    //   hours,
+    //   time,
+    //   timeHasCome,
+    //   hasOverlapMomentAndDay,
+    //   state: this.state,
+    // });
 
     if (timeHasCome && hasOverlapMomentAndDay) {
       this.block.autoOff.day = [addDays(from, 1), addDays(to, 1)];
