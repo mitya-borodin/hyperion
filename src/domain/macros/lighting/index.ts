@@ -720,6 +720,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAlreadyOn = this.state.switch === Switch.ON;
     const isLightingLevelDefined = this.state.lightingLevel !== LightingLevel.UNSPECIFIED;
 
+    if (this.name === 'Освещение инженерной') {
+      logger(
+        stringify({
+          name: this.name,
+          isAutoOnBlocked,
+          isAlreadyOn,
+          isLightingLevelDefined,
+          state: this.state,
+        }),
+      );
+    }
+
     if (isAutoOnBlocked || isAlreadyOn || !isLightingLevelDefined) {
       return;
     }
