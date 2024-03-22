@@ -129,6 +129,7 @@ export type LightingMacrosSettings = {
     readonly switcher: {
       /**
        * Переключает реакцию на положение переключателя
+       *
        * UP - переключатель нажали/замкнули
        * DOWN - переключатель отпустили/разомкнули
        */
@@ -148,6 +149,8 @@ export type LightingMacrosSettings = {
       /**
        * Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть
        * какие значения дают датчики в нужных местах в разное время суток.
+       *
+       * Значения могут быть в диапазоне 0...10000
        */
       readonly HIGHT: number;
       readonly MIDDLE: number;
@@ -188,16 +191,17 @@ export type LightingMacrosSettings = {
 
         /**
          * Диапазон времени, когда работает включение по движению.
-         * Если указать нули, то работает все время.
+         *
+         * Если указать нули, то работает все время, имеется в виду с нуля текущих суток до 0 следующих.
          */
         readonly active: {
           /**
-           * 0...23
+           * Диапазон значений 0...23
            */
           readonly from: number;
 
           /**
-           * 0...23
+           * Диапазон значений 0...23
            */
           readonly to: number;
         };
@@ -209,6 +213,8 @@ export type LightingMacrosSettings = {
       readonly block: {
         /**
          * Время блокировки autoOn по освещенности.
+         *
+         * Диапазон значений 0...24
          *
          * Если задано 0, то блокировка не будет включаться.
          *
@@ -235,36 +241,41 @@ export type LightingMacrosSettings = {
       readonly lightingLevel: LightingLevel;
 
       /**
-       * Если значение движения ниже motion, считаем, что движения нет, если указать 0, то движение не учитывается.
+       * Если значение движения ниже motion, считаем, что движения нет, если указать <= 0, то движение не учитывается.
        */
       readonly motion: number;
 
       /**
-       * Если значение шума ниже noise, считаем, что шума нет, если указать 0, то шум не учитывается.
+       * Если значение шума ниже noise, считаем, что шума нет, если указать <= 0, то шум не учитывается.
        */
       readonly noise: number;
 
       /**
        * Если движение отсутствует в течении заданного времени, lightings выключаются.
+       *
        * Если указать <= 0, то autoOff по движению отключается.
        */
       readonly motionMin: number;
 
       /**
        * Если шум отсутствует, в течении заданного времени, lightings выключаются.
+       *
        * Если указать <= 0, то autoOff по шуму отключается.
        */
       readonly noiseMin: number;
 
       /**
        * Если > 0, то в случае отсутствия шума и движения группа выключится через заданное время.
+       *
        * Если указать <= 0, то autoOff по шуму отключается.
        */
       readonly silenceMin: number;
 
       /**
        * В это время все lightings будут выключены. Событие случается единоразово.
-       * 0...23
+       *
+       * Диапазон значений 0...23
+       *
        * Если указать -1 или меньше, то автоматическое отключение по таймеру отключается.
        */
       readonly time: number;
@@ -276,6 +287,8 @@ export type LightingMacrosSettings = {
         /**
          * Время блокировки autoOff по освещенности.
          * Если задано 0, то блокировка не будет включаться.
+         *
+         * Диапазон значений 0...24
          *
          * Причина такая же как и для autoOn, нужно иметь возможность включить группу
          *  в момент когда этому противоречит правило по освещению.
@@ -730,8 +743,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
     const hasMotionAndNoiseDevice = this.settings.devices.motion.length > 0;
 
-    
-
     /**
      * ! Settings
      */
@@ -1182,8 +1193,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * Настройка this.block.autoOff.day
    */
   private setupAutoOffTime = () => {
+    /**
+     * time - количество часов указано в временной зоне клиента
+     */
     const { time } = this.settings.properties.autoOff;
 
+    /**
+     * Если time не в диапазоне 0 - 23, не выполняем отключение по времени
+     */
     if (time < 0 || time > 23) {
       return;
     }
@@ -1253,6 +1270,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    */
   private tic = () => {
     /**
+     * time - количество часов указано в временной зоне клиента
+     */
+    const { time } = this.settings.properties.autoOff;
+
+    /**
+     * Если time не в диапазоне 0 - 23, не выполняем отключение по времени
+     */
+    if (time < 0 || time > 23) {
+      return;
+    }
+
+    /**
      * Устанавливаем время клиентской временной зоны, оставаясь в UTC
      */
     const now = utcToZonedTime(new Date(), config.client.timeZone);
@@ -1263,11 +1292,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      *  от 00:00 до 23:59:59
      */
     const [from, to] = this.block.autoOff.day;
-
-    /**
-     * time - количество часов указано в временной зоне клиента
-     */
-    const { time } = this.settings.properties.autoOff;
 
     const timeHasCome = hours === time;
     const hasOverlapMomentAndDay = now.getTime() >= from.getTime() && now.getTime() <= to.getTime();

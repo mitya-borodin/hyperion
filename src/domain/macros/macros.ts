@@ -153,7 +153,7 @@ export abstract class Macros<
       }
     }
 
-    this.applyExternalValue = debounce(this.applyExternalValue.bind(this), 500, {
+    this.applyExternalValue = debounce(this.applyExternalValue.bind(this), 100, {
       leading: false,
       trailing: true,
     });
