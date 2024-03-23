@@ -91,12 +91,11 @@ type SettingsTo = {
       readonly lightingLevel: LightingLevel;
       readonly motion: number;
       readonly noise: number;
-      readonly motionMin: number;
-      readonly noiseMin: number;
       readonly silenceMin: number;
       readonly time: number;
       readonly block: {
         readonly illuminationHours: number;
+        readonly handSwitchMin: number;
       };
     };
   };
@@ -117,10 +116,10 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
         everyOn: false,
       },
       illumination: {
-        HIGHT: 500,
-        MIDDLE: 150,
-        LOW: 75,
-        detection: LevelDetection.AVG,
+        HIGHT: 750,
+        MIDDLE: 300,
+        LOW: 25,
+        detection: LevelDetection.MAX,
       },
       motion: {
         detection: LevelDetection.MAX,
@@ -131,7 +130,7 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
       autoOn: {
         lightingLevel: LightingLevel.LOW,
         motion: {
-          trigger: 30,
+          trigger: 60,
           active: {
             from: 15,
             to: 0,
@@ -143,14 +142,13 @@ export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
       },
       autoOff: {
         lightingLevel: LightingLevel.MAX,
-        motion: 40,
-        noise: 50,
-        noiseMin: 10,
-        motionMin: 5,
+        motion: 60,
+        noise: 45,
         silenceMin: 1,
-        time: 1,
+        time: -1,
         block: {
           illuminationHours: 0,
+          handSwitchMin: 15,
         },
       },
     },
