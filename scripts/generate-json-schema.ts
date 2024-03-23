@@ -47,6 +47,18 @@ Promise.all([
   /**
    * ! WATER-SUPPLY MACROS
    */
+  generate({
+    type: 'WaterSupplyMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'water-supply/index.ts'),
+    output: resolve(basePath, 'water-supply/settings.json'),
+  }),
+  generate({
+    type: 'WaterSupplyMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'water-supply/index.ts'),
+    output: resolve(basePath, 'water-supply/state.json'),
+  }),
 ])
   .then(() => {
     logger('All schemas was builded ✅');

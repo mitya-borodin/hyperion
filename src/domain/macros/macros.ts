@@ -24,10 +24,7 @@ const logger = debug('hyperion-macros');
  * 2. Реализовывать общие
  */
 
-export type SettingsBase = {
-  devices: { [key: string]: Array<{ deviceId: string; controlId: string }> };
-  properties: { [key: string]: unknown };
-};
+export type SettingsBase = { [key: string]: unknown };
 
 export type MacrosParameters<SETTINGS, STATE> = {
   readonly eventBus: EventEmitter;
@@ -228,6 +225,9 @@ export abstract class Macros<
    */
   protected abstract applyOutput(): void;
 
+  /**
+   * Метод предназначен остановить все процессы порожденные макросом.
+   */
   protected abstract destroy(): void;
 
   /**

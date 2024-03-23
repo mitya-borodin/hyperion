@@ -1,0 +1,468 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/WaterSupplyMacrosSettings",
+  "definitions": {
+    "WaterSupplyMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "coldWaterMeters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "switch"
+              },
+              "trigger": {
+                "$ref": "#/definitions/WaterMeterTrigger"
+              },
+              "value": {
+                "type": "number"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": ["deviceId", "controlId", "controlType", "trigger", "value", "description"],
+            "additionalProperties": false
+          },
+          "description": "Счетчики холодной воды."
+        },
+        "hotWaterMeters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "switch"
+              },
+              "trigger": {
+                "$ref": "#/definitions/WaterMeterTrigger"
+              },
+              "value": {
+                "type": "number"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": ["deviceId", "controlId", "controlType", "trigger", "value", "description"],
+            "additionalProperties": false
+          },
+          "description": "Счетчики горячей воды.\n\nДопустимо использовать нескольких счетчиков."
+        },
+        "coldWaterPumps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "switch"
+              },
+              "description": {
+                "type": "string"
+              },
+              "leaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType"],
+                  "additionalProperties": false
+                },
+                "description": "Датчики протечки.\n\nСвязь конкретного насоса с группой датчиков протечки, если хотя бы один срабатывает, то насос выключается."
+              }
+            },
+            "required": ["deviceId", "controlId", "controlType", "description", "leaks"],
+            "additionalProperties": false
+          },
+          "description": "Насосы холодного водоснабжения.\n\nПозволяет управлять контактором для отключения питание насоса (либо самого насоса, либо частотного преобразователя) в случае протечки.\n\nРекомендуется использовать НО (нормально открытый) контактор, чтобы при пропадании питания контактор переключилось в открытое положение и выключил насос."
+        },
+        "valves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/definitions/ValveType"
+              },
+              "analog": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "range"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false,
+                "description": "В случае если кран с аналоговым управлением, задается порт выдающий 0-10 вольт, на самом кране выставляется, 0 открыто, 10 закрыто."
+              },
+              "phase": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType"],
+                  "additionalProperties": false
+                },
+                "description": "В случае если кран с фазным управлением, элементов массива может быть 2-3.\n\nЕсли элементов 2, то первый это OPEN, второй CLOSE Если элементов 3, то первый это OPEN, второй CLOSE, третий ON/OFF"
+              },
+              "positions": {
+                "type": "array",
+                "minItems": 2,
+                "items": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch"
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch"
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false
+                  }
+                ],
+                "maxItems": 2,
+                "description": "Сигналы положения кранов.\n\nЕсли type: 'PHASE' то должно быть определено две позиции [OPEN, CLOSE], в списке позиций первая всегда OPEN вторая всегда CLOSE."
+              },
+              "leaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["deviceId", "controlId"],
+                  "additionalProperties": false
+                },
+                "description": "Датчики протечки.\n\nСвязь конкретного крана с группой датчиков протечки, если хотя бы один срабатывает, то кран закрывается, и как только пропадает протечка, кран открывается.\n\nTODO Сделать в следующей итерации функцию, открывания через апрув пользователя.\n\nТак как может возникнуть такая ситуация, протекло, высохло протекло, высохло и так по кругу."
+              }
+            },
+            "required": ["description", "type", "leaks"],
+            "additionalProperties": false
+          },
+          "description": "Краны защиты от протечки.\n\nКран может быть установлен на вводе воды в дом, на конкретных линиях, на холодной и горячей воде."
+        },
+        "boilers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "temperatureSensor": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "temperature"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false,
+                "description": "Датчик температуры бойлера.\n\nУстановлен в специальную гильзу в бойлере."
+              },
+              "pump": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false,
+                "description": "Насос загрузки бойлера.\n\nРеализация функции параллельной загрузки бойлера."
+              },
+              "heat": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Уникальный идентификатор источника тепла, в котором нужно будет запросить тепло для загрузки бойлера.\n\n? Список идентификаторов тепла будет доступе в макросе отопление."
+              }
+            },
+            "required": ["description", "temperatureSensor", "pump", "heat"],
+            "additionalProperties": false
+          }
+        },
+        "recirculation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "pump": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false,
+                "description": "Насос рециркуляции ГВС."
+              },
+              "switcher": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    },
+                    "trigger": {
+                      "$ref": "#/definitions/Trigger"
+                    },
+                    "delayMin": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
+                  "additionalProperties": false
+                },
+                "description": "В случае реакции на переключатель запускается насос на delayMin"
+              },
+              "motion": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "value"
+                    },
+                    "trigger": {
+                      "type": "number"
+                    },
+                    "delayMin": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
+                  "additionalProperties": false
+                },
+                "description": "В случае реакции на движение запускается насос на delayMin"
+              },
+              "noise": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "value"
+                    },
+                    "trigger": {
+                      "type": "number"
+                    },
+                    "delayMin": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
+                  "additionalProperties": false
+                },
+                "description": "В случае реакции на шум запускается насос на delayMin"
+              },
+              "leaks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": ["deviceId", "controlId", "controlType"],
+                  "additionalProperties": false
+                },
+                "description": "При возникновении протечки, насос отключается."
+              },
+              "schedule": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["from", "to"],
+                  "additionalProperties": false
+                },
+                "description": "Расписание включения рециркуляции.\n\nЕсли список пустой, то рециркуляция может быть включена в любое время.\n\nЕсли указаны диапазоны времени, то если хотя бы в один диапазон попадает текущее время в которое требуется включить насос, насос включается.\n\nТребуется указание даты в формате ISO '2024-03-16T07:31:20.331Z'."
+              }
+            },
+            "required": ["description", "pump", "switcher", "motion", "noise", "leaks", "schedule"],
+            "additionalProperties": false
+          },
+          "description": "Рециркуляция ГВС."
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "coldWaterMeters",
+        "hotWaterMeters",
+        "coldWaterPumps",
+        "valves",
+        "boilers",
+        "recirculation"
+      ],
+      "additionalProperties": false
+    },
+    "WaterMeterTrigger": {
+      "type": "string",
+      "enum": ["FRONT", "BACK", "BOTH"]
+    },
+    "ValveType": {
+      "type": "string",
+      "enum": ["PHASE", "ANALOG"]
+    },
+    "Trigger": {
+      "type": "string",
+      "enum": ["UP", "DOWN"],
+      "description": "! SETTINGS"
+    }
+  }
+}

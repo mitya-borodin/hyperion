@@ -1136,6 +1136,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   }
 
+  /**
+   * ! DESTROY
+   */
   protected destroy() {
     clearInterval(this.clock);
   }
