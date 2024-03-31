@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CounterMacrosSettings",
+  "definitions": {
+    "CounterMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string"
+        },
+        "controlId": {
+          "type": "string"
+        },
+        "controlType": {
+          "type": "string",
+          "const": "switch"
+        },
+        "type": {
+          "$ref": "#/definitions/CounterType"
+        },
+        "trigger": {
+          "$ref": "#/definitions/CounterTrigger"
+        }
+      },
+      "required": [
+        "deviceId",
+        "controlId",
+        "controlType",
+        "type",
+        "trigger"
+      ],
+      "additionalProperties": false,
+      "description": "Счетчики воды, газа, электричества, тепла, количества (верхних, нижних) уровней на переключателях,  время работы, простоя реле."
+    },
+    "CounterType": {
+      "type": "string",
+      "enum": [
+        "COLD_WATER",
+        "HOT_WATER",
+        "GAS",
+        "ELECTRICITY",
+        "HEAT",
+        "SWITCH",
+        "RELAY_ON"
+      ],
+      "description": "! SETTINGS"
+    },
+    "CounterTrigger": {
+      "type": "string",
+      "enum": [
+        "FRONT",
+        "BACK",
+        "BOTH"
+      ]
+    }
+  }
+}

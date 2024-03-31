@@ -137,24 +137,6 @@ export type RefreshAccessTokenOutput = {
   accessToken: Scalars['String'];
 };
 
-export enum MacrosType {
-  LIGHTING = 'LIGHTING',
-  HEATING = 'HEATING',
-  VENTILATION = 'VENTILATION',
-  HUMIDIFICATION = 'HUMIDIFICATION',
-  CONDITIONING = 'CONDITIONING',
-  WATER_SUPPLY = 'WATER_SUPPLY',
-  SNOW_MELTING = 'SNOW_MELTING',
-  SWIMMING_POOL = 'SWIMMING_POOL',
-  COVER_OPENING = 'COVER_OPENING',
-  HEATING_CABLE = 'HEATING_CABLE',
-  MASTER_SWITCH = 'MASTER_SWITCH',
-  SECURITY = 'SECURITY',
-  ACCOUNTING = 'ACCOUNTING',
-  UPS = 'UPS',
-  AUTOMATIC_RESERVE_ENTRY = 'AUTOMATIC_RESERVE_ENTRY',
-}
-
 export enum ControlType {
   UNSPECIFIED = 'UNSPECIFIED',
   SWITCH = 'SWITCH',
@@ -170,13 +152,7 @@ export enum ControlType {
   SOUND_LEVEL = 'SOUND_LEVEL',
   REL_HUMIDITY = 'REL_HUMIDITY',
   ATMOSPHERIC_PRESSURE = 'ATMOSPHERIC_PRESSURE',
-}
-
-export enum LightingLevel {
-  HIGHT = 'HIGHT',
-  MIDDLE = 'MIDDLE',
-  LOW = 'LOW',
-  ACCIDENT = 'ACCIDENT',
+  HEAT_SOURCE = 'HEAT_SOURCE',
 }
 
 export enum SubscriptionDeviceType {
@@ -294,65 +270,55 @@ export type SetControlValue = {
 };
 
 /**
- * ## MacrosShowcase
- * #
- * # Используется только как витрина доступных макросов для установки.
- * # Возможность установки нескольких макросов одного типа
- * # задается реализацией макроса.
- * #
- * # Список хардкодится в реализации, и новые MacrosShowcase, добавляются
- * # по средством разработки.
- * #
- * # Каждый MacrosShowcase содержит json schema для state и settings, исходя из этих схем,
- * # FE стоит UI на лету.
- * #
- * # Если BE меняет реализацию, то FE код не изменится.
- * #
+ * MacrosShowcase
+ *
+ * Витрина доступных макросов для установки.
+ *
+ * Каждый MacrosShowcase содержит json schema для settings и state.
  */
 export type MacrosShowcase = {
   __typename?: 'MacrosShowcase';
   type: Scalars['ID'];
   name: Scalars['String'];
   description: Scalars['String'];
-  state: Scalars['String'];
   settings: Scalars['String'];
+  state: Scalars['String'];
 };
 
 /**
  * MacrosSetup
  *
- * Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
- * Узнать json schema конкретного макроса можно в MacrosShowcase, отправляется state и settings.
+ * По type это тип макроса полученный из ветрины макросов.
  *
- * По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+ * Данные для заполнения settings и state собираются в соответствии Json Schema в
+ * витрине макроса, и передаются в виде Json Text.
  */
 export type MacrosSetup = {
-  type: MacrosType;
+  type: Scalars['ID'];
   id: Scalars['ID'];
   name: Scalars['String'];
   description: Scalars['String'];
   labels: Array<Scalars['String']>;
-  state: Scalars['String'];
   settings: Scalars['String'];
+  state: Scalars['String'];
 };
 
 /**
  * Macros
  *
- * Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
- * Узнать json schema конкретного макроса можно в MacrosShowcase, в соответствии со схемой, отправляется state и settings.
+ * По type это тип макроса полученный из ветрины макросов, является уникальный идентификатиоромом типа макроса.
  *
- * По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+ * Данные переданные в момент setup settings и state возвращаются в виде Json Text.
  */
 export type Macros = {
   __typename?: 'Macros';
-  type: MacrosType;
+  type: Scalars['ID'];
   id: Scalars['ID'];
   name: Scalars['String'];
   description: Scalars['String'];
   labels: Array<Scalars['String']>;
-  state: Scalars['String'];
   settings: Scalars['String'];
+  state: Scalars['String'];
 };
 
 export type MacrosOutput = {
@@ -565,9 +531,7 @@ export type ResolversTypes = {
   TwoFaOtpOutput: ResolverTypeWrapper<TwoFaOtpOutput>;
   DeactivateTwoFaInput: DeactivateTwoFaInput;
   RefreshAccessTokenOutput: ResolverTypeWrapper<RefreshAccessTokenOutput>;
-  MacrosType: MacrosType;
   ControlType: ControlType;
-  LightingLevel: LightingLevel;
   SubscriptionDeviceType: SubscriptionDeviceType;
   SubscriptionMacrosType: SubscriptionMacrosType;
   Upload: ResolverTypeWrapper<Scalars['Upload']>;
@@ -825,8 +789,8 @@ export type MacrosShowcaseResolvers<
   type?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  state?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   settings?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  state?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -834,13 +798,13 @@ export type MacrosResolvers<
   ContextType = MercuriusContext,
   ParentType extends ResolversParentTypes['Macros'] = ResolversParentTypes['Macros'],
 > = {
-  type?: Resolver<ResolversTypes['MacrosType'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  state?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   settings?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  state?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1144,18 +1108,18 @@ export interface Loaders<TContext = import('mercurius').MercuriusContext & { rep
     type?: LoaderResolver<Scalars['ID'], MacrosShowcase, {}, TContext>;
     name?: LoaderResolver<Scalars['String'], MacrosShowcase, {}, TContext>;
     description?: LoaderResolver<Scalars['String'], MacrosShowcase, {}, TContext>;
-    state?: LoaderResolver<Scalars['String'], MacrosShowcase, {}, TContext>;
     settings?: LoaderResolver<Scalars['String'], MacrosShowcase, {}, TContext>;
+    state?: LoaderResolver<Scalars['String'], MacrosShowcase, {}, TContext>;
   };
 
   Macros?: {
-    type?: LoaderResolver<MacrosType, Macros, {}, TContext>;
+    type?: LoaderResolver<Scalars['ID'], Macros, {}, TContext>;
     id?: LoaderResolver<Scalars['ID'], Macros, {}, TContext>;
     name?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
     description?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
     labels?: LoaderResolver<Array<Scalars['String']>, Macros, {}, TContext>;
-    state?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
     settings?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
+    state?: LoaderResolver<Scalars['String'], Macros, {}, TContext>;
   };
 
   MacrosOutput?: {

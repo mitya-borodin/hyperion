@@ -1,21 +1,3 @@
-enum MacrosType {
-  LIGHTING
-  HEATING
-  VENTILATION
-  HUMIDIFICATION
-  CONDITIONING
-  WATER_SUPPLY
-  SNOW_MELTING
-  SWIMMING_POOL
-  COVER_OPENING
-  HEATING_CABLE
-  MASTER_SWITCH
-  SECURITY
-  ACCOUNTING
-  UPS
-  AUTOMATIC_RESERVE_ENTRY
-}
-
 enum ControlType {
   UNSPECIFIED
   SWITCH
@@ -31,13 +13,7 @@ enum ControlType {
   SOUND_LEVEL
   REL_HUMIDITY
   ATMOSPHERIC_PRESSURE
-}
-
-enum LightingLevel {
-  HIGHT
-  MIDDLE
-  LOW
-  ACCIDENT
+  HEAT_SOURCE
 }
 
 enum SubscriptionDeviceType {
@@ -165,41 +141,31 @@ input SetControlValue {
 }
 
 """
-## MacrosShowcase
-#
-# Используется только как витрина доступных макросов для установки.
-# Возможность установки нескольких макросов одного типа
-# задается реализацией макроса.
-#
-# Список хардкодится в реализации, и новые MacrosShowcase, добавляются
-# по средством разработки.
-#
-# Каждый MacrosShowcase содержит json schema для state и settings, исходя из этих схем,
-# FE стоит UI на лету.
-#
-# Если BE меняет реализацию, то FE код не изменится.
-#
+MacrosShowcase
+
+Витрина доступных макросов для установки.
+
+Каждый MacrosShowcase содержит json schema для settings и state.
 """
 type MacrosShowcase {
   type: ID!
   name: String!
   description: String!
 
-  state: String!
   settings: String!
+  state: String!
 }
 
 """
 MacrosSetup
 
-Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
-Узнать json schema конкретного макроса можно в MacrosShowcase, отправляется state и settings.
+По type это тип макроса полученный из ветрины макросов.
 
-По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+Данные для заполнения settings и state собираются в соответствии Json Schema в
+витрине макроса, и передаются в виде Json Text.
 """
 input MacrosSetup {
-  type: MacrosType!
-
+  type: ID!
   id: ID!
 
   name: String!
@@ -207,21 +173,19 @@ input MacrosSetup {
 
   labels: [String!]!
 
-  state: String!
   settings: String!
+  state: String!
 }
 
 """
 Macros
 
-Определение и контроль конкретного интерфейса макроса, находится на слое приложения.
-Узнать json schema конкретного макроса можно в MacrosShowcase, в соответствии со схемой, отправляется state и settings.
+По type это тип макроса полученный из ветрины макросов, является уникальный идентификатиоромом типа макроса.
 
-По полю type: MacrosType!, нужно понимать, что за макрос перед нами.
+Данные переданные в момент setup settings и state возвращаются в виде Json Text.
 """
 type Macros {
-  type: MacrosType!
-
+  type: ID!
   id: ID!
 
   name: String!
@@ -229,8 +193,8 @@ type Macros {
 
   labels: [String!]!
 
-  state: String!
   settings: String!
+  state: String!
 }
 
 type MacrosOutput {

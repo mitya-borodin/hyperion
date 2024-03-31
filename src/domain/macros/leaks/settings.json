@@ -1,0 +1,244 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/LeaksMacrosSettings",
+  "definitions": {
+    "LeaksMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/ValveType",
+          "description": "Тип управления краном, бывают краны, без контроля положения,  с контролем крайних положений, аналоговое управление 0-10В"
+        },
+        "analog": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string"
+            },
+            "controlId": {
+              "type": "string"
+            },
+            "controlType": {
+              "type": "string",
+              "const": "range"
+            }
+          },
+          "required": [
+            "deviceId",
+            "controlId",
+            "controlType"
+          ],
+          "additionalProperties": false,
+          "description": "В случае если кран с аналоговым управлением, задается порт выдающий 0-10 вольт, на самом кране выставляется, 0 открыто, 10 закрыто."
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 2,
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": [
+                    "deviceId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": [
+                    "deviceId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "minItems": 3,
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": [
+                    "deviceId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": [
+                    "deviceId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "type": "string",
+                      "const": "switch"
+                    }
+                  },
+                  "required": [
+                    "deviceId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "maxItems": 3
+            }
+          ],
+          "description": "В случае если кран с фазным управлением, элементов массива может быть 2-3, для двух позиционных кранов.\n\nЕсли элементов 2, то первый это OPEN, второй CLOSE. Если элементов 3, то первый это OPEN, второй CLOSE, третий ON/OFF."
+        },
+        "positions": {
+          "type": "array",
+          "minItems": 2,
+          "items": [
+            {
+              "type": "object",
+              "properties": {
+                "deviceId": {
+                  "type": "string"
+                },
+                "controlId": {
+                  "type": "string"
+                },
+                "controlType": {
+                  "type": "string",
+                  "const": "switch"
+                }
+              },
+              "required": [
+                "deviceId",
+                "controlId",
+                "controlType"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "deviceId": {
+                  "type": "string"
+                },
+                "controlId": {
+                  "type": "string"
+                },
+                "controlType": {
+                  "type": "string",
+                  "const": "switch"
+                }
+              },
+              "required": [
+                "deviceId",
+                "controlId",
+                "controlType"
+              ],
+              "additionalProperties": false
+            }
+          ],
+          "maxItems": 2,
+          "description": "Сигналы положения кранов.\n\nЕсли type: 'PHASE' то должно быть определено две позиции [OPEN, CLOSE], в списке позиций первая всегда OPEN вторая всегда CLOSE, для двух позиционных кранов."
+        },
+        "leaks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "deviceId",
+              "controlId"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Датчики протечки.\n\nСвязь конкретного крана с группой датчиков протечки, если хотя бы один срабатывает, то кран закрывается, и как только пропадает протечка, кран открывается.\n\nTODO Сделать в следующей итерации функцию, разблокировки воды через апрув пользователя.\n\nТак как может возникнуть такая ситуация, протекло, высохло протекло, высохло и так по кругу."
+        }
+      },
+      "required": [
+        "type",
+        "leaks"
+      ],
+      "additionalProperties": false,
+      "description": "Защита от протечек.\n\nКран может быть установлен на вводе воды в дом, на конкретных линиях, на холодной и горячей воде."
+    },
+    "ValveType": {
+      "type": "string",
+      "enum": [
+        "ANALOG",
+        "PHASE"
+      ]
+    }
+  }
+}

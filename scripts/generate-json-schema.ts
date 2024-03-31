@@ -45,19 +45,83 @@ Promise.all([
   }),
 
   /**
-   * ! WATER-SUPPLY MACROS
+   * ! BOILER MACROS
    */
   generate({
-    type: 'WaterSupplyMacrosSettings',
+    type: 'BoilerMacrosSettings',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'water-supply/index.ts'),
-    output: resolve(basePath, 'water-supply/settings.json'),
+    path: resolve(basePath, 'boiler/index.ts'),
+    output: resolve(basePath, 'boiler/settings.json'),
   }),
   generate({
-    type: 'WaterSupplyMacrosPublicState',
+    type: 'BoilerMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'water-supply/index.ts'),
-    output: resolve(basePath, 'water-supply/state.json'),
+    path: resolve(basePath, 'boiler/index.ts'),
+    output: resolve(basePath, 'boiler/state.json'),
+  }),
+
+  /**
+   * ! COUNTER MACROS
+   */
+  generate({
+    type: 'CounterMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'counter/index.ts'),
+    output: resolve(basePath, 'counter/settings.json'),
+  }),
+  generate({
+    type: 'CounterMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'counter/index.ts'),
+    output: resolve(basePath, 'counter/state.json'),
+  }),
+
+  /**
+   * ! LEAKS MACROS
+   */
+  generate({
+    type: 'LeaksMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'leaks/index.ts'),
+    output: resolve(basePath, 'leaks/settings.json'),
+  }),
+  generate({
+    type: 'LeaksMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'leaks/index.ts'),
+    output: resolve(basePath, 'leaks/state.json'),
+  }),
+
+  /**
+   * ! PUMP MACROS
+   */
+  generate({
+    type: 'PumpMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'pump/index.ts'),
+    output: resolve(basePath, 'pump/settings.json'),
+  }),
+  generate({
+    type: 'PumpMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'pump/index.ts'),
+    output: resolve(basePath, 'pump/state.json'),
+  }),
+
+  /**
+   * ! PUMP MACROS
+   */
+  generate({
+    type: 'RecirculationMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'recirculation/index.ts'),
+    output: resolve(basePath, 'recirculation/settings.json'),
+  }),
+  generate({
+    type: 'RecirculationMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'recirculation/index.ts'),
+    output: resolve(basePath, 'recirculation/state.json'),
   }),
 ])
   .then(() => {

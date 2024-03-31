@@ -12,13 +12,13 @@ import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { Macros, MacrosEject } from './macros';
-import { MacrosType, macrosMap } from './showcase';
+import { MacrosType, macrosByType, toDomainMacrosType } from './showcase';
 
 const logger = debug('hyperion-macros-engine');
 
 type Setup = {
   id?: string;
-  type: MacrosType;
+  type: string;
   name: string;
   description: string;
   labels: string[];
@@ -126,10 +126,19 @@ export class MacrosEngine {
   };
 
   setup = async (setup: Setup): Promise<Error | MacrosEject> => {
-    const { id, type, name, description, labels, settings, state, version } = setup;
+    const { id, name, description, labels, settings, state, version } = setup;
 
     try {
-      const Macros = macrosMap[type];
+      const type = toDomainMacrosType(setup.type);
+
+      if (type === MacrosType.UNSPECIFIED) {
+        logger('Failed to install the macros 🚨');
+        logger(stringify(setup));
+
+        return new Error(ErrorType.INVALID_ARGUMENTS);
+      }
+
+      const Macros = macrosByType[type];
 
       let macros: Macros | undefined;
 

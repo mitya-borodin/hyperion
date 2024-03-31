@@ -1,3 +1,6 @@
+/* eslint-disable unicorn/no-array-reduce */
+/* eslint-disable unicorn/no-array-callback-reference */
+/* eslint-disable unicorn/no-array-for-each */
 import EventEmitter from 'node:events';
 
 import { addHours } from 'date-fns';
@@ -7,16 +10,17 @@ import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
 import { v4 } from 'uuid';
 
+import { stringify } from '../../helpers/json-stringify';
 import { JsonObject } from '../../helpers/json-types';
 import { config } from '../../infrastructure/config';
-import { ControlType } from '../control-type';
+import { ControlType, toDomainControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
 
 import { getControlId } from './get-control-id';
 import { MacrosType } from './showcase';
 
-const logger = debug('hyperion-macros');
+const logger = debug('hyperion:macros');
 
 /**
  * Создание базового класса макроса было мотивировано:
@@ -52,7 +56,6 @@ export type MacrosParameters<SETTINGS, STATE> = {
 
 type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly type: TYPE;
-  readonly controlTypes: { [key: string]: ControlType };
 
   readonly version: number;
 };
@@ -82,6 +85,8 @@ export abstract class Macros<
   SETTINGS extends SettingsBase = SettingsBase,
   STATE extends JsonObject = JsonObject,
 > {
+  readonly version: number;
+
   /**
    * ! Общие зависимости всех макросов
    */
@@ -107,12 +112,11 @@ export abstract class Macros<
    */
   readonly type: TYPE;
   readonly settings: SETTINGS;
-  readonly version: number;
-  readonly controlIds: Set<string>;
+  readonly controlTypes: Map<string, ControlType>;
   protected readonly state: STATE;
-  protected readonly controlTypes: { [key: string]: ControlType };
 
   constructor({
+    version,
     eventBus,
     id,
     name,
@@ -120,10 +124,10 @@ export abstract class Macros<
     labels,
     type,
     settings,
-    version,
     state,
-    controlTypes,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
+    this.version = version;
+
     this.eventBus = eventBus;
 
     this.previous = new Map();
@@ -138,17 +142,10 @@ export abstract class Macros<
     this.type = type;
     this.settings = settings;
     this.state = state;
-    this.version = version;
 
-    this.controlTypes = controlTypes;
+    this.controlTypes = new Map();
 
-    this.controlIds = new Set();
-
-    for (const name in this.settings.devices) {
-      for (const item of this.settings.devices[name]) {
-        this.controlIds.add(getControlId(item));
-      }
-    }
+    this.parseControlTypes(this.settings);
 
     this.applyExternalValue = debounce(this.applyExternalValue.bind(this), 50, {
       leading: false,
@@ -157,6 +154,91 @@ export abstract class Macros<
 
     this.applyExternalValue();
   }
+
+  private parseControlTypes = (settings: SettingsBase) => {
+    if (typeof settings !== 'object') {
+      return;
+    }
+
+    if (Array.isArray(settings)) {
+      settings.filter((item) => typeof item === 'object').forEach(this.parseControlTypes);
+
+      return;
+    }
+
+    const { deviceId, controlId, controlType } = settings;
+
+    const hasDeviceId = typeof deviceId === 'string' && Boolean(deviceId);
+    const hasControlId = typeof controlId === 'string' && Boolean(controlId);
+    const hasControlType = typeof controlType === 'string' && Boolean(controlType);
+
+    if (hasDeviceId && hasControlId && hasControlType) {
+      const id = getControlId({ deviceId, controlId });
+
+      this.controlTypes.set(id, toDomainControlType(controlType));
+    }
+
+    Object.values(settings)
+      .filter((item) => typeof item === 'object')
+      .forEach((item) => this.parseControlTypes(item as SettingsBase));
+  };
+
+  static migrate = (
+    json: string,
+    from: number,
+    to: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mappers: Array<(from: any) => unknown>,
+    type: 'settings' | 'state',
+  ) => {
+    if (type === 'settings') {
+      logger('Migrate settings was started 🚀');
+    }
+
+    if (type === 'state') {
+      logger('Migrate state was started 🚀');
+    }
+
+    logger(stringify({ type, from, to }));
+
+    const mappersSubSet = mappers.slice(from, to);
+
+    logger({ mappers, mappersSubSet });
+
+    if (mappersSubSet.length === 0) {
+      if (type === 'settings') {
+        logger('Settings in the current version ✅');
+      }
+
+      if (type === 'state') {
+        logger('State in the current version ✅');
+      }
+
+      /**
+       * TODO Проверять через JSON Schema
+       */
+
+      return JSON.parse(json);
+    }
+
+    const result = mappersSubSet.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(json));
+
+    logger(stringify(result));
+
+    if (type === 'settings') {
+      logger('Migrate settings or state was finished ✅');
+    }
+
+    if (type === 'state') {
+      logger('Migrate state or state was finished ✅');
+    }
+
+    /**
+     * TODO Проверять через JSON Schema
+     */
+
+    return result;
+  };
 
   abstract setState(nextStateJson: string): void;
 
@@ -254,7 +336,7 @@ export abstract class Macros<
   protected isControlValueHasBeenChanged(device: HyperionDevice): boolean {
     for (const control of device.controls) {
       const id = getControlId({ deviceId: device.id, controlId: control.id });
-      const isSuitableControl = this.controlIds.has(id);
+      const isSuitableControl = this.controlTypes.has(id);
 
       if (isSuitableControl) {
         const previous = this.previous.get(id);
@@ -327,34 +409,30 @@ export abstract class Macros<
    * Контролы появляются с разной скоростью, если прежде они небыли добавлены в БД.
    */
   protected isDevicesReady(): boolean {
-    const isDevicesReady = Object.keys(this.settings.devices).every((key) => {
-      const settings = this.settings.devices[key];
+    const isDevicesReady = [...this.controlTypes.entries()].every(([id, controlType]) => {
+      const control = this.controls.get(id);
 
-      return settings.every(({ deviceId, controlId }) => {
-        if (typeof deviceId === 'string' && typeof controlId === 'string') {
-          const control = this.controls.get(getControlId({ deviceId, controlId }));
+      if (control?.type !== controlType) {
+        logger({
+          message: 'The type of control does not match the type in the settings 🚨',
+          name: this.name,
+          id,
+          controlType,
+          control: control ?? 'NOT FOUND',
+        });
+      }
 
-          if (control?.type !== this.controlTypes[key]) {
-            logger({
-              deviceId,
-              controlId,
-              controlType: control?.type,
-              key,
-              settingsControlType: this.controlTypes[key],
-              control: control ?? 'NOT FOUND',
-            });
-          }
-
-          return control?.type === this.controlTypes[key];
-        } else {
-          return true;
-        }
-      });
+      return control?.type === controlType;
     });
 
     if (!isDevicesReady) {
-      logger('The devices are not ready for use in this macro 🚨 🚨 🚨');
-      logger({ name: this.name, labels: this.labels, devices: this.devices.size, controls: this.controls.size });
+      logger({
+        message: 'The devices are not ready for use in this macro 🚨 🚨 🚨',
+        name: this.name,
+        labels: this.labels,
+        devices: this.devices.size,
+        controls: this.controls.size,
+      });
     }
 
     return isDevicesReady;

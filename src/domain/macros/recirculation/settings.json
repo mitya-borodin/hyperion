@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/RecirculationMacrosSettings",
+  "definitions": {
+    "RecirculationMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "pump": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string"
+            },
+            "controlId": {
+              "type": "string"
+            },
+            "controlType": {
+              "type": "string",
+              "const": "switch"
+            }
+          },
+          "required": [
+            "deviceId",
+            "controlId",
+            "controlType"
+          ],
+          "additionalProperties": false,
+          "description": "Насос."
+        },
+        "switcher": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "switch"
+              },
+              "trigger": {
+                "$ref": "#/definitions/Trigger"
+              },
+              "delayMin": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "deviceId",
+              "controlId",
+              "controlType",
+              "trigger",
+              "delayMin"
+            ],
+            "additionalProperties": false
+          },
+          "description": "В случае реакции на переключатель (Кнопка, Открытие двери) запускается насос на delayMin."
+        },
+        "motion": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "value"
+              },
+              "trigger": {
+                "type": "number"
+              },
+              "delayMin": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "deviceId",
+              "controlId",
+              "controlType",
+              "trigger",
+              "delayMin"
+            ],
+            "additionalProperties": false
+          },
+          "description": "В случае реакции на движение запускается насос на delayMin."
+        },
+        "noise": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "value"
+              },
+              "trigger": {
+                "type": "number"
+              },
+              "delayMin": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "deviceId",
+              "controlId",
+              "controlType",
+              "trigger",
+              "delayMin"
+            ],
+            "additionalProperties": false
+          },
+          "description": "В случае реакции на шум запускается насос на delayMin."
+        },
+        "leaks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "switch"
+              }
+            },
+            "required": [
+              "deviceId",
+              "controlId",
+              "controlType"
+            ],
+            "additionalProperties": false
+          },
+          "description": "При возникновении протечки, насос отключается."
+        },
+        "schedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Расписание включения рециркуляции.\n\nЕсли список пустой, то рециркуляция включается по датчикам.\n\nЕсли указаны диапазоны времени, то если хотя бы в один диапазон попадает текущее время в которое требуется включить насос, насос включается вне зависимости от датчиков.\n\nТребуется указание часов в сутках от 0 до 23."
+        }
+      },
+      "required": [
+        "pump",
+        "switcher",
+        "motion",
+        "noise",
+        "leaks",
+        "schedule"
+      ],
+      "additionalProperties": false,
+      "description": "Рециркуляция ГВС."
+    },
+    "Trigger": {
+      "type": "string",
+      "enum": [
+        "UP",
+        "DOWN"
+      ],
+      "description": "! SETTINGS"
+    }
+  }
+}

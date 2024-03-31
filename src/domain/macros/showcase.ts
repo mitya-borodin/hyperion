@@ -1,4 +1,21 @@
+import { BoilerMacros } from './boiler';
+import BoilerMacrosSettings from './boiler/settings.json';
+import BoilerMacrosPublicState from './boiler/state.json';
+import { CounterMacros } from './counter';
+import CounterMacrosSettings from './counter/settings.json';
+import CounterMacrosPublicState from './counter/state.json';
+import { LeaksMacros } from './leaks';
+import LeaksMacrosSettings from './leaks/settings.json';
+import LeaksMacrosPublicState from './leaks/state.json';
 import { LightingMacros } from './lighting';
+import LightingMacrosSettings from './lighting/settings.json';
+import LightingMacrosPublicState from './lighting/state.json';
+import { PumpMacros } from './pump';
+import PumpMacrosSettings from './pump/settings.json';
+import PumpMacrosPublicState from './pump/state.json';
+import { RecirculationMacros } from './recirculation';
+import RecirculationMacrosSettings from './recirculation/settings.json';
+import RecirculationMacrosPublicState from './recirculation/state.json';
 
 /**
  * Витрина позволяет фронту:
@@ -14,111 +31,128 @@ import { LightingMacros } from './lighting';
  * ! ADD_MACROS - Добавить тип макроса
  */
 export enum MacrosType {
+  UNSPECIFIED = 'UNSPECIFIED',
   LIGHTING = 'LIGHTING',
   HEATING = 'HEATING',
   VENTILATION = 'VENTILATION',
   HUMIDIFICATION = 'HUMIDIFICATION',
   CONDITIONING = 'CONDITIONING',
-  WATER_SUPPLY = 'WATER_SUPPLY',
+  BOILER = 'BOILER',
+  COUNTER = 'COUNTER',
+  LEAKS = 'LEAKS',
+  PUMP = 'PUMP',
+  RECIRCULATION = 'RECIRCULATION',
   SNOW_MELTING = 'SNOW_MELTING',
   SWIMMING_POOL = 'SWIMMING_POOL',
   COVER_OPENING = 'COVER_OPENING',
   HEATING_CABLE = 'HEATING_CABLE',
   MASTER_SWITCH = 'MASTER_SWITCH',
   SECURITY = 'SECURITY',
-  ACCOUNTING = 'ACCOUNTING',
   UPS = 'UPS',
   AUTOMATIC_RESERVE_ENTRY = 'AUTOMATIC_RESERVE_ENTRY',
 }
 
-export const toDomainMacrosType = (input: unknown) => {
+export const toDomainMacrosType = (input: unknown): MacrosType => {
   /**
    * ! ADD_MACROS - Добавить тип макроса
    */
-  let type = MacrosType.LIGHTING;
-
   if (input === MacrosType.LIGHTING) {
-    type = MacrosType.LIGHTING;
+    return MacrosType.LIGHTING;
   }
 
   if (input === MacrosType.HEATING) {
-    type = MacrosType.HEATING;
+    return MacrosType.HEATING;
   }
 
   if (input === MacrosType.VENTILATION) {
-    type = MacrosType.VENTILATION;
+    return MacrosType.VENTILATION;
   }
 
   if (input === MacrosType.HUMIDIFICATION) {
-    type = MacrosType.HUMIDIFICATION;
+    return MacrosType.HUMIDIFICATION;
   }
 
   if (input === MacrosType.CONDITIONING) {
-    type = MacrosType.CONDITIONING;
+    return MacrosType.CONDITIONING;
   }
 
-  if (input === MacrosType.WATER_SUPPLY) {
-    type = MacrosType.WATER_SUPPLY;
+  if (input === MacrosType.BOILER) {
+    return MacrosType.BOILER;
+  }
+
+  if (input === MacrosType.COUNTER) {
+    return MacrosType.COUNTER;
+  }
+
+  if (input === MacrosType.LEAKS) {
+    return MacrosType.LEAKS;
+  }
+
+  if (input === MacrosType.PUMP) {
+    return MacrosType.PUMP;
+  }
+
+  if (input === MacrosType.RECIRCULATION) {
+    return MacrosType.RECIRCULATION;
   }
 
   if (input === MacrosType.SNOW_MELTING) {
-    type = MacrosType.SNOW_MELTING;
+    return MacrosType.SNOW_MELTING;
   }
 
   if (input === MacrosType.SWIMMING_POOL) {
-    type = MacrosType.SWIMMING_POOL;
+    return MacrosType.SWIMMING_POOL;
   }
 
   if (input === MacrosType.COVER_OPENING) {
-    type = MacrosType.COVER_OPENING;
+    return MacrosType.COVER_OPENING;
   }
 
   if (input === MacrosType.HEATING_CABLE) {
-    type = MacrosType.HEATING_CABLE;
+    return MacrosType.HEATING_CABLE;
   }
 
   if (input === MacrosType.MASTER_SWITCH) {
-    type = MacrosType.MASTER_SWITCH;
+    return MacrosType.MASTER_SWITCH;
   }
 
   if (input === MacrosType.SECURITY) {
-    type = MacrosType.SECURITY;
-  }
-
-  if (input === MacrosType.ACCOUNTING) {
-    type = MacrosType.ACCOUNTING;
+    return MacrosType.SECURITY;
   }
 
   if (input === MacrosType.UPS) {
-    type = MacrosType.UPS;
+    return MacrosType.UPS;
   }
 
   if (input === MacrosType.AUTOMATIC_RESERVE_ENTRY) {
-    type = MacrosType.AUTOMATIC_RESERVE_ENTRY;
+    return MacrosType.AUTOMATIC_RESERVE_ENTRY;
   }
 
-  return type;
+  return MacrosType.UNSPECIFIED;
 };
 
 /**
  * ! ADD_MACROS - Добавить конструктор макроса
  */
-export const macrosMap = {
+export const macrosByType = {
   [MacrosType.LIGHTING]: LightingMacros,
+  [MacrosType.COVER_OPENING]: LightingMacros,
   [MacrosType.HEATING]: LightingMacros,
+  [MacrosType.COUNTER]: CounterMacros,
+  [MacrosType.LEAKS]: LeaksMacros,
+  [MacrosType.PUMP]: PumpMacros,
+  [MacrosType.BOILER]: BoilerMacros,
+  [MacrosType.RECIRCULATION]: RecirculationMacros,
   [MacrosType.VENTILATION]: LightingMacros,
   [MacrosType.HUMIDIFICATION]: LightingMacros,
   [MacrosType.CONDITIONING]: LightingMacros,
-  [MacrosType.WATER_SUPPLY]: LightingMacros,
-  [MacrosType.SNOW_MELTING]: LightingMacros,
-  [MacrosType.SWIMMING_POOL]: LightingMacros,
-  [MacrosType.COVER_OPENING]: LightingMacros,
-  [MacrosType.HEATING_CABLE]: LightingMacros,
-  [MacrosType.MASTER_SWITCH]: LightingMacros,
   [MacrosType.SECURITY]: LightingMacros,
-  [MacrosType.ACCOUNTING]: LightingMacros,
+  [MacrosType.MASTER_SWITCH]: LightingMacros,
+  [MacrosType.HEATING_CABLE]: LightingMacros,
   [MacrosType.UPS]: LightingMacros,
   [MacrosType.AUTOMATIC_RESERVE_ENTRY]: LightingMacros,
+  [MacrosType.SNOW_MELTING]: LightingMacros,
+  [MacrosType.SWIMMING_POOL]: LightingMacros,
 };
 
 /**
@@ -128,6 +162,12 @@ export const macrosShowcase = {
   [MacrosType.LIGHTING]: {
     name: 'Освещение',
     description: 'Позволяет управлять освещением как релейно так и RGBW лентами.',
+    settings: LightingMacrosSettings,
+    state: LightingMacrosPublicState,
+  },
+  [MacrosType.COVER_OPENING]: {
+    name: 'Открывание крышек',
+    description: 'Позволяет управлять шторами, воротами, всем тем, что может открываться и закрываться.',
   },
   [MacrosType.HEATING]: {
     name: 'Отопление',
@@ -135,6 +175,43 @@ export const macrosShowcase = {
       'Позволяет управлять нагревом поверхностей пола, стен, уличных дорожек, воздуха в помещениях,' +
       ' воздуха в системе вентиляции. По средством управления котлами, насосными узлами, ' +
       'термостатическими приводами, смесительными устройствами.',
+  },
+  [MacrosType.COUNTER]: {
+    name: 'Счетчик',
+    description:
+      'Позволяет создать счетчики воды, газа, электричества, тепла, количества (верхних, нижних) уровней' +
+      ' на переключателях, время работы, простоя реле.',
+    settings: CounterMacrosSettings,
+    state: CounterMacrosPublicState,
+  },
+  [MacrosType.LEAKS]: {
+    name: 'Протечка',
+    description: 'Позволяет закрыть нужный кран при обнаружении протечки, по средством связи крана и датчика протечки.',
+    settings: LeaksMacrosSettings,
+    state: LeaksMacrosPublicState,
+  },
+  [MacrosType.PUMP]: {
+    name: 'Насос',
+    description: 'Позволяет отключить насос при обнаружении протечки, по средством управления контактором.',
+    settings: PumpMacrosSettings,
+    state: PumpMacrosPublicState,
+  },
+  [MacrosType.BOILER]: {
+    name: 'Параллельная загрузка бойлера',
+    description:
+      'Позволяет нагревать бойлер от контура отопления, без переключения на контур ГВС и ' +
+      'остановки отопления, полезно использовать при наличии подогрева воздуха в вентиляции для ' +
+      'избежания замерзания калорифера.',
+    settings: BoilerMacrosSettings,
+    state: BoilerMacrosPublicState,
+  },
+  [MacrosType.RECIRCULATION]: {
+    name: 'Рециркуляция ГВС',
+    description:
+      'Позволяет управлять насосом рециркуляции ГВС опираясь на нажатия кнопок, датчики движения, шума,' +
+      ' протечек, так же на расписание включений.',
+    settings: RecirculationMacrosSettings,
+    state: RecirculationMacrosPublicState,
   },
   [MacrosType.VENTILATION]: {
     name: 'Вентиляция',
@@ -153,24 +230,13 @@ export const macrosShowcase = {
     name: 'Кондиционирование',
     description: 'Позволяет управлять процессом охлаждения и нагрева воздуха в помещениях по средством кондиционеров.',
   },
-  [MacrosType.WATER_SUPPLY]: {
-    name: 'Водоснабжение',
-    description:
-      'Позволяет управлять системой горячего и холодного водоснабжения, циркуляцией ГВС,' +
-      ' защитой от протечек, учет расхода холодной воды.' +
-      'По средством управления насосами, кранами, и контролем показаний счетчиков.',
+  [MacrosType.SECURITY]: {
+    name: 'Безопасность',
+    description: 'Позволяет узнать о открытии дверей и окон.',
   },
-  [MacrosType.SNOW_MELTING]: {
-    name: 'Снега таяние',
-    description: 'Позволяет управлять системой таяния снега.',
-  },
-  [MacrosType.SWIMMING_POOL]: {
-    name: 'Бассейн',
-    description: 'Позволяет управлять состоянием бассейна, температура, наполнение, слив, фильтрация (вкл/вык)',
-  },
-  [MacrosType.COVER_OPENING]: {
-    name: 'Открывание крышек',
-    description: 'Позволяет управлять шторами, воротами, всем тем, что может открываться и закрываться.',
+  [MacrosType.MASTER_SWITCH]: {
+    name: 'Мастер выключатель',
+    description: 'Позволяет отключать линии которые не используются без пользователей.',
   },
   [MacrosType.HEATING_CABLE]: {
     name: 'Греющий кабель',
@@ -178,19 +244,6 @@ export const macrosShowcase = {
       'Позволяет релейно управлять греющим кабелем. Может быть использована для различных целей.' +
       'Подогрев водостоков, трубы ХВС, рамки входной двери, ' +
       ' подогрев стекол в окнах в которые вклеен греющий слой, подоконников, порогов',
-  },
-  [MacrosType.MASTER_SWITCH]: {
-    name: 'Мастер выключатель',
-    description: 'Позволяет отключать линии которые не используются без пользователей.',
-  },
-  [MacrosType.SECURITY]: {
-    name: 'Безопасность',
-    description: 'Позволяет узнать о открытии дверей и окон.',
-  },
-  [MacrosType.ACCOUNTING]: {
-    name: 'Учет',
-    description:
-      'Позволяет вести учет электричества, воды, газа, тепла.' + 'По средством подключения импульсных средств учета.',
   },
   [MacrosType.UPS]: {
     name: 'Источник бесперебойного питания',
@@ -203,6 +256,14 @@ export const macrosShowcase = {
       'При появлении сети переключиться обратно на сеть.' +
       'Позволяет отслеживать количества топлива в генераторе, ' +
       'через потребляемую мощность и паспортные данные генератора.',
+  },
+  [MacrosType.SNOW_MELTING]: {
+    name: 'Снега таяние',
+    description: 'Позволяет управлять системой таяния снега.',
+  },
+  [MacrosType.SWIMMING_POOL]: {
+    name: 'Бассейн',
+    description: 'Позволяет управлять состоянием бассейна, температура, наполнение, слив, фильтрация (вкл/вык)',
   },
 };
 

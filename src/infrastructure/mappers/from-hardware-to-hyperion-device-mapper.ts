@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/no-array-reduce */
 
-import { ControlType } from '../../domain/control-type';
+import { ControlType, toDomainControlType } from '../../domain/control-type';
 import { HardwareControl, HardwareDevice } from '../../domain/hardware-device';
 import { HyperionDeviceControl } from '../../domain/hyperion-control';
 import { HyperionDevice } from '../../domain/hyperion-device';
@@ -40,7 +40,7 @@ export const fromHardwareToHyperionDevice = ({
     (hardwareControl: HardwareControl) => {
       const hyperionDeviceControl = hyperionControls.get(hardwareControl.id);
 
-      let type = toHyperionControlType(hardwareControl.type);
+      let type = toDomainControlType(hardwareControl.type);
 
       if (type === ControlType.UNSPECIFIED) {
         type = hyperionDeviceControl?.type ?? ControlType.UNSPECIFIED;
@@ -135,62 +135,4 @@ export const fromHardwareToHyperionDevice = ({
 
     controls: hyperionDeviceControls,
   };
-};
-
-const toHyperionControlType = (hardwareControlType?: string) => {
-  let type: ControlType = ControlType.UNSPECIFIED;
-
-  if (hardwareControlType === ControlType.SWITCH) {
-    type = ControlType.SWITCH;
-  }
-
-  if (hardwareControlType === ControlType.ILLUMINATION) {
-    type = ControlType.ILLUMINATION;
-  }
-
-  if (hardwareControlType === ControlType.TEXT) {
-    type = ControlType.TEXT;
-  }
-
-  if (hardwareControlType === ControlType.ENUM) {
-    type = ControlType.ENUM;
-  }
-
-  if (hardwareControlType === ControlType.VALUE) {
-    type = ControlType.VALUE;
-  }
-
-  if (hardwareControlType === ControlType.VOLTAGE) {
-    type = ControlType.VOLTAGE;
-  }
-
-  if (hardwareControlType === ControlType.TEMPERATURE) {
-    type = ControlType.TEMPERATURE;
-  }
-
-  if (hardwareControlType === ControlType.RANGE) {
-    type = ControlType.RANGE;
-  }
-
-  if (hardwareControlType === ControlType.PUSH_BUTTON) {
-    type = ControlType.PUSH_BUTTON;
-  }
-
-  if (hardwareControlType === ControlType.PRESSURE) {
-    type = ControlType.PRESSURE;
-  }
-
-  if (hardwareControlType === ControlType.SOUND_LEVEL) {
-    type = ControlType.SOUND_LEVEL;
-  }
-
-  if (hardwareControlType === ControlType.REL_HUMIDITY) {
-    type = ControlType.REL_HUMIDITY;
-  }
-
-  if (hardwareControlType === ControlType.ATMOSPHERIC_PRESSURE) {
-    type = ControlType.ATMOSPHERIC_PRESSURE;
-  }
-
-  return type;
 };

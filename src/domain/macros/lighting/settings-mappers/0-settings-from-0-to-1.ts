@@ -1,4 +1,4 @@
-type SettingsFrom = {
+export type SettingsFrom0 = {
   buttons: Array<{
     controlId: string;
     deviceId: string;
@@ -14,7 +14,6 @@ type SettingsFrom = {
     deviceId: string;
   }>;
 };
-
 enum Trigger {
   UP = 'UP',
   DOWN = 'DOWN',
@@ -34,7 +33,7 @@ enum LevelDetection {
   AVG = 'AVG',
 }
 
-type SettingsTo = {
+export type SettingsTo1 = {
   readonly devices: {
     readonly switchers: Array<{
       readonly deviceId: string;
@@ -101,14 +100,23 @@ type SettingsTo = {
   };
 };
 
-export const settings_from_1_to_2 = (settings: SettingsFrom): SettingsTo => {
+export const settings_from_0_to_1 = (settings: SettingsFrom0): SettingsTo1 => {
   return {
     devices: {
-      switchers: settings.buttons.map(({ deviceId, controlId }) => ({ deviceId, controlId })),
-      illuminations: settings.illuminations.map(({ deviceId, controlId }) => ({ deviceId, controlId })),
+      switchers: settings.buttons.map(({ deviceId, controlId }) => ({
+        deviceId,
+        controlId,
+      })),
+      illuminations: settings.illuminations.map(({ deviceId, controlId }) => ({
+        deviceId,
+        controlId,
+      })),
       motion: [],
       noise: [],
-      lightings: settings.lightings.map(({ deviceId, controlId }) => ({ deviceId, controlId })),
+      lightings: settings.lightings.map(({ deviceId, controlId }) => ({
+        deviceId,
+        controlId,
+      })),
     },
     properties: {
       switcher: {

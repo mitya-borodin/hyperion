@@ -12,10 +12,10 @@ import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
-import { settings_from_1_to_2 } from './settings-mappers/settings-from-1-to-2';
-import { settings_to_1 } from './settings-mappers/settings-to-1';
+import { settings_from_0_to_1 } from './settings-mappers/0-settings-from-0-to-1';
+import { settings_from_1_to_2 } from './settings-mappers/1-settings-from-1-to-2';
 
-const logger = debug('hyperion-lighting-macros');
+const logger = debug('hyperion:macros:lighting');
 
 /**
  * ! SETTINGS
@@ -104,22 +104,27 @@ export type LightingMacrosSettings = {
     readonly switchers: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
     }>;
     readonly illuminations: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly controlType: ControlType.ILLUMINATION;
     }>;
     readonly motion: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly controlType: ControlType.VALUE;
     }>;
     readonly noise: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly controlType: ControlType.SOUND_LEVEL;
     }>;
     readonly lightings: Array<{
       readonly deviceId: string;
       readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
     }>;
   };
   /**
@@ -368,7 +373,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 /**
  * ! VERSION - текущая версия макроса освещения
  */
-const VERSION = 1;
+const VERSION = 2;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private nextOutput: LightingMacrosNextOutput;
@@ -390,9 +395,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
   constructor(parameters: LightingMacrosParameters) {
     const settings = LightingMacros.parseSettings(parameters.settings, parameters.version);
-    const state = LightingMacros.parseState(parameters.state);
+    const state = LightingMacros.parseState(parameters.state, parameters.version);
 
     super({
+      /**
+       * Версия фиксируется в конструкторе конкретного макроса
+       */
+      version: VERSION,
+
       eventBus: parameters.eventBus,
 
       type: MacrosType.LIGHTING,
@@ -415,19 +425,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         timeAfterNoiseDisappearedMin: 10,
         timeAfterMotionDisappearedMin: 5,
         time: 1,
-      },
-
-      /**
-       * Версия фиксируется в конструкторе конкретного макроса
-       */
-      version: VERSION,
-
-      controlTypes: {
-        switchers: ControlType.SWITCH,
-        illuminations: ControlType.ILLUMINATION,
-        motion: ControlType.VALUE,
-        noise: ControlType.SOUND_LEVEL,
-        lightings: ControlType.SWITCH,
       },
 
       devices: parameters.devices,
@@ -454,43 +451,47 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   }
 
   static parseSettings = (settings: string, version: number = VERSION): LightingMacrosSettings => {
-    if (version === VERSION) {
-      logger('Settings in the current version ✅');
-      logger(stringify({ from: version, to: VERSION }));
+    /**
+     * TODO Унифицировать с parseState и сделать общий метод, который будет
+     * TODO заниматься парсингом и миграцией стейта и настроек.
+     */
+    // logger('Migrate settings was started 🚀');
+    // logger(stringify({ from: version, to: VERSION }));
 
-      return JSON.parse(settings);
-    }
+    // const mappers = [settings_from_0_to_1, settings_from_1_to_2].slice(version, VERSION);
 
-    logger('Migrate settings was started 🚀');
-    logger(stringify({ from: version, to: VERSION }));
+    // logger(mappers);
 
-    const mappers = [settings_to_1, settings_from_1_to_2].slice(version, VERSION + 1);
+    // if (mappers.length === 0) {
+    //   logger('Settings in the current version ✅');
 
-    logger(mappers);
+    //   /**
+    //    * TODO Проверять через JSON Schema
+    //    */
 
-    const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
+    //   return JSON.parse(settings);
+    // }
 
-    logger(stringify(result));
-    logger('Migrate settings was finished ✅');
+    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
 
-    return result;
+    // logger(stringify(result));
+    // logger('Migrate settings was finished ✅');
+
+    return Macros.migrate(settings, version, VERSION, [settings_from_0_to_1, settings_from_1_to_2], 'settings');
   };
 
-  static parseState = (state?: string): LightingMacrosPublicState => {
+  static parseState = (state?: string, version: number = VERSION): LightingMacrosPublicState => {
     if (!state) {
       return {
         force: LightingForce.UNSPECIFIED,
       };
     }
-    /**
-     * TODO Проверять через JSON Schema
-     */
 
-    return JSON.parse(state);
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
   setState = (nextPublicState: string): void => {
-    const nextState: LightingMacrosPublicState = LightingMacros.parseState(nextPublicState);
+    const nextState: LightingMacrosPublicState = LightingMacros.parseState(nextPublicState, this.version);
 
     logger('The next state was appeared ⏭️ ⏭️ ⏭️');
     logger(
