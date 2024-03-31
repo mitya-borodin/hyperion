@@ -19,11 +19,7 @@
               "const": "temperature"
             }
           },
-          "required": [
-            "deviceId",
-            "controlId",
-            "controlType"
-          ],
+          "required": ["deviceId", "controlId", "controlType"],
           "additionalProperties": false,
           "description": "Датчик температуры."
         },
@@ -41,11 +37,7 @@
               "const": "switch"
             }
           },
-          "required": [
-            "deviceId",
-            "controlId",
-            "controlType"
-          ],
+          "required": ["deviceId", "controlId", "controlType"],
           "additionalProperties": false,
           "description": "Насос загрузки."
         },
@@ -65,21 +57,13 @@
                 "const": "HEAT_SOURCE"
               }
             },
-            "required": [
-              "deviceId",
-              "controlId",
-              "controlType"
-            ],
+            "required": ["deviceId", "controlId", "controlType"],
             "additionalProperties": false
           },
           "description": "Уникальный идентификатор источника тепла.\n\nУстройства с подходящим контролом виртуальное и появляется запущен макрос источник тепла."
         }
       },
-      "required": [
-        "temperature",
-        "pump",
-        "heat"
-      ],
+      "required": ["temperature", "pump", "heat"],
       "additionalProperties": false,
       "description": "Параллельная загрузка бойлера."
     }

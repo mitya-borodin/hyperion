@@ -23,11 +23,7 @@
               "const": "range"
             }
           },
-          "required": [
-            "deviceId",
-            "controlId",
-            "controlType"
-          ],
+          "required": ["deviceId", "controlId", "controlType"],
           "additionalProperties": false,
           "description": "В случае если кран с аналоговым управлением, задается порт выдающий 0-10 вольт, на самом кране выставляется, 0 открыто, 10 закрыто."
         },
@@ -51,11 +47,7 @@
                       "const": "switch"
                     }
                   },
-                  "required": [
-                    "deviceId",
-                    "controlId",
-                    "controlType"
-                  ],
+                  "required": ["deviceId", "controlId", "controlType"],
                   "additionalProperties": false
                 },
                 {
@@ -72,11 +64,7 @@
                       "const": "switch"
                     }
                   },
-                  "required": [
-                    "deviceId",
-                    "controlId",
-                    "controlType"
-                  ],
+                  "required": ["deviceId", "controlId", "controlType"],
                   "additionalProperties": false
                 }
               ],
@@ -100,11 +88,7 @@
                       "const": "switch"
                     }
                   },
-                  "required": [
-                    "deviceId",
-                    "controlId",
-                    "controlType"
-                  ],
+                  "required": ["deviceId", "controlId", "controlType"],
                   "additionalProperties": false
                 },
                 {
@@ -121,11 +105,7 @@
                       "const": "switch"
                     }
                   },
-                  "required": [
-                    "deviceId",
-                    "controlId",
-                    "controlType"
-                  ],
+                  "required": ["deviceId", "controlId", "controlType"],
                   "additionalProperties": false
                 },
                 {
@@ -142,11 +122,7 @@
                       "const": "switch"
                     }
                   },
-                  "required": [
-                    "deviceId",
-                    "controlId",
-                    "controlType"
-                  ],
+                  "required": ["deviceId", "controlId", "controlType"],
                   "additionalProperties": false
                 }
               ],
@@ -173,11 +149,7 @@
                   "const": "switch"
                 }
               },
-              "required": [
-                "deviceId",
-                "controlId",
-                "controlType"
-              ],
+              "required": ["deviceId", "controlId", "controlType"],
               "additionalProperties": false
             },
             {
@@ -194,11 +166,7 @@
                   "const": "switch"
                 }
               },
-              "required": [
-                "deviceId",
-                "controlId",
-                "controlType"
-              ],
+              "required": ["deviceId", "controlId", "controlType"],
               "additionalProperties": false
             }
           ],
@@ -217,28 +185,19 @@
                 "type": "string"
               }
             },
-            "required": [
-              "deviceId",
-              "controlId"
-            ],
+            "required": ["deviceId", "controlId"],
             "additionalProperties": false
           },
           "description": "Датчики протечки.\n\nСвязь конкретного крана с группой датчиков протечки, если хотя бы один срабатывает, то кран закрывается, и как только пропадает протечка, кран открывается.\n\nTODO Сделать в следующей итерации функцию, разблокировки воды через апрув пользователя.\n\nТак как может возникнуть такая ситуация, протекло, высохло протекло, высохло и так по кругу."
         }
       },
-      "required": [
-        "type",
-        "leaks"
-      ],
+      "required": ["type", "leaks"],
       "additionalProperties": false,
       "description": "Защита от протечек.\n\nКран может быть установлен на вводе воды в дом, на конкретных линиях, на холодной и горячей воде."
     },
     "ValveType": {
       "type": "string",
-      "enum": [
-        "ANALOG",
-        "PHASE"
-      ]
+      "enum": ["ANALOG", "PHASE"]
     }
   }
 }

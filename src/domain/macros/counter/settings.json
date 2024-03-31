@@ -22,36 +22,18 @@
           "$ref": "#/definitions/CounterTrigger"
         }
       },
-      "required": [
-        "deviceId",
-        "controlId",
-        "controlType",
-        "type",
-        "trigger"
-      ],
+      "required": ["deviceId", "controlId", "controlType", "type", "trigger"],
       "additionalProperties": false,
       "description": "Счетчики воды, газа, электричества, тепла, количества (верхних, нижних) уровней на переключателях,  время работы, простоя реле."
     },
     "CounterType": {
       "type": "string",
-      "enum": [
-        "COLD_WATER",
-        "HOT_WATER",
-        "GAS",
-        "ELECTRICITY",
-        "HEAT",
-        "SWITCH",
-        "RELAY_ON"
-      ],
+      "enum": ["COLD_WATER", "HOT_WATER", "GAS", "ELECTRICITY", "HEAT", "SWITCH", "RELAY_ON"],
       "description": "! SETTINGS"
     },
     "CounterTrigger": {
       "type": "string",
-      "enum": [
-        "FRONT",
-        "BACK",
-        "BOTH"
-      ]
+      "enum": ["FRONT", "BACK", "BOTH"]
     }
   }
 }

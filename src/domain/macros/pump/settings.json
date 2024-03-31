@@ -31,22 +31,13 @@
                 "const": "switch"
               }
             },
-            "required": [
-              "deviceId",
-              "controlId",
-              "controlType"
-            ],
+            "required": ["deviceId", "controlId", "controlType"],
             "additionalProperties": false
           },
           "description": "Датчики протечки.\n\nСвязь конкретного насоса с группой датчиков протечки, если хотя бы один срабатывает, то насос выключается."
         }
       },
-      "required": [
-        "deviceId",
-        "controlId",
-        "controlType",
-        "leaks"
-      ],
+      "required": ["deviceId", "controlId", "controlType", "leaks"],
       "additionalProperties": false,
       "description": "Насос холодного водоснабжения, с защитой от протечек.\n\nПозволяет управлять контактором для отключения питание насоса (либо самого насоса, либо частотного преобразователя) в случае протечки.\n\nРекомендуется использовать НО (нормально открытый) контактор, чтобы при пропадании питания контактор переключилось в открытое положение и выключил насос."
     }

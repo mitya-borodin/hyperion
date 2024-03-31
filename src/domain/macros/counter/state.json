@@ -9,9 +9,7 @@
           "type": "number"
         }
       },
-      "required": [
-        "value"
-      ],
+      "required": ["value"],
       "additionalProperties": false,
       "description": "! STATE"
     }

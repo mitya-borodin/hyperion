@@ -24,11 +24,7 @@
                     "const": "switch"
                   }
                 },
-                "required": [
-                  "deviceId",
-                  "controlId",
-                  "controlType"
-                ],
+                "required": ["deviceId", "controlId", "controlType"],
                 "additionalProperties": false
               }
             },
@@ -48,11 +44,7 @@
                     "const": "lux"
                   }
                 },
-                "required": [
-                  "deviceId",
-                  "controlId",
-                  "controlType"
-                ],
+                "required": ["deviceId", "controlId", "controlType"],
                 "additionalProperties": false
               }
             },
@@ -72,11 +64,7 @@
                     "const": "value"
                   }
                 },
-                "required": [
-                  "deviceId",
-                  "controlId",
-                  "controlType"
-                ],
+                "required": ["deviceId", "controlId", "controlType"],
                 "additionalProperties": false
               }
             },
@@ -96,11 +84,7 @@
                     "const": "sound_level"
                   }
                 },
-                "required": [
-                  "deviceId",
-                  "controlId",
-                  "controlType"
-                ],
+                "required": ["deviceId", "controlId", "controlType"],
                 "additionalProperties": false
               }
             },
@@ -120,22 +104,12 @@
                     "const": "switch"
                   }
                 },
-                "required": [
-                  "deviceId",
-                  "controlId",
-                  "controlType"
-                ],
+                "required": ["deviceId", "controlId", "controlType"],
                 "additionalProperties": false
               }
             }
           },
-          "required": [
-            "switchers",
-            "illuminations",
-            "motion",
-            "noise",
-            "lightings"
-          ],
+          "required": ["switchers", "illuminations", "motion", "noise", "lightings"],
           "additionalProperties": false,
           "description": "Список устройств которые участвую в макросе"
         },
@@ -154,10 +128,7 @@
                   "description": "Позволяет отключить функционал до-включения выключенных lightings.\n\nЕсли true, то при нажатии на кнопку сначала включатся все не включенные групы, а после  чего произойдет выключение, если все включены, то выключение произойдет сразу.\n\nЕсли false, то сразу произойдет выключение включенных групп."
                 }
               },
-              "required": [
-                "trigger",
-                "everyOn"
-              ],
+              "required": ["trigger", "everyOn"],
               "additionalProperties": false
             },
             "illumination": {
@@ -177,12 +148,7 @@
                   "$ref": "#/definitions/LevelDetection"
                 }
               },
-              "required": [
-                "HIGHT",
-                "MIDDLE",
-                "LOW",
-                "detection"
-              ],
+              "required": ["HIGHT", "MIDDLE", "LOW", "detection"],
               "additionalProperties": false
             },
             "motion": {
@@ -192,9 +158,7 @@
                   "$ref": "#/definitions/LevelDetection"
                 }
               },
-              "required": [
-                "detection"
-              ],
+              "required": ["detection"],
               "additionalProperties": false
             },
             "noise": {
@@ -204,9 +168,7 @@
                   "$ref": "#/definitions/LevelDetection"
                 }
               },
-              "required": [
-                "detection"
-              ],
+              "required": ["detection"],
               "additionalProperties": false
             },
             "autoOn": {
@@ -235,18 +197,12 @@
                           "description": "Диапазон значений 0...23"
                         }
                       },
-                      "required": [
-                        "from",
-                        "to"
-                      ],
+                      "required": ["from", "to"],
                       "additionalProperties": false,
                       "description": "Диапазон времени, когда работает включение по движению.\n\nЕсли указать указать одинаковые значение (0, 0 или 15,15) это будет восприниматься как диапазон [from, to + 24]."
                     }
                   },
-                  "required": [
-                    "trigger",
-                    "active"
-                  ],
+                  "required": ["trigger", "active"],
                   "additionalProperties": false,
                   "description": "Автоматическое включение по движению."
                 },
@@ -258,18 +214,12 @@
                       "description": "Время блокировки autoOn по освещенности.\n\nДиапазон значений 0...24\n\nЕсли задано 0, то блокировка не будет включаться.\n\nЭто нужно, чтобы была возможность вручную выключить группу,  в случае когда для неё выполняется autoOn по освещенности.\n\nИначе правило autoOn всегда будет перебивать ручное выключение и  получится так, что кнопка нажимается, а свет продолжает гореть."
                     }
                   },
-                  "required": [
-                    "illuminationHours"
-                  ],
+                  "required": ["illuminationHours"],
                   "additionalProperties": false,
                   "description": "Позволяет блокировать автоматическое включение"
                 }
               },
-              "required": [
-                "lightingLevel",
-                "motion",
-                "block"
-              ],
+              "required": ["lightingLevel", "motion", "block"],
               "additionalProperties": false
             },
             "autoOff": {
@@ -307,71 +257,38 @@
                       "description": "Время блокировки autoOff по ручному включению."
                     }
                   },
-                  "required": [
-                    "illuminationHours",
-                    "handSwitchMin"
-                  ],
+                  "required": ["illuminationHours", "handSwitchMin"],
                   "additionalProperties": false,
                   "description": "Позволяет блокировать автоматическое выключение"
                 }
               },
-              "required": [
-                "lightingLevel",
-                "motion",
-                "noise",
-                "silenceMin",
-                "time",
-                "block"
-              ],
+              "required": ["lightingLevel", "motion", "noise", "silenceMin", "time", "block"],
               "additionalProperties": false,
               "description": "Автоматическое выключение по движению, шуму, заданному времени."
             }
           },
-          "required": [
-            "switcher",
-            "illumination",
-            "motion",
-            "noise",
-            "autoOn",
-            "autoOff"
-          ],
+          "required": ["switcher", "illumination", "motion", "noise", "autoOn", "autoOff"],
           "additionalProperties": false,
           "description": "Настройки макроса"
         }
       },
-      "required": [
-        "devices",
-        "properties"
-      ],
+      "required": ["devices", "properties"],
       "additionalProperties": false,
       "description": "! Lighting macros scenarios\n\nОсвещение управляется при помощи: кнопок, герконов, освещенности, движения, шума, времени.\n\n1. Вкл/Выкл через кнопки  Классический способ переключения освещения при котором нужно нажимать на кнопку 2. Вкл/Выкл через герконы  Позволяет включать освещение в момент начала открывания двери.  Для выключения света применяются правила основанные на освещенности, движении, шуме и времени. 3. Вкл/Выкл через датчик освещенности  Позволяет включать освещение при достижении определенного уровня освещенности, а так же   выключать, в случае изменения освещенности в большую сторону. 4. Вкл/Выкл через датчик движения  Позволяет включать освещение при наличии движения и выключать при пропадании движения. 5. Выключать освещение в определенный час суток  Возможно задать, что освещение выключается в 0 часов, и при наступлении нуля часов   освещение единоразово выключится 6. Выключение освещения по датчику движения и шума  Возможно задать задать задержку выключения при наличии движения и/или шума.  Допустим если нет движения и есть шум то свет выключится через 10 минут, а если   нет ни движения ни шума то через 1 минуту. 7. Блокировка включения освещения по датчику освещенности  Возможно задать значение освещенности выше которого освещение не будет включаться. 8. Блокировка включения освещения по временному диапазону  Возможно задать диапазон часов в сутках когда автоматическое включение освещение активно например от 15 и до 0 9. Блокировка по нажатию кнопки  Возможно задать время блокировки автоматического выключения или/и включения при выключении или включении через    кнопку.\n\nВ настройках макроса можно задать все необходимые параметры  для реакции на освещенность, движение, переключатели, время.\n\nВсе перечисленные возможности скомбинированы и работают сообща."
     },
     "Trigger": {
       "type": "string",
-      "enum": [
-        "UP",
-        "DOWN"
-      ],
+      "enum": ["UP", "DOWN"],
       "description": "Определяет по верхнему (\"1\", +5, true) или по нижнему (\"0\", 0, false) уровню случится реакция."
     },
     "LevelDetection": {
       "type": "string",
-      "enum": [
-        "MAX",
-        "MIN",
-        "AVG"
-      ],
+      "enum": ["MAX", "MIN", "AVG"],
       "description": "Правило определения числового значения по нескольким датчикам MAX - берем максимальное среди всех MIN - берем минимальное среди всех AVG - берем среднее среди всех"
     },
     "LightingLevel": {
       "type": "number",
-      "enum": [
-        3,
-        2,
-        1,
-        0,
-        -1
-      ],
+      "enum": [3, 2, 1, 0, -1],
       "description": "Уровни освещенности который определил макрос по всем имеющимся датчикам в соответствии с правилом определения"
     }
   }

@@ -10,9 +10,7 @@
           "description": "Уставка, до какой температуры греть горячую воду.\n\nЕсли уставка меньше 60, то раз в 6 часов, вода будет нагрета до 60. Если уставка больше 75 градусов то вода будет нагреваться до 75 градусов.\n\nДиапазон значений 40 - 75 градусов."
         }
       },
-      "required": [
-        "temperatureTarget"
-      ],
+      "required": ["temperatureTarget"],
       "additionalProperties": false,
       "description": "! STATE"
     }
