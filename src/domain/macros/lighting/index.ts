@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/consistent-destructuring */
 /* eslint-disable unicorn/no-array-reduce */
 import { addDays, addHours, addMinutes, compareAsc, format, subDays } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
@@ -14,6 +15,7 @@ import { MacrosType } from '../showcase';
 
 import { settings_from_0_to_1 } from './settings-mappers/0-settings-from-0-to-1';
 import { settings_from_1_to_2 } from './settings-mappers/1-settings-from-1-to-2';
+import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3';
 
 const logger = debug('hyperion:macros:lighting');
 
@@ -35,18 +37,6 @@ export enum Switch {
 export enum Trigger {
   UP = 'UP',
   DOWN = 'DOWN',
-}
-
-/**
- * Уровни освещенности который определил макрос по всем имеющимся датчикам в соответствии с
- * правилом определения
- */
-export enum LightingLevel {
-  MAX = 3,
-  HIGHT = 2,
-  MIDDLE = 1,
-  LOW = 0,
-  UNSPECIFIED = -1,
 }
 
 /**
@@ -95,6 +85,8 @@ export enum LevelDetection {
  *  для реакции на освещенность, движение, переключатели, время.
  *
  * Все перечисленные возможности скомбинированы и работают сообща.
+ *
+ * Для добавления дополнительного сценария обращаться к dmitriy@borodin.site
  */
 export type LightingMacrosSettings = {
   /**
@@ -151,16 +143,6 @@ export type LightingMacrosSettings = {
     };
 
     readonly illumination: {
-      /**
-       * Настройка освещенности для каждого уровня. Чтобы понять какие значения выставлять, нужно посмотреть
-       * какие значения дают датчики в нужных местах в разное время суток.
-       *
-       * Значения могут быть в диапазоне 0...10000
-       */
-      readonly HIGHT: number;
-      readonly MIDDLE: number;
-      readonly LOW: number;
-
       readonly detection: LevelDetection;
     };
 
@@ -175,13 +157,13 @@ export type LightingMacrosSettings = {
     readonly autoOn: {
       /**
        * Автоматическое включение по освещенности.
+       * Как только уровень освещенности стал ниже указанного, происходит включение группы освещения.
        *
-       * Если указано UNSPECIFIED, автоматическое включение по освещенности выключено.
+       * Значения могут быть в диапазоне -1...10000
        *
-       * Если указаны другие значения, то автоматически включатся все lightings
-       *  когда освещение буже ниже или равно указанному уровню.
+       * Если указано -1, автоматическое включение по освещенности выключено, так как датчик не сможет показать -1.
        */
-      readonly lightingLevel: LightingLevel;
+      readonly illumination: number;
 
       /**
        * Автоматическое включение по движению.
@@ -240,11 +222,14 @@ export type LightingMacrosSettings = {
     readonly autoOff: {
       /**
        * Автоматическое выключение по освещенности.
-       * Если указано UNSPECIFIED, автоматическое выключение по освещенности выключено.
-       * Если указаны другие значения, то автоматически выключатся все lightings
-       *  когда освещение буже выше указанного уровня.
+       * Как только уровень освещенности стал выше указанного, происходит выключение группы освещения.
+       *
+       * Значения могут быть в диапазоне -1...10000.
+       *
+       * Если указано 10000, автоматическое выключение по освещенности выключено,
+       *  так как датчик не сможет показать 10000.
        */
-      readonly lightingLevel: LightingLevel;
+      readonly illumination: number;
 
       /**
        * Если значение движения ниже motion, считаем, что движения нет, диапазон значений 0...10000
@@ -316,11 +301,8 @@ export type LightingMacrosSettings = {
 type LightingMacrosPrivateState = {
   switch: Switch;
   illumination: number;
-  lightingLevel: LightingLevel;
   motion: number;
   noise: number;
-  timeAfterNoiseDisappearedMin: number;
-  timeAfterMotionDisappearedMin: number;
   /**
    * Время в часах на текущие сутки 0...23
    */
@@ -373,7 +355,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 /**
  * ! VERSION - текущая версия макроса освещения
  */
-const VERSION = 2;
+const VERSION = 3;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private nextOutput: LightingMacrosNextOutput;
@@ -419,11 +401,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         force: state.force,
         switch: Switch.OFF,
         illumination: -1,
-        lightingLevel: LightingLevel.UNSPECIFIED,
         motion: -1,
         noise: -1,
-        timeAfterNoiseDisappearedMin: 10,
-        timeAfterMotionDisappearedMin: 5,
         time: 1,
       },
 
@@ -451,33 +430,13 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   }
 
   static parseSettings = (settings: string, version: number = VERSION): LightingMacrosSettings => {
-    /**
-     * TODO Унифицировать с parseState и сделать общий метод, который будет
-     * TODO заниматься парсингом и миграцией стейта и настроек.
-     */
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [settings_from_0_to_1, settings_from_1_to_2].slice(version, VERSION);
-
-    // logger(mappers);
-
-    // if (mappers.length === 0) {
-    //   logger('Settings in the current version ✅');
-
-    //   /**
-    //    * TODO Проверять через JSON Schema
-    //    */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return Macros.migrate(settings, version, VERSION, [settings_from_0_to_1, settings_from_1_to_2], 'settings');
+    return Macros.migrate(
+      settings,
+      version,
+      VERSION,
+      [settings_from_0_to_1, settings_from_1_to_2, settings_from_2_to_3],
+      'settings',
+    );
   };
 
   static parseState = (state?: string, version: number = VERSION): LightingMacrosPublicState => {
@@ -726,9 +685,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      */
     const isAutoOnBlocked = compareAsc(this.block.autoOn.illumination, new Date()) === 1;
     const isAlreadyOn = this.state.switch === Switch.ON;
-    const isLightingLevelDefined = this.state.lightingLevel !== LightingLevel.UNSPECIFIED;
+    const isIlluminationDetected = this.state.illumination >= 0;
 
-    if (isAutoOnBlocked || isAlreadyOn || !isLightingLevelDefined) {
+    if (isAutoOnBlocked || isAlreadyOn || !isIlluminationDetected) {
       return;
     }
 
@@ -741,8 +700,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * ! Settings
      */
-    const { lightingLevel, motion } = this.settings.properties.autoOn;
-
     let nextSwitchState: Switch = this.state.switch;
 
     /**
@@ -752,10 +709,15 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      * * то есть пока не потемнеет, группа не будет включена даже если есть движение.
      */
     const autoOnByIllumination =
-      hasIlluminationDevice && isLightingLevelDefined && this.state.lightingLevel <= lightingLevel;
+      hasIlluminationDevice &&
+      isIlluminationDetected &&
+      this.state.illumination <= this.settings.properties.autoOn.illumination;
 
     /**
-     * * Если есть датчики движения отсутствуют, можно включить группу без проверки движения.
+     *  Если датчики движения отсутствуют, можно включить группу без проверки движения.
+     *
+     *  Если датчики движения, присутствуют, проверка продолжается и autoOnByIllumination
+     *   выполняет роль блокировки по освещенности.
      */
     if (autoOnByIllumination && !hasMotionDevice) {
       nextSwitchState = Switch.ON;
@@ -764,7 +726,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * ! AutoOn по датчикам движения
      */
-    const { trigger, active } = motion;
+    const { trigger, active } = this.settings.properties.autoOn.motion;
 
     const hasMotionTrigger = Number.isInteger(trigger) && trigger > 0;
 
@@ -797,19 +759,21 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
           isAutoOnBlocked,
           isAlreadyOn,
-          isLightingLevelDefined,
+          isIlluminationDetected,
 
           hasIlluminationDevice,
           hasMotionDevice,
 
-          lightingLevelProperty: lightingLevel,
-          lightingLevelState: this.state.lightingLevel,
+          illuminationSettings: this.settings.properties.autoOn.illumination,
+          illuminationState: this.state.illumination,
           autoOnByIllumination,
 
-          motionTriggerProperty: trigger,
+          // eslint-disable-next-line unicorn/consistent-destructuring
+          motionTriggerSettings: this.settings.properties.autoOn.motion.trigger,
           motionState: this.state.motion,
 
-          motionActiveTimeRange: active,
+          // eslint-disable-next-line unicorn/consistent-destructuring
+          motionActiveTimeRangeSettings: this.settings.properties.autoOn.motion.active,
 
           hasMotionTrigger,
           motionDetected,
@@ -836,9 +800,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      */
     const isAutoOffBlocked = compareAsc(this.block.autoOff.illumination, new Date()) === 1;
     const isAlreadyOff = this.state.switch === Switch.OFF;
-    const isLightingLevelDefined = this.state.lightingLevel !== LightingLevel.UNSPECIFIED;
+    const isIlluminationDetected = this.state.illumination >= 0;
 
-    if (isAutoOffBlocked || isAlreadyOff || !isLightingLevelDefined) {
+    if (isAutoOffBlocked || isAlreadyOff || !isIlluminationDetected) {
       return;
     }
 
@@ -852,10 +816,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const hasNoiseDevice = noise.length > 0;
 
     /**
-     * ! Properties
+     * ! Settings
      */
-    const { lightingLevel, silenceMin } = this.settings.properties.autoOff;
-
     let nextSwitchState: Switch = this.state.switch;
 
     /**
@@ -864,7 +826,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      * Работает когда имеются датчики освещенности.
      */
     const autoOffByIllumination =
-      hasIlluminationDevice && isLightingLevelDefined && this.state.lightingLevel >= lightingLevel;
+      hasIlluminationDevice &&
+      isIlluminationDetected &&
+      this.state.illumination >= this.settings.properties.autoOff.illumination;
 
     if (autoOffByIllumination) {
       nextSwitchState = Switch.OFF;
@@ -875,6 +839,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      *
      * Работает когда имеются датчики движения.
      */
+    const { silenceMin } = this.settings.properties.autoOff;
+
     const isSilence =
       Number.isInteger(silenceMin) &&
       silenceMin > 0 &&
@@ -895,14 +861,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
           isAutoOffBlocked,
           isAlreadyOff,
-          isLightingLevelDefined,
+          isIlluminationDetected,
 
           hasIlluminationDevice,
           hasMotionDevice,
           hasNoiseDevice,
 
-          lightingLevelSettings: lightingLevel,
-          lightingLevelState: this.state.lightingLevel,
+          illuminationSettings: this.settings.properties.autoOff.illumination,
+          illuminationState: this.state.illumination,
 
           lastMotionDetected: this.lastMotionDetected,
           lastNoseDetected: this.lastNoseDetected,
@@ -973,44 +939,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private applyExternalIlluminationSate = () => {
-    const { LOW, MIDDLE, HIGHT, detection } = this.settings.properties.illumination;
+    const { detection } = this.settings.properties.illumination;
+    const { illuminations } = this.settings.devices;
 
-    const illumination = this.getValueByDetection(this.settings.devices.illuminations, detection);
-
-    let lightingLevel = LightingLevel.UNSPECIFIED;
-
-    if (illumination <= LOW) {
-      lightingLevel = LightingLevel.LOW;
-    }
-
-    if (illumination > LOW && illumination <= MIDDLE) {
-      lightingLevel = LightingLevel.MIDDLE;
-    }
-
-    if (illumination > MIDDLE) {
-      lightingLevel = LightingLevel.HIGHT;
-    }
-
-    if (illumination > HIGHT) {
-      lightingLevel = LightingLevel.MAX;
-    }
-
-    if (lightingLevel === LightingLevel.UNSPECIFIED) {
-      logger('The light level could not be determined 🚨');
-      logger(
-        stringify({
-          name: this.name,
-          settings: {
-            illumination: this.settings.properties.illumination,
-          },
-          illumination,
-          lightingLevel,
-        }),
-      );
-    }
-
-    this.state.illumination = illumination;
-    this.state.lightingLevel = lightingLevel;
+    this.state.illumination = this.getValueByDetection(illuminations, detection);
   };
 
   private applyExternalMotionSate = () => {

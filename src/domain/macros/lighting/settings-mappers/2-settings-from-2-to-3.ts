@@ -1,6 +1,6 @@
 import { ControlType } from '../../../control-type';
 
-import { SettingsTo1 as SettingsFrom1 } from './0-settings-from-0-to-1';
+import { SettingsTo2 as SettingsFrom2 } from './1-settings-from-1-to-2';
 
 enum Trigger {
   UP = 'UP',
@@ -21,7 +21,7 @@ enum LevelDetection {
   AVG = 'AVG',
 }
 
-export type SettingsTo2 = {
+type SettingsTo3 = {
   readonly devices: {
     readonly switchers: Array<{
       readonly deviceId: string;
@@ -49,25 +49,27 @@ export type SettingsTo2 = {
       readonly controlType: ControlType.SWITCH;
     }>;
   };
+
   readonly properties: {
     readonly switcher: {
       readonly trigger: Trigger;
       readonly everyOn: boolean;
     };
+
     readonly illumination: {
-      readonly HIGHT: number;
-      readonly MIDDLE: number;
-      readonly LOW: number;
       readonly detection: LevelDetection;
     };
+
     readonly motion: {
       readonly detection: LevelDetection;
     };
+
     readonly noise: {
       readonly detection: LevelDetection;
     };
+
     readonly autoOn: {
-      readonly lightingLevel: LightingLevel;
+      readonly illumination: number;
       readonly motion: {
         readonly trigger: number;
         readonly active: {
@@ -79,8 +81,9 @@ export type SettingsTo2 = {
         readonly illuminationHours: number;
       };
     };
+
     readonly autoOff: {
-      readonly lightingLevel: LightingLevel;
+      readonly illumination: number;
       readonly motion: number;
       readonly noise: number;
       readonly silenceMin: number;
@@ -93,7 +96,43 @@ export type SettingsTo2 = {
   };
 };
 
-export const settings_from_1_to_2 = (settings: SettingsFrom1): SettingsTo2 => {
+export const settings_from_2_to_3 = (settings: SettingsFrom2): SettingsTo3 => {
+  let autoOnIllumination = 0;
+
+  if (settings.properties.autoOn.lightingLevel === LightingLevel.MAX) {
+    autoOnIllumination = settings.properties.illumination.HIGHT;
+  }
+
+  if (settings.properties.autoOn.lightingLevel === LightingLevel.HIGHT) {
+    autoOnIllumination = settings.properties.illumination.HIGHT;
+  }
+
+  if (settings.properties.autoOn.lightingLevel === LightingLevel.MIDDLE) {
+    autoOnIllumination = settings.properties.illumination.MIDDLE;
+  }
+
+  if (settings.properties.autoOn.lightingLevel === LightingLevel.LOW) {
+    autoOnIllumination = settings.properties.illumination.LOW;
+  }
+
+  let autoOffIllumination = 0;
+
+  if (settings.properties.autoOff.lightingLevel === LightingLevel.MAX) {
+    autoOffIllumination = settings.properties.illumination.HIGHT;
+  }
+
+  if (settings.properties.autoOff.lightingLevel === LightingLevel.HIGHT) {
+    autoOffIllumination = settings.properties.illumination.HIGHT;
+  }
+
+  if (settings.properties.autoOff.lightingLevel === LightingLevel.MIDDLE) {
+    autoOffIllumination = settings.properties.illumination.MIDDLE;
+  }
+
+  if (settings.properties.autoOff.lightingLevel === LightingLevel.LOW) {
+    autoOffIllumination = settings.properties.illumination.LOW;
+  }
+
   return {
     devices: {
       switchers: settings.devices.switchers.map(({ deviceId, controlId }) => ({
@@ -128,9 +167,6 @@ export const settings_from_1_to_2 = (settings: SettingsFrom1): SettingsTo2 => {
         everyOn: settings.properties.switcher.everyOn,
       },
       illumination: {
-        HIGHT: settings.properties.illumination.HIGHT,
-        MIDDLE: settings.properties.illumination.MIDDLE,
-        LOW: settings.properties.illumination.LOW,
         detection: settings.properties.illumination.detection,
       },
       motion: {
@@ -140,7 +176,7 @@ export const settings_from_1_to_2 = (settings: SettingsFrom1): SettingsTo2 => {
         detection: settings.properties.noise.detection,
       },
       autoOn: {
-        lightingLevel: settings.properties.autoOn.lightingLevel,
+        illumination: autoOnIllumination,
         motion: {
           trigger: settings.properties.autoOn.motion.trigger,
           active: {
@@ -153,7 +189,7 @@ export const settings_from_1_to_2 = (settings: SettingsFrom1): SettingsTo2 => {
         },
       },
       autoOff: {
-        lightingLevel: settings.properties.autoOff.lightingLevel,
+        illumination: autoOffIllumination,
         motion: settings.properties.autoOff.motion,
         noise: settings.properties.autoOff.noise,
         silenceMin: settings.properties.autoOff.silenceMin,

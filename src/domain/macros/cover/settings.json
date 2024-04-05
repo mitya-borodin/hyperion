@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/BoilerMacrosSettings",
+  "definitions": {
+    "BoilerMacrosSettings": {
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string"
+            },
+            "controlId": {
+              "type": "string"
+            },
+            "controlType": {
+              "type": "string",
+              "const": "temperature"
+            }
+          },
+          "required": ["deviceId", "controlId", "controlType"],
+          "additionalProperties": false,
+          "description": "Датчик температуры."
+        },
+        "pump": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string"
+            },
+            "controlId": {
+              "type": "string"
+            },
+            "controlType": {
+              "type": "string",
+              "const": "switch"
+            }
+          },
+          "required": ["deviceId", "controlId", "controlType"],
+          "additionalProperties": false,
+          "description": "Насос загрузки."
+        },
+        "heat": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "HEAT_SOURCE"
+              }
+            },
+            "required": ["deviceId", "controlId", "controlType"],
+            "additionalProperties": false
+          },
+          "description": "Уникальный идентификатор источника тепла.\n\nУстройства с подходящим контролом виртуальное и появляется запущен макрос источник тепла."
+        }
+      },
+      "required": ["temperature", "pump", "heat"],
+      "additionalProperties": false,
+      "description": "Параллельная загрузка бойлера."
+    }
+  }
+}

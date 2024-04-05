@@ -44,7 +44,7 @@ export enum MacrosType {
   RECIRCULATION = 'RECIRCULATION',
   SNOW_MELTING = 'SNOW_MELTING',
   SWIMMING_POOL = 'SWIMMING_POOL',
-  COVER_OPENING = 'COVER_OPENING',
+  COVER = 'COVER',
   HEATING_CABLE = 'HEATING_CABLE',
   MASTER_SWITCH = 'MASTER_SWITCH',
   SECURITY = 'SECURITY',
@@ -104,8 +104,8 @@ export const toDomainMacrosType = (input: unknown): MacrosType => {
     return MacrosType.SWIMMING_POOL;
   }
 
-  if (input === MacrosType.COVER_OPENING) {
-    return MacrosType.COVER_OPENING;
+  if (input === MacrosType.COVER) {
+    return MacrosType.COVER;
   }
 
   if (input === MacrosType.HEATING_CABLE) {
@@ -136,7 +136,7 @@ export const toDomainMacrosType = (input: unknown): MacrosType => {
  */
 export const macrosByType = {
   [MacrosType.LIGHTING]: LightingMacros,
-  [MacrosType.COVER_OPENING]: LightingMacros,
+  [MacrosType.COVER]: LightingMacros,
   [MacrosType.HEATING]: LightingMacros,
   [MacrosType.COUNTER]: CounterMacros,
   [MacrosType.LEAKS]: LeaksMacros,
@@ -165,8 +165,8 @@ export const macrosShowcase = {
     settings: LightingMacrosSettings,
     state: LightingMacrosPublicState,
   },
-  [MacrosType.COVER_OPENING]: {
-    name: 'Открывание крышек',
+  [MacrosType.COVER]: {
+    name: 'Крышка',
     description: 'Позволяет управлять шторами, воротами, всем тем, что может открываться и закрываться.',
   },
   [MacrosType.HEATING]: {

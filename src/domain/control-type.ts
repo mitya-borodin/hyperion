@@ -17,6 +17,7 @@ export enum ControlType {
   REL_HUMIDITY = 'rel_humidity',
   ATMOSPHERIC_PRESSURE = 'atmospheric_pressure',
   HEAT_SOURCE = 'HEAT_SOURCE',
+  MOTOR_STATE = 'motor_state',
 }
 
 export const toDomainControlType = (controlType: unknown) => {
