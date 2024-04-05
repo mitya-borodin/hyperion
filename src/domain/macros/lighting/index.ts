@@ -455,6 +455,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     logger('The next state was appeared ⏭️ ⏭️ ⏭️');
     logger(
       stringify({
+        name: this.name,
         currentState: this.state,
         nextState,
       }),
@@ -487,6 +488,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     logger('The next state was applied ⏭️ ✅ ⏭️');
     logger(
       stringify({
+        name: this.name,
         currentState: this.state,
         nextState,
       }),
@@ -646,6 +648,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           logger('The auto ON block was activated ✅');
           logger(
             stringify({
+              name: this.name,
               autoOnBlockedFor: format(this.block.autoOn.illumination, 'yyyy.MM.dd HH:mm:ss OOOO'),
             }),
           );
@@ -666,6 +669,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
           logger(
             stringify({
+              name: this.name,
               autoOffBlockedFor: format(this.block.autoOff.illumination, 'yyyy.MM.dd HH:mm:ss OOOO'),
             }),
           );
@@ -1269,13 +1273,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         this.state.switch = Switch.OFF;
 
         logger('The switch state was changed by clock 🪄');
-        logger(stringify(this.state));
+        logger(stringify({ name: this.name, state: this.state }));
 
         this.block.autoOn.illumination = addHours(new Date(), this.settings.properties.autoOn.block.illuminationHours);
 
         logger('The auto ON block was activated ✅');
         logger(
           stringify({
+            name: this.name,
             autoOnBlockedFor: format(this.block.autoOn.illumination, 'yyyy.MM.dd HH:mm:ss OOOO'),
           }),
         );
