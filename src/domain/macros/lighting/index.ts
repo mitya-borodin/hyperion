@@ -1096,6 +1096,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     devices: Array<{ deviceId: string; controlId: string }>,
     detection: LevelDetection,
   ) => {
+    if (devices.length === 0) {
+      return 0;
+    }
+
     let result = -1;
 
     for (const { deviceId, controlId } of devices) {
