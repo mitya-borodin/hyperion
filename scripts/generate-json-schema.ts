@@ -123,6 +123,21 @@ Promise.all([
     path: resolve(basePath, 'recirculation/index.ts'),
     output: resolve(basePath, 'recirculation/state.json'),
   }),
+  /**
+   * ! COVER MACROS
+   */
+  generate({
+    type: 'CoverMacrosSettings',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'cover/index.ts'),
+    output: resolve(basePath, 'cover/settings.json'),
+  }),
+  generate({
+    type: 'CoverMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'cover/index.ts'),
+    output: resolve(basePath, 'cover/state.json'),
+  }),
 ])
   .then(() => {
     logger('All schemas was builded ✅');

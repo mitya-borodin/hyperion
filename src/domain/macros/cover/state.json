@@ -1,16 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/definitions/BoilerMacrosPublicState",
+  "$ref": "#/definitions/CoverMacrosPublicState",
   "definitions": {
-    "BoilerMacrosPublicState": {
+    "CoverMacrosPublicState": {
       "type": "object",
       "properties": {
-        "temperatureTarget": {
+        "state": {
+          "type": "string",
+          "description": "Текущее состояние\n\nCoverMacrosSettings.state.open - крышка открывается CoverMacrosSettings.state.close - крышка закрывается CoverMacrosSettings.state.stop - крышка остановлена\n\nenum может быть разным для разных устройств, и сопоставление enum устройства и настроек макроса происходит пользователем."
+        },
+        "position": {
           "type": "number",
-          "description": "Уставка, до какой температуры греть горячую воду.\n\nЕсли уставка меньше 60, то раз в 6 часов, вода будет нагрета до 60. Если уставка больше 75 градусов то вода будет нагреваться до 75 градусов.\n\nДиапазон значений 40 - 75 градусов."
+          "description": "Положение шторы, от 0 до 100.\n\nПо умолчанию 100 - открыто, 0 - закрыто.\n\nРеверс настраивается на самом устройстве, а так же можно выполнить реверс через настройки, путем указания параметров CoverMacrosSettings.position.open и CoverMacrosSettings.position.close\n\nВозможно для каждой шторы задать значение открытого и закрытого положения, исходя из этого макросу будет понятно, в каком направлении двигать штору.\n\nНужно иметь в виду, что при подключении привода, ему нужно указать где начало и где границы открывания/закрывания, а так же направление, и желательно задавать значение по умолчанию."
         }
       },
-      "required": ["temperatureTarget"],
+      "required": ["state", "position"],
       "additionalProperties": false,
       "description": "! STATE"
     }
