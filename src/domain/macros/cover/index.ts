@@ -4,6 +4,7 @@ import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
 import { ControlType } from '../../control-type';
+import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
@@ -12,14 +13,6 @@ const logger = debug('hyperion:macros:cover');
 /**
  * ! SETTINGS
  */
-
-/**
- * Состояние переключателя (кнопка, виртуальная кнопка, геркон).
- */
-export enum Switch {
-  ON = 'ON',
-  OFF = 'OFF',
-}
 
 /**
  * Тип переключателя (кнопка, виртуальная кнопка, геркон). От типа зависит приоритет
@@ -53,7 +46,7 @@ export enum LevelDetection {
 }
 
 /**
- * Тип .
+ * Направление движения крышки.
  */
 export enum OpenCloseByTimeDirection {
   OPEN = 'OPEN',
@@ -67,6 +60,15 @@ export enum BlockType {
   OPEN = 'OPEN',
   CLOSE = 'CLOSE',
   ALL = 'ALL',
+}
+
+/**
+ * Состояние крышки, в терминах макроса.
+ */
+export enum CoverState {
+  OPEN = 'OPEN',
+  CLOSE = 'CLOSE',
+  STOP = 'STOP',
 }
 
 /**
@@ -235,27 +237,42 @@ export type CoverMacrosSettings = {
      * никогда не будет достигнуто.
      */
     readonly illumination: number;
+
+    /**
+     * Позволяет до-открыть/закрыть все шторы.
+     *
+     * Если true, и в списке штор есть открытые и закрытые шторы, произойдет закрытие открытых штор.
+     *
+     * Если false, и в списке штор есть открытые и закрытые шторы, произойдет открытие закрытых штор.
+     *
+     * Если в списке все шторы в одном состоянии, то произойдет инверсия состояния.
+     */
+    readonly everyOn: boolean;
   }>;
+
   readonly illuminations: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.ILLUMINATION;
   }>;
+
   readonly motions: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.VALUE;
   }>;
+
   readonly noises: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.SOUND_LEVEL;
   }>;
-  readonly temperatures: {
+
+  readonly temperatures: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.TEMPERATURE;
-  };
+  }>;
 
   /**
    * Контрол переключения состояния шторы.
@@ -282,7 +299,7 @@ export type CoverMacrosSettings = {
    * Контрол позволяет увидеть положение шторы после окончания
    * движения, и задать то положение в которое должна прийти штора.
    */
-  readonly positions: {
+  readonly positions: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.VALUE;
@@ -294,7 +311,7 @@ export type CoverMacrosSettings = {
      * Значение при полностью закрытом положении
      */
     readonly close: number;
-  };
+  }>;
 
   readonly illumination: {
     readonly detection: LevelDetection;
@@ -410,11 +427,13 @@ export type CoverMacrosSettings = {
      * Если освещенность выше заданного порога, то активируется закрытие/открытие
      * шторы по солнцу.
      */
+
     readonly illumination: number;
     /**
      * Если температура превысила уставку и установилась полная тишина,
      * то штора закрывается до указанного положения.
      */
+
     readonly temperature: number;
     /**
      * Определение полной тишины.
@@ -428,6 +447,7 @@ export type CoverMacrosSettings = {
      * отключается.
      */
     readonly silenceMin: number;
+
     readonly position: number;
   };
 };
@@ -437,16 +457,9 @@ export type CoverMacrosSettings = {
  */
 export type CoverMacrosPublicState = {
   /**
-   * Текущее состояние
-   *
-   * CoverMacrosSettings.state.open - крышка открывается
-   * CoverMacrosSettings.state.close - крышка закрывается
-   * CoverMacrosSettings.state.stop - крышка остановлена
-   *
-   * enum может быть разным для разных устройств, и сопоставление
-   * enum устройства и настроек макроса происходит пользователем.
+   * Текущее состояние крышки.
    */
-  state: string;
+  state: CoverState;
 
   /**
    * Положение шторы, от 0 до 100.
@@ -470,7 +483,6 @@ export type CoverMacrosPublicState = {
 };
 
 type CoverMacrosPrivateState = {
-  switch: Switch;
   illumination: number;
   motion: number;
   noise: number;
@@ -488,18 +500,18 @@ type CoverMacrosState = CoverMacrosPublicState & CoverMacrosPrivateState;
  * сделал всю работу, и полностью открыл, закрыл, остановил крышку.
  */
 type CoverMacrosNextOutput = {
-  position?: {
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.VALUE;
-    readonly value: number;
-  };
-  state?: {
+  states: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly controlType: ControlType.ENUM;
     readonly value: string;
-  };
+  }>;
+  positions: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly controlType: ControlType.VALUE;
+    readonly value: number;
+  }>;
 };
 
 const VERSION = 0;
@@ -508,6 +520,11 @@ type CoverMacrosParameters = MacrosParameters<string, string | undefined>;
 
 export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, CoverMacrosState> {
   private nextOutput: CoverMacrosNextOutput;
+
+  private last = {
+    motion: new Date(),
+    noise: new Date(),
+  };
 
   constructor(parameters: CoverMacrosParameters) {
     const settings = CoverMacros.parseSettings(parameters.settings, parameters.version);
@@ -532,17 +549,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       settings,
 
       state: defaultsDeep(state, {
-        disable: {
-          coldWater: false,
-          hotWater: false,
-          recirculation: false,
-        },
-        hotWaterTemperature: 60,
-        coldWaterPumps: {},
-        valves: {},
-        boilerPumps: {},
-        heatRequests: {},
-        recirculationPumps: {},
+        state: 'STOP',
+        position: -1,
+        illumination: -1,
+        motion: -1,
+        noise: -1,
+        temperature: -1,
       }),
 
       devices: parameters.devices,
@@ -550,44 +562,20 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     });
 
     this.nextOutput = {
-      state: undefined,
-      position: undefined,
+      states: [],
+      positions: [],
     };
   }
 
   static parseSettings = (settings: string, version: number = VERSION): CoverMacrosSettings => {
-    // if (version === VERSION) {
-    //   logger('Settings in the current version ✅');
-    //   logger(stringify({ from: version, to: VERSION }));
-
-    // /**
-    //  * TODO Проверять через JSON Schema
-    //  */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [() => {}].slice(version, VERSION + 1);
-
-    // logger(mappers);
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return JSON.parse(settings);
+    return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string): CoverMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): CoverMacrosState => {
     if (!state) {
       return {
         position: 100,
-        state: 'STOP',
-        switch: Switch.OFF,
+        state: CoverState.STOP,
         illumination: -1,
         motion: -1,
         noise: -1,
@@ -595,32 +583,226 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       };
     }
 
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
+
+  setState = (nextPublicStateJson: string): void => {
+    const nextPublicState = CoverMacros.parseState(nextPublicStateJson, this.version);
+
+    logger('The next state was appeared ⏭️ ⏭️ ⏭️');
+    logger(
+      stringify({
+        name: this.name,
+        nextPublicState,
+        currentState: this.state,
+      }),
+    );
+
+    this.state.state = nextPublicState.state;
+    this.state.position = nextPublicState.position;
+
+    logger('The next state was applied ⏭️ ✅ ⏭️');
+    logger(
+      stringify({
+        name: this.name,
+        state: this.state,
+      }),
+    );
+
+    this.output();
+
+    if (this.nextOutput.states.length > 0 || this.nextOutput.positions.length > 0) {
+      logger('The public state was determined 🫡 🚀');
+      logger(
+        stringify({
+          name: this.name,
+          state: this.state,
+          nextOutput: this.nextOutput,
+        }),
+      );
+    }
+
+    this.send();
+  };
+
+  protected collecting() {
+    this.collectCover();
+    this.collectIllumination();
+    this.collectMotion();
+    this.collectNoise();
+    this.collectTemperature();
+  }
+
+  private collectCover = () => {
+    const isSomeCurveOpen = this.settings.states.some((state) => {
+      const control = this.controls.get(getControlId(state));
+
+      if (control) {
+        return control.value === state.open;
+      }
+
+      return false;
+    });
+
+    const isSomeCurveClose = this.settings.states.some((state) => {
+      const control = this.controls.get(getControlId(state));
+
+      if (control) {
+        return control.value === state.close;
+      }
+
+      return false;
+    });
+
+    const isSomeCurveStop = this.settings.states.some((state) => {
+      const control = this.controls.get(getControlId(state));
+
+      if (control) {
+        return control.value === state.stop;
+      }
+
+      return false;
+    });
+
+    const isSomePositionOpen = this.settings.positions.some((position) => {
+      const control = this.controls.get(getControlId(position));
+
+      if (control) {
+        return Number(control.value) === position.open;
+      }
+
+      return false;
+    });
+
+    const isSomePositionClose = this.settings.positions.some((position) => {
+      const control = this.controls.get(getControlId(position));
+
+      if (control) {
+        return Number(control.value) === position.close;
+      }
+
+      return false;
+    });
+
+    const isSomePositionStop = this.settings.positions.some((position) => {
+      const control = this.controls.get(getControlId(position));
+
+      if (control) {
+        const value = Number(control.value);
+
+        if (position.open > position.close && value >= position.close && value <= position.open) {
+          return true;
+        }
+
+        if (position.close > position.open && value >= position.open && value <= position.close) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    let nextCoverState = CoverState.STOP;
+
+    if (isSomeCurveOpen || isSomePositionOpen) {
+      nextCoverState = CoverState.OPEN;
+    } else if (isSomeCurveClose || isSomePositionClose) {
+      nextCoverState = CoverState.CLOSE;
+    } else {
+      nextCoverState = CoverState.STOP;
+    }
+
+    if (this.state.state === nextCoverState) {
+      return;
+    }
+
+    logger('The cover state has been changed because one of the managed controls has changed state 🍋');
+    logger(
+      stringify({
+        name: this.name,
+        isSomeCurveOpen,
+        isSomeCurveClose,
+        isSomeCurveStop,
+        isSomePositionOpen,
+        isSomePositionClose,
+        isSomePositionStop,
+        nextCoverState,
+        states: this.settings.states.map((state) => {
+          return {
+            value: this.controls.get(getControlId(state))?.value,
+          };
+        }),
+        positions: this.settings.positions.map((position) => {
+          return {
+            value: this.controls.get(getControlId(position))?.value,
+          };
+        }),
+        state: this.state,
+      }),
+    );
+
+    this.state.state = nextCoverState;
+
     /**
-     * TODO Проверять через JSON Schema
+     * Записываем среднее значение позиции если в нашем сетапе некоторые шторы находятся в промежуточном положении.
+     *
+     * Это значение пользователь может изменить при помощи какого-либо
+     * способа управления (web gui, Apple Home Kit, Android Home, Home Assistant, Яндекс Алиса, Apple Siri).
      */
+    // eslint-disable-next-line unicorn/no-array-reduce
+    this.state.position = this.settings.positions.reduce((accumulator, position, currentIndex, positions) => {
+      const control = this.controls.get(getControlId(position));
 
-    return JSON.parse(state);
+      if (control) {
+        if (positions.length - 1 === currentIndex) {
+          return (accumulator + Number(control.value)) / positions.length;
+        }
+
+        return accumulator + Number(control.value);
+      }
+
+      return accumulator;
+    }, 0);
   };
 
-  setState = (nextPublicState: string): void => {};
+  private collectIllumination = () => {
+    this.state.illumination = this.getValueByDetection(
+      this.settings.illuminations,
+      this.settings.illumination.detection,
+    );
+  };
 
-  protected applyPublicState = () => {
+  private collectMotion = () => {
+    this.state.motion = this.getValueByDetection(this.settings.motions, this.settings.motion.detection);
+
+    if (this.state.motion >= this.settings.motion.trigger) {
+      this.last.motion = new Date();
+    }
+  };
+
+  private collectNoise = () => {
+    this.state.noise = this.getValueByDetection(this.settings.noises, this.settings.noise.detection);
+
+    if (this.state.noise >= this.settings.noise.trigger) {
+      this.last.noise = new Date();
+    }
+  };
+
+  private collectTemperature = () => {
+    this.state.temperature = this.getValueByDetection(this.settings.temperatures, this.settings.temperature.detection);
+  };
+
+  protected priorityComputation = () => {
     return false;
   };
 
-  protected applyInput = () => {
-    return false;
-  };
+  protected computation = () => {};
 
-  protected applyExternalValue() {}
-
-  protected computeOutput = (value: string) => {
-    const nextOutput: CoverMacrosNextOutput = {
-      state: undefined,
-      position: undefined,
+  protected output = () => {
+    this.nextOutput = {
+      states: [],
+      positions: [],
     };
-
-    this.nextOutput = nextOutput;
 
     logger('The next output was computed ⏭️ 🍋');
     logger(
@@ -632,11 +814,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     );
   };
 
-  protected applyOutput = () => {};
+  protected send = () => {};
 
   protected destroy() {}
-
-  /**
-   * ! INTERNAL_IMPLEMENTATION
-   */
 }

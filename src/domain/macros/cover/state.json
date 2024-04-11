@@ -6,8 +6,8 @@
       "type": "object",
       "properties": {
         "state": {
-          "type": "string",
-          "description": "Текущее состояние\n\nCoverMacrosSettings.state.open - крышка открывается CoverMacrosSettings.state.close - крышка закрывается CoverMacrosSettings.state.stop - крышка остановлена\n\nenum может быть разным для разных устройств, и сопоставление enum устройства и настроек макроса происходит пользователем."
+          "$ref": "#/definitions/CoverState",
+          "description": "Текущее состояние крышки."
         },
         "position": {
           "type": "number",
@@ -17,6 +17,11 @@
       "required": ["state", "position"],
       "additionalProperties": false,
       "description": "! STATE"
+    },
+    "CoverState": {
+      "type": "string",
+      "enum": ["OPEN", "CLOSE", "STOP"],
+      "description": "Состояние крышки, в терминах макроса."
     }
   }
 }

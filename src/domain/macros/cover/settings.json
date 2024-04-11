@@ -33,9 +33,22 @@
               "illumination": {
                 "type": "number",
                 "description": "Уровень освещенности выше которого случится открывание шторы.\n\nЕсли указать значение меньше 0 (например -1), то освещенность учитываться не будет, и переключатель будет каждый раз открывать штору.\n\nЕсли значение -1 и переключатель типа SwitchType.SEALED_CONTACT, перед открытием будут проверены условия блокировок открывания.\n\nЕсли указать большое значение больше 10000, то данный переключатель никогда не откроет штору, так как значение освещенности никогда не будет достигнуто."
+              },
+              "everyOn": {
+                "type": "boolean",
+                "description": "Позволяет до-открыть/закрыть все шторы.\n\nЕсли true, и в списке штор есть открытые и закрытые шторы, произойдет закрытие открытых штор.\n\nЕсли false, и в списке штор есть открытые и закрытые шторы, произойдет открытие закрытых штор.\n\nЕсли в списке все шторы в одном состоянии, то произойдет инверсия состояния."
               }
             },
-            "required": ["deviceId", "controlId", "controlType", "type", "trigger", "blockMin", "illumination"],
+            "required": [
+              "deviceId",
+              "controlId",
+              "controlType",
+              "type",
+              "trigger",
+              "blockMin",
+              "illumination",
+              "everyOn"
+            ],
             "additionalProperties": false
           },
           "description": "Включает в себя все типы переключателей, кнопки,  виртуальные кнопки, герконы."
@@ -101,21 +114,24 @@
           }
         },
         "temperatures": {
-          "type": "object",
-          "properties": {
-            "deviceId": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "temperature"
+              }
             },
-            "controlId": {
-              "type": "string"
-            },
-            "controlType": {
-              "type": "string",
-              "const": "temperature"
-            }
-          },
-          "required": ["deviceId", "controlId", "controlType"],
-          "additionalProperties": false
+            "required": ["deviceId", "controlId", "controlType"],
+            "additionalProperties": false
+          }
         },
         "states": {
           "type": "array",
@@ -151,29 +167,32 @@
           "description": "Контрол переключения состояния шторы."
         },
         "positions": {
-          "type": "object",
-          "properties": {
-            "deviceId": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string"
+              },
+              "controlId": {
+                "type": "string"
+              },
+              "controlType": {
+                "type": "string",
+                "const": "value"
+              },
+              "open": {
+                "type": "number",
+                "description": "Значение при полностью открытом положении"
+              },
+              "close": {
+                "type": "number",
+                "description": "Значение при полностью закрытом положении"
+              }
             },
-            "controlId": {
-              "type": "string"
-            },
-            "controlType": {
-              "type": "string",
-              "const": "value"
-            },
-            "open": {
-              "type": "number",
-              "description": "Значение при полностью открытом положении"
-            },
-            "close": {
-              "type": "number",
-              "description": "Значение при полностью закрытом положении"
-            }
+            "required": ["deviceId", "controlId", "controlType", "open", "close"],
+            "additionalProperties": false
           },
-          "required": ["deviceId", "controlId", "controlType", "open", "close"],
-          "additionalProperties": false,
           "description": "Контрол позволяет увидеть положение шторы после окончания движения, и задать то положение в которое должна прийти штора."
         },
         "illumination": {
@@ -351,7 +370,7 @@
     "OpenCloseByTimeDirection": {
       "type": "string",
       "enum": ["OPEN", "CLOSE"],
-      "description": "Тип ."
+      "description": "Направление движения крышки."
     },
     "BlockType": {
       "type": "string",

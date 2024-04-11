@@ -215,17 +215,17 @@ export class RecirculationMacros extends Macros<
 
   setState = (nextPublicState: string): void => {};
 
-  protected applyPublicState = () => {
+  protected priorityComputation = () => {
     return false;
   };
 
-  protected applyInput = () => {
+  protected computation = () => {
     return false;
   };
 
-  protected applyExternalValue() {}
+  protected collecting() {}
 
-  protected computeOutput = (value: string) => {
+  protected output = (value: string) => {
     const nextOutput: RecirculationMacrosNextOutput = {
       pump: undefined,
     };
@@ -242,7 +242,7 @@ export class RecirculationMacros extends Macros<
     );
   };
 
-  protected applyOutput = () => {};
+  protected send = () => {};
 
   protected destroy() {}
 

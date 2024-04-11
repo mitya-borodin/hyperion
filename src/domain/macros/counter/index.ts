@@ -145,17 +145,15 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
 
   setState = (nextPublicState: string): void => {};
 
-  protected applyPublicState = () => {
+  protected priorityComputation = () => {
     return false;
   };
 
-  protected applyInput = () => {
-    return false;
-  };
+  protected computation = () => {};
 
-  protected applyExternalValue() {}
+  protected collecting() {}
 
-  protected computeOutput = (value: string) => {
+  protected output = (value: string) => {
     const nextOutput: CounterMacrosNextOutput = {
       value: 0,
       unitOfMeasurement: '',
@@ -173,7 +171,7 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
     );
   };
 
-  protected applyOutput = () => {};
+  protected send = () => {};
 
   protected destroy() {}
 

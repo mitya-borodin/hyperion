@@ -131,13 +131,17 @@ export type LightingMacrosSettings = {
        * DOWN - переключатель отпустили/разомкнули
        */
       readonly trigger: Trigger;
+
       /**
-       * Позволяет отключить функционал до-включения выключенных lightings.
+       * Позволяет до-включить/выключить все группы.
        *
-       * Если true, то при нажатии на кнопку сначала включатся все не включенные групы, а после
-       *  чего произойдет выключение, если все включены, то выключение произойдет сразу.
+       * Если true, и в списке групп есть включенные и выключенные группы,
+       * произойдет включенных выключение групп.
        *
-       * Если false, то сразу произойдет выключение включенных групп.
+       * Если false, и в списке групп есть включенные и выключенные группы,
+       * произойдет выключение включенных групп.
+       *
+       * Если в списке все группы в одном состоянии, то произойдет инверсия состояния.
        */
       readonly everyOn: boolean;
     };
@@ -498,9 +502,80 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   /**
-   * ! PUBLIC STATE
+   * ! COLLECT CONTROL VALUES
    */
-  protected applyPublicState = () => {
+  protected collecting() {
+    this.collectSwitchers();
+    this.collectIllumination();
+    this.collectMotion();
+    this.collectNoise();
+  }
+
+  private collectSwitchers = () => {
+    /**
+     * Актуализация состояния освещения по внешнему состоянию каждой группы освещения.
+     */
+    const isSomeOn = this.settings.devices.lightings.some((lighting) => {
+      const control = this.controls.get(getControlId(lighting));
+
+      if (control) {
+        return control.value === control.on;
+      }
+
+      return false;
+    });
+
+    const nextState: Switch = isSomeOn ? Switch.ON : Switch.OFF;
+
+    if (this.state.switch === nextState) {
+      return;
+    }
+
+    logger('The internal state has been changed because one of the managed controls has changed state 🍋');
+    logger(
+      stringify({
+        name: this.name,
+        isSomeOn,
+        nextState,
+        lightings: this.settings.devices.lightings.map((lighting) => {
+          return {
+            value: this.controls.get(getControlId(lighting))?.value,
+          };
+        }),
+        state: this.state,
+      }),
+    );
+
+    this.state.switch = nextState;
+  };
+
+  private collectIllumination = () => {
+    const { detection } = this.settings.properties.illumination;
+    const { illuminations } = this.settings.devices;
+
+    this.state.illumination = this.getValueByDetection(illuminations, detection);
+  };
+
+  private collectMotion = () => {
+    this.state.motion = this.getValueByDetection(
+      this.settings.devices.motion,
+      this.settings.properties.motion.detection,
+    );
+
+    if (this.state.motion >= this.settings.properties.autoOff.motion) {
+      this.lastMotionDetected = new Date();
+    }
+  };
+
+  private collectNoise = () => {
+    this.state.noise = this.getValueByDetection(this.settings.devices.noise, this.settings.properties.noise.detection);
+
+    if (this.state.noise >= this.settings.properties.autoOff.noise) {
+      this.lastNoseDetected = new Date();
+    }
+  };
+
+  protected priorityComputation = () => {
     if (this.state.force !== 'UNSPECIFIED') {
       const control = this.getFirstLightingControl();
 
@@ -520,7 +595,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         nextSwitchState = Switch.OFF;
       }
 
-      this.computeOutput();
+      this.output();
 
       if (this.nextOutput.lightings.length > 0) {
         logger('The force state was determined 🫡 😡 😤 🚀');
@@ -535,7 +610,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
         this.state.switch = nextSwitchState;
 
-        this.applyOutput();
+        this.send();
       }
 
       return true;
@@ -544,32 +619,23 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  /**
-   * ! INPUT
-   */
-  protected applyInput() {
+  protected computation() {
     const currentSwitchState = this.state.switch;
 
-    this.applySwitch();
-    this.applyAutoOn();
-    this.applyAutoOff();
+    this.switch();
+    this.autoOn();
+    this.autoOff();
 
     if (currentSwitchState !== this.state.switch) {
-      this.computeOutput();
-      this.applyOutput();
-
-      return true;
+      this.output();
+      this.send();
     }
-
-    return false;
   }
 
   /**
-   * ! SWITCH
-   *
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
-  private applySwitch = () => {
+  private switch = () => {
     let isSwitchHasBeenChange = false;
     let trigger: Trigger = Trigger.UP;
 
@@ -680,10 +746,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  /**
-   * ! AUTO_ON
-   */
-  private applyAutoOn = () => {
+  private autoOn = () => {
     /**
      * ! Pre flight check
      */
@@ -691,7 +754,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAlreadyOn = this.state.switch === Switch.ON;
     const isIlluminationDetected = this.state.illumination >= 0;
 
-    if (isAutoOnBlocked || isAlreadyOn || !isIlluminationDetected) {
+    if (isAutoOnBlocked || isAlreadyOn) {
       return;
     }
 
@@ -709,8 +772,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     /**
      * ! AutoOn по датчикам освещенности.
      *
-     * * При наличии датчиков движения, освещенность становится фактором блокировки включения,
-     * * то есть пока не потемнеет, группа не будет включена даже если есть движение.
+     * * При наличии датчиков движения, освещенность становится фактором
+     * * блокировки включения, то есть пока не потемнеет, группа не
+     * * будет включена даже если есть движение.
      */
     const autoOnByIllumination =
       hasIlluminationDevice &&
@@ -728,7 +792,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     /**
-     * ! AutoOn по датчикам движения
+     * ! AutoOn по датчикам движения.
      */
     const { trigger, active } = this.settings.properties.autoOn.motion;
 
@@ -795,10 +859,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  /**
-   * ! AUTO_OFF
-   */
-  private applyAutoOff = () => {
+  private autoOff = () => {
     /**
      * ! Pre flight check
      */
@@ -806,7 +867,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAlreadyOff = this.state.switch === Switch.OFF;
     const isIlluminationDetected = this.state.illumination >= 0;
 
-    if (isAutoOffBlocked || isAlreadyOff || !isIlluminationDetected) {
+    if (isAutoOffBlocked || isAlreadyOff) {
       return;
     }
 
@@ -825,7 +886,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     let nextSwitchState: Switch = this.state.switch;
 
     /**
-     * ! AutoOff по датчикам освещенности, как только освещенность превышает заданный порог, группа будет выключена.
+     * ! AutoOff по датчикам освещенности.
+     *
+     * Как только освещенность превышает заданный порог, группа будет выключена.
      *
      * Работает когда имеются датчики освещенности.
      */
@@ -839,7 +902,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     /**
-     * ! AutoOff по датчикам движения и звука, как только пропадает движение и шум группа будет выключена.
+     * ! AutoOff по датчикам движения и звука.
+     *
+     * Как только пропадает движение и шум группа будет выключена.
      *
      * Работает когда имеются датчики движения.
      */
@@ -894,84 +959,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  /**
-   * ! EXTERNAL_VALUE
-   */
-  protected applyExternalValue() {
-    this.applyExternalSwitchersState();
-    this.applyExternalIlluminationSate();
-    this.applyExternalMotionSate();
-    this.applyExternalNoiseSate();
-  }
-
-  private applyExternalSwitchersState = () => {
-    /**
-     * Актуализация состояния освещения по внешнему состоянию каждой группы освещения.
-     */
-    const isSomeOn = this.settings.devices.lightings.some((lighting) => {
-      const control = this.controls.get(getControlId(lighting));
-
-      if (control) {
-        return control.value === control.on;
-      }
-
-      return false;
-    });
-
-    const nextState: Switch = isSomeOn ? Switch.ON : Switch.OFF;
-
-    if (this.state.switch === nextState) {
-      return;
-    }
-
-    logger('The internal state has been changed because one of the managed controls has changed state 🍋');
-    logger(
-      stringify({
-        name: this.name,
-        isSomeOn,
-        nextState,
-        lightings: this.settings.devices.lightings.map((lighting) => {
-          return {
-            value: this.controls.get(getControlId(lighting))?.value,
-          };
-        }),
-        state: this.state,
-      }),
-    );
-
-    this.state.switch = nextState;
-  };
-
-  private applyExternalIlluminationSate = () => {
-    const { detection } = this.settings.properties.illumination;
-    const { illuminations } = this.settings.devices;
-
-    this.state.illumination = this.getValueByDetection(illuminations, detection);
-  };
-
-  private applyExternalMotionSate = () => {
-    this.state.motion = this.getValueByDetection(
-      this.settings.devices.motion,
-      this.settings.properties.motion.detection,
-    );
-
-    if (this.state.motion >= this.settings.properties.autoOff.motion) {
-      this.lastMotionDetected = new Date();
-    }
-  };
-
-  private applyExternalNoiseSate = () => {
-    this.state.noise = this.getValueByDetection(this.settings.devices.noise, this.settings.properties.noise.detection);
-
-    if (this.state.noise >= this.settings.properties.autoOff.noise) {
-      this.lastNoseDetected = new Date();
-    }
-  };
-
-  /**
-   * ! COMPUTE
-   */
-  protected computeOutput() {
+  protected output() {
     const nextOutput: LightingMacrosNextOutput = {
       lightings: [],
     };
@@ -1027,10 +1015,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     );
   }
 
-  /**
-   * ! APPLY
-   */
-  protected applyOutput() {
+  protected send() {
     for (const lighting of this.nextOutput.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
 
@@ -1073,16 +1058,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   }
 
-  /**
-   * ! DESTROY
-   */
   protected destroy() {
     clearInterval(this.clock);
   }
-
-  /**
-   * ! INTERNAL_IMPLEMENTATION
-   */
 
   protected isSwitchHasBeenUp(): boolean {
     return super.isSwitchHasBeenUp(this.settings.devices.switchers);
@@ -1091,49 +1069,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   protected isSwitchHasBeenDown(): boolean {
     return super.isSwitchHasBeenDown(this.settings.devices.switchers);
   }
-
-  private getValueByDetection = (
-    devices: Array<{ deviceId: string; controlId: string }>,
-    detection: LevelDetection,
-  ) => {
-    if (devices.length === 0) {
-      return 0;
-    }
-
-    let result = -1;
-
-    for (const { deviceId, controlId } of devices) {
-      const control = this.controls.get(getControlId({ deviceId, controlId }));
-
-      if (control) {
-        const value = Number(control.value);
-
-        if (result === -1) {
-          result = value;
-
-          continue;
-        }
-
-        if (detection === LevelDetection.MAX && value > result) {
-          result = value;
-        }
-
-        if (detection === LevelDetection.MIN && value < result) {
-          result = value;
-        }
-
-        if (detection === LevelDetection.AVG) {
-          result += value;
-        }
-      }
-    }
-
-    if (detection === LevelDetection.AVG) {
-      result = result / devices.length;
-    }
-
-    return result;
-  };
 
   private getFirstLightingControl = () => {
     let control: HyperionDeviceControl | undefined;
@@ -1289,8 +1224,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           }),
         );
 
-        this.computeOutput();
-        this.applyOutput();
+        this.output();
+        this.send();
       }
     }
   };

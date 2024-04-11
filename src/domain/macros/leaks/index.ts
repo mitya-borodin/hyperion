@@ -266,17 +266,15 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   setState = (nextPublicState: string): void => {};
 
-  protected applyPublicState = () => {
+  protected priorityComputation = () => {
     return false;
   };
 
-  protected applyInput = () => {
-    return false;
-  };
+  protected computation = () => {};
 
-  protected applyExternalValue() {}
+  protected collecting() {}
 
-  protected computeOutput = (value: string) => {
+  protected output = (value: string) => {
     const nextOutput: LeaksMacrosNextOutput = {
       analog: undefined,
       phase: undefined,
@@ -294,7 +292,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     );
   };
 
-  protected applyOutput = () => {};
+  protected send = () => {};
 
   protected destroy() {}
 

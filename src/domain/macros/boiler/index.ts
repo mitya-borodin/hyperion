@@ -195,17 +195,15 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
 
   setState = (nextPublicState: string): void => {};
 
-  protected applyPublicState = () => {
+  protected priorityComputation = () => {
     return false;
   };
 
-  protected applyInput = () => {
-    return false;
-  };
+  protected computation = () => {};
 
-  protected applyExternalValue() {}
+  protected collecting() {}
 
-  protected computeOutput = (value: string) => {
+  protected output = (value: string) => {
     const nextOutput: BoilerMacrosNextOutput = {
       pump: undefined,
       heat: [],
@@ -223,7 +221,7 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
     );
   };
 
-  protected applyOutput = () => {};
+  protected send = () => {};
 
   protected destroy() {}
 
