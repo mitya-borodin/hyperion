@@ -5,16 +5,20 @@
     "CoverMacrosPublicState": {
       "type": "object",
       "properties": {
-        "state": {
+        "cover": {
           "$ref": "#/definitions/CoverState",
           "description": "Текущее состояние крышки."
+        },
+        "prevCover": {
+          "$ref": "#/definitions/CoverState",
+          "description": "Предыдущее состояние крышки."
         },
         "position": {
           "type": "number",
           "description": "Положение шторы, от 0 до 100.\n\nПо умолчанию 100 - открыто, 0 - закрыто.\n\nРеверс настраивается на самом устройстве, а так же можно выполнить реверс через настройки, путем указания параметров CoverMacrosSettings.position.open и CoverMacrosSettings.position.close\n\nВозможно для каждой шторы задать значение открытого и закрытого положения, исходя из этого макросу будет понятно, в каком направлении двигать штору.\n\nНужно иметь в виду, что при подключении привода, ему нужно указать где начало и где границы открывания/закрывания, а так же направление, и желательно задавать значение по умолчанию."
         }
       },
-      "required": ["state", "position"],
+      "required": ["cover", "prevCover", "position"],
       "additionalProperties": false,
       "description": "! STATE"
     },
