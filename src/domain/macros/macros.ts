@@ -490,6 +490,10 @@ export abstract class Macros<
     return nowMs >= fromMs && nowMs <= toMs;
   }
 
+  protected getDateInClientTimeZone = () => {
+    return utcToZonedTime(new Date(), config.client.timeZone);
+  };
+
   protected getValueByDetection = (
     devices: Array<{ deviceId: string; controlId: string }>,
     detection: LevelDetection,

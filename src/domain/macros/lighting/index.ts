@@ -295,6 +295,23 @@ export type LightingMacrosSettings = {
  */
 
 /**
+ * ! PUBLIC STATE
+ */
+
+export enum LightingForce {
+  ON = 'ON',
+  OFF = 'OFF',
+  UNSPECIFIED = 'UNSPECIFIED',
+}
+
+/**
+ * Состояние макроса которое может изменить пользователь
+ */
+export type LightingMacrosPublicState = {
+  force: LightingForce;
+};
+
+/**
  * ! PRIVATE STATE
  */
 
@@ -314,27 +331,10 @@ type LightingMacrosPrivateState = {
 };
 
 /**
- * ! PUBLIC STATE
- */
-
-export enum LightingForce {
-  ON = 'ON',
-  OFF = 'OFF',
-  UNSPECIFIED = 'UNSPECIFIED',
-}
-
-/**
- * Состояние макроса которое может изменить пользователь
- */
-export type LightingMacrosPublicState = {
-  force: LightingForce;
-};
-
-/**
  * ! FULL STATE
  */
 
-type LightingMacrosState = LightingMacrosPrivateState & LightingMacrosPublicState;
+type LightingMacrosState = LightingMacrosPublicState & LightingMacrosPrivateState;
 
 /**
  * ! OUTPUT
@@ -531,7 +531,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       return;
     }
 
-    logger('The internal state has been changed because one of the managed controls has changed state 🍋');
+    logger('The lighting internal state has been changed🍋');
     logger(
       stringify({
         name: this.name,
@@ -641,13 +641,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
     if (this.settings.properties.switcher.trigger === Trigger.UP) {
       isSwitchHasBeenChange = this.isSwitchHasBeenUp();
-
       trigger = Trigger.UP;
     }
 
     if (this.settings.properties.switcher.trigger === Trigger.DOWN) {
       isSwitchHasBeenChange = this.isSwitchHasBeenDown();
-
       trigger = Trigger.DOWN;
     }
 
