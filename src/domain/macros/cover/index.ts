@@ -1197,13 +1197,15 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     let nextCoverState = this.state.cover;
 
     if (toOpen) {
-      this.state.prevCover = this.state.cover;
       nextCoverState = CoverState.OPEN;
     }
 
     if (toClose) {
-      this.state.prevCover = this.state.cover;
       nextCoverState = CoverState.CLOSE;
+    }
+
+    if (this.isBlockedByTimeRange(nextCoverState)) {
+      return;
     }
 
     if (this.state.cover !== nextCoverState) {
@@ -1216,6 +1218,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         }),
       );
 
+      this.state.prevCover = this.state.cover;
+      this.state.cover = nextCoverState;
+
       this.output();
       this.send();
     }
@@ -1224,9 +1229,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   /**
    * Автоматизации по датчикам.
    */
-  private sensors = () => {
-
-  };
+  private sensors = () => {};
 
   protected output = () => {
     this.nextOutput = {
