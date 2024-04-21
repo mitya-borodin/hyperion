@@ -21,7 +21,7 @@ enum LevelDetection {
   AVG = 'AVG',
 }
 
-type SettingsTo3 = {
+export type SettingsTo3 = {
   readonly devices: {
     readonly switchers: Array<{
       readonly deviceId: string;

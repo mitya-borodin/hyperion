@@ -434,7 +434,7 @@ export type CoverMacrosSettings = {
      * как только освещение упадет до нужного порога открыть штору
      * [закрыть при 3000 при открытой шторе, открыть при 300 при закрытой шторе ].
      */
-    readonly switchingBoundaries: [number, number][];
+    readonly boundaries: [number, number][];
 
     /**
      * Если true, то при полной тишине операция OPEN будет заблокирована до
@@ -1229,7 +1229,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   /**
    * Автоматизации по датчикам.
    */
-  private sensors = () => {};
+  private sensors = () => {
+    /**
+     * TODO Реализовать автоматизации работающие по сенсорам
+     */
+  };
 
   protected output = () => {
     this.nextOutput = {
