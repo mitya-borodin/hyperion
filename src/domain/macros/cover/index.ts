@@ -1,16 +1,22 @@
+/* eslint-disable prefer-const */
 /* eslint-disable unicorn/no-array-reduce */
 /* eslint-disable unicorn/no-empty-file */
-import { addMinutes, format } from 'date-fns';
+import { addMinutes, compareAsc, format } from 'date-fns';
 import debug from 'debug';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
+import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { ControlType } from '../../control-type';
 import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
 const logger = debug('hyperion:macros:cover');
+
+/**
+ * TODO Добавить блокировку открывания, по датчиком открытия окна.
+ */
 
 /**
  * ! SETTINGS
@@ -106,27 +112,43 @@ export enum Computation {
  *  Времени
  *
  * * 1. Блокировка действий по времени
+ *
  * Позволяет заблокировать изменение состояния шторы в заданном временном диапазоне.
  *
- * Возможно указать какое именно действие блокировать, [[OPEN, 23, 9], [CLOSE, 11,16], [ANY, 21-22]].
+ * Возможно указать какое именно действие блокировать:
+ * [
+ *  {type: "OPEN", fromMin: 23 * 60, toMin: 9 * 60 },
+ *  {type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 },
+ *  {type: "ANY", fromMin: 21 * 60, toMin: 22 * 60 }
+ * ]
  *
  * Это полезно когда нужно приостановить выполнение автоматических функций.
  *
  * В случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до
- * 10 дня, мы зададим [[OPEN, 0, 10]].
- * В случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [[CLOSE, 11,16]].
- * В случае когда мы хотим запретить все автоматические действия, скажем перед сном [[ANY, 20,23]].
+ * 10 дня, мы зададим [{type: "OPEN", fromMin: 0 * 60, toMin: 10 * 60 }].
  *
- * В результате мы получим настройку [[OPEN, 0, 10], [CLOSE, 10,16], [ALL, 20,23]].
+ * В случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим
+ * [{type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 }].
  *
- * Нужно понимать, что это специализированная настройка и за частую управление шторами
- * будет происходит по освещенности + движение и шум.
+ * В случае когда мы хотим запретить все автоматические действия, скажем перед сном
+ * [{type: "ANY", fromMin: 20 * 60, toMin: 23 * 60 }].
  *
- * * 2. Открыть/Закрыть/Остановить через кнопку либо через реальную либо через виртуальную.
+ * В результате мы получим настройку
+ * [
+ *  {type: "OPEN", fromMin: 0 * 60, toMin: 10 * 60 },
+ *  {type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 },
+ *  {type: "ANY", fromMin: 20 * 60, toMin: 23 * 60 }
+ * ]
+ *
+ * Это базовая настройка, задается для:
+ * - Предотвращения не нужных переключений утром и ночью.
+ * - Для обеспечения достаточного времени инсоляции.
+ *
+ * * 2. Открыть/Остановить/Закрыть через кнопку либо через реальную либо через виртуальную.
  * Классический способ переключать состояние шторы, при котором нужно нажимать на кнопку.
  *
- * Способ является приоритетным над всеми остальными, и может выставлять блокировку на изменения
- *  состояния, на заданное время.
+ * Способ является приоритетным над всеми остальными, и может выставлять блокировку
+ * на изменения состояния, на заданное время.
  *
  * То есть в случае открывания/закрывания кнопкой, штора в любом случае изменит состояние,
  *  и автоматические действия будут заблокированы на время указанное в настройках.
@@ -137,390 +159,377 @@ export enum Computation {
  * Нажимая на неё через приложение, все шторы будут получать команды.
  *
  * * 3. Открыть по геркону
- * Позволяет начать открывать шторы при отрывании двери, окна, и других открывающихся конструкций.
+ * Позволяет начать открывать шторы при отрывании двери.
  *
- * Может работать совместно с датчиком освещенности, и при превышении
- * указанной освещенности начинать открывать штору в момент срабатывания геркона.
- *
- * Например в случае открывания двери в котельную, в которой весит штора, открываем дверь,
- * и ждем пока откроется штора.
- *
- * Например утром (освещение выше уставки) при выходе из любой комнаты начинают открываться прихожая и гостиная.
- * Нужно понимать, что при каждом открывании двери будут срабатывать этот сценарий, пытающийся открыть шторы, но
- * его могут блокировать другие условия.
+ * Открывание шторы блокируется датчиком освещенности.
  *
  * * 4. Открыть/Закрыть по времени
- * Второй по приоритетности переключатель состояния после ручного нажатия на кнопку.
- *
  * Позволяет указать в какой час нужно изменить состояние шторы.
- *
- * Можно задать по действию на каждый час.
  *
  * {
  *   direction: "OPEN",
  *   blockMin: 2 * 60,
- *   mins: [1 * 60,4 * 60,6 * 60,8 * 60]
+ *   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60]
  * }
- * Штора будет пытаться открыться в час ночи, в 4, 6, 8
- * утра причем после каждой попытки будут блокироваться
- * автоматические действия на заданное время.
+ * Штора будет пытаться открыться в 1, 4, 6, 8 часов
+ * и после каждой попытки будут блокироваться автоматические
+ * действия на заданное время.
  *
  * {
  *  direction: "CLOSE",
  *  blockMin: 8 * 60,
- *  mins: [18 * 60,20 * 60,0 * 60]
+ *  timePointMin: [18 * 60,20 * 60,0 * 60]
  * }
  * Штора будет пытаться закрыться в 18, 20, 0, часов
- * причем после каждой попытки будут блокироваться автоматические
+ * и после каждой попытки будут блокироваться автоматические
  * действия на заданное время.
  *
  * При пересечении времени, приоритет будет отдан операции CLOSE.
  *
  * * 5. Открыть/Закрыть по освещенности
- * Позволяет указать пороги освещенности после которых нужно изменить состояние шторы.
+ * Позволяет указать пороги освещенности при переходе через которые изменяется
+ * состояние шторы.
  *
- * Порог задается кортежем [CLOSE, OPEN], можно задать несколько пороговых значений [[25, 150], [3000, 300]].
+ * Порог задается списком [{closeLux, openLux}], можно задать несколько пороговых
+ * значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].
  *
- * Если значение CLOSE < OPEN, то при освещении меньше (<) CLOSE штора будет закрываться,
- * а при значении больше (>) OPEN будет открываться.
+ * Если значение closeLux < openLux, то при освещении меньше (<) closeLux штора
+ * будет закрываться, а при значении больше (>) openLux будет открываться.
  *
- * Если значение CLOSE > OPEN, то при освещении больше (>) CLOSE штора будет закрываться,
- * а при значении меньше (<) OPEN будет открываться.
+ * Если значение closeLux > openLux, то при освещении больше (>) closeLux штора
+ * будет закрываться, а при значении меньше (<) openLux будет открываться.
  *
- * Нужно понимать, то, что когда штора закрыта, сила солнечного освещения сильно меньше, и при пусконаладке
- * нужно определить какое освещение при закрытой шторе будет подходящим для изменения состояния.
+ * Значение closeLux указывается при открытой шторе.
+ * Значение openLux указывается при закрытой шторе, в случае включенного
+ * освещения, значение увеличивается в mul раза.
+ * Значение mul задается дробным числом (float).
  *
- * Пуска наладку сложно сделать непосредственно в день окончания монтажа, по
- * этому пользователю будет выдана инструкция о том как регулировать значения освещенности.
+ * Регулировка уровней освещенности, может производиться пользователем,
+ * в процесс эксплуатации, чтобы учесть значения в разные
+ * (солнечные, пасмурные, дождливые) дни.
  *
- * Приоритет отдается закрытию, проверяются все диапазоны, и если в каком либо есть закрытие, то случится оно.
+ * Приоритет отдается закрытию.
+ *
+ * Открывание блокируется полной тишиной.
  *
  * Например:
- * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно происходящего внутри
- *   [ при 25 закрыть, при 150 открыть], а как только солнце взойдет и освещение при закрытой шторе
- *   станет выше уставки, можно пытаться открыть штору.
- * - Солнце взошло или тучи рассеялись после сумерек, стоит открыть шторы для инсоляции помещения
- *   [ закрыть при 100 при открытой шторе, открыть при 150 при закрытой шторе].
- * - Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и как только освещение упадет
- *   до нужного порога открыть штору [закрыть при 3000 при открытой шторе, открыть при 300 при
- *   закрытой шторе ].
+ * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно
+ * происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть],
+ * а как только солнце взойдет и освещение при закрытой шторе станет выше
+ * уставки, можно пытаться открыть штору.
  *
- * * 6. Открывание/Закрывание по датчику движения и/или шуму.
- *  Дополняет изменение состояние шторы по освещенности, позволяет НЕ открывать шторы,
- *  пока не появится движение и/или шум, даже когда освещение достаточно для открывания.
+ * - Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и
+ * как только освещение упадет до нужного порога открыть штору [закрыть
+ * при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при
+ * закрытой шторе ].
  *
- *  Позволяет при достаточном освещении открыть шторы в нужных места при появлении движения
- *  либо шума на указанных датчиках, свыше указанных значений.
+ * * 6. Движение и шум
+ * Блокирует открывание по освещенности, в случае полной тишины.
  *
- * * 7. Закрыть по солнечной активности или освещенности движению, шуму и температуре
- * В солнечные дни в комнату может проникать слишком много тепла от солнца
- * и эта автоматизация даст возможность прикрыть штору, если в помещении
- * выросла температура при высокой освещенности.
+ * Дополнительные данные, позволяют определять полную тишину.
  *
- * Позволяет закрыть штору если освещенность выше установленного порога, установилась
- * полная тишина ни движения ни шума дольше заданного промежутка скажем 1 час,
- * температура выше заданной уставки.
+ * При нарушении тишины и достаточной освещенности, штора откроется.
  *
- * Позволяет закрыть штору не полностью, а прикрыть на нужную величину.
+ * * 7. Закрыть по солнечной активности
+ * Позволяет закрыть штору, если освещенность, температура
+ * выше уставок и установилась полная тишина.
  */
 export type CoverMacrosSettings = {
-  /**
-   * Включает в себя все типы переключателей, кнопки,
-   *  виртуальные кнопки, герконы.
-   */
-  readonly switchers: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
-  }>;
-
-  /**
-   * Группы освещения, возле датчика освещения.
-   *
-   * Позволяет понять, включено ли освещение.
-   */
-  readonly lightings: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
-  }>;
-
-  readonly illuminations: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.ILLUMINATION;
-  }>;
-
-  readonly motions: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.VALUE;
-  }>;
-
-  readonly noises: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SOUND_LEVEL;
-  }>;
-
-  readonly temperatures: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.TEMPERATURE;
-  }>;
-
-  /**
-   * Контрол переключения состояния шторы.
-   */
-  readonly states: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.ENUM;
+  readonly devices: {
     /**
-     * Выбирается пользователем из enum который предоставляет устройство.
+     * Включает в себя все типы переключателей, кнопки,
+     *  виртуальные кнопки, герконы.
      */
-    readonly open: string;
-    /**
-     * Выбирается пользователем из enum который предоставляет устройство.
-     */
-    readonly close: string;
-    /**
-     * Выбирается пользователем из enum который предоставляет устройство.
-     */
-    readonly stop: string;
-  }>;
-
-  /**
-   * Контрол позволяет увидеть положение шторы после окончания
-   * движения, и задать то положение в которое должна прийти штора.
-   */
-  readonly positions: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.VALUE;
-    /**
-     * Значение при полностью открытом положении
-     */
-    readonly open: number;
-    /**
-     * Значение при полностью закрытом положении
-     */
-    readonly close: number;
-  }>;
-
-  readonly switcher: {
-    /**
-     * Позволяет указать, на какое состояние переключателя реагировать, верхнее или нижнее.
-     */
-    readonly trigger: Trigger;
+    readonly switchers: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    }>;
 
     /**
-     * Позволяет разделить приоритет на типы переключателей.
-     */
-    readonly type: SwitchType;
-
-    /**
-     * Позволяет заблокировать все автоматические действия на заданное время.
+     * Группы освещения, возле датчика освещения.
      *
-     * Если указать 0 минут, то блокировка не включится.
+     * Позволяет понять, включено ли освещение.
      */
-    readonly blockMin: number;
+    readonly lightings: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    }>;
+
+    readonly illuminations: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.ILLUMINATION;
+    }>;
+
+    readonly motions: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.VALUE;
+    }>;
+
+    readonly noises: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SOUND_LEVEL;
+    }>;
+
+    readonly temperatures: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.TEMPERATURE;
+    }>;
 
     /**
-     * Уровень освещенности выше которого случится открывание шторы.
-     *
-     * Если указать значение меньше (<) 0 (например -1), то освещенность
-     * учитываться не будет, и переключатель будет каждый раз
-     * открывать штору.
-     *
-     * Если указать большое значение больше 100_000, то данный переключатель
-     * никогда не откроет штору, так как значение освещенности
-     * никогда не будет достигнуто.
-     *
-     * Имеет смысл опытным путем определить какое освещение достаточно
-     * при закрытой шторе, чтобы открыть штору, нужно проверить
-     * это значение и в пасмурный день.
-     *
-     * Если указаны группы освещения, то при включенном освещение
-     * значение будет умножено на 2.
+     * Контрол переключения состояния шторы.
      */
-    readonly illumination: number;
+    readonly states: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.ENUM;
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly open: string;
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly close: string;
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly stop: string;
+    }>;
+
+    /**
+     * Контрол позволяет увидеть положение шторы после окончания
+     * движения, и задать то положение в которое должна прийти штора.
+     */
+    readonly positions: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.VALUE;
+      /**
+       * Значение при полностью открытом положении
+       */
+      readonly open: number;
+      /**
+       * Значение при полностью закрытом положении
+       */
+      readonly close: number;
+    }>;
   };
 
-  /**
-   * Позволяет заблокировать изменение состояния шторы в заданном временном диапазоне.
-   *
-   * Возможно указать какое именно действие блокировать, [[OPEN, 23, 9], [CLOSE, 11,16], [ANY, 21-22]].
-   *
-   * Это полезно когда нужно приостановить выполнение автоматических функций.
-   *
-   * В случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до
-   * 10 дня, мы зададим [[OPEN, 0, 10]].
-   * В случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [[CLOSE, 11,16]].
-   * В случае когда мы хотим запретить все автоматические действия, скажем перед сном [[ANY, 20,23]].
-   *
-   * В результате мы получим настройку [[OPEN, 0, 10], [CLOSE, 10,16], [ALL, 20,23]].
-   *
-   * Нужно понимать, что это специализированная настройка и за частую управление шторами
-   * будет происходит по освещенности + движение и шум.
-   */
-  readonly blocks: [BlockType, number, number][];
-
-  /**
-   * Второй по приоритетности переключатель состояния после ручного
-   * нажатия на кнопку.
-   *
-   * Позволяет указать в какой час нужно изменить состояние шторы.
-   *
-   * Можно задать по действию на каждый час.
-   *
-   * {
-   *   direction: "OPEN",
-   *   blockMin: 2 * 60,
-   *   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60]
-   * }
-   * Штора будет пытаться открыться в час ночи, в 4, 6, 8
-   * утра причем после каждой попытки будут блокироваться
-   * автоматические действия на заданное время.
-   *
-   * {
-   *  direction: "CLOSE",
-   *  blockMin: 8 * 60,
-   *  timePointMin: [18 * 60,20 * 60,0 * 60]
-   * }
-   * Штора будет пытаться закрыться в 18, 20, 0, часов
-   * причем после каждой попытки будут блокироваться автоматические
-   * действия на заданное время.
-   *
-   * При пересечении времени, приоритет будет отдан операции CLOSE.
-   */
-  readonly openCloseByTime: Array<{
-    direction: OpenCloseByTimeDirection;
-    blockMin: number;
-    timePointMin: number[];
-  }>;
-
-  readonly illumination: {
-    readonly detection: LevelDetection;
+  readonly properties: {
+    /**
+     * * 1. Блокировка действий по времени
+     *
+     * Позволяет заблокировать изменение состояния шторы в заданном
+     * временном диапазоне.
+     *
+     * Возможно указать какое именно действие блокировать:
+     * [
+     *  {type: "OPEN", fromMin: 23 * 60, toMin: 9 * 60 },
+     *  {type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 },
+     *  {type: "ANY", fromMin: 21 * 60, toMin: 22 * 60 }
+     * ]
+     *
+     * Это полезно когда нужно приостановить выполнение автоматических
+     * функций.
+     *
+     * В случае когда мы не хотим открывать штору с ночи до определенно
+     * времени дня например гарантированно до 10 дня, мы зададим
+     * [{type: "OPEN", fromMin: 0 * 60, toMin: 10 * 60 }].
+     *
+     * В случае когда мы гарантированно не хотим закрывать шторы в середине
+     * дня, мы зададим
+     * [{type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 }].
+     *
+     * В случае когда мы хотим запретить все автоматические действия,
+     * скажем перед сном
+     * [{type: "ANY", fromMin: 20 * 60, toMin: 23 * 60 }].
+     *
+     * В результате мы получим настройку
+     * [
+     *  {type: "OPEN", fromMin: 0 * 60, toMin: 10 * 60 },
+     *  {type: "CLOSE", fromMin: 11 * 60, toMin: 16 * 60 },
+     *  {type: "ANY", fromMin: 20 * 60, toMin: 23 * 60 }
+     * ]
+     *
+     * Это базовая настройка, задается для:
+     * - Предотвращения не нужных переключений утром и ночью.
+     * - Для обеспечения достаточного времени инсоляции.
+     */
+    readonly blocks: Array<{ type: BlockType; fromMin: number; toMin: number }>;
 
     /**
-     * Диапазоны освещенности для закрывания и открывания шторы.
+     * * 2. Открыть/Остановить/Закрыть через кнопку либо через реальную
+     * * либо через виртуальную.
+     * Классический способ переключать состояние шторы, при котором нужно
+     * нажимать на кнопку.
      *
-     * Порог задается кортежем [CLOSE, OPEN], можно задать несколько
-     * пороговых значений [[25, 150], [3000, 200], [300, 500]].
+     * Способ является приоритетным над всеми остальными, и может
+     * выставлять блокировку на изменения состояния, на заданное время.
      *
-     * Если значение CLOSE < OPEN, то при освещении меньше (<) CLOSE
-     * штора будет закрываться, а при значении больше (>) OPEN будет
-     * открываться.
+     * То есть в случае открывания/закрывания кнопкой, штора в любом
+     * случае изменит состояние, и автоматические действия будут
+     * заблокированы на время указанное в настройках.
      *
-     * Если значение CLOSE > OPEN, то при освещении больше (>) CLOSE
-     * штора будет закрываться, а при значении меньше (<) OPEN
-     * будет открываться.
+     * Чтобы реализовать функциональность открыть/закрыть все шторы,
+     * нужно сделать экземпляр макроса, куда добавить одну
+     * виртуальную кнопу и все шторы.
+     *
+     * Нажимая на неё через приложение, все шторы будут получать команды.
+     *
+     * * 3. Открыть по геркону
+     * Позволяет начать открывать шторы при отрывании двери.
+     *
+     * Открывание шторы блокируется датчиком освещенности.
+     */
+    readonly switcher: {
+      /**
+       * Позволяет указать, на какое состояние переключателя реагировать, верхнее или нижнее.
+       */
+      readonly trigger: Trigger;
+
+      /**
+       * Позволяет разделить приоритет на типы переключателей.
+       */
+      readonly type: SwitchType;
+
+      /**
+       * Позволяет заблокировать все автоматические действия на заданное время.
+       *
+       * Если указать 0 минут, то блокировка не включится.
+       */
+      readonly blockMin: number;
+    };
+
+    /**
+     * * 4. Открыть/Закрыть по времени
+     * Позволяет указать в какой час нужно изменить состояние шторы.
+     *
+     * {
+     *   direction: "OPEN",
+     *   blockMin: 2 * 60,
+     *   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60]
+     * }
+     * Штора будет пытаться открыться в 1, 4, 6, 8 часов
+     * и после каждой попытки будут блокироваться автоматические
+     * действия на заданное время.
+     *
+     * {
+     *  direction: "CLOSE",
+     *  blockMin: 8 * 60,
+     *  timePointMin: [18 * 60,20 * 60,0 * 60]
+     * }
+     * Штора будет пытаться закрыться в 18, 20, 0, часов
+     * и после каждой попытки будут блокироваться автоматические
+     * действия на заданное время.
+     *
+     * При пересечении времени, приоритет будет отдан операции CLOSE.
+     */
+    readonly openCloseByTime: Array<{
+      direction: OpenCloseByTimeDirection;
+      blockMin: number;
+      timePointMin: number[];
+    }>;
+
+    /**
+     * * 5. Открыть/Закрыть по освещенности
+     * Позволяет указать пороги освещенности при переходе через которые изменяется
+     * состояние шторы.
+     *
+     * Порог задается списком [{closeLux, openLux}], можно задать несколько пороговых
+     * значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].
+     *
+     * Если значение closeLux < openLux, то при освещении меньше (<) closeLux штора
+     * будет закрываться, а при значении больше (>) openLux будет открываться.
+     *
+     * Если значение closeLux > openLux, то при освещении больше (>) closeLux штора
+     * будет закрываться, а при значении меньше (<) openLux будет открываться.
+     *
+     * Значение closeLux указывается при открытой шторе.
+     * Значение openLux указывается при закрытой шторе, в случае включенного
+     * освещения, значение увеличивается в mul раза.
+     * Значение mul задается дробным числом (float).
+     *
+     * Регулировка уровней освещенности, может производиться пользователем,
+     * в процесс эксплуатации, чтобы учесть значения в разные
+     * (солнечные, пасмурные, дождливые) дни.
      *
      * Приоритет отдается закрытию.
-     * Проверяются все диапазоны, и если в каком либо есть закрытие, то случится оно.
+     *
+     * Открывание блокируется полной тишиной.
      *
      * Например:
-     * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не
-     * было видно происходящего внутри [ при 25 закрыть, при 150 открыть],
-     * а как только солнце взойдет и освещение при закрытой шторе станет
-     * выше уставки, можно пытаться открыть штору.
-     *
-     * - Солнце взошло или тучи рассеялись после сумерек, стоит открыть шторы
-     * для инсоляции помещения [ закрыть при 100 при открытой шторе, открыть
-     * при 150 при закрытой шторе].
+     * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно
+     * происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть],
+     * а как только солнце взойдет и освещение при закрытой шторе станет выше
+     * уставки, можно пытаться открыть штору.
      *
      * - Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и
-     * как только освещение упадет до нужного порога открыть штору
-     * [закрыть при 3000 при открытой шторе, открыть при 300 при закрытой шторе ].
+     * как только освещение упадет до нужного порога открыть штору [закрыть
+     * при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при
+     * закрытой шторе ].
      */
-    readonly boundaries: [number, number][];
+    readonly illumination: {
+      readonly detection: LevelDetection;
+      readonly boundaries: Array<{ closeLux: number; openLux: number }>;
+      readonly mul: number;
+    };
 
     /**
-     * Если true, то при полной тишине операция OPEN будет заблокирована до
-     * нарушения тишины.
+     * * 6. Движение и шум
+     * Блокирует открывание по освещенности, в случае полной тишины.
+     *
+     * Дополнительные данные, позволяют определять полную тишину.
+     *
+     * При нарушении тишины и достаточной освещенности, штора откроется.
      */
-    readonly blockTheOpenWhileFullSilent: boolean;
-  };
+    readonly motion: {
+      readonly detection: LevelDetection;
 
-  readonly motion: {
-    readonly detection: LevelDetection;
+      /**
+       * Задает чувствительность к движению.
+       */
+      readonly trigger: number;
+    };
 
-    /**
-     * Задает чувствительность к движению.
-     */
-    readonly trigger: number;
+    readonly noise: {
+      readonly detection: LevelDetection;
 
-    /**
-     * Значение освещенности, превышение которого позволяет открывать
-     * штору при появлении движения.
-     */
-    readonly illumination: number;
-  };
+      /**
+       * Задает чувствительность к шуму.
+       */
+      readonly trigger: number;
+    };
 
-  readonly noise: {
-    readonly detection: LevelDetection;
-
-    /**
-     * Задает чувствительность к шуму.
-     */
-    readonly trigger: number;
-
-    /**
-     * Значение освещенности, превышение которого позволяет открывать
-     * штору при появлении шума.
-     */
-    readonly illumination: number;
-  };
-
-  readonly temperature: {
-    readonly detection: LevelDetection;
-  };
-
-  /**
-   * Определение полной тишины.
-   *
-   * Значение задается в минутах.
-   *
-   * Если > 0, то в случае отсутствия шума и движения группа
-   * будет активен фактор закрытия по движению и шуму.
-   *
-   * Если указать <= 0, то фактор закрывания по шуму и движению
-   * отключается.
-   */
-  readonly silenceMin: number;
-
-  /**
-   * Автоматическое закрытие шторы, по высокой солнечной
-   * активности.
-   */
-  readonly closeBySun: {
-    /**
-     * Если освещенность выше заданного порога, то активируется закрытие/открытие
-     * шторы по солнцу.
-     */
-
-    readonly illumination: number;
-    /**
-     * Если температура превысила уставку и установилась полная тишина,
-     * то штора закрывается до указанного положения.
-     */
-
-    readonly temperature: number;
     /**
      * Определение полной тишины.
      *
      * Значение задается в минутах.
      *
-     * Если > 0, то в случае отсутствия шума и движения группа
-     * будет активен фактор закрытия по движению и шуму.
+     * Если > 0, то в случае отсутствия шума и движения
+     * устанавливается полная тишина.
      *
-     * Если указать <= 0, то фактор закрывания по шуму и движению
-     * отключается.
+     * Если указать <= 0, то полная тишина устанавливаться не будет.
      */
     readonly silenceMin: number;
 
-    readonly position: number;
+    readonly temperature: {
+      readonly detection: LevelDetection;
+    };
+
+    /**
+     * * 7. Закрыть по солнечной активности
+     * Позволяет закрыть штору, если освещенность и температура выше уставок.
+     */
+    readonly closeBySun: {
+      readonly illumination: number;
+      readonly temperature: number;
+    };
   };
 };
 
@@ -607,7 +616,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private block = {
     open: new Date(),
     close: new Date(),
-    all: new Date(),
   };
 
   private timer: NodeJS.Timeout;
@@ -726,8 +734,110 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectTemperature();
   }
 
+  private get isIlluminationReady() {
+    const { boundaries, mul } = this.settings.properties.illumination;
+    const { illumination } = this.state;
+
+    return (
+      illumination > 0 &&
+      boundaries.some(({ closeLux, openLux }) => {
+        if (closeLux < 0 || openLux < 0) {
+          return false;
+        }
+
+        return false;
+      }) &&
+      mul > 0
+    );
+  }
+
+  private get isEnoughLightingToOpen(): boolean {
+    /**
+     * Реализация приоритета закрывания.
+     */
+    if (this.isEnoughLightingToClose) {
+      return false;
+    }
+
+    const { boundaries, mul } = this.settings.properties.illumination;
+    const { lighting, illumination } = this.state;
+
+    if (this.isIlluminationReady) {
+      return boundaries.some(({ closeLux, openLux }) => {
+        if (openLux > closeLux) {
+          return illumination >= openLux * (lighting === Lighting.ON ? mul : 1);
+        }
+
+        if (closeLux > openLux) {
+          return illumination <= openLux * (lighting === Lighting.ON ? mul : 1);
+        }
+
+        return false;
+      });
+    }
+
+    return false;
+  }
+
+  private get isEnoughLightingToClose(): boolean {
+    const { boundaries, mul } = this.settings.properties.illumination;
+    const { lighting, illumination } = this.state;
+
+    if (this.isIlluminationReady) {
+      return boundaries.some(({ closeLux, openLux }) => {
+        if (openLux > closeLux) {
+          return illumination <= closeLux * (lighting === Lighting.ON ? mul : 1);
+        }
+
+        if (closeLux > openLux) {
+          return illumination >= closeLux;
+        }
+
+        return false;
+      });
+    }
+
+    return false;
+  }
+
+  private get isSilence(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
+    );
+  }
+
+  private get isSunActive(): boolean {
+    const { closeBySun } = this.settings.properties;
+    const { illumination, temperature } = this.state;
+
+    return (
+      closeBySun.illumination > 0 &&
+      closeBySun.temperature > 0 &&
+      illumination > 0 &&
+      temperature > 0 &&
+      illumination > closeBySun.illumination &&
+      temperature > closeBySun.temperature &&
+      this.isSilence
+    );
+  }
+
+  private get hasOpenBlock(): boolean {
+    return compareAsc(this.block.open, new Date()) === 1;
+  }
+
+  private get hasCloseBlock(): boolean {
+    return compareAsc(this.block.close, new Date()) === 1;
+  }
+
   private collectCurrentCover = () => {
-    const isSomeCoverOpen = this.settings.states.some((state) => {
+    const { states, positions } = this.settings.devices;
+
+    const isSomeCoverOpen = states.some((state) => {
       const control = this.controls.get(getControlId(state));
 
       if (control) {
@@ -737,7 +847,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return false;
     });
 
-    const isSomeCoverClose = this.settings.states.some((state) => {
+    const isSomeCoverClose = states.some((state) => {
       const control = this.controls.get(getControlId(state));
 
       if (control) {
@@ -747,7 +857,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return false;
     });
 
-    const isSomeCoverStop = this.settings.states.some((state) => {
+    const isSomeCoverStop = states.some((state) => {
       const control = this.controls.get(getControlId(state));
 
       if (control) {
@@ -757,7 +867,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return false;
     });
 
-    const isSomePositionOpen = this.settings.positions.some((position) => {
+    const isSomePositionOpen = positions.some((position) => {
       const control = this.controls.get(getControlId(position));
 
       if (control) {
@@ -767,7 +877,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return false;
     });
 
-    const isSomePositionClose = this.settings.positions.some((position) => {
+    const isSomePositionClose = positions.some((position) => {
       const control = this.controls.get(getControlId(position));
 
       if (control) {
@@ -777,7 +887,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return false;
     });
 
-    const isSomePositionStop = this.settings.positions.some((position) => {
+    const isSomePositionStop = positions.some((position) => {
       const control = this.controls.get(getControlId(position));
 
       if (control) {
@@ -809,6 +919,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private collectCover = () => {
+    const { states, positions } = this.settings.devices;
+
     let nextCoverState = CoverState.STOP;
 
     const {
@@ -847,12 +959,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         isSomePositionClose,
         isSomePositionStop,
         nextCoverState,
-        states: this.settings.states.map((state) => {
+        states: states.map((state) => {
           return {
             value: this.controls.get(getControlId(state))?.value,
           };
         }),
-        positions: this.settings.positions.map((position) => {
+        positions: positions.map((position) => {
           return {
             value: this.controls.get(getControlId(position))?.value,
           };
@@ -871,7 +983,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
      * способа управления (web gui, Apple Home Kit, Android Home, Home Assistant,
      * Яндекс Алиса, Apple Siri).
      */
-    this.state.position = this.settings.positions.reduce((accumulator, position, currentIndex, positions) => {
+    this.state.position = positions.reduce((accumulator, position, currentIndex, positions) => {
       const control = this.controls.get(getControlId(position));
 
       if (control) {
@@ -887,7 +999,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private collectLightings = () => {
-    const isLightingOn = this.settings.lightings.some((lighting) => {
+    const { lightings } = this.settings.devices;
+
+    const isLightingOn = lightings.some((lighting) => {
       const control = this.controls.get(getControlId(lighting));
 
       return control?.value === control?.on;
@@ -897,30 +1011,39 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private collectIllumination = () => {
-    this.state.illumination = this.getValueByDetection(
-      this.settings.illuminations,
-      this.settings.illumination.detection,
-    );
+    const { illuminations } = this.settings.devices;
+    const { illumination } = this.settings.properties;
+
+    this.state.illumination = this.getValueByDetection(illuminations, illumination.detection);
   };
 
   private collectMotion = () => {
-    this.state.motion = this.getValueByDetection(this.settings.motions, this.settings.motion.detection);
+    const { motions } = this.settings.devices;
+    const { motion } = this.settings.properties;
 
-    if (this.state.motion >= this.settings.motion.trigger) {
+    this.state.motion = this.getValueByDetection(motions, motion.detection);
+
+    if (this.state.motion >= motion.trigger) {
       this.last.motion = new Date();
     }
   };
 
   private collectNoise = () => {
-    this.state.noise = this.getValueByDetection(this.settings.noises, this.settings.noise.detection);
+    const { noises } = this.settings.devices;
+    const { noise } = this.settings.properties;
 
-    if (this.state.noise >= this.settings.noise.trigger) {
+    this.state.noise = this.getValueByDetection(noises, noise.detection);
+
+    if (this.state.noise >= noise.trigger) {
       this.last.noise = new Date();
     }
   };
 
   private collectTemperature = () => {
-    this.state.temperature = this.getValueByDetection(this.settings.temperatures, this.settings.temperature.detection);
+    const { temperatures } = this.settings.devices;
+    const { temperature } = this.settings.properties;
+
+    this.state.temperature = this.getValueByDetection(temperatures, temperature.detection);
   };
 
   protected priorityComputation = () => {
@@ -930,11 +1053,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   protected computation = () => {
     const previousCoverState = this.state.cover;
 
-    const computation = this.switching();
-
-    if (computation === Computation.CONTINUE) {
-      this.sensors();
-    }
+    this.switching();
+    this.sensors();
 
     if (previousCoverState !== this.state.cover) {
       this.output();
@@ -943,11 +1063,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   /**
-   * Проверка наличия блокировок по времени.
+   * Проверка наличия блокировок.
    */
-  private isBlockedByTimeRange = (nextCoverState: CoverState): boolean => {
-    return this.settings.blocks.some(([type, from, to]) => {
-      if (this.hasHourOverlap(from, to)) {
+  private isBlocked = (nextCoverState: CoverState): boolean => {
+    const { blocks } = this.settings.properties;
+
+    const hasBlockByTimeRange = blocks.some(({ type, fromMin, toMin }) => {
+      if (this.hasHourOverlap(fromMin, toMin, 'min')) {
         if (nextCoverState === CoverState.OPEN && (type === BlockType.OPEN || type === BlockType.ALL)) {
           return true;
         }
@@ -959,17 +1081,31 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       return false;
     });
+
+    if (hasBlockByTimeRange) {
+      return true;
+    }
+
+    if (nextCoverState === CoverState.OPEN && this.hasOpenBlock) {
+      return true;
+    }
+
+    if (nextCoverState === CoverState.CLOSE && this.hasCloseBlock) {
+      return true;
+    }
+
+    return false;
   };
 
   /**
    * Автоматизация по переключателям.
    */
-  private switching = (): Computation => {
-    const { switcher: settings } = this.settings;
+  private switching = (): void => {
+    const { switcher, illumination } = this.settings.properties;
 
     let isSwitchHasBeenChange = false;
 
-    if (settings.trigger === Trigger.UP) {
+    if (switcher.trigger === Trigger.UP) {
       isSwitchHasBeenChange = this.isSwitchHasBeenUp();
 
       if (isSwitchHasBeenChange) {
@@ -977,7 +1113,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }
     }
 
-    if (settings.trigger === Trigger.DOWN) {
+    if (switcher.trigger === Trigger.DOWN) {
       isSwitchHasBeenChange = this.isSwitchHasBeenDown();
 
       if (isSwitchHasBeenChange) {
@@ -1035,38 +1171,28 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }
 
       if (this.state.cover !== nextCoverState) {
-        const isLowPrioritySwitcher = settings.type === SwitchType.SEALED_CONTACT || settings.type === SwitchType.RELAY;
+        const isLowPrioritySwitcher = switcher.type === SwitchType.SEALED_CONTACT || switcher.type === SwitchType.RELAY;
 
         /**
          * Запрет переключения, по средством геркона, реле или других
          * низко приоритетных переключателей, при наличии блокировок.
+         *
+         * ! Реализация приоритета блокировок.
          */
-        if (isLowPrioritySwitcher && this.isBlockedByTimeRange(nextCoverState)) {
-          return Computation.STOP;
+        if (isLowPrioritySwitcher && this.isBlocked(nextCoverState)) {
+          return;
         }
 
         /**
          * Запрет открытия, в случае реакции на геркон, реле или другой низко
          * приоритетный переключатель, при недостаточной освещенности.
+         *
+         * ! Реализация приоритета достаточности освещенности.
          */
-        // eslint-disable-next-line prefer-const
-        let { illumination, blockMin } = settings;
+        let { blockMin } = switcher;
 
-        /**
-         * В случае включенного освещения, стоит умножить значение освещенности на 2.
-         */
-        if (this.state.lighting === Lighting.ON) {
-          illumination *= 2;
-        }
-
-        if (
-          isLowPrioritySwitcher &&
-          illumination > 0 &&
-          this.state.illumination > 0 &&
-          this.state.illumination < illumination &&
-          nextCoverState === CoverState.OPEN
-        ) {
-          logger('The open was blocked by illumination 🚫');
+        if (isLowPrioritySwitcher && nextCoverState === CoverState.OPEN && !this.isEnoughLightingToOpen) {
+          logger('The illumination is not enough to open by low priority switcher 🚫');
           logger(
             stringify({
               name: this.name,
@@ -1075,7 +1201,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
             }),
           );
 
-          return Computation.CONTINUE;
+          return;
         }
 
         if (blockMin > 0) {
@@ -1105,12 +1231,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         }
 
         this.state.cover = nextCoverState;
-
-        return Computation.STOP;
       }
     }
-
-    return Computation.CONTINUE;
   };
 
   private hitTimeRange = (min: number) => {
@@ -1136,9 +1258,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     let blockMin = 0;
 
     /**
-     * Создаем приоритет для закрывания.
+     * ! Реализация приоритета закрывания.
      */
-    const openCloseByTime = this.settings.openCloseByTime.sort((a, b) => {
+    const openCloseByTime = this.settings.properties.openCloseByTime.sort((a, b) => {
       if (a.direction === OpenCloseByTimeDirection.CLOSE) {
         return 1;
       }
@@ -1172,28 +1294,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }
     }
 
-    if (blockMin > 0) {
-      this.block.close = addMinutes(new Date(), blockMin);
-
-      logger('The close block was activated ✅');
-      logger(
-        stringify({
-          name: this.name,
-          closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
-        }),
-      );
-
-      this.block.open = addMinutes(new Date(), blockMin);
-
-      logger('The open block was activated ✅');
-      logger(
-        stringify({
-          name: this.name,
-          openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
-        }),
-      );
-    }
-
     let nextCoverState = this.state.cover;
 
     if (toOpen) {
@@ -1204,16 +1304,42 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.CLOSE;
     }
 
-    if (this.isBlockedByTimeRange(nextCoverState)) {
-      return;
-    }
-
     if (this.state.cover !== nextCoverState) {
+      /**
+       * ! Реализация приоритета блокировок.
+       */
+      if (this.isBlocked(nextCoverState)) {
+        return;
+      }
+
+      if (blockMin > 0) {
+        this.block.close = addMinutes(new Date(), blockMin);
+
+        logger('The close block was activated ✅');
+        logger(
+          stringify({
+            name: this.name,
+            closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
+          }),
+        );
+
+        this.block.open = addMinutes(new Date(), blockMin);
+
+        logger('The open block was activated ✅');
+        logger(
+          stringify({
+            name: this.name,
+            openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
+          }),
+        );
+      }
+
       logger('Switching has been performed at a given time point ✅');
       logger(
         stringify({
           name: this.name,
-          openCloseByTime: this.settings.openCloseByTime,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          openCloseByTime: this.settings.properties.openCloseByTime,
           state: this.state,
         }),
       );
@@ -1230,16 +1356,110 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    * Автоматизации по датчикам.
    */
   private sensors = () => {
-    /**
-     * TODO Реализовать автоматизации работающие по сенсорам
-     */
+    let nextCoverState = this.state.cover;
+
+    if (this.isEnoughLightingToOpen && !this.isSilence) {
+      nextCoverState = CoverState.OPEN;
+    }
+
+    if (this.isEnoughLightingToClose) {
+      nextCoverState = CoverState.CLOSE;
+    }
+
+    if (this.isSunActive) {
+      nextCoverState = CoverState.CLOSE;
+    }
+
+    if (nextCoverState !== this.state.cover) {
+      /**
+       * ! Реализация приоритета блокировок.
+       */
+      if (this.isBlocked(nextCoverState)) {
+        return;
+      }
+
+      this.state.prevCover = this.state.cover;
+      this.state.cover = nextCoverState;
+    }
   };
 
   protected output = () => {
-    this.nextOutput = {
+    const nextOutput: CoverMacrosNextOutput = {
       states: [],
       positions: [],
     };
+
+    for (const state of this.settings.devices.states) {
+      const controlType = ControlType.ENUM;
+      const control = this.controls.get(getControlId(state));
+
+      if (!control || control.type !== controlType || !control.topic) {
+        logger('The control specified in the settings was not found, or matches the parameters 🚨');
+        logger(
+          stringify({
+            name: this.name,
+            state,
+            controlType,
+            controls: [...this.controls.values()],
+          }),
+        );
+
+        continue;
+      }
+
+      let value = state.stop;
+
+      if (this.state.cover === CoverState.OPEN) {
+        value = state.open;
+      }
+
+      if (this.state.cover === CoverState.STOP) {
+        value = state.stop;
+      }
+
+      if (this.state.cover === CoverState.CLOSE) {
+        value = state.close;
+      }
+
+      if (control.value !== value) {
+        nextOutput.states.push({ ...state, value });
+      }
+    }
+
+    for (const position of this.settings.devices.positions) {
+      const controlType = ControlType.ENUM;
+      const control = this.controls.get(getControlId(position));
+
+      if (!control || control.type !== controlType || !control.topic) {
+        logger('The control specified in the settings was not found, or matches the parameters 🚨');
+        logger(
+          stringify({
+            name: this.name,
+            position,
+            controlType,
+            controls: [...this.controls.values()],
+          }),
+        );
+
+        continue;
+      }
+
+      let value = 50;
+
+      if (this.state.cover === CoverState.OPEN) {
+        value = position.open;
+      }
+
+      if (this.state.cover === CoverState.CLOSE) {
+        value = position.close;
+      }
+
+      if (control.value !== String(value)) {
+        nextOutput.positions.push({ ...position, value });
+      }
+    }
+
+    this.nextOutput = nextOutput;
 
     logger('The next output was computed ⏭️ 🍋');
     logger(
@@ -1251,17 +1471,93 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     );
   };
 
-  protected send = () => {};
+  protected send = () => {
+    for (const state of this.nextOutput.states) {
+      const hyperionDevice = this.devices.get(state.deviceId);
+      const hyperionControl = this.controls.get(getControlId(state));
+
+      if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
+        logger(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger(
+          stringify({
+            name: this.name,
+            state,
+            hyperionDevice,
+            controlId: getControlId(state),
+            hyperionControl,
+            topic: hyperionControl?.topic,
+          }),
+        );
+
+        continue;
+      }
+
+      const { topic } = hyperionControl;
+      const message = state.value;
+
+      logger('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
+      logger(
+        stringify({
+          name: this.name,
+          topic,
+          message,
+        }),
+      );
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    for (const position of this.nextOutput.positions) {
+      const hyperionDevice = this.devices.get(position.deviceId);
+      const hyperionControl = this.controls.get(getControlId(position));
+
+      if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
+        logger(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger(
+          stringify({
+            name: this.name,
+            position,
+            hyperionDevice,
+            controlId: getControlId(position),
+            hyperionControl,
+            topic: hyperionControl?.topic,
+          }),
+        );
+
+        continue;
+      }
+
+      const { topic } = hyperionControl;
+      const message = String(position.value);
+
+      logger('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
+      logger(
+        stringify({
+          name: this.name,
+          topic,
+          message,
+        }),
+      );
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+  };
 
   protected destroy() {
     clearInterval(this.timer);
   }
 
   protected isSwitchHasBeenUp(): boolean {
-    return super.isSwitchHasBeenUp(this.settings.switchers);
+    return super.isSwitchHasBeenUp(this.settings.devices.switchers);
   }
 
   protected isSwitchHasBeenDown(): boolean {
-    return super.isSwitchHasBeenDown(this.settings.switchers);
+    return super.isSwitchHasBeenDown(this.settings.devices.switchers);
   }
 }

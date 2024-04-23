@@ -16,7 +16,7 @@
     "LightingForce": {
       "type": "string",
       "enum": ["ON", "OFF", "UNSPECIFIED"],
-      "description": "! PUBLIC STATE"
+      "description": "Принудительное состояние освещения, может задаваться из приложения."
     }
   }
 }

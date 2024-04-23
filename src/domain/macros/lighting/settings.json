@@ -48,7 +48,7 @@
                 "additionalProperties": false
               }
             },
-            "motion": {
+            "motions": {
               "type": "array",
               "items": {
                 "type": "object",
@@ -68,7 +68,7 @@
                 "additionalProperties": false
               }
             },
-            "noise": {
+            "noises": {
               "type": "array",
               "items": {
                 "type": "object",
@@ -109,7 +109,7 @@
               }
             }
           },
-          "required": ["switchers", "illuminations", "motion", "noise", "lightings"],
+          "required": ["switchers", "illuminations", "motions", "noises", "lightings"],
           "additionalProperties": false,
           "description": "Список устройств которые участвую в макросе"
         },
@@ -129,137 +129,107 @@
                 }
               },
               "required": ["trigger", "everyOn"],
-              "additionalProperties": false
+              "additionalProperties": false,
+              "description": "Настройки переключателей"
             },
             "illumination": {
               "type": "object",
               "properties": {
                 "detection": {
                   "$ref": "#/definitions/LevelDetection"
+                },
+                "boundary": {
+                  "type": "object",
+                  "properties": {
+                    "onLux": {
+                      "type": "number"
+                    },
+                    "offLux": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["onLux", "offLux"],
+                  "additionalProperties": false,
+                  "description": "Пороговые значения освещенности для включения и выключения освещения.\n\nЕсли ON меньше 5 то нужно включить, если OFF больше 300, то нужно выключить.\n\nЕсли OFF > ON, то OFF и ON будут перевернуты.\n\nПри включенном освещении, пороговое значение OFF умножается на mul, чтобы предотвратить автоматическое ВЫКлючение по освещенности."
+                },
+                "mul": {
+                  "type": "number",
+                  "description": "Множитель порога выключения."
                 }
               },
-              "required": ["detection"],
-              "additionalProperties": false
+              "required": ["detection", "boundary", "mul"],
+              "additionalProperties": false,
+              "description": "Настройки автоматизации по освещению."
             },
             "motion": {
               "type": "object",
               "properties": {
                 "detection": {
                   "$ref": "#/definitions/LevelDetection"
+                },
+                "trigger": {
+                  "type": "number",
+                  "description": "Задает чувствительность к движению.\n\nЕсли значение освещение выше уставки, то движение обнаружено. Если значение ниже уставки то движение не обнаружено."
+                },
+                "schedule": {
+                  "type": "object",
+                  "properties": {
+                    "fromHour": {
+                      "type": "number"
+                    },
+                    "toHour": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["fromHour", "toHour"],
+                  "additionalProperties": false,
+                  "description": "Расписание активации ВКЛючения по освещению.\n\nЕсли указать указать одинаковые значение (0, 0 или 15,15) это будет восприниматься как диапазон [from, to + 24].\n\nДиапазон значений 0...23"
                 }
               },
-              "required": ["detection"],
-              "additionalProperties": false
+              "required": ["detection", "trigger", "schedule"],
+              "additionalProperties": false,
+              "description": "Настройки автоматизации по движению"
             },
             "noise": {
               "type": "object",
               "properties": {
                 "detection": {
                   "$ref": "#/definitions/LevelDetection"
+                },
+                "trigger": {
+                  "type": "number",
+                  "description": "Задает чувствительность к шуму.\n\nЕсли значение освещение выше уставки, то шум обнаружен. Если значение ниже уставки то шум не обнаружен."
                 }
               },
-              "required": ["detection"],
-              "additionalProperties": false
-            },
-            "autoOn": {
-              "type": "object",
-              "properties": {
-                "illumination": {
-                  "type": "number",
-                  "description": "Автоматическое включение по освещенности. Как только уровень освещенности стал ниже указанного, происходит включение группы освещения.\n\nЗначения могут быть в диапазоне -1...10000\n\nЕсли указано -1, автоматическое включение по освещенности выключено, так как датчик не сможет показать -1."
-                },
-                "motion": {
-                  "type": "object",
-                  "properties": {
-                    "trigger": {
-                      "type": "number",
-                      "description": "Указывается значение движения в моменте, при достижении которого будут включены все lightings.\n\nЕсли указать <= 0, то включение по движению отключается."
-                    },
-                    "active": {
-                      "type": "object",
-                      "properties": {
-                        "from": {
-                          "type": "number",
-                          "description": "Диапазон значений 0...23"
-                        },
-                        "to": {
-                          "type": "number",
-                          "description": "Диапазон значений 0...23"
-                        }
-                      },
-                      "required": ["from", "to"],
-                      "additionalProperties": false,
-                      "description": "Диапазон времени, когда работает включение по движению.\n\nЕсли указать указать одинаковые значение (0, 0 или 15,15) это будет восприниматься как диапазон [from, to + 24]."
-                    }
-                  },
-                  "required": ["trigger", "active"],
-                  "additionalProperties": false,
-                  "description": "Автоматическое включение по движению."
-                },
-                "block": {
-                  "type": "object",
-                  "properties": {
-                    "illuminationHours": {
-                      "type": "number",
-                      "description": "Время блокировки autoOn по освещенности.\n\nДиапазон значений 0...24\n\nЕсли задано 0, то блокировка не будет включаться.\n\nЭто нужно, чтобы была возможность вручную выключить группу,  в случае когда для неё выполняется autoOn по освещенности.\n\nИначе правило autoOn всегда будет перебивать ручное выключение и  получится так, что кнопка нажимается, а свет продолжает гореть."
-                    }
-                  },
-                  "required": ["illuminationHours"],
-                  "additionalProperties": false,
-                  "description": "Позволяет блокировать автоматическое включение"
-                }
-              },
-              "required": ["illumination", "motion", "block"],
-              "additionalProperties": false
-            },
-            "autoOff": {
-              "type": "object",
-              "properties": {
-                "illumination": {
-                  "type": "number",
-                  "description": "Автоматическое выключение по освещенности. Как только уровень освещенности стал выше указанного, происходит выключение группы освещения.\n\nЗначения могут быть в диапазоне -1...10000.\n\nЕсли указано 10000, автоматическое выключение по освещенности выключено,  так как датчик не сможет показать 10000."
-                },
-                "motion": {
-                  "type": "number",
-                  "description": "Если значение движения ниже motion, считаем, что движения нет, диапазон значений 0...10000\n\nЧтобы отключить обнаружение движения, нужно установить максимальное значение."
-                },
-                "noise": {
-                  "type": "number",
-                  "description": "Если значение шума ниже noise, считаем, что шума нет, диапазон значений 0...10000\n\nЧтобы отключить обнаружение шума, нужно установить максимальное значение."
-                },
-                "silenceMin": {
-                  "type": "number",
-                  "description": "Если > 0, то в случае отсутствия шума и движения группа выключится через заданное время.\n\nЕсли указать <= 0, то autoOff по шуму отключается."
-                },
-                "time": {
-                  "type": "number",
-                  "description": "В это время все lightings будут выключены. Событие случается единоразово.\n\nДиапазон значений 0...23\n\nЕсли указать значение вне диапазона, то автоматическое отключение по таймеру отключается."
-                },
-                "block": {
-                  "type": "object",
-                  "properties": {
-                    "illuminationHours": {
-                      "type": "number",
-                      "description": "Время блокировки autoOff по освещенности.\n\nЕсли задано 0, то блокировка не будет включаться.\n\nДиапазон значений 0...23\n\nПричина такая же как и для autoOn, нужно иметь возможность включить группу в момент когда этому противоречит правило по освещению."
-                    },
-                    "handSwitchMin": {
-                      "type": "number",
-                      "description": "Время блокировки autoOff по ручному включению."
-                    }
-                  },
-                  "required": ["illuminationHours", "handSwitchMin"],
-                  "additionalProperties": false,
-                  "description": "Позволяет блокировать автоматическое выключение"
-                }
-              },
-              "required": ["illumination", "motion", "noise", "silenceMin", "time", "block"],
+              "required": ["detection", "trigger"],
               "additionalProperties": false,
-              "description": "Автоматическое выключение по движению, шуму, заданному времени."
+              "description": "Настройки автоматизации по шуму"
+            },
+            "silenceMin": {
+              "type": "number",
+              "description": "Определение полной тишины.\n\nЗначение задается в минутах.\n\nЕсли > 0, то в случае отсутствия шума и движения, через указанное время будет определена полная тишина.\n\nЕсли указать <= 0, то определение полной тишины будет отключено."
+            },
+            "block": {
+              "type": "object",
+              "properties": {
+                "onMin": {
+                  "type": "number"
+                },
+                "offMin": {
+                  "type": "number"
+                }
+              },
+              "required": ["onMin", "offMin"],
+              "additionalProperties": false,
+              "description": "Настройка времени блокировки автоматического переключения.\n\nBLOCK_ON должен быть меньше BLOCK_OFF, если пользователь задал на оборот, то значения поменяются местами.\n\nБлокировка включается при переключении пользователем, через кнопку (физическую, виртуальную).\n\nБлокируется при единоразовом выключении освещения.\n\nЕсли пользователь включил освещение, то заблокируется выключение. Если пользователь выключил освещение, то заблокируется включение."
+            },
+            "offByTime": {
+              "type": "number",
+              "description": "Единоразовое отключение освещения.\n\nПри выключении блокируется включение, на время указанное в настройках blocks.\n\nЗначение указывается в часах 0...23."
             }
           },
-          "required": ["switcher", "illumination", "motion", "noise", "autoOn", "autoOff"],
-          "additionalProperties": false,
-          "description": "Настройки макроса"
+          "required": ["switcher", "illumination", "motion", "noise", "silenceMin", "block", "offByTime"],
+          "additionalProperties": false
         }
       },
       "required": ["devices", "properties"],

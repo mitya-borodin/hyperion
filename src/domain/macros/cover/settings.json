@@ -5,377 +5,382 @@
     "CoverMacrosSettings": {
       "type": "object",
       "properties": {
-        "switchers": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "switch"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          },
-          "description": "Включает в себя все типы переключателей, кнопки,  виртуальные кнопки, герконы."
-        },
-        "lightings": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "switch"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          },
-          "description": "Группы освещения, возле датчика освещения.\n\nПозволяет понять, включено ли освещение."
-        },
-        "illuminations": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "lux"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          }
-        },
-        "motions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "value"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          }
-        },
-        "noises": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "sound_level"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          }
-        },
-        "temperatures": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "temperature"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          }
-        },
-        "states": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "enum"
-              },
-              "open": {
-                "type": "string",
-                "description": "Выбирается пользователем из enum который предоставляет устройство."
-              },
-              "close": {
-                "type": "string",
-                "description": "Выбирается пользователем из enum который предоставляет устройство."
-              },
-              "stop": {
-                "type": "string",
-                "description": "Выбирается пользователем из enum который предоставляет устройство."
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType", "open", "close", "stop"],
-            "additionalProperties": false
-          },
-          "description": "Контрол переключения состояния шторы."
-        },
-        "positions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "value"
-              },
-              "open": {
-                "type": "number",
-                "description": "Значение при полностью открытом положении"
-              },
-              "close": {
-                "type": "number",
-                "description": "Значение при полностью закрытом положении"
-              }
-            },
-            "required": ["deviceId", "controlId", "controlType", "open", "close"],
-            "additionalProperties": false
-          },
-          "description": "Контрол позволяет увидеть положение шторы после окончания движения, и задать то положение в которое должна прийти штора."
-        },
-        "switcher": {
+        "devices": {
           "type": "object",
           "properties": {
-            "trigger": {
-              "$ref": "#/definitions/Trigger",
-              "description": "Позволяет указать, на какое состояние переключателя реагировать, верхнее или нижнее."
-            },
-            "type": {
-              "$ref": "#/definitions/SwitchType",
-              "description": "Позволяет разделить приоритет на типы переключателей."
-            },
-            "blockMin": {
-              "type": "number",
-              "description": "Позволяет заблокировать все автоматические действия на заданное время.\n\nЕсли указать 0 минут, то блокировка не включится."
-            },
-            "illumination": {
-              "type": "number",
-              "description": "Уровень освещенности выше которого случится открывание шторы.\n\nЕсли указать значение меньше (<) 0 (например -1), то освещенность учитываться не будет, и переключатель будет каждый раз открывать штору.\n\nЕсли указать большое значение больше 100_000, то данный переключатель никогда не откроет штору, так как значение освещенности никогда не будет достигнуто.\n\nИмеет смысл опытным путем определить какое освещение достаточно при закрытой шторе, чтобы открыть штору, нужно проверить это значение и в пасмурный день.\n\nЕсли указаны группы освещения, то при включенном освещение значение будет умножено на 2."
-            }
-          },
-          "required": ["trigger", "type", "blockMin", "illumination"],
-          "additionalProperties": false
-        },
-        "blocks": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "minItems": 3,
-            "items": [
-              {
-                "$ref": "#/definitions/BlockType"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "number"
-              }
-            ],
-            "maxItems": 3
-          },
-          "description": "Позволяет заблокировать изменение состояния шторы в заданном временном диапазоне.\n\nВозможно указать какое именно действие блокировать, [[OPEN, 23, 9], [CLOSE, 11,16], [ANY, 21-22]].\n\nЭто полезно когда нужно приостановить выполнение автоматических функций.\n\nВ случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до 10 дня, мы зададим [[OPEN, 0, 10]]. В случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [[CLOSE, 11,16]]. В случае когда мы хотим запретить все автоматические действия, скажем перед сном [[ANY, 20,23]].\n\nВ результате мы получим настройку [[OPEN, 0, 10], [CLOSE, 10,16], [ALL, 20,23]].\n\nНужно понимать, что это специализированная настройка и за частую управление шторами будет происходит по освещенности + движение и шум."
-        },
-        "openCloseByTime": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "direction": {
-                "$ref": "#/definitions/OpenCloseByTimeDirection"
-              },
-              "blockMin": {
-                "type": "number"
-              },
-              "timePointMin": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              }
-            },
-            "required": ["direction", "blockMin", "timePointMin"],
-            "additionalProperties": false
-          },
-          "description": "Второй по приоритетности переключатель состояния после ручного нажатия на кнопку.\n\nПозволяет указать в какой час нужно изменить состояние шторы.\n\nМожно задать по действию на каждый час.\n\n{   direction: \"OPEN\",   blockMin: 2 * 60,   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60] } Штора будет пытаться открыться в час ночи, в 4, 6, 8 утра причем после каждой попытки будут блокироваться автоматические действия на заданное время.\n\n{  direction: \"CLOSE\",  blockMin: 8 * 60,  timePointMin: [18 * 60,20 * 60,0 * 60] } Штора будет пытаться закрыться в 18, 20, 0, часов причем после каждой попытки будут блокироваться автоматические действия на заданное время.\n\nПри пересечении времени, приоритет будет отдан операции CLOSE."
-        },
-        "illumination": {
-          "type": "object",
-          "properties": {
-            "detection": {
-              "$ref": "#/definitions/LevelDetection"
-            },
-            "switchingBoundaries": {
+            "switchers": {
               "type": "array",
               "items": {
-                "type": "array",
-                "items": {
-                  "type": "number"
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch"
+                  }
                 },
-                "minItems": 2,
-                "maxItems": 2
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
               },
-              "description": "Диапазоны освещенности для закрывания и открывания шторы.\n\nПорог задается кортежем [CLOSE, OPEN], можно задать несколько пороговых значений [[25, 150], [3000, 200], [300, 500]].\n\nЕсли значение CLOSE < OPEN, то при освещении меньше (<) CLOSE штора будет закрываться, а при значении больше (>) OPEN будет открываться.\n\nЕсли значение CLOSE > OPEN, то при освещении больше (>) CLOSE штора будет закрываться, а при значении меньше (<) OPEN будет открываться.\n\nПриоритет отдается закрытию. Проверяются все диапазоны, и если в каком либо есть закрытие, то случится оно.\n\nНапример:\n- Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно происходящего внутри [ при 25 закрыть, при 150 открыть], а как только солнце взойдет и освещение при закрытой шторе станет выше уставки, можно пытаться открыть штору.\n\n- Солнце взошло или тучи рассеялись после сумерек, стоит открыть шторы для инсоляции помещения [ закрыть при 100 при открытой шторе, открыть при 150 при закрытой шторе].\n\n- Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и как только освещение упадет до нужного порога открыть штору [закрыть при 3000 при открытой шторе, открыть при 300 при закрытой шторе ]."
+              "description": "Включает в себя все типы переключателей, кнопки,  виртуальные кнопки, герконы."
             },
-            "blockTheOpenWhileFullSilent": {
-              "type": "boolean",
-              "description": "Если true, то при полной тишине операция OPEN будет заблокирована до нарушения тишины."
+            "lightings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "Группы освещения, возле датчика освещения.\n\nПозволяет понять, включено ли освещение."
+            },
+            "illuminations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "lux"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              }
+            },
+            "motions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "value"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              }
+            },
+            "noises": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "sound_level"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              }
+            },
+            "temperatures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "temperature"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              }
+            },
+            "states": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "enum"
+                  },
+                  "open": {
+                    "type": "string",
+                    "description": "Выбирается пользователем из enum который предоставляет устройство."
+                  },
+                  "close": {
+                    "type": "string",
+                    "description": "Выбирается пользователем из enum который предоставляет устройство."
+                  },
+                  "stop": {
+                    "type": "string",
+                    "description": "Выбирается пользователем из enum который предоставляет устройство."
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType", "open", "close", "stop"],
+                "additionalProperties": false
+              },
+              "description": "Контрол переключения состояния шторы."
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "value"
+                  },
+                  "open": {
+                    "type": "number",
+                    "description": "Значение при полностью открытом положении"
+                  },
+                  "close": {
+                    "type": "number",
+                    "description": "Значение при полностью закрытом положении"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType", "open", "close"],
+                "additionalProperties": false
+              },
+              "description": "Контрол позволяет увидеть положение шторы после окончания движения, и задать то положение в которое должна прийти штора."
             }
           },
-          "required": ["detection", "switchingBoundaries", "blockTheOpenWhileFullSilent"],
+          "required": [
+            "switchers",
+            "lightings",
+            "illuminations",
+            "motions",
+            "noises",
+            "temperatures",
+            "states",
+            "positions"
+          ],
           "additionalProperties": false
         },
-        "motion": {
+        "properties": {
           "type": "object",
           "properties": {
-            "detection": {
-              "$ref": "#/definitions/LevelDetection"
+            "blocks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "$ref": "#/definitions/BlockType"
+                  },
+                  "fromMin": {
+                    "type": "number"
+                  },
+                  "toMin": {
+                    "type": "number"
+                  }
+                },
+                "required": ["type", "fromMin", "toMin"],
+                "additionalProperties": false
+              },
+              "description": "* 1. Блокировка действий по времени\n\nПозволяет заблокировать изменение состояния шторы в заданном временном диапазоне.\n\nВозможно указать какое именно действие блокировать: [  {type: \"OPEN\", fromMin: 23 * 60, toMin: 9 * 60 },  {type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 },  {type: \"ANY\", fromMin: 21 * 60, toMin: 22 * 60 } ]\n\nЭто полезно когда нужно приостановить выполнение автоматических функций.\n\nВ случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до 10 дня, мы зададим [{type: \"OPEN\", fromMin: 0 * 60, toMin: 10 * 60 }].\n\nВ случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [{type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 }].\n\nВ случае когда мы хотим запретить все автоматические действия, скажем перед сном [{type: \"ANY\", fromMin: 20 * 60, toMin: 23 * 60 }].\n\nВ результате мы получим настройку [  {type: \"OPEN\", fromMin: 0 * 60, toMin: 10 * 60 },  {type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 },  {type: \"ANY\", fromMin: 20 * 60, toMin: 23 * 60 } ]\n\nЭто базовая настройка, задается для:\n- Предотвращения не нужных переключений утром и ночью.\n- Для обеспечения достаточного времени инсоляции."
             },
-            "trigger": {
-              "type": "number",
-              "description": "Задает чувствительность к движению."
+            "switcher": {
+              "type": "object",
+              "properties": {
+                "trigger": {
+                  "$ref": "#/definitions/Trigger",
+                  "description": "Позволяет указать, на какое состояние переключателя реагировать, верхнее или нижнее."
+                },
+                "type": {
+                  "$ref": "#/definitions/SwitchType",
+                  "description": "Позволяет разделить приоритет на типы переключателей."
+                },
+                "blockMin": {
+                  "type": "number",
+                  "description": "Позволяет заблокировать все автоматические действия на заданное время.\n\nЕсли указать 0 минут, то блокировка не включится."
+                }
+              },
+              "required": ["trigger", "type", "blockMin"],
+              "additionalProperties": false,
+              "description": "* 2. Открыть/Остановить/Закрыть через кнопку либо через реальную\n* либо через виртуальную. Классический способ переключать состояние шторы, при котором нужно нажимать на кнопку.\n\nСпособ является приоритетным над всеми остальными, и может выставлять блокировку на изменения состояния, на заданное время.\n\nТо есть в случае открывания/закрывания кнопкой, штора в любом случае изменит состояние, и автоматические действия будут заблокированы на время указанное в настройках.\n\nЧтобы реализовать функциональность открыть/закрыть все шторы, нужно сделать экземпляр макроса, куда добавить одну виртуальную кнопу и все шторы.\n\nНажимая на неё через приложение, все шторы будут получать команды.\n\n* 3. Открыть по геркону Позволяет начать открывать шторы при отрывании двери.\n\nОткрывание шторы блокируется датчиком освещенности."
+            },
+            "openCloseByTime": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "$ref": "#/definitions/OpenCloseByTimeDirection"
+                  },
+                  "blockMin": {
+                    "type": "number"
+                  },
+                  "timePointMin": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "required": ["direction", "blockMin", "timePointMin"],
+                "additionalProperties": false
+              },
+              "description": "* 4. Открыть/Закрыть по времени Позволяет указать в какой час нужно изменить состояние шторы.\n\n{   direction: \"OPEN\",   blockMin: 2 * 60,   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60] } Штора будет пытаться открыться в 1, 4, 6, 8 часов и после каждой попытки будут блокироваться автоматические действия на заданное время.\n\n{  direction: \"CLOSE\",  blockMin: 8 * 60,  timePointMin: [18 * 60,20 * 60,0 * 60] } Штора будет пытаться закрыться в 18, 20, 0, часов и после каждой попытки будут блокироваться автоматические действия на заданное время.\n\nПри пересечении времени, приоритет будет отдан операции CLOSE."
             },
             "illumination": {
-              "type": "number",
-              "description": "Значение освещенности, превышение которого позволяет открывать штору при появлении движения."
-            }
-          },
-          "required": ["detection", "trigger", "illumination"],
-          "additionalProperties": false
-        },
-        "noise": {
-          "type": "object",
-          "properties": {
-            "detection": {
-              "$ref": "#/definitions/LevelDetection"
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                },
+                "boundaries": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "closeLux": {
+                        "type": "number"
+                      },
+                      "openLux": {
+                        "type": "number"
+                      }
+                    },
+                    "required": ["closeLux", "openLux"],
+                    "additionalProperties": false
+                  }
+                },
+                "mul": {
+                  "type": "number"
+                }
+              },
+              "required": ["detection", "boundaries", "mul"],
+              "additionalProperties": false,
+              "description": "* 5. Открыть/Закрыть по освещенности Позволяет указать пороги освещенности при переходе через которые изменяется состояние шторы.\n\nПорог задается списком [{closeLux, openLux}], можно задать несколько пороговых значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].\n\nЕсли значение closeLux < openLux, то при освещении меньше (<) closeLux штора будет закрываться, а при значении больше (>) openLux будет открываться.\n\nЕсли значение closeLux > openLux, то при освещении больше (>) closeLux штора будет закрываться, а при значении меньше (<) openLux будет открываться.\n\nЗначение closeLux указывается при открытой шторе. Значение openLux указывается при закрытой шторе, в случае включенного освещения, значение увеличивается в mul раза. Значение mul задается дробным числом (float).\n\nРегулировка уровней освещенности, может производиться пользователем, в процесс эксплуатации, чтобы учесть значения в разные (солнечные, пасмурные, дождливые) дни.\n\nПриоритет отдается закрытию.\n\nОткрывание блокируется полной тишиной.\n\nНапример:\n- Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть], а как только солнце взойдет и освещение при закрытой шторе станет выше уставки, можно пытаться открыть штору.\n\n- Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и как только освещение упадет до нужного порога открыть штору [закрыть при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при закрытой шторе ]."
             },
-            "trigger": {
-              "type": "number",
-              "description": "Задает чувствительность к шуму."
+            "motion": {
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                },
+                "trigger": {
+                  "type": "number",
+                  "description": "Задает чувствительность к движению."
+                }
+              },
+              "required": ["detection", "trigger"],
+              "additionalProperties": false,
+              "description": "* 6. Движение и шум Блокирует открывание по освещенности, в случае полной тишины.\n\nДополнительные данные, позволяют определять полную тишину.\n\nПри нарушении тишины и достаточной освещенности, штора откроется."
             },
-            "illumination": {
-              "type": "number",
-              "description": "Значение освещенности, превышение которого позволяет открывать штору при появлении шума."
-            }
-          },
-          "required": ["detection", "trigger", "illumination"],
-          "additionalProperties": false
-        },
-        "temperature": {
-          "type": "object",
-          "properties": {
-            "detection": {
-              "$ref": "#/definitions/LevelDetection"
-            }
-          },
-          "required": ["detection"],
-          "additionalProperties": false
-        },
-        "silenceMin": {
-          "type": "number",
-          "description": "Определение полной тишины.\n\nЗначение задается в минутах.\n\nЕсли > 0, то в случае отсутствия шума и движения группа будет активен фактор закрытия по движению и шуму.\n\nЕсли указать <= 0, то фактор закрывания по шуму и движению отключается."
-        },
-        "closeBySun": {
-          "type": "object",
-          "properties": {
-            "illumination": {
-              "type": "number",
-              "description": "Если освещенность выше заданного порога, то активируется закрытие/открытие шторы по солнцу."
-            },
-            "temperature": {
-              "type": "number",
-              "description": "Если температура превысила уставку и установилась полная тишина, то штора закрывается до указанного положения."
+            "noise": {
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                },
+                "trigger": {
+                  "type": "number",
+                  "description": "Задает чувствительность к шуму."
+                }
+              },
+              "required": ["detection", "trigger"],
+              "additionalProperties": false
             },
             "silenceMin": {
               "type": "number",
-              "description": "Определение полной тишины.\n\nЗначение задается в минутах.\n\nЕсли > 0, то в случае отсутствия шума и движения группа будет активен фактор закрытия по движению и шуму.\n\nЕсли указать <= 0, то фактор закрывания по шуму и движению отключается."
+              "description": "Определение полной тишины.\n\nЗначение задается в минутах.\n\nЕсли > 0, то в случае отсутствия шума и движения устанавливается полная тишина.\n\nЕсли указать <= 0, то полная тишина устанавливаться не будет."
             },
-            "position": {
-              "type": "number"
+            "temperature": {
+              "type": "object",
+              "properties": {
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
+              },
+              "required": ["detection"],
+              "additionalProperties": false
+            },
+            "closeBySun": {
+              "type": "object",
+              "properties": {
+                "illumination": {
+                  "type": "number"
+                },
+                "temperature": {
+                  "type": "number"
+                }
+              },
+              "required": ["illumination", "temperature"],
+              "additionalProperties": false,
+              "description": "* 7. Закрыть по солнечной активности Позволяет закрыть штору, если освещенность и температура выше уставок."
             }
           },
-          "required": ["illumination", "temperature", "silenceMin", "position"],
-          "additionalProperties": false,
-          "description": "Автоматическое закрытие шторы, по высокой солнечной активности."
+          "required": [
+            "blocks",
+            "switcher",
+            "openCloseByTime",
+            "illumination",
+            "motion",
+            "noise",
+            "silenceMin",
+            "temperature",
+            "closeBySun"
+          ],
+          "additionalProperties": false
         }
       },
-      "required": [
-        "switchers",
-        "lightings",
-        "illuminations",
-        "motions",
-        "noises",
-        "temperatures",
-        "states",
-        "positions",
-        "switcher",
-        "blocks",
-        "openCloseByTime",
-        "illumination",
-        "motion",
-        "noise",
-        "temperature",
-        "silenceMin",
-        "closeBySun"
-      ],
+      "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "! Cover macros scenarios\n\nВ описание роль крышки будет играть штора, но вместо шторы могут быть любые другие  устройства типа Cover https://www.zigbee2mqtt.io/guide/usage/exposes.html#specific\n\nШторы управляются при помощи:  Кнопок  Виртуальная кнопка (дает возможность управлять через приложение)  Герконов  Освещенности  Движения  Шума  Температуре  Времени\n\n* 1. Блокировка действий по времени Позволяет заблокировать изменение состояния шторы в заданном временном диапазоне.\n\nВозможно указать какое именно действие блокировать, [[OPEN, 23, 9], [CLOSE, 11,16], [ANY, 21-22]].\n\nЭто полезно когда нужно приостановить выполнение автоматических функций.\n\nВ случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до 10 дня, мы зададим [[OPEN, 0, 10]]. В случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [[CLOSE, 11,16]]. В случае когда мы хотим запретить все автоматические действия, скажем перед сном [[ANY, 20,23]].\n\nВ результате мы получим настройку [[OPEN, 0, 10], [CLOSE, 10,16], [ALL, 20,23]].\n\nНужно понимать, что это специализированная настройка и за частую управление шторами будет происходит по освещенности + движение и шум.\n\n* 2. Открыть/Закрыть/Остановить через кнопку либо через реальную либо через виртуальную. Классический способ переключать состояние шторы, при котором нужно нажимать на кнопку.\n\nСпособ является приоритетным над всеми остальными, и может выставлять блокировку на изменения  состояния, на заданное время.\n\nТо есть в случае открывания/закрывания кнопкой, штора в любом случае изменит состояние,  и автоматические действия будут заблокированы на время указанное в настройках.\n\nЧтобы реализовать функциональность открыть/закрыть все шторы, нужно сделать экземпляр  макроса, куда добавить одну виртуальную кнопу и все шторы.\n\nНажимая на неё через приложение, все шторы будут получать команды.\n\n* 3. Открыть по геркону Позволяет начать открывать шторы при отрывании двери, окна, и других открывающихся конструкций.\n\nМожет работать совместно с датчиком освещенности, и при превышении указанной освещенности начинать открывать штору в момент срабатывания геркона.\n\nНапример в случае открывания двери в котельную, в которой весит штора, открываем дверь, и ждем пока откроется штора.\n\nНапример утром (освещение выше уставки) при выходе из любой комнаты начинают открываться прихожая и гостиная. Нужно понимать, что при каждом открывании двери будут срабатывать этот сценарий, пытающийся открыть шторы, но его могут блокировать другие условия.\n\n* 4. Открыть/Закрыть по времени Второй по приоритетности переключатель состояния после ручного нажатия на кнопку.\n\nПозволяет указать в какой час нужно изменить состояние шторы.\n\nМожно задать по действию на каждый час.\n\n{   direction: \"OPEN\",   blockMin: 2 * 60,   mins: [1 * 60,4 * 60,6 * 60,8 * 60] } Штора будет пытаться открыться в час ночи, в 4, 6, 8 утра причем после каждой попытки будут блокироваться автоматические действия на заданное время.\n\n{  direction: \"CLOSE\",  blockMin: 8 * 60,  mins: [18 * 60,20 * 60,0 * 60] } Штора будет пытаться закрыться в 18, 20, 0, часов причем после каждой попытки будут блокироваться автоматические действия на заданное время.\n\nПри пересечении времени, приоритет будет отдан операции CLOSE.\n\n* 5. Открыть/Закрыть по освещенности Позволяет указать пороги освещенности после которых нужно изменить состояние шторы.\n\nПорог задается кортежем [CLOSE, OPEN], можно задать несколько пороговых значений [[25, 150], [3000, 300]].\n\nЕсли значение CLOSE < OPEN, то при освещении меньше (<) CLOSE штора будет закрываться, а при значении больше (>) OPEN будет открываться.\n\nЕсли значение CLOSE > OPEN, то при освещении больше (>) CLOSE штора будет закрываться, а при значении меньше (<) OPEN будет открываться.\n\nНужно понимать, то, что когда штора закрыта, сила солнечного освещения сильно меньше, и при пусконаладке нужно определить какое освещение при закрытой шторе будет подходящим для изменения состояния.\n\nПуска наладку сложно сделать непосредственно в день окончания монтажа, по этому пользователю будет выдана инструкция о том как регулировать значения освещенности.\n\nПриоритет отдается закрытию, проверяются все диапазоны, и если в каком либо есть закрытие, то случится оно.\n\nНапример:\n- Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно происходящего внутри   [ при 25 закрыть, при 150 открыть], а как только солнце взойдет и освещение при закрытой шторе   станет выше уставки, можно пытаться открыть штору.\n- Солнце взошло или тучи рассеялись после сумерек, стоит открыть шторы для инсоляции помещения   [ закрыть при 100 при открытой шторе, открыть при 150 при закрытой шторе].\n- Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и как только освещение упадет   до нужного порога открыть штору [закрыть при 3000 при открытой шторе, открыть при 300 при   закрытой шторе ].\n\n* 6. Открывание/Закрывание по датчику движения и/или шуму.  Дополняет изменение состояние шторы по освещенности, позволяет НЕ открывать шторы,  пока не появится движение и/или шум, даже когда освещение достаточно для открывания.\n\n Позволяет при достаточном освещении открыть шторы в нужных места при появлении движения  либо шума на указанных датчиках, свыше указанных значений.\n\n* 7. Закрыть по солнечной активности или освещенности движению, шуму и температуре В солнечные дни в комнату может проникать слишком много тепла от солнца и эта автоматизация даст возможность прикрыть штору, если в помещении выросла температура при высокой освещенности.\n\nПозволяет закрыть штору если освещенность выше установленного порога, установилась полная тишина ни движения ни шума дольше заданного промежутка скажем 1 час, температура выше заданной уставки.\n\nПозволяет закрыть штору не полностью, а прикрыть на нужную величину."
+      "description": "! Cover macros scenarios\n\nВ описание роль крышки будет играть штора, но вместо шторы могут быть любые другие  устройства типа Cover https://www.zigbee2mqtt.io/guide/usage/exposes.html#specific\n\nШторы управляются при помощи:  Кнопок  Виртуальная кнопка (дает возможность управлять через приложение)  Герконов  Освещенности  Движения  Шума  Температуре  Времени\n\n* 1. Блокировка действий по времени\n\nПозволяет заблокировать изменение состояния шторы в заданном временном диапазоне.\n\nВозможно указать какое именно действие блокировать: [  {type: \"OPEN\", fromMin: 23 * 60, toMin: 9 * 60 },  {type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 },  {type: \"ANY\", fromMin: 21 * 60, toMin: 22 * 60 } ]\n\nЭто полезно когда нужно приостановить выполнение автоматических функций.\n\nВ случае когда мы не хотим открывать штору с ночи до определенно времени дня например гарантированно до 10 дня, мы зададим [{type: \"OPEN\", fromMin: 0 * 60, toMin: 10 * 60 }].\n\nВ случае когда мы гарантированно не хотим закрывать шторы в середине дня, мы зададим [{type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 }].\n\nВ случае когда мы хотим запретить все автоматические действия, скажем перед сном [{type: \"ANY\", fromMin: 20 * 60, toMin: 23 * 60 }].\n\nВ результате мы получим настройку [  {type: \"OPEN\", fromMin: 0 * 60, toMin: 10 * 60 },  {type: \"CLOSE\", fromMin: 11 * 60, toMin: 16 * 60 },  {type: \"ANY\", fromMin: 20 * 60, toMin: 23 * 60 } ]\n\nЭто базовая настройка, задается для:\n- Предотвращения не нужных переключений утром и ночью.\n- Для обеспечения достаточного времени инсоляции.\n\n* 2. Открыть/Остановить/Закрыть через кнопку либо через реальную либо через виртуальную. Классический способ переключать состояние шторы, при котором нужно нажимать на кнопку.\n\nСпособ является приоритетным над всеми остальными, и может выставлять блокировку на изменения состояния, на заданное время.\n\nТо есть в случае открывания/закрывания кнопкой, штора в любом случае изменит состояние,  и автоматические действия будут заблокированы на время указанное в настройках.\n\nЧтобы реализовать функциональность открыть/закрыть все шторы, нужно сделать экземпляр  макроса, куда добавить одну виртуальную кнопу и все шторы.\n\nНажимая на неё через приложение, все шторы будут получать команды.\n\n* 3. Открыть по геркону Позволяет начать открывать шторы при отрывании двери.\n\nОткрывание шторы блокируется датчиком освещенности.\n\n* 4. Открыть/Закрыть по времени Позволяет указать в какой час нужно изменить состояние шторы.\n\n{   direction: \"OPEN\",   blockMin: 2 * 60,   timePointMin: [1 * 60,4 * 60,6 * 60,8 * 60] } Штора будет пытаться открыться в 1, 4, 6, 8 часов и после каждой попытки будут блокироваться автоматические действия на заданное время.\n\n{  direction: \"CLOSE\",  blockMin: 8 * 60,  timePointMin: [18 * 60,20 * 60,0 * 60] } Штора будет пытаться закрыться в 18, 20, 0, часов и после каждой попытки будут блокироваться автоматические действия на заданное время.\n\nПри пересечении времени, приоритет будет отдан операции CLOSE.\n\n* 5. Открыть/Закрыть по освещенности Позволяет указать пороги освещенности при переходе через которые изменяется состояние шторы.\n\nПорог задается списком [{closeLux, openLux}], можно задать несколько пороговых значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].\n\nЕсли значение closeLux < openLux, то при освещении меньше (<) closeLux штора будет закрываться, а при значении больше (>) openLux будет открываться.\n\nЕсли значение closeLux > openLux, то при освещении больше (>) closeLux штора будет закрываться, а при значении меньше (<) openLux будет открываться.\n\nЗначение closeLux указывается при открытой шторе. Значение openLux указывается при закрытой шторе, в случае включенного освещения, значение увеличивается в mul раза. Значение mul задается дробным числом (float).\n\nРегулировка уровней освещенности, может производиться пользователем, в процесс эксплуатации, чтобы учесть значения в разные (солнечные, пасмурные, дождливые) дни.\n\nПриоритет отдается закрытию.\n\nОткрывание блокируется полной тишиной.\n\nНапример:\n- Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть], а как только солнце взойдет и освещение при закрытой шторе станет выше уставки, можно пытаться открыть штору.\n\n- Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и как только освещение упадет до нужного порога открыть штору [закрыть при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при закрытой шторе ].\n\n* 6. Движение и шум Блокирует открывание по освещенности, в случае полной тишины.\n\nДополнительные данные, позволяют определять полную тишину.\n\nПри нарушении тишины и достаточной освещенности, штора откроется.\n\n* 7. Закрыть по солнечной активности Позволяет закрыть штору, если освещенность, температура выше уставок и установилась полная тишина."
+    },
+    "BlockType": {
+      "type": "string",
+      "enum": ["OPEN", "CLOSE", "ALL"],
+      "description": "Типы блокировок."
     },
     "Trigger": {
       "type": "string",
@@ -386,11 +391,6 @@
       "type": "string",
       "enum": ["BUTTON", "SEALED_CONTACT", "RELAY"],
       "description": "Тип переключателя (кнопка, геркон).\n\nОт типа зависит приоритет у кнопки максимальный приоритет, после идет геркон.\n\nДля геркона уже будут проверяться имеющиеся блокировки действий."
-    },
-    "BlockType": {
-      "type": "string",
-      "enum": ["OPEN", "CLOSE", "ALL"],
-      "description": "Типы блокировок."
     },
     "OpenCloseByTimeDirection": {
       "type": "string",

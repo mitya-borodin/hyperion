@@ -4,7 +4,7 @@
 /* eslint-disable unicorn/no-array-for-each */
 import EventEmitter from 'node:events';
 
-import { addHours } from 'date-fns';
+import { addHours, addMinutes } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
@@ -455,20 +455,40 @@ export abstract class Macros<
   /**
    * Метод определяет попадает ли текущий момент время в диапазон.
    *
-   * from - вводится в часах, в местном времени пользователя.
-   * to - вводится в часах, в местном времени пользователя.
+   * from - вводится либо в часах либо в минутах в зависимости от выбранного типа,
+   * в местном времени пользователя.
+   *
+   * to - вводится либо в часах либо в минутах в зависимости от выбранного типа,
+   * в местном времени пользователя.
    */
-  protected hasHourOverlap(from: number, to: number) {
+  protected hasHourOverlap(from: number, to: number, type: 'hour' | 'min') {
     if (to <= from) {
-      to = to + 24;
+      if (type === 'hour') {
+        to = to + 24;
+      }
+
+      if (type === 'min') {
+        to = to + 24 * 60;
+      }
     }
 
     const year = new Date().getFullYear();
     const month = new Date().getMonth();
     const date = new Date().getDate();
 
-    const fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
-    const toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
+    let fromMs = 0;
+    let toMs = 0;
+
+    if (type === 'hour') {
+      fromMs = addHours(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
+      toMs = addHours(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
+    }
+
+    if (type === 'min') {
+      fromMs = addMinutes(new Date(year, month, date, 0, 0, 0, 0), from).getTime();
+      toMs = addMinutes(new Date(year, month, date, 0, 0, 0, 0), to).getTime();
+    }
+
     const nowMs = utcToZonedTime(new Date(), config.client.timeZone).getTime();
 
     /**
@@ -481,6 +501,7 @@ export abstract class Macros<
     //   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     //   from,
     //   to,
+    //   type,
     //   fromMs,
     //   toMs,
     //   nowMs,

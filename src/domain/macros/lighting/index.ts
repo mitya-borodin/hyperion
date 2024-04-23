@@ -158,7 +158,7 @@ export type LightingMacrosSettings = {
     };
 
     /**
-     * Настройки автоматизации по освещению
+     * Настройки автоматизации по освещению.
      */
     readonly illumination: {
       readonly detection: LevelDetection;
@@ -480,6 +480,17 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.collectNoise();
   }
 
+  private get isSilence(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(new Date(this.lastMotionDetected.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.lastNoseDetected.getTime()), silenceMin)) === 1
+    );
+  }
+
   private collectSwitchers = () => {
     /**
      * Актуализация состояния освещения по внешнему состоянию каждой группы освещения.
@@ -778,7 +789,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
     if (autoOnByMotion) {
       if (isPartTimeActive) {
-        if (this.hasHourOverlap(fromHour, toHour)) {
+        if (this.hasHourOverlap(fromHour, toHour, 'hour')) {
           nextSwitchState = Switch.ON;
         }
       } else {
@@ -814,7 +825,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           motionDetected,
           autoOnByMotion,
           isPartTimeActive,
-          hasHourOverlap: this.hasHourOverlap(fromHour, toHour),
+          hasHourOverlap: this.hasHourOverlap(fromHour, toHour, 'hour'),
 
           nextSwitchState,
 
@@ -886,15 +897,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      *
      * Работает когда имеются датчики движения.
      */
-    const { silenceMin } = this.settings.properties;
-
-    const isSilence =
-      Number.isInteger(silenceMin) &&
-      silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(new Date(this.lastMotionDetected.getTime()), silenceMin)) === 1 &&
-      compareAsc(new Date(), addMinutes(new Date(this.lastNoseDetected.getTime()), silenceMin)) === 1;
-
-    const autoOffByMovementAndNoise = (hasMotionDevice || hasNoiseDevice) && isSilence;
+    const autoOffByMovementAndNoise = (hasMotionDevice || hasNoiseDevice) && this.isSilence;
 
     if (autoOffByMovementAndNoise) {
       nextSwitchState = Switch.OFF;
@@ -925,8 +928,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
           autoOffByIllumination,
 
-          silenceMin,
-          isSilence,
+          silenceMin: this.settings.properties.silenceMin,
+          isSilence: this.isSilence,
 
           autoOffByMovementAndNoise,
 
@@ -945,18 +948,17 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       lightings: [],
     };
 
-    for (const { deviceId, controlId } of this.settings.devices.lightings) {
+    for (const lighting of this.settings.devices.lightings) {
       const type = ControlType.SWITCH;
 
-      const control = this.controls.get(getControlId({ deviceId, controlId }));
+      const control = this.controls.get(getControlId(lighting));
 
       if (!control || control.type !== type || !control.topic) {
         logger('The control specified in the settings was not found, or matches the parameters 🚨');
         logger(
           stringify({
             name: this.name,
-            deviceId,
-            controlId,
+            device: lighting,
             type,
             controls: [...this.controls.values()],
           }),
@@ -967,18 +969,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       let value = control.off;
 
-      if (this.state.switch === 'ON') {
+      if (this.state.switch === Switch.ON) {
         value = control.on;
       }
 
-      if (this.state.switch === 'OFF') {
+      if (this.state.switch === Switch.OFF) {
         value = control.off;
       }
 
       if (control.value !== value) {
         nextOutput.lightings.push({
-          deviceId,
-          controlId,
+          deviceId: lighting.deviceId,
+          controlId: lighting.controlId,
           value,
         });
       }
