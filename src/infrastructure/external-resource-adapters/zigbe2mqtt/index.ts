@@ -202,6 +202,11 @@ export const runZigbee2mqtt = async ({
         const exposes: any[] = [];
         const stack: any[] = device.definition.exposes;
 
+        /**
+         * Проверяем является ли expose композитным, композитные имеют поле features, если оно есть то
+         * нужно вынуть все элементы из него и проверить каждый из них, если найдена ещё вложенность
+         * то происходит тоже самое.
+         */
         while (stack.length > 0) {
           const expose = stack.pop();
           const { property, features, path, topic } = expose;
@@ -411,7 +416,7 @@ export const runZigbee2mqtt = async ({
     /**
      * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-friendly-name
      */
-    // logger('The device state has been received ⬇️ ⛵️ 🌍 ⬇️');
+    logger('The zigbee device state has been received ⬇️ ⛵️ 🌍 ⬇️');
 
     const friendlyName = topic.replace(`${config.zigbee2mqtt.baseTopic}/`, '');
     const ieeeAddress = ieeeAddressByFriendlyName.get(friendlyName);

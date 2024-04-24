@@ -8,6 +8,7 @@ import defaultsDeep from 'lodash.defaultsdeep';
 import { stringify } from '../../../helpers/json-stringify';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { ControlType } from '../../control-type';
+import { HyperionDevice } from '../../hyperion-device';
 import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
@@ -236,21 +237,18 @@ export enum Computation {
  */
 export type CoverMacrosSettings = {
   readonly devices: {
-    /**
-     * Включает в себя все типы переключателей, кнопки,
-     *  виртуальные кнопки, герконы.
-     */
     readonly switchers: Array<{
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.SWITCH;
     }>;
 
-    /**
-     * Группы освещения, возле датчика освещения.
-     *
-     * Позволяет понять, включено ли освещение.
-     */
+    readonly buttons: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.ENUM;
+    }>;
+
     readonly lightings: Array<{
       readonly deviceId: string;
       readonly controlId: string;
@@ -288,14 +286,17 @@ export type CoverMacrosSettings = {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.ENUM;
+
       /**
        * Выбирается пользователем из enum который предоставляет устройство.
        */
       readonly open: string;
+
       /**
        * Выбирается пользователем из enum который предоставляет устройство.
        */
       readonly close: string;
+
       /**
        * Выбирается пользователем из enum который предоставляет устройство.
        */
@@ -310,10 +311,12 @@ export type CoverMacrosSettings = {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.VALUE;
+
       /**
        * Значение при полностью открытом положении
        */
       readonly open: number;
+
       /**
        * Значение при полностью закрытом положении
        */
@@ -1050,10 +1053,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
-  protected computation = () => {
+  protected computation = (current?: HyperionDevice) => {
     const previousCoverState = this.state.cover;
 
-    this.switching();
+    this.switching(current);
     this.sensors();
 
     if (previousCoverState !== this.state.cover) {
@@ -1097,10 +1100,24 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
+  private isButtonChange(current?: HyperionDevice): boolean {
+    if (!current) {
+      return false;
+    }
+
+    const { buttons } = this.settings.devices;
+
+    return buttons.some(({ deviceId, controlId, controlType }) =>
+      current.controls.find(
+        (control) => current.id === deviceId && control.id === controlId && control.type === controlType,
+      ),
+    );
+  }
+
   /**
    * Автоматизация по переключателям.
    */
-  private switching = (): void => {
+  private switching = (current?: HyperionDevice): void => {
     const { switcher, illumination } = this.settings.properties;
 
     let isSwitchHasBeenChange = false;
@@ -1119,6 +1136,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       if (isSwitchHasBeenChange) {
         logger('The switch was open 🔓');
       }
+    }
+
+    if (this.isButtonChange(current)) {
+      isSwitchHasBeenChange = true;
+
+      logger('The button was touched 👉 🔘');
     }
 
     if (isSwitchHasBeenChange) {

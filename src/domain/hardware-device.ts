@@ -13,6 +13,7 @@ export type HardwareControl = {
     ru?: string;
     en?: string;
   };
+
   /**
    * Display order in user interface
    */
@@ -38,15 +39,18 @@ export type HardwareControl = {
    * no limit specified by default
    */
   max?: number;
+
   /**
    * Minimum allowed control's value. Default value for range type is 0, for other types no limit
    * specified by default
    */
   min?: number;
+
   /**
    * The step of changing the numeric value is not set by default
    */
   step?: number;
+
   /**
    * Control's value is rounded to defined precision by a driver and it is also used during user input validation
    * If no precision is present, the value is used as-is
@@ -69,6 +73,7 @@ export type HardwareControl = {
    * The real value that the control has.
    */
   value?: string;
+
   /**
    * Stores a preset value, or the value at the time the device is turned off
    */
@@ -105,6 +110,7 @@ export type HardwareDevice = {
     ru?: string;
     en?: string;
   };
+
   /**
    * Display order in user interface
    */

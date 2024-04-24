@@ -260,7 +260,11 @@ export abstract class Macros<
     this.controls = controls;
 
     if (this.isDevicesReady() && this.isControlValueHasBeenChanged(current)) {
-      this.execute();
+      if (current.controls.length > 1) {
+        logger('The current hyperion device should contains only one control, which was changed 🚨 🚨 🚨 🚨');
+      }
+
+      this.execute(current);
     }
   }
 
@@ -273,14 +277,14 @@ export abstract class Macros<
    *    если новое состояние вычислено, то процесс прерывается на этом этапе.
    * 3. computation - вычисление нового состояния контрола.
    */
-  protected execute = () => {
-    this.collecting();
+  protected execute = (current?: HyperionDevice) => {
+    this.collecting(current);
 
-    if (this.priorityComputation()) {
+    if (this.priorityComputation(current)) {
       return;
     }
 
-    this.computation();
+    this.computation(current);
   };
 
   /**
@@ -289,19 +293,19 @@ export abstract class Macros<
    *
    * Не производит никакого next output.
    */
-  protected abstract collecting(): void;
+  protected abstract collecting(current?: HyperionDevice): void;
 
   /**
    * Операция приоритетного вычисления next output исходя из всех имеющихся данных.
    *
    * Если next output был вычислен, выполнению следующих стадий прерывается.
    */
-  protected abstract priorityComputation(): boolean;
+  protected abstract priorityComputation(current?: HyperionDevice): boolean;
 
   /**
    * Операция вычисления next output исходя из всех имеющихся данных.
    */
-  protected abstract computation(): void;
+  protected abstract computation(current?: HyperionDevice): void;
 
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
