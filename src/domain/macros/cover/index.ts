@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */
 /* eslint-disable unicorn/no-array-reduce */
 /* eslint-disable unicorn/no-empty-file */
-import { addMinutes, compareAsc, format } from 'date-fns';
+import { addMinutes, compareAsc, format, subMinutes } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
@@ -611,8 +611,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private nextOutput: CoverMacrosNextOutput;
 
   private last = {
-    motion: new Date(),
-    noise: new Date(),
+    motion: subMinutes(new Date(), 60),
+    noise: subMinutes(new Date(), 60),
   };
 
   private block = {
@@ -795,14 +795,23 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { boundaries, mul } = this.settings.properties.illumination;
     const { illumination } = this.state;
 
+    // logger('Is illumination ready');
+    // logger(
+    //   stringify({
+    //     illumination,
+    //     boundaries,
+    //     mul,
+    //   }),
+    // );
+
     return (
       illumination > 0 &&
-      boundaries.some(({ closeLux, openLux }) => {
+      boundaries.every(({ closeLux, openLux }) => {
         if (closeLux < 0 || openLux < 0) {
           return false;
         }
 
-        return false;
+        return true;
       }) &&
       mul > 0
     );
@@ -1358,6 +1367,15 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    */
   private sensors = () => {
     let nextCoverState = this.state.coverState;
+
+    // logger('The sensors ℹ️');
+    // logger({
+    //   isIlluminationReady: this.isIlluminationReady,
+    //   isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    //   isEnoughLightingToClose: this.isEnoughLightingToClose,
+    //   isSilence: this.isSilence,
+    //   isSunActive: this.isSunActive,
+    // });
 
     if (this.isEnoughLightingToOpen && !this.isSilence) {
       nextCoverState = CoverState.OPEN;
