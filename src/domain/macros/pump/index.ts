@@ -174,7 +174,7 @@ export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, Pump
 
   protected collecting() {}
 
-  protected output = (value: string) => {
+  protected computeOutput = (value: string) => {
     const nextOutput: PumpMacrosNextOutput = {
       pump: undefined,
     };

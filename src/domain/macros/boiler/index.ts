@@ -203,7 +203,7 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
 
   protected collecting() {}
 
-  protected output = (value: string) => {
+  protected computeOutput = (value: string) => {
     const nextOutput: BoilerMacrosNextOutput = {
       pump: undefined,
       heat: [],

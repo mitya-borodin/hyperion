@@ -274,7 +274,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   protected collecting() {}
 
-  protected output = (value: string) => {
+  protected computeOutput = (value: string) => {
     const nextOutput: LeaksMacrosNextOutput = {
       analog: undefined,
       phase: undefined,

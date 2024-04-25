@@ -225,7 +225,7 @@ export class RecirculationMacros extends Macros<
 
   protected collecting() {}
 
-  protected output = (value: string) => {
+  protected computeOutput = (value: string) => {
     const nextOutput: RecirculationMacrosNextOutput = {
       pump: undefined,
     };

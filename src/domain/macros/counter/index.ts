@@ -153,7 +153,7 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
 
   protected collecting() {}
 
-  protected output = (value: string) => {
+  protected computeOutput = (value: string) => {
     const nextOutput: CounterMacrosNextOutput = {
       value: 0,
       unitOfMeasurement: '',

@@ -306,7 +306,7 @@ export abstract class Macros<
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
    */
-  protected abstract output(value: string): void;
+  protected abstract computeOutput(value: string): void;
 
   /**
    * Метод предназначен отправлять будущее состояние контролов контроллеру.

@@ -322,7 +322,7 @@ type LightingMacrosState = LightingMacrosPublicState & LightingMacrosPrivateStat
 /**
  * Будущее состояние контролов, передается в контроллер по средством MQTT
  */
-type LightingMacrosNextOutput = {
+type LightingMacrosOutput = {
   readonly lightings: Array<{
     readonly deviceId: string;
     readonly controlId: string;
@@ -341,7 +341,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 const VERSION = 5;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
-  private nextOutput: LightingMacrosNextOutput;
+  private output: LightingMacrosOutput;
 
   /**
    * Временные точки до которых действует блокировка.
@@ -395,7 +395,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       controls: parameters.controls,
     });
 
-    this.nextOutput = {
+    this.output = {
       lightings: [],
     };
 
@@ -592,16 +592,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         nextSwitchState = Switch.OFF;
       }
 
-      this.output();
+      this.computeOutput();
 
-      if (this.nextOutput.lightings.length > 0) {
+      if (this.output.lightings.length > 0) {
         logger('The force state was determined 🫡 😡 😤 🚀');
         logger(
           stringify({
             name: this.name,
             currentState: this.state,
             nextSwitchState,
-            nextOutput: this.nextOutput,
+            output: this.output,
           }),
         );
 
@@ -624,7 +624,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.autoOff();
 
     if (currentSwitchState !== this.state.switch) {
-      this.output();
+      this.computeOutput();
       this.send();
     }
   }
@@ -949,8 +949,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  protected output() {
-    const nextOutput: LightingMacrosNextOutput = {
+  protected computeOutput() {
+    const output: LightingMacrosOutput = {
       lightings: [],
     };
 
@@ -984,7 +984,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
 
       if (String(control.value) !== String(value)) {
-        nextOutput.lightings.push({
+        output.lightings.push({
           deviceId: lighting.deviceId,
           controlId: lighting.controlId,
           value: String(value),
@@ -992,20 +992,20 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       }
     }
 
-    this.nextOutput = nextOutput;
+    this.output = output;
 
     logger('The next output was computed ⏭️ 🍋');
     logger(
       stringify({
         name: this.name,
         nextState: this.state,
-        nextOutput: this.nextOutput,
+        output: this.output,
       }),
     );
   }
 
   protected send() {
-    for (const lighting of this.nextOutput.lightings) {
+    for (const lighting of this.output.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
 
       const controlId = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
@@ -1213,7 +1213,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           }),
         );
 
-        this.output();
+        this.computeOutput();
         this.send();
       }
     }
