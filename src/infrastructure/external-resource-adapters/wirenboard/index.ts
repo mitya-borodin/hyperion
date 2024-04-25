@@ -267,7 +267,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           controls: {
             [control]: {
               id: control,
-              value: message,
+              value: String(message),
             },
           },
         };

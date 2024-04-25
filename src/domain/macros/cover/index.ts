@@ -3,6 +3,7 @@
 /* eslint-disable unicorn/no-empty-file */
 import { addMinutes, compareAsc, format } from 'date-fns';
 import debug from 'debug';
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
@@ -83,6 +84,7 @@ export enum BlockType {
  * Состояние крышки, в терминах макроса.
  */
 export enum CoverState {
+  UNDEFINED = 'UNDEFINED',
   OPEN = 'OPEN',
   CLOSE = 'CLOSE',
   STOP = 'STOP',
@@ -286,21 +288,6 @@ export type CoverMacrosSettings = {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.ENUM;
-
-      /**
-       * Выбирается пользователем из enum который предоставляет устройство.
-       */
-      readonly open: string;
-
-      /**
-       * Выбирается пользователем из enum который предоставляет устройство.
-       */
-      readonly close: string;
-
-      /**
-       * Выбирается пользователем из enum который предоставляет устройство.
-       */
-      readonly stop: string;
     }>;
 
     /**
@@ -311,16 +298,6 @@ export type CoverMacrosSettings = {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.VALUE;
-
-      /**
-       * Значение при полностью открытом положении
-       */
-      readonly open: number;
-
-      /**
-       * Значение при полностью закрытом положении
-       */
-      readonly close: number;
     }>;
   };
 
@@ -533,6 +510,35 @@ export type CoverMacrosSettings = {
       readonly illumination: number;
       readonly temperature: number;
     };
+
+    readonly state: {
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly open: string;
+
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly close: string;
+
+      /**
+       * Выбирается пользователем из enum который предоставляет устройство.
+       */
+      readonly stop: string;
+    };
+
+    readonly position: {
+      /**
+       * Значение при полностью открытом положении
+       */
+      readonly open: number;
+
+      /**
+       * Значение при полностью закрытом положении
+       */
+      readonly close: number;
+    };
   };
 };
 
@@ -540,16 +546,6 @@ export type CoverMacrosSettings = {
  * ! STATE
  */
 export type CoverMacrosPublicState = {
-  /**
-   * Текущее состояние крышки.
-   */
-  cover: CoverState;
-
-  /**
-   * Предыдущее состояние крышки.
-   */
-  prevCover: CoverState;
-
   /**
    * Положение шторы, от 0 до 100.
    *
@@ -568,10 +564,13 @@ export type CoverMacrosPublicState = {
    * указать где начало и где границы открывания/закрывания, а так
    * же направление, и желательно задавать значение по умолчанию.
    */
+  prevCoverState: CoverState;
+  coverState: CoverState;
   position: number;
 };
 
 type CoverMacrosPrivateState = {
+  running: boolean;
   lighting: Lighting;
   illumination: number;
   motion: number;
@@ -621,6 +620,23 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     close: new Date(),
   };
 
+  private skip = {
+    /**
+     * Кнопки работающие через enum, эмитят события с одним и тем же значением действия,
+     * и мы не можем понять изменилось ли оно с прошлого нажатия, это приводит к тому,
+     * что при старте макроса загруженные данные воспринимаются как нажатая кнопка,
+     * чтобы этого избежать, мы пропускаем обработку первого нажатия.
+     *
+     * Даже если в БД нет данных по кнопке, пользователь в первый раз после запуска
+     * макроса один раз в холостую нажмет, это не страшно.
+     */
+    firstButtonChange: [] as Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.ENUM;
+    }>,
+  };
+
   private timer: NodeJS.Timeout;
 
   constructor(parameters: CoverMacrosParameters) {
@@ -646,9 +662,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       settings,
 
       state: defaultsDeep(state, {
-        prevCover: CoverState.STOP,
-        state: CoverState.STOP,
+        prevCoverState: CoverState.UNDEFINED,
+        coverState: CoverState.UNDEFINED,
         position: -1,
+        running: false,
         lighting: Lighting.OFF,
         illumination: -1,
         motion: -1,
@@ -666,6 +683,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     };
 
     this.timer = setInterval(this.clock, 60 * 1000);
+
+    this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
   }
 
   static parseSettings = (settings: string, version: number = VERSION): CoverMacrosSettings => {
@@ -675,9 +694,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   static parseState = (state?: string, version: number = VERSION): CoverMacrosState => {
     if (!state) {
       return {
-        prevCover: CoverState.STOP,
-        cover: CoverState.STOP,
-        position: 100,
+        prevCoverState: CoverState.UNDEFINED,
+        coverState: CoverState.UNDEFINED,
+        position: -1,
+        running: false,
         lighting: Lighting.OFF,
         illumination: -1,
         motion: -1,
@@ -697,39 +717,73 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       stringify({
         name: this.name,
         nextPublicState,
-        currentState: this.state,
-      }),
-    );
-
-    this.state.cover = nextPublicState.cover;
-    this.state.position = nextPublicState.position;
-
-    logger('The next state was applied ⏭️ ✅ ⏭️');
-    logger(
-      stringify({
-        name: this.name,
         state: this.state,
       }),
     );
 
-    this.output();
+    this.state.prevCoverState = this.state.coverState;
+    this.state.coverState = nextPublicState.coverState;
+    this.state.position = nextPublicState.position;
 
-    if (this.nextOutput.states.length > 0 || this.nextOutput.positions.length > 0) {
-      logger('The public state was determined 🫡 🚀');
-      logger(
-        stringify({
-          name: this.name,
-          state: this.state,
-          nextOutput: this.nextOutput,
-        }),
-      );
+    logger('The next state was applied by set state in manual mode ⏭️ ✅ ⏭️');
+    logger(stringify({ name: this.name, state: this.state }));
+
+    for (const position of this.settings.devices.positions) {
+      const controlType = ControlType.VALUE;
+      const control = this.controls.get(getControlId(position));
+
+      if (!control || control.type !== controlType || !control.topic) {
+        logger('The position control specified in the settings was not found 🚨');
+        logger(
+          stringify({
+            name: this.name,
+            position,
+            controlType,
+            control,
+          }),
+        );
+
+        continue;
+      }
+
+      const value = this.state.position;
+
+      if (String(control.value) !== String(value)) {
+        this.nextOutput.positions.push({ ...position, value });
+      }
     }
 
+    logger('The next output was computed for positions by set state in manual mode ⏭️ 🍋');
+    logger(
+      stringify({
+        name: this.name,
+        state: this.state,
+        nextOutput: this.nextOutput,
+      }),
+    );
+
+    this.output();
     this.send();
   };
 
+  private setCoverState(nextCoverState: CoverState) {
+    const { position } = this.settings.properties;
+
+    if (this.state.coverState !== nextCoverState) {
+      this.state.coverState = nextCoverState;
+
+      if (this.state.coverState === CoverState.OPEN) {
+        this.state.position = position.open;
+      }
+
+      if (this.state.coverState === CoverState.CLOSE) {
+        this.state.position = position.close;
+      }
+    }
+  }
+
   protected collecting() {
-    this.collectCover();
+    this.collectPosition();
     this.collectLightings();
     this.collectIllumination();
     this.collectMotion();
@@ -837,168 +891,58 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return compareAsc(this.block.close, new Date()) === 1;
   }
 
-  private collectCurrentCover = () => {
-    const { states, positions } = this.settings.devices;
+  private collectPosition = () => {
+    const { positions } = this.settings.devices;
+    const { position: positionSettings } = this.settings.properties;
 
-    const isSomeCoverOpen = states.some((state) => {
-      const control = this.controls.get(getControlId(state));
+    let position = 0;
 
-      if (control) {
-        return control.value === state.open;
-      }
-
-      return false;
-    });
-
-    const isSomeCoverClose = states.some((state) => {
-      const control = this.controls.get(getControlId(state));
+    for (const item of positions) {
+      const control = this.controls.get(getControlId(item));
 
       if (control) {
-        return control.value === state.close;
+        position += Number(control.value);
       }
-
-      return false;
-    });
-
-    const isSomeCoverStop = states.some((state) => {
-      const control = this.controls.get(getControlId(state));
-
-      if (control) {
-        return control.value === state.stop;
-      }
-
-      return false;
-    });
-
-    const isSomePositionOpen = positions.some((position) => {
-      const control = this.controls.get(getControlId(position));
-
-      if (control) {
-        return Number(control.value) === position.open;
-      }
-
-      return false;
-    });
-
-    const isSomePositionClose = positions.some((position) => {
-      const control = this.controls.get(getControlId(position));
-
-      if (control) {
-        return Number(control.value) === position.close;
-      }
-
-      return false;
-    });
-
-    const isSomePositionStop = positions.some((position) => {
-      const control = this.controls.get(getControlId(position));
-
-      if (control) {
-        const value = Number(control.value);
-
-        if (position.open > position.close && value >= position.close && value <= position.open) {
-          return true;
-        }
-
-        if (position.close > position.open && value >= position.open && value <= position.close) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-
-    return {
-      isSomeOpen: isSomeCoverOpen || isSomePositionOpen,
-      isSomeClose: isSomeCoverClose || isSomePositionClose,
-      isSomeStop: isSomeCoverStop || isSomePositionStop,
-      isSomeCoverOpen,
-      isSomeCoverClose,
-      isSomeCoverStop,
-      isSomePositionOpen,
-      isSomePositionClose,
-      isSomePositionStop,
-    };
-  };
-
-  private collectCover = () => {
-    const { states, positions } = this.settings.devices;
-
-    let nextCoverState = CoverState.STOP;
-
-    const {
-      isSomeOpen,
-      isSomeClose,
-      isSomeStop,
-      isSomeCoverOpen,
-      isSomeCoverClose,
-      isSomeCoverStop,
-      isSomePositionOpen,
-      isSomePositionClose,
-      isSomePositionStop,
-    } = this.collectCurrentCover();
-
-    if (isSomeOpen) {
-      nextCoverState = CoverState.OPEN;
-    } else if (isSomeClose) {
-      nextCoverState = CoverState.CLOSE;
     }
 
-    if (this.state.cover === nextCoverState) {
-      return;
+    position /= positions.length;
+
+    let coverState = CoverState.UNDEFINED;
+
+    if (this.state.position === positionSettings.open) {
+      coverState = CoverState.OPEN;
     }
 
-    logger('The cover internal state has been changed 🍋');
-    logger(
-      stringify({
-        name: this.name,
-        isSomeOpen,
-        isSomeClose,
-        isSomeStop,
-        isSomeCoverOpen,
-        isSomeCoverClose,
-        isSomeCoverStop,
-        isSomePositionOpen,
-        isSomePositionClose,
-        isSomePositionStop,
-        nextCoverState,
-        states: states.map((state) => {
-          return {
-            value: this.controls.get(getControlId(state))?.value,
-          };
-        }),
-        positions: positions.map((position) => {
-          return {
-            value: this.controls.get(getControlId(position))?.value,
-          };
-        }),
-        state: this.state,
-      }),
-    );
+    if (this.state.position === positionSettings.close) {
+      coverState = CoverState.CLOSE;
+    }
 
-    this.state.cover = nextCoverState;
+    if (this.state.position > 0 && this.state.position < 100) {
+      coverState = CoverState.STOP;
+    }
 
-    /**
-     * Записываем среднее значение позиции если в нашем сетапе некоторые шторы
-     * находятся в промежуточном положении.
-     *
-     * Это значение пользователь может изменить при помощи какого-либо
-     * способа управления (web gui, Apple Home Kit, Android Home, Home Assistant,
-     * Яндекс Алиса, Apple Siri).
-     */
-    this.state.position = positions.reduce((accumulator, position, currentIndex, positions) => {
-      const control = this.controls.get(getControlId(position));
+    if (
+      this.state.prevCoverState === CoverState.UNDEFINED ||
+      this.state.coverState === CoverState.UNDEFINED ||
+      this.state.position === -1
+    ) {
+      logger('The cover state and position was initialized 🚀');
+      logger({ position, coverState, state: this.state });
 
-      if (control) {
-        if (positions.length - 1 === currentIndex) {
-          return (accumulator + Number(control.value)) / positions.length;
+      this.state.prevCoverState = coverState;
+      this.state.coverState = coverState;
+      this.state.position = position;
+    } else {
+      this.state.running = positions.some((position) => {
+        const control = this.controls.get(getControlId(position));
+
+        if (control) {
+          return String(control.value) !== String(this.state.position);
         }
 
-        return accumulator + Number(control.value);
-      }
-
-      return accumulator;
-    }, 0);
+        return false;
+      });
+    }
   };
 
   private collectLightings = () => {
@@ -1054,12 +998,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   protected computation = (current?: HyperionDevice) => {
-    const previousCoverState = this.state.cover;
+    const previousCoverState = this.state.coverState;
 
     this.switching(current);
     this.sensors();
 
-    if (previousCoverState !== this.state.cover) {
+    if (previousCoverState !== this.state.coverState) {
       this.output();
       this.send();
     }
@@ -1107,11 +1051,36 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     const { buttons } = this.settings.devices;
 
-    return buttons.some(({ deviceId, controlId, controlType }) =>
+    const isButtonChange = buttons.some(({ deviceId, controlId, controlType }) =>
       current.controls.find(
         (control) => current.id === deviceId && control.id === controlId && control.type === controlType,
       ),
     );
+
+    if (isButtonChange && this.skip.firstButtonChange.length > 0) {
+      logger('The first button change was skipped ⏭️');
+      logger(
+        stringify({
+          isButtonChange,
+          buttons,
+          skip: this.skip.firstButtonChange,
+          current,
+        }),
+      );
+
+      this.skip.firstButtonChange = this.skip.firstButtonChange.filter(
+        ({ deviceId, controlId, controlType }) =>
+          !current.controls.some(
+            (control) => current.id === deviceId && control.id === controlId && control.type === controlType,
+          ),
+      );
+
+      logger(stringify({ skip: this.skip.firstButtonChange }));
+
+      return false;
+    }
+
+    return isButtonChange;
   }
 
   /**
@@ -1145,55 +1114,66 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
 
     if (isSwitchHasBeenChange) {
-      logger(stringify({ name: this.name, state: this.state }));
+      let nextCoverState: CoverState = this.state.coverState;
 
-      let nextCoverState: CoverState = this.state.cover;
+      /**
+       * TODO Как-то нужно понять, что сейчас происходит, включен мотор или нет
+       */
 
-      switch (this.state.cover) {
+      switch (this.state.coverState) {
         /**
-         * Состояние в котором происходит движение к открыванию.
+         * Состояние в котором происходит движение к открыванию или уже открыто.
          */
         case CoverState.OPEN: {
-          nextCoverState = CoverState.STOP;
+          this.state.prevCoverState = CoverState.OPEN;
 
-          this.state.prevCover = CoverState.OPEN;
+          nextCoverState = this.state.running ? CoverState.STOP : CoverState.CLOSE;
 
           break;
         }
+
         /**
-         * Состояние в котором происходит движение к закрыванию.
+         * Состояние в котором происходит движение к закрыванию или уже закрыто.
          */
         case CoverState.CLOSE: {
-          nextCoverState = CoverState.STOP;
+          this.state.prevCoverState = CoverState.CLOSE;
 
-          this.state.prevCover = CoverState.CLOSE;
+          nextCoverState = this.state.running ? CoverState.STOP : CoverState.OPEN;
 
           break;
         }
+
         /**
          * Состояние в котором крышка остановлена в неком среднем положении.
          * После остановки, нужно двигаться в противоположном направлении.
          */
         case CoverState.STOP: {
-          if (this.state.prevCover === CoverState.OPEN) {
+          if (this.state.prevCoverState === CoverState.OPEN) {
             nextCoverState = CoverState.CLOSE;
+
+            break;
           }
 
-          if (this.state.prevCover === CoverState.CLOSE) {
+          if (this.state.prevCoverState === CoverState.CLOSE) {
             nextCoverState = CoverState.OPEN;
+
+            break;
           }
 
           break;
         }
+
         default: {
           logger('No handler found for the cover state 🚨');
           logger(stringify({ name: this.name, state: this.state }));
-
-          nextCoverState = CoverState.CLOSE;
         }
       }
 
-      if (this.state.cover !== nextCoverState) {
+      logger(stringify({ name: this.name, nextCoverState, state: this.state }));
+
+      if (this.state.coverState !== nextCoverState) {
+        logger('The next cover state obtained 😊');
+
         const isLowPrioritySwitcher = switcher.type === SwitchType.SEALED_CONTACT || switcher.type === SwitchType.RELAY;
 
         /**
@@ -1203,6 +1183,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
          * ! Реализация приоритета блокировок.
          */
         if (isLowPrioritySwitcher && this.isBlocked(nextCoverState)) {
+          logger('Try to change cover state was blocked 🚫 😭');
+
           return;
         }
 
@@ -1215,14 +1197,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         let { blockMin } = switcher;
 
         if (isLowPrioritySwitcher && nextCoverState === CoverState.OPEN && !this.isEnoughLightingToOpen) {
-          logger('The illumination is not enough to open by low priority switcher 🚫');
-          logger(
-            stringify({
-              name: this.name,
-              illumination,
-              state: this.state,
-            }),
-          );
+          logger('The illumination is not enough to open by low priority switcher 🚫 😭');
+          logger(stringify({ name: this.name, illumination, state: this.state }));
 
           return;
         }
@@ -1253,7 +1229,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
           }
         }
 
-        this.state.cover = nextCoverState;
+        this.setCoverState(nextCoverState);
       }
     }
   };
@@ -1317,7 +1293,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }
     }
 
-    let nextCoverState = this.state.cover;
+    let nextCoverState = this.state.coverState;
 
     if (toOpen) {
       nextCoverState = CoverState.OPEN;
@@ -1327,11 +1303,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.CLOSE;
     }
 
-    if (this.state.cover !== nextCoverState) {
+    if (this.state.coverState !== nextCoverState) {
       /**
        * ! Реализация приоритета блокировок.
        */
       if (this.isBlocked(nextCoverState)) {
+        logger('Try to change cover state by time was blocked 🚫 😭');
+
         return;
       }
 
@@ -1367,8 +1345,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         }),
       );
 
-      this.state.prevCover = this.state.cover;
-      this.state.cover = nextCoverState;
+      this.state.prevCoverState = this.state.coverState;
+      this.setCoverState(nextCoverState);
 
       this.output();
       this.send();
@@ -1379,7 +1357,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    * Автоматизации по датчикам.
    */
   private sensors = () => {
-    let nextCoverState = this.state.cover;
+    let nextCoverState = this.state.coverState;
 
     if (this.isEnoughLightingToOpen && !this.isSilence) {
       nextCoverState = CoverState.OPEN;
@@ -1393,96 +1371,79 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.CLOSE;
     }
 
-    if (nextCoverState !== this.state.cover) {
+    if (nextCoverState !== this.state.coverState) {
       /**
        * ! Реализация приоритета блокировок.
        */
       if (this.isBlocked(nextCoverState)) {
+        logger('Try to change cover state by sensors was blocked 🚫 😭');
+
         return;
       }
 
-      this.state.prevCover = this.state.cover;
-      this.state.cover = nextCoverState;
+      this.state.prevCoverState = this.state.coverState;
+      this.setCoverState(nextCoverState);
     }
   };
 
   protected output = () => {
-    const nextOutput: CoverMacrosNextOutput = {
-      states: [],
-      positions: [],
-    };
+    const { state: stateSettings } = this.settings.properties;
 
     for (const state of this.settings.devices.states) {
       const controlType = ControlType.ENUM;
       const control = this.controls.get(getControlId(state));
 
       if (!control || control.type !== controlType || !control.topic) {
-        logger('The control specified in the settings was not found, or matches the parameters 🚨');
+        logger('The state control specified in the settings was not found, or matches the parameters 🚨');
         logger(
           stringify({
             name: this.name,
             state,
             controlType,
-            controls: [...this.controls.values()],
+            control,
           }),
         );
 
         continue;
       }
 
-      let value = state.stop;
+      let value = '';
 
-      if (this.state.cover === CoverState.OPEN) {
-        value = state.open;
+      switch (this.state.coverState) {
+        case CoverState.OPEN: {
+          value = stateSettings.open;
+
+          break;
+        }
+        case CoverState.CLOSE: {
+          value = stateSettings.close;
+
+          break;
+        }
+        case CoverState.STOP: {
+          value = stateSettings.stop;
+
+          break;
+        }
+        default: {
+          logger('The state value was not defined 🚨');
+          logger(
+            stringify({
+              name: this.name,
+              state,
+              stateSettings,
+            }),
+          );
+
+          continue;
+        }
       }
 
-      if (this.state.cover === CoverState.STOP) {
-        value = state.stop;
-      }
-
-      if (this.state.cover === CoverState.CLOSE) {
-        value = state.close;
-      }
-
-      if (control.value !== value) {
-        nextOutput.states.push({ ...state, value });
-      }
+      /**
+       * Пишем всегда, так как то что выдает устройство не всегда соответствует тому что декларировано в enum.
+       */
+      this.nextOutput.states.push({ ...state, value });
     }
-
-    for (const position of this.settings.devices.positions) {
-      const controlType = ControlType.ENUM;
-      const control = this.controls.get(getControlId(position));
-
-      if (!control || control.type !== controlType || !control.topic) {
-        logger('The control specified in the settings was not found, or matches the parameters 🚨');
-        logger(
-          stringify({
-            name: this.name,
-            position,
-            controlType,
-            controls: [...this.controls.values()],
-          }),
-        );
-
-        continue;
-      }
-
-      let value = 50;
-
-      if (this.state.cover === CoverState.OPEN) {
-        value = position.open;
-      }
-
-      if (this.state.cover === CoverState.CLOSE) {
-        value = position.close;
-      }
-
-      if (control.value !== String(value)) {
-        nextOutput.positions.push({ ...position, value });
-      }
-    }
-
-    this.nextOutput = nextOutput;
 
     logger('The next output was computed ⏭️ 🍋');
     logger(
@@ -1570,6 +1531,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
+
+    this.nextOutput = {
+      states: [],
+      positions: [],
+    };
+
+    logger('The next output was clean 🧼');
+    logger(stringify({ nextOutput: this.nextOutput }));
   };
 
   protected destroy() {

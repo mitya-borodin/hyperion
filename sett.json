@@ -1,0 +1,136 @@
+{
+  "devices": {
+    "buttons": [
+      {
+        "controlId": "action",
+        "controlType": "enum",
+        "deviceId": "0x00158d000977cd3f"
+      }
+    ],
+    "illuminations": [
+      {
+        "controlId": "Illuminance",
+        "controlType": "lux",
+        "deviceId": "wb-msw-v3_121"
+      }
+    ],
+    "lightings": [
+      {
+        "controlId": "K4",
+        "controlType": "switch",
+        "deviceId": "wb-mr6cu_49"
+      },
+      {
+        "controlId": "K5",
+        "controlType": "switch",
+        "deviceId": "wb-mr6cu_49"
+      }
+    ],
+    "motions": [
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_121"
+      }
+    ],
+    "noises": [
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_121"
+      }
+    ],
+    "positions": [
+      {
+        "controlId": "position",
+        "controlType": "value",
+        "deviceId": "0x00158d000710f3ff"
+      }
+    ],
+    "states": [
+      {
+        "controlId": "state",
+        "controlType": "enum",
+        "deviceId": "0x00158d000710f3ff"
+      }
+    ],
+    "switchers": [],
+    "temperatures": [
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_121"
+      },
+      {
+        "controlId": "temperature",
+        "controlType": "value",
+        "deviceId": "0x00158d000ae15fc8"
+      }
+    ]
+  },
+  "properties": {
+    "state": {
+      "open": "OPEN",
+      "close": "CLOSE",
+      "stop": "STOP"
+    },
+    "position": {
+      "open": 100,
+      "close": 0
+    },
+    "blocks": [
+      {
+        "fromMin": 0,
+        "toMin": 600,
+        "type": "OPEN"
+      }
+    ],
+    "closeBySun": {
+      "illumination": 750,
+      "temperature": 28
+    },
+    "illumination": {
+      "boundaries": [
+        {
+          "closeLux": 5,
+          "openLux": 75
+        },
+        {
+          "closeLux": 750,
+          "openLux": 250
+        }
+      ],
+      "detection": "MAX",
+      "mul": 5
+    },
+    "motion": {
+      "detection": "MAX",
+      "trigger": 100
+    },
+    "noise": {
+      "detection": "MAX",
+      "trigger": 50
+    },
+    "openCloseByTime": [
+      {
+        "blockMin": 60,
+        "direction": "OPEN",
+        "timePointMin": [660]
+      },
+      {
+        "blockMin": 60,
+        "direction": "OPEN",
+        "timePointMin": [1080]
+      }
+    ],
+    "silenceMin": 15,
+    "switcher": {
+      "blockMin": 0,
+      "trigger": "UP",
+      "type": "BUTTON"
+    },
+    "temperature": {
+      "detection": "MAX"
+    }
+  }
+}

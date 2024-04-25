@@ -260,10 +260,6 @@ export abstract class Macros<
     this.controls = controls;
 
     if (this.isDevicesReady() && this.isControlValueHasBeenChanged(current)) {
-      if (current.controls.length > 1) {
-        logger('The current hyperion device should contains only one control, which was changed 🚨 🚨 🚨 🚨');
-      }
-
       this.execute(current);
     }
   }
@@ -353,18 +349,25 @@ export abstract class Macros<
         const previous = this.previous.get(id);
         const current = this.controls.get(id);
 
+        if (current?.type === ControlType.ENUM) {
+          return true;
+        }
+
         if (previous?.value !== current?.value) {
           /**
            * TODO Придумать, как включать логи указанного метода.
            * TODO Скорее всего через экземпляр логера с подскоупом для этого метода.
            */
-          // logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
-          // logger(
-          //   stringify({
-          //     macros: omit(this.toJS(), ['labels', 'settings']),
-          //     device: { id: device.id, controls: device.controls.map(({ id, value }) => ({ id, value })) },
-          //   }),
-          // );
+          // if (this.name === 'Штора кабинет') {
+          //   logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
+          //   logger(
+          //     stringify({
+          //       name: this.name,
+          //       macros: omit(this.toJS(), ['labels', 'settings']),
+          //       device: { id: device.id, controls: device.controls.map(({ id, value }) => ({ id, value })) },
+          //     }),
+          //   );
+          // }
 
           return true;
         }

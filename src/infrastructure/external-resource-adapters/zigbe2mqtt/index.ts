@@ -10,7 +10,6 @@ import debug from 'debug';
 import { ControlType } from '../../../domain/control-type';
 import { EventBus } from '../../../domain/event-bus';
 import { HardwareControl, HardwareDevice } from '../../../domain/hardware-device';
-import { HyperionDeviceControl } from '../../../domain/hyperion-control';
 import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
 import { isJson } from '../../../helpers/is-json';
@@ -137,8 +136,17 @@ export const runZigbee2mqtt = async ({
 
     const message = messageBuffer.toString();
 
+    /**
+     * Когда значения передаются через /set, в ответ прилетает сообщение с установленным значением.
+     *
+     * Можно не обрабатывать этот случай, так как после этого сообщения прилетает обновленное состояние
+     * всего устройства.
+     *
+     * ! Если появятся случаи, когда мы не получаем состояние устройства, то придется разбирать топик,
+     * ! и по полученному пути и использовать значение для обновления hyperion device.
+     */
     if (!isJson(message)) {
-      logger('A message was received in a non-JSON format ⬇️  🍟 ⬇️');
+      logger('A message was received in a non-JSON format ⬇️ 🍟 ⬇️');
       logger(stringify({ topic, message }));
 
       return;
@@ -390,7 +398,7 @@ export const runZigbee2mqtt = async ({
 
               readonly: true,
 
-              value: state,
+              value: String(state),
             },
           },
         };
@@ -475,7 +483,7 @@ export const runZigbee2mqtt = async ({
         if (fields.has(control.id)) {
           controls[control.id] = {
             id: control.id,
-            value: payload[control.id],
+            value: String(payload[control.id]),
           };
         }
       }

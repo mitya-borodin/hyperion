@@ -17,6 +17,7 @@ import { settings_from_0_to_1 } from './settings-mappers/0-settings-from-0-to-1'
 import { settings_from_1_to_2 } from './settings-mappers/1-settings-from-1-to-2';
 import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3';
 import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4';
+import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-5-to-5';
 
 const logger = debug('hyperion:macros:lighting');
 
@@ -266,6 +267,11 @@ export type LightingMacrosSettings = {
      * Значение указывается в часах 0...23.
      */
     readonly offByTime: number;
+
+    /**
+     * Позволяет отключить функцию автоматического включения.
+     */
+    readonly autoOn: boolean;
   };
 };
 
@@ -332,7 +338,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 /**
  * ! VERSION - текущая версия макроса освещения
  */
-const VERSION = 4;
+const VERSION = 5;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private nextOutput: LightingMacrosNextOutput;
@@ -410,7 +416,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       settings,
       version,
       VERSION,
-      [settings_from_0_to_1, settings_from_1_to_2, settings_from_2_to_3, settings_from_3_to_4],
+      [settings_from_0_to_1, settings_from_1_to_2, settings_from_2_to_3, settings_from_3_to_4, settings_from_4_to_5],
       'settings',
     );
   };
@@ -729,7 +735,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAlreadyOn = this.state.switch === Switch.ON;
     const isIlluminationDetected = this.state.illumination >= 0;
 
-    if (isAutoOnBlocked || isAlreadyOn) {
+    if (!this.settings.properties.autoOn || isAutoOnBlocked || isAlreadyOn) {
       return;
     }
 
@@ -977,11 +983,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         value = control.off;
       }
 
-      if (control.value !== value) {
+      if (String(control.value) !== String(value)) {
         nextOutput.lightings.push({
           deviceId: lighting.deviceId,
           controlId: lighting.controlId,
-          value,
+          value: String(value),
         });
       }
     }

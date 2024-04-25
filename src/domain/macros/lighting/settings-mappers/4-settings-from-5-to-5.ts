@@ -1,6 +1,6 @@
 import { ControlType } from '../../../control-type';
 
-import { SettingsTo3 as SettingsFrom3 } from './2-settings-from-2-to-3';
+import { SettingsTo4 as SettingsFrom4 } from './3-settings-from-3-to-4';
 
 enum Trigger {
   UP = 'UP',
@@ -13,7 +13,7 @@ enum LevelDetection {
   AVG = 'AVG',
 }
 
-export type SettingsTo4 = {
+export type SettingsTo5 = {
   readonly devices: {
     readonly switchers: Array<{
       readonly deviceId: string;
@@ -77,10 +77,11 @@ export type SettingsTo4 = {
       readonly offMin: number;
     };
     readonly offByTime: number;
+    readonly autoOn: boolean;
   };
 };
 
-export const settings_from_3_to_4 = (settings: SettingsFrom3): SettingsTo4 => {
+export const settings_from_4_to_5 = (settings: SettingsFrom4): SettingsTo5 => {
   return {
     devices: {
       switchers: settings.devices.switchers.map(({ deviceId, controlId }) => ({
@@ -93,12 +94,12 @@ export const settings_from_3_to_4 = (settings: SettingsFrom3): SettingsTo4 => {
         controlId,
         controlType: ControlType.ILLUMINATION,
       })),
-      motions: settings.devices.motion.map(({ deviceId, controlId }) => ({
+      motions: settings.devices.motions.map(({ deviceId, controlId }) => ({
         deviceId,
         controlId,
         controlType: ControlType.VALUE,
       })),
-      noises: settings.devices.noise.map(({ deviceId, controlId }) => ({
+      noises: settings.devices.noises.map(({ deviceId, controlId }) => ({
         deviceId,
         controlId,
         controlType: ControlType.SOUND_LEVEL,
@@ -124,22 +125,23 @@ export const settings_from_3_to_4 = (settings: SettingsFrom3): SettingsTo4 => {
       },
       motion: {
         detection: settings.properties.motion.detection,
-        trigger: settings.properties.autoOn.motion.trigger,
+        trigger: settings.properties.motion.trigger,
         schedule: {
-          fromHour: settings.properties.autoOn.motion.active.from,
-          toHour: settings.properties.autoOn.motion.active.to,
+          fromHour: settings.properties.motion.schedule.fromHour,
+          toHour: settings.properties.motion.schedule.toHour,
         },
       },
       noise: {
         detection: settings.properties.noise.detection,
-        trigger: settings.properties.autoOff.noise,
+        trigger: settings.properties.noise.trigger,
       },
-      silenceMin: settings.properties.autoOff.silenceMin,
+      silenceMin: settings.properties.silenceMin,
       block: {
-        onMin: settings.properties.autoOn.block.illuminationHours * 60,
-        offMin: settings.properties.autoOff.block.illuminationHours * 60,
+        onMin: settings.properties.block.onMin,
+        offMin: settings.properties.block.offMin,
       },
-      offByTime: settings.properties.autoOff.time,
+      offByTime: settings.properties.offByTime,
+      autoOn: true,
     },
   };
 };
