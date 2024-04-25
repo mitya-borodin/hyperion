@@ -1423,18 +1423,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     // });
 
     if (this.isEnoughLightingToClose) {
-      if (nextCoverState !== CoverState.CLOSE) {
-        logger('Close because enough lighting to close 🌃 🌅');
+      logger('Close because enough lighting to close 🌃 🌅');
 
-        nextCoverState = CoverState.CLOSE;
-      }
+      nextCoverState = CoverState.CLOSE;
     } else if (this.isSunActive) {
-      if (nextCoverState !== CoverState.CLOSE) {
-        logger('Close because sun is active 🥵 🌅 🌞');
+      logger('Close because sun is active 🥵 🌅 🌞');
 
-        nextCoverState = CoverState.CLOSE;
-      }
-    } else if (this.isEnoughLightingToOpen && !this.isSilence && nextCoverState !== CoverState.OPEN) {
+      nextCoverState = CoverState.CLOSE;
+    } else if (this.isEnoughLightingToOpen && !this.isSilence) {
       logger('Open because enough lighting to open 💡 🚀');
 
       nextCoverState = CoverState.OPEN;
