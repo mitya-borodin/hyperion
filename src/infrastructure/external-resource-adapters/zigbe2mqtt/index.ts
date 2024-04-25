@@ -120,6 +120,7 @@ export const runZigbee2mqtt = async ({
     const isLoggingTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/logging`);
     const isDevicesTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/devices`);
     const isAvailabilityTopic = isBaseTopic && topic.endsWith('/availability');
+    const isSetTopic = isBaseTopic && topic.includes('/set/');
 
     if (!isBaseTopic) {
       return;
@@ -145,7 +146,7 @@ export const runZigbee2mqtt = async ({
      * ! Если появятся случаи, когда мы не получаем состояние устройства, то придется разбирать топик,
      * ! и по полученному пути и использовать значение для обновления hyperion device.
      */
-    if (!isJson(message)) {
+    if (!isSetTopic && !isJson(message)) {
       logger('A message was received in a non-JSON format ⬇️ 🍟 ⬇️');
       logger(stringify({ topic, message }));
 
@@ -412,6 +413,42 @@ export const runZigbee2mqtt = async ({
         //       .map(({ id, title }) => ({ id, title: title?.en })),
         //   }),
         // );
+
+        eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
+
+        lastHardwareDeviceAppeared = new Date();
+      }
+
+      return;
+    }
+
+    if (isSetTopic) {
+      const [friendlyName, controlId] = topic.replace(`${config.zigbee2mqtt.baseTopic}/`, '').split('/set/');
+      const ieeeAddress = ieeeAddressByFriendlyName.get(friendlyName);
+      const hyperionDevice = hyperionDevices.get(ieeeAddress ?? '');
+      const payload = message;
+
+      logger('The result of set operation on zigbee device has been received ⬇️ ⛵️ 🌍 ⬇️');
+      logger(stringify({ topic, friendlyName, ieeeAddress, payload }));
+
+      if (hyperionDevice) {
+        const controls: { [key: string]: HardwareControl } = {};
+
+        for (const control of hyperionDevice.controls) {
+          if (control.id === controlId) {
+            controls[control.id] = {
+              id: control.id,
+              value: String(payload),
+            };
+          }
+        }
+
+        const hardwareDevice: HardwareDevice = {
+          id: hyperionDevice.id,
+          controls,
+        };
+
+        logger(stringify({ topic, friendlyName, ieeeAddress, payload, hardwareDevice }));
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
