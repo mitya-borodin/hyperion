@@ -288,8 +288,9 @@ export abstract class Macros<
    *    если новое состояние вычислено, то процесс прерывается на этом этапе.
    * 3. computation - вычисление нового состояния контрола.
    */
-  protected execute = async (current?: HyperionDevice) => {
-    await this.collecting(current);
+
+  protected execute = (current?: HyperionDevice) => {
+    this.collecting(current);
 
     if (this.priorityComputation(current)) {
       return;
@@ -373,7 +374,7 @@ export abstract class Macros<
            * TODO Придумать, как включать логи указанного метода.
            * TODO Скорее всего через экземпляр логера с подскоупом для этого метода.
            */
-          // if (this.name === 'Штора кабинет') {
+          // if (this.name === 'Освещение 1 рабочего места' && device.id === 'wb-gpio' && control.id === 'EXT2_IN2') {
           //   logger('A suitable control has been detected 🕵️‍♂️ 🕵️‍♂️ 🕵️‍♂️');
           //   logger(
           //     stringify({

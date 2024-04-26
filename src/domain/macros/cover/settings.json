@@ -311,23 +311,9 @@
                   "required": ["closeLux", "openLux"],
                   "additionalProperties": false,
                   "description": "Позволяет определить излишне солнечный день или нет."
-                },
-                "mod": {
-                  "type": "object",
-                  "properties": {
-                    "close": {
-                      "type": "number"
-                    },
-                    "open": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["close", "open"],
-                  "additionalProperties": false,
-                  "description": "Количественные модификаторы для closeLux и openLux значений.\n\nПри наличии освещения, closeLux * mod.close, а openLux * mod.open."
                 }
               },
-              "required": ["detection", "low", "hi", "mod"],
+              "required": ["detection", "low", "hi"],
               "additionalProperties": false,
               "description": "* 5. Открыть/Закрыть по освещенности Позволяет закрывать штору при наступлении ночи и в излишне солнечный день."
             },

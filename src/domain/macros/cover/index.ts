@@ -654,7 +654,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 5000,
+      collectingThrottleMs: 4000,
     });
 
     this.output = {

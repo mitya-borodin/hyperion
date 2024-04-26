@@ -9,6 +9,7 @@ import { config } from '../../../infrastructure/config';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { ControlType } from '../../control-type';
 import { HyperionDeviceControl } from '../../hyperion-control';
+import { HyperionDevice } from '../../hyperion-device';
 import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
@@ -17,7 +18,7 @@ import { settings_from_0_to_1 } from './settings-mappers/0-settings-from-0-to-1'
 import { settings_from_1_to_2 } from './settings-mappers/1-settings-from-1-to-2';
 import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3';
 import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4';
-import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-5-to-5';
+import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-4-to-5';
 
 const logger = debug('hyperion:macros:lighting');
 
@@ -394,7 +395,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingDebounceMs: 50,
+      collectingDebounceMs: 0,
     });
 
     this.output = {
@@ -618,10 +619,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  protected computation() {
+  protected computation(current?: HyperionDevice) {
     const currentSwitchState = this.state.switch;
 
-    this.switch();
+    this.switch(current);
     this.autoOn();
     this.autoOff();
 
@@ -634,7 +635,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   /**
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
-  private switch = () => {
+  private switch = (current?: HyperionDevice) => {
     let isSwitchHasBeenChange = false;
 
     if (this.settings.properties.switcher.trigger === Trigger.UP) {
@@ -662,7 +663,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         return;
       }
 
-      logger(stringify({ name: this.name, state: this.state }));
+      logger(
+        stringify({
+          name: this.name,
+          state: this.state,
+          deviceId: current?.id,
+          controlId: current?.controls.map(({ id }) => id),
+        }),
+      );
 
       let nextSwitchState: Switch = Switch.OFF;
 
