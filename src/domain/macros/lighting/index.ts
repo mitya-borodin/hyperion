@@ -19,6 +19,7 @@ import { settings_from_1_to_2 } from './settings-mappers/1-settings-from-1-to-2'
 import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3';
 import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4';
 import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-4-to-5';
+import { settings_from_5_to_6 } from './settings-mappers/5-settings-from-5-to-6';
 
 const logger = debug('hyperion:macros:lighting');
 
@@ -419,7 +420,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       settings,
       version,
       VERSION,
-      [settings_from_0_to_1, settings_from_1_to_2, settings_from_2_to_3, settings_from_3_to_4, settings_from_4_to_5],
+      [
+        settings_from_0_to_1,
+        settings_from_1_to_2,
+        settings_from_2_to_3,
+        settings_from_3_to_4,
+        settings_from_4_to_5,
+        settings_from_5_to_6,
+      ],
       'settings',
     );
   };
