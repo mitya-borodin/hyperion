@@ -92,11 +92,7 @@
         "closeLux": 1500,
         "openLux": 300
       },
-      "detection": "MAX",
-      "mod": {
-        "close": 25,
-        "open": 10
-      }
+      "detection": "MAX"
     },
     "motion": {
       "detection": "MAX",

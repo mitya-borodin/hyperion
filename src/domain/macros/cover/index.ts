@@ -421,16 +421,6 @@ export type CoverMacrosSettings = {
          */
         openLux: number;
       };
-
-      /**
-       * Количественные модификаторы для closeLux и openLux значений.
-       *
-       * При наличии освещения, closeLux * mod.close, а openLux * mod.open.
-       */
-      readonly mod: {
-        close: number;
-        open: number;
-      };
     };
 
     /**
@@ -818,7 +808,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   }
 
   private get isIlluminationReady() {
-    const { low, hi, mod } = this.settings.properties.illumination;
+    const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
 
     // logger('Is illumination ready');
@@ -848,8 +838,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       low.openLux > 0 &&
       hi.closeLux > 0 &&
       hi.openLux > 0 &&
-      mod.close > 0 &&
-      mod.open > 0 &&
       low.closeLux < low.openLux &&
       low.openLux < hi.openLux &&
       hi.openLux < hi.closeLux
@@ -875,15 +863,21 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     );
   }
 
+  private get isCloseByLighting(): boolean {
+    const { lighting } = this.state;
+
+    return lighting === Lighting.ON;
+  }
+
   private get isEnoughLightingToClose(): boolean {
-    const { low, hi, mod } = this.settings.properties.illumination;
-    const { lighting, illumination } = this.state;
+    const { low, hi } = this.settings.properties.illumination;
+    const { illumination } = this.state;
 
     if (this.isIlluminationReady) {
       /**
        * Решение принимается при открытой шторе, при закрытой шторе и включенном освещении.
        */
-      const isEnoughToCloseByLow = illumination <= low.closeLux * (lighting === Lighting.ON ? mod.close : 1);
+      const isEnoughToCloseByLow = illumination <= low.closeLux;
 
       /**
        * Решение принимается при открытой шторе
@@ -927,15 +921,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   }
 
   private get isEnoughLightingToOpen(): boolean {
-    const { low, hi, mod } = this.settings.properties.illumination;
-    const { lighting, illumination } = this.state;
+    const { low, hi } = this.settings.properties.illumination;
+    const { illumination } = this.state;
 
-    if (this.isIlluminationReady) {
-      const mul = lighting === Lighting.ON ? mod.close : 1;
-
-      if (this.isCoverClose) {
-        return illumination >= low.openLux * mul && illumination <= hi.openLux * mul;
-      }
+    if (this.isIlluminationReady && this.isCoverClose) {
+      return illumination >= low.openLux && illumination <= hi.openLux;
     }
 
     return false;
@@ -1458,7 +1448,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     //   state: this.state,
     // });
 
-    if (this.isEnoughLightingToClose) {
+    if (this.isCloseByLighting) {
+      logger('Close because enabled lighting 💡');
+
+      nextCoverState = CoverState.CLOSE;
+    } else if (this.isEnoughLightingToClose) {
       logger('Close because enough lighting to close 🌃 or 🌇');
 
       nextCoverState = CoverState.CLOSE;
