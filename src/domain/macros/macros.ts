@@ -8,6 +8,7 @@ import { addHours, addMinutes } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
+import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
 import { v4 } from 'uuid';
 
@@ -70,6 +71,7 @@ export type MacrosParameters<SETTINGS, STATE> = {
 type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly type: TYPE;
   readonly version: number;
+  readonly collectingDebounceMs?: number;
   readonly collectingThrottleMs?: number;
 };
 
@@ -139,6 +141,7 @@ export abstract class Macros<
     settings,
     state,
     collectingThrottleMs = 0,
+    collectingDebounceMs = 0,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
@@ -161,8 +164,17 @@ export abstract class Macros<
 
     this.parseControlTypes(this.settings);
 
-    if (collectingThrottleMs > 0) {
+    if (collectingThrottleMs > 0 && collectingDebounceMs <= 0) {
       this.collecting = throttle(this.collecting.bind(this), collectingThrottleMs, {
+        leading: false,
+        trailing: true,
+      });
+
+      this.collecting();
+    }
+
+    if (collectingDebounceMs > 0 && collectingThrottleMs <= 0) {
+      this.collecting = debounce(this.collecting.bind(this), collectingDebounceMs, {
         leading: false,
         trailing: true,
       });
