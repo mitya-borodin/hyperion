@@ -190,41 +190,8 @@ export enum Computation {
  * При пересечении времени, приоритет будет отдан операции CLOSE.
  *
  * * 5. Открыть/Закрыть по освещенности
- * Позволяет указать пороги освещенности при переходе через которые изменяется
- * состояние шторы.
- *
- * Порог задается списком [{closeLux, openLux}], можно задать несколько пороговых
- * значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].
- *
- * Если значение closeLux < openLux, то при освещении меньше (<) closeLux штора
- * будет закрываться, а при значении больше (>) openLux будет открываться.
- *
- * Если значение closeLux > openLux, то при освещении больше (>) closeLux штора
- * будет закрываться, а при значении меньше (<) openLux будет открываться.
- *
- * Значение closeLux указывается при открытой шторе.
- * Значение openLux указывается при закрытой шторе, в случае включенного
- * освещения, значение увеличивается в mul раза.
- * Значение mul задается дробным числом (float).
- *
- * Регулировка уровней освещенности, может производиться пользователем,
- * в процесс эксплуатации, чтобы учесть значения в разные
- * (солнечные, пасмурные, дождливые) дни.
- *
- * Приоритет отдается закрытию.
- *
- * Открывание блокируется полной тишиной.
- *
- * Например:
- * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно
- * происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть],
- * а как только солнце взойдет и освещение при закрытой шторе станет выше
- * уставки, можно пытаться открыть штору.
- *
- * - Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и
- * как только освещение упадет до нужного порога открыть штору [закрыть
- * при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при
- * закрытой шторе ].
+ * Позволяет закрывать штору при наступлении ночи и в излишне солнечный день,
+ * и открывать при наступлении для и уменьшении солнечной активности.
  *
  * * 6. Движение и шум
  * Блокирует открывание по освещенности, в случае полной тишины.
@@ -418,49 +385,51 @@ export type CoverMacrosSettings = {
 
     /**
      * * 5. Открыть/Закрыть по освещенности
-     * Позволяет указать пороги освещенности при переходе через которые изменяется
-     * состояние шторы.
-     *
-     * Порог задается списком [{closeLux, openLux}], можно задать несколько пороговых
-     * значений [{closeLux: 25, openLux: 150}, {closeLux: 3000, openLux: 300}].
-     *
-     * Если значение closeLux < openLux, то при освещении меньше (<) closeLux штора
-     * будет закрываться, а при значении больше (>) openLux будет открываться.
-     *
-     * Если значение closeLux > openLux, то при освещении больше (>) closeLux штора
-     * будет закрываться, а при значении меньше (<) openLux будет открываться.
-     *
-     * Значение closeLux указывается при открытой шторе.
-     * Значение openLux указывается при закрытой шторе, в случае включенного
-     * освещения, значение увеличивается в mul раза.
-     * Значение mul задается дробным числом (float).
-     *
-     * Регулировка уровней освещенности, может производиться пользователем,
-     * в процесс эксплуатации, чтобы учесть значения в разные
-     * (солнечные, пасмурные, дождливые) дни.
-     *
-     * Приоритет отдается закрытию.
-     *
-     * Открывание блокируется полной тишиной.
-     *
-     * Например:
-     * - Потемнело и в связи с этим стоит закрыть шторы, чтобы с улицы не было видно
-     * происходящего внутри  [ при closeLux: 25 закрыть, при openLux: 150 открыть],
-     * а как только солнце взойдет и освещение при закрытой шторе станет выше
-     * уставки, можно пытаться открыть штору.
-     *
-     * - Солнце слишком яркое и/или светит на монитор, стоит закрыть окно, и
-     * как только освещение упадет до нужного порога открыть штору [закрыть
-     * при closeLux: 3000 при открытой шторе, открыть при openLux: 300 при
-     * закрытой шторе ].
+     * Позволяет закрывать штору при наступлении ночи и в излишне солнечный день.
      */
     readonly illumination: {
       readonly detection: LevelDetection;
-      readonly boundaries: Array<{ closeLux: number; openLux: number }>;
-      readonly mul: number;
-      readonly blockMin: {
-        readonly open: number;
-        readonly close: number;
+
+      /**
+       * Позволяет определить день или ночь.
+       */
+      readonly low: {
+        /**
+         * Если значение меньше closeLux штора закрывается.
+         * Значение рассматривается только при открытой шторе.
+         */
+        closeLux: number;
+        /**
+         * Если значение больше openLux штора откроется при появлении движения.
+         * Значение рассматривается только при закрытой шторе.
+         */
+        openLux: number;
+      };
+
+      /**
+       * Позволяет определить излишне солнечный день или нет.
+       */
+      readonly hi: {
+        /**
+         * Если значение больше closeLux штора закроется.
+         * Значение рассматривается только при открытой шторе.
+         */
+        closeLux: number;
+        /**
+         * Если значение меньше openLux штора откроется.
+         * Значение рассматривается только при закрытой шторе.
+         */
+        openLux: number;
+      };
+
+      /**
+       * Количественные модификаторы для closeLux и openLux значений.
+       *
+       * При наличии освещения, closeLux * mod.close, а openLux * mod.open.
+       */
+      readonly mod: {
+        close: number;
+        open: number;
       };
     };
 
@@ -511,9 +480,23 @@ export type CoverMacrosSettings = {
      * Позволяет закрыть штору, если освещенность и температура выше уставок.
      */
     readonly closeBySun: {
-      readonly illumination: number;
+      readonly illumination: {
+        /**
+         * Если освещенность больше closeLux и температура больше temperature
+         * штора закрывается.
+         *
+         * Значение рассматривается только при открытой шторе.
+         */
+        closeLux: number;
+
+        /**
+         * Если освещенность меньше openLux штора закрывается.
+         *
+         * Значение рассматривается только при закрытой шторе.
+         */
+        openLux: number;
+      };
       readonly temperature: number;
-      readonly div: number;
     };
 
     readonly state: {
@@ -680,6 +663,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       devices: parameters.devices,
       controls: parameters.controls,
+
+      collectingDelay: 500,
+      executionDelay: 1000,
     });
 
     this.output = {
@@ -813,8 +799,24 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     );
   }
 
+  private get isCoverOpen(): boolean {
+    const { position, state } = this.settings.properties;
+
+    const { coverState, running } = this.state;
+
+    return this.state.position === position.open && coverState === state.open && !running;
+  }
+
+  private get isCoverClose(): boolean {
+    const { position, state } = this.settings.properties;
+
+    const { coverState, running } = this.state;
+
+    return this.state.position === position.close && coverState === state.close && !running;
+  }
+
   private get isIlluminationReady() {
-    const { boundaries, mul } = this.settings.properties.illumination;
+    const { low, hi, mod } = this.settings.properties.illumination;
     const { illumination } = this.state;
 
     // logger('Is illumination ready');
@@ -826,87 +828,112 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     //   }),
     // );
 
+    if (low.closeLux > low.openLux) {
+      logger('The low.closeLux should be less then low.openLux 🚨');
+    }
+
+    if (low.openLux > hi.openLux) {
+      logger('The low.openLux should be less then hi.openLux 🚨');
+    }
+
+    if (hi.openLux > hi.closeLux) {
+      logger('The hi.openLux should be less then hi.closeLux 🚨');
+    }
+
     return (
       illumination > 0 &&
-      boundaries.every(({ closeLux, openLux }) => {
-        if (closeLux < 0 || openLux < 0) {
-          return false;
-        }
-
-        return true;
-      }) &&
-      mul > 0
+      low.closeLux > 0 &&
+      low.openLux > 0 &&
+      hi.closeLux > 0 &&
+      hi.openLux > 0 &&
+      mod.close > 0 &&
+      mod.open > 0 &&
+      low.closeLux < low.openLux &&
+      low.openLux < hi.openLux &&
+      hi.openLux < hi.closeLux
     );
   }
 
-  private get isEnoughLightingToClose(): boolean {
-    const { boundaries, mul } = this.settings.properties.illumination;
-    const { lighting, illumination } = this.state;
-
-    if (this.isIlluminationReady) {
-      return boundaries.some(({ closeLux, openLux }) => {
-        /**
-         * Ситуация перехода от более темного времени суток к светлому.
-         */
-        if (openLux > closeLux) {
-          /**
-           * Если illumination меньше closeLux это означает наступление ночи.
-           */
-          return illumination <= closeLux * (lighting === Lighting.ON ? mul : 1);
-        }
-
-        /**
-         * Ситуация перехода более светлого времени суток к темному.
-         */
-        if (closeLux > openLux) {
-          /**
-           * Если illumination больше closeLux это означает наступление
-           * самого яркого времени суток.
-           */
-          return illumination >= closeLux;
-        }
-
-        return false;
-      });
-    }
-
-    return false;
-  }
-
-  private get isSunActive(): boolean {
+  private get isCloseBySunReady(): boolean {
     const { closeBySun } = this.settings.properties;
 
-    const { mul } = this.settings.properties.illumination;
+    const { temperature } = this.state;
 
-    const { lighting, illumination, temperature, coverState } = this.state;
+    if (closeBySun.illumination.closeLux < closeBySun.illumination.openLux) {
+      logger('The closeBySun.illumination.closeLux should be more then closeBySun.illumination.openLux 🚨');
+    }
 
     return (
       temperature > 0 &&
       closeBySun.temperature > 0 &&
       temperature > closeBySun.temperature &&
-      closeBySun.illumination > 0 &&
-      illumination >
-        (closeBySun.illumination * (lighting === Lighting.ON ? mul : 1)) /
-          (coverState === CoverState.OPEN ? 1 : closeBySun.div)
+      closeBySun.illumination.closeLux > 0 &&
+      closeBySun.illumination.openLux > 0 &&
+      closeBySun.illumination.closeLux > closeBySun.illumination.openLux
+    );
+  }
+
+  private get isEnoughLightingToClose(): boolean {
+    const { low, hi, mod } = this.settings.properties.illumination;
+    const { lighting, illumination } = this.state;
+
+    if (this.isIlluminationReady) {
+      /**
+       * Решение принимается при открытой шторе, при закрытой шторе и включенном освещении.
+       */
+      const isEnoughToCloseByLow = illumination <= low.closeLux * (lighting === Lighting.ON ? mod.close : 1);
+
+      /**
+       * Решение принимается при открытой шторе
+       */
+      const isEnoughToCloseByHi = illumination >= hi.closeLux && this.isCoverOpen;
+
+      return isEnoughToCloseByLow || isEnoughToCloseByHi;
+    }
+
+    return false;
+  }
+
+  private get isEnoughSunActiveToClose(): boolean {
+    const { closeBySun } = this.settings.properties;
+
+    const { illumination } = this.state;
+
+    return (
+      this.isCloseBySunReady &&
+      illumination >= closeBySun.illumination.closeLux &&
+      /**
+       * Решение принимается при открытой шторе
+       */
+      this.isCoverOpen
+    );
+  }
+
+  private get isEnoughSunActiveToOpen(): boolean {
+    const { closeBySun } = this.settings.properties;
+
+    const { illumination } = this.state;
+
+    return (
+      this.isCloseBySunReady &&
+      illumination <= closeBySun.illumination.openLux &&
+      /**
+       * Решение принимается при закрытой шторе
+       */
+      this.isCoverClose
     );
   }
 
   private get isEnoughLightingToOpen(): boolean {
-    const { boundaries, mul } = this.settings.properties.illumination;
+    const { low, hi, mod } = this.settings.properties.illumination;
     const { lighting, illumination } = this.state;
 
     if (this.isIlluminationReady) {
-      return boundaries.some(({ closeLux, openLux }) => {
-        if (openLux > closeLux) {
-          return illumination >= openLux * (lighting === Lighting.ON ? mul : 1);
-        }
+      const mul = lighting === Lighting.ON ? mod.close : 1;
 
-        if (closeLux > openLux) {
-          return illumination <= openLux * (lighting === Lighting.ON ? mul : 1);
-        }
-
-        return false;
-      });
+      if (this.isCoverClose) {
+        return illumination >= low.openLux * mul && illumination <= hi.openLux * mul;
+      }
     }
 
     return false;
@@ -1431,15 +1458,19 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     // });
 
     if (this.isEnoughLightingToClose) {
-      logger('Close because enough lighting to close 🌃 🌅');
+      logger('Close because enough lighting to close 🌃 or 🌇');
 
       nextCoverState = CoverState.CLOSE;
-    } else if (this.isSunActive) {
-      logger('Close because sun is active 🥵 🌅 🌞');
+    } else if (this.isEnoughSunActiveToClose) {
+      logger('Close because sun is active 🌅 🌇 🌞 🥵');
 
       nextCoverState = CoverState.CLOSE;
+    } else if (this.isEnoughSunActiveToOpen) {
+      logger('Close because sun is not active 🪭 😎 🆒');
+
+      nextCoverState = CoverState.OPEN;
     } else if (this.isEnoughLightingToOpen && !this.isSilence) {
-      logger('Open because enough lighting to open 💡 🚀');
+      logger('Open because enough lighting to open 🌅 💡');
 
       nextCoverState = CoverState.OPEN;
     }
