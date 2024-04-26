@@ -990,7 +990,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       logger({ state: this.state });
 
-      if (position !== positionSettings.open || position !== positionSettings.close) {
+      if (position !== positionSettings.open && position !== positionSettings.close) {
         logger(
           'The cover macro is stuck in the initial intermediate position, the state will be switched to fully open 📖',
         );
