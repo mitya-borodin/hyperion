@@ -664,8 +664,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingDelay: 500,
-      executionDelay: 1000,
+      collectingThrottleMs: 1000,
     });
 
     this.output = {
@@ -786,6 +785,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectMotion();
     this.collectNoise();
     this.collectTemperature();
+
+    // logger('The collecting completed ✅');
+    // logger(stringify({ state: this.state }));
   }
 
   private get isSilence(): boolean {
@@ -1453,7 +1455,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     //   isEnoughLightingToOpen: this.isEnoughLightingToOpen,
     //   isEnoughLightingToClose: this.isEnoughLightingToClose,
     //   isSilence: this.isSilence,
-    //   isSunActive: this.isSunActive,
     //   state: this.state,
     // });
 

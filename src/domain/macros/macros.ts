@@ -8,7 +8,7 @@ import { addHours, addMinutes } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
-import debounce from 'lodash.debounce';
+import throttle from 'lodash.throttle';
 import { v4 } from 'uuid';
 
 import { stringify } from '../../helpers/json-stringify';
@@ -70,8 +70,7 @@ export type MacrosParameters<SETTINGS, STATE> = {
 type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly type: TYPE;
   readonly version: number;
-  readonly collectingDelay?: number;
-  readonly executionDelay?: number;
+  readonly collectingThrottleMs?: number;
 };
 
 export type MacrosAccept = {
@@ -139,8 +138,7 @@ export abstract class Macros<
     type,
     settings,
     state,
-    collectingDelay = 50,
-    executionDelay = 100,
+    collectingThrottleMs = 0,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
@@ -163,17 +161,14 @@ export abstract class Macros<
 
     this.parseControlTypes(this.settings);
 
-    this.collecting = debounce(this.collecting.bind(this), collectingDelay, {
-      leading: false,
-      trailing: true,
-    });
+    if (collectingThrottleMs > 0) {
+      this.collecting = throttle(this.collecting.bind(this), collectingThrottleMs, {
+        leading: false,
+        trailing: true,
+      });
 
-    this.collecting();
-
-    this.execute = debounce(this.execute.bind(this), executionDelay, {
-      leading: false,
-      trailing: true,
-    });
+      this.collecting();
+    }
   }
 
   private parseControlTypes = (settings: SettingsBase) => {
@@ -281,8 +276,8 @@ export abstract class Macros<
    *    если новое состояние вычислено, то процесс прерывается на этом этапе.
    * 3. computation - вычисление нового состояния контрола.
    */
-  protected execute = (current?: HyperionDevice) => {
-    this.collecting(current);
+  protected execute = async (current?: HyperionDevice) => {
+    await this.collecting(current);
 
     if (this.priorityComputation(current)) {
       return;
