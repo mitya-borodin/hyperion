@@ -44,7 +44,8 @@
                     },
                     "controlType": {
                       "type": "string",
-                      "const": "switch"
+                      "const": "switch",
+                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                     }
                   },
                   "required": ["deviceId", "controlId", "controlType"],
@@ -61,7 +62,8 @@
                     },
                     "controlType": {
                       "type": "string",
-                      "const": "switch"
+                      "const": "switch",
+                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                     }
                   },
                   "required": ["deviceId", "controlId", "controlType"],
@@ -85,7 +87,8 @@
                     },
                     "controlType": {
                       "type": "string",
-                      "const": "switch"
+                      "const": "switch",
+                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                     }
                   },
                   "required": ["deviceId", "controlId", "controlType"],
@@ -102,7 +105,8 @@
                     },
                     "controlType": {
                       "type": "string",
-                      "const": "switch"
+                      "const": "switch",
+                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                     }
                   },
                   "required": ["deviceId", "controlId", "controlType"],
@@ -119,7 +123,8 @@
                     },
                     "controlType": {
                       "type": "string",
-                      "const": "switch"
+                      "const": "switch",
+                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                     }
                   },
                   "required": ["deviceId", "controlId", "controlType"],
@@ -146,7 +151,8 @@
                 },
                 "controlType": {
                   "type": "string",
-                  "const": "switch"
+                  "const": "switch",
+                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                 }
               },
               "required": ["deviceId", "controlId", "controlType"],
@@ -163,7 +169,8 @@
                 },
                 "controlType": {
                   "type": "string",
-                  "const": "switch"
+                  "const": "switch",
+                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                 }
               },
               "required": ["deviceId", "controlId", "controlType"],

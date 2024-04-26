@@ -21,7 +21,8 @@
                   },
                   "controlType": {
                     "type": "string",
-                    "const": "switch"
+                    "const": "switch",
+                    "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                   }
                 },
                 "required": ["deviceId", "controlId", "controlType"],
@@ -101,7 +102,8 @@
                   },
                   "controlType": {
                     "type": "string",
-                    "const": "switch"
+                    "const": "switch",
+                    "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                   }
                 },
                 "required": ["deviceId", "controlId", "controlType"],
@@ -226,9 +228,13 @@
             "offByTime": {
               "type": "number",
               "description": "Единоразовое отключение освещения.\n\nПри выключении блокируется включение, на время указанное в настройках blocks.\n\nЗначение указывается в часах 0...23."
+            },
+            "autoOn": {
+              "type": "boolean",
+              "description": "Позволяет отключить функцию автоматического включения."
             }
           },
-          "required": ["switcher", "illumination", "motion", "noise", "silenceMin", "block", "offByTime"],
+          "required": ["switcher", "illumination", "motion", "noise", "silenceMin", "block", "offByTime", "autoOn"],
           "additionalProperties": false
         }
       },
