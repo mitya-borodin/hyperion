@@ -339,7 +339,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 /**
  * ! VERSION - текущая версия макроса освещения
  */
-const VERSION = 5;
+const VERSION = 6;
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private output: LightingMacrosOutput;
@@ -860,6 +860,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAutoOffBlocked = compareAsc(this.block.off, new Date()) === 1;
     const isAlreadyOff = this.state.switch === Switch.OFF;
     const isIlluminationDetected = this.state.illumination >= 0;
+    const isLightingOn = this.state.switch === Switch.ON;
 
     if (isAutoOffBlocked || isAlreadyOff) {
       return;
@@ -886,21 +887,15 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      *
      * Работает когда имеются датчики освещенности.
      */
-    let autoOffByIllumination =
+    const autoOffByIllumination =
       hasIlluminationDevice &&
       isIlluminationDetected &&
+      /**
+       * Если включено освещение, то автоматическое отключение по освещения выключается,
+       * остается только по полной тишине.
+       */
+      !isLightingOn &&
       this.state.illumination >= this.settings.properties.illumination.boundary.offLux;
-
-    /**
-     * Если включено освещение, то порог отключения умножается на заданный параметр, чтобы
-     * предотвратить выключение при включенном освещении.
-     */
-    if (this.state.switch === Switch.ON) {
-      autoOffByIllumination =
-        autoOffByIllumination &&
-        this.state.illumination >=
-          this.settings.properties.illumination.boundary.offLux * this.settings.properties.illumination.mul;
-    }
 
     if (autoOffByIllumination) {
       nextSwitchState = Switch.OFF;
@@ -928,6 +923,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           isAutoOffBlocked,
           isAlreadyOff,
           isIlluminationDetected,
+
+          isLightingOn,
 
           hasIlluminationDevice,
           hasMotionDevice,
