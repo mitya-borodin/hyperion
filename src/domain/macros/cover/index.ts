@@ -936,7 +936,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
   private collectPosition = () => {
     const { positions } = this.settings.devices;
-    const { position: positionSettings } = this.settings.properties;
+    const { position: positionSettings, state: stateSettings } = this.settings.properties;
 
     let position = 0;
 
@@ -989,6 +989,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.state.position = position;
 
       logger({ state: this.state });
+
+      if (position !== positionSettings.open || position !== positionSettings.close) {
+        logger(
+          'The cover macro is stuck in the initial intermediate position, the state will be switched to fully open 📖',
+        );
+
+        this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
+      }
     } else {
       const running = this.isRunning();
 
