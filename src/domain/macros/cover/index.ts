@@ -1391,6 +1391,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by time was blocked 🚫 😭');
+        logger({ name: this.name });
 
         return;
       }
@@ -1439,33 +1440,29 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private sensors = () => {
     let nextCoverState = this.state.coverState;
 
-    // logger('The sensors ℹ️');
-    // logger({
-    //   isIlluminationReady: this.isIlluminationReady,
-    //   isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    //   isEnoughLightingToClose: this.isEnoughLightingToClose,
-    //   isSilence: this.isSilence,
-    //   state: this.state,
-    // });
-
     if (this.isCloseByLighting) {
       logger('Close because enabled lighting 💡');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughLightingToClose) {
       logger('Close because enough lighting to close 🌃 or 🌇');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughSunActiveToClose) {
       logger('Close because sun is active 🌅 🌇 🌞 🥵');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughSunActiveToOpen) {
       logger('Close because sun is not active 🪭 😎 🆒');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
     } else if (this.isEnoughLightingToOpen && !this.isSilence) {
       logger('Open because enough lighting to open 🌅 💡');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
     }
@@ -1476,6 +1473,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by sensors was blocked 🚫 😭');
+        logger({ name: this.name });
 
         return;
       }
