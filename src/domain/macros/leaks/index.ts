@@ -20,8 +20,9 @@ export enum ValueState {
 }
 
 export enum ValveType {
-  ANALOG = 'ANALOG',
   PHASE = 'PHASE',
+  ANALOG = 'ANALOG',
+  ZIGBEE = 'ZIGBEE',
 }
 
 /**
@@ -32,7 +33,7 @@ export enum ValveType {
 export type LeaksMacrosSettings = {
   /**
    * Тип управления краном, бывают краны, без контроля положения,
-   *  с контролем крайних положений, аналоговое управление 0-10В
+   *  с контролем крайних положений, аналоговое управление 0-10В, кран подключенный по zigbee2mqtt.
    */
   readonly type: ValveType;
 

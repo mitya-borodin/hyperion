@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import dotenv from 'dotenv';
-import type { Level } from 'pino';
+import { LogLevel } from 'fastify';
 
 const rootDirection = path.resolve(__dirname, '../../..');
 
@@ -22,15 +22,14 @@ export class Config {
   public readonly gracefullyShutdownMs: number;
 
   public readonly log: {
-    level: Level;
-    hideSensitiveInfo: boolean;
+    filter: string;
   };
 
   public readonly fastify: {
     readonly host: string;
     readonly port: number;
     readonly log: {
-      readonly level: Level;
+      readonly level: LogLevel;
     };
     readonly cookieSecret: string;
     readonly public: string;
@@ -81,8 +80,7 @@ export class Config {
     this.isDev = (process.env.NODE_ENV ?? 'development') === 'development';
 
     this.log = {
-      level: this.toLogLevel(process.env.LOG_LEVEL),
-      hideSensitiveInfo: (process.env.HIDE_SENSITIVE_INFO ?? 'true') === 'true',
+      filter: process.env.LOG_FILTER ?? 'PLEASE TYPE SOME TEXT',
     };
 
     this.fastify = {
@@ -142,7 +140,7 @@ export class Config {
     return defaultValue;
   }
 
-  private toLogLevel(level?: string): Level {
+  private toLogLevel(level?: string): LogLevel {
     if (level === 'fatal') {
       return 'fatal';
     }

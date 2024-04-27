@@ -971,72 +971,26 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   }
 
   private collectPosition = () => {
-    const { positions } = this.settings.devices;
     const { position: positionSettings, state: stateSettings } = this.settings.properties;
-
-    let position = 0;
-
-    for (const item of positions) {
-      const control = this.controls.get(getControlId(item));
-
-      if (control) {
-        const value = Number(control.value);
-
-        if (!Number.isInteger(value)) {
-          logger('Skip cover state and position was initialization, because value is not integer ⏭️');
-          logger(stringify({ name: this.name }));
-
-          return;
-        }
-
-        position += value;
-      } else {
-        logger('Skip cover state and position was initialization, because control is not available ⏭️');
-        logger(stringify({ name: this.name }));
-
-        return;
-      }
-    }
-
-    position /= positions.length;
-
-    let coverState = CoverState.UNDEFINED;
-
-    if (position === positionSettings.open) {
-      coverState = CoverState.OPEN;
-    }
-
-    if (position === positionSettings.close) {
-      coverState = CoverState.CLOSE;
-    }
-
-    if (position > 0 && position < 100) {
-      coverState = CoverState.CLOSE;
-    }
 
     if (
       this.state.prevCoverState === CoverState.UNDEFINED ||
       this.state.coverState === CoverState.UNDEFINED ||
       this.state.position === -1
     ) {
-      logger('The cover state and position was initialized 🚀');
-      logger({ name: this.name, position, coverState, positionSettings, state: this.state });
+      this.state.prevCoverState = CoverState.CLOSE;
+      this.state.coverState = CoverState.CLOSE;
+      this.state.position = 0;
 
-      this.state.prevCoverState = coverState;
-      this.state.coverState = coverState;
-      this.state.position = position;
-
-      logger({ state: this.state });
-
-      logger('Initializing the initial state as open 📖');
-      logger(stringify({ name: this.name }));
+      logger('Initializing the initial state as open 📖 🚀');
+      logger(stringify({ name: this.name, positionSettings, stateSettings, state: this.state }));
 
       this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
     } else {
       const running = this.isRunning();
 
       if (this.state.running !== running) {
-        logger('The running was detected ⛹️‍♀️');
+        logger('The change of running state was detected ⛹️‍♀️');
 
         this.state.running = running;
 
