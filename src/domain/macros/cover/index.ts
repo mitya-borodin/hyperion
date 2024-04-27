@@ -845,7 +845,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
 
     return (
-      illumination > 0 &&
+      illumination >= 0 &&
       low.closeLux > 0 &&
       low.openLux > 0 &&
       hi.closeLux > 0 &&
@@ -1497,6 +1497,21 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    */
   private sensors = () => {
     let nextCoverState = this.state.coverState;
+
+    // if (this.name === 'Штора инженерная') {
+    //   logger({
+    //     name: this.name,
+    //     state: this.state,
+    //     nextCoverState,
+    //     isSilence: this.isSilence,
+    //     isIlluminationReady: this.isIlluminationReady,
+    //     isCloseByLighting: this.isCloseByLighting,
+    //     isEnoughLightingToClose: this.isEnoughLightingToClose,
+    //     isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+    //     isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+    //     isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    //   });
+    // }
 
     if (this.isCloseByLighting) {
       if (nextCoverState !== CoverState.CLOSE) {
