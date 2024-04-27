@@ -665,7 +665,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 250,
+      collectingThrottleMs: 1000,
     });
 
     this.output = {
@@ -676,7 +676,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.movingArrange = {
       sum: 0,
       avg: 0,
-      width: subMinutes(new Date(), 30),
+      width: subMinutes(new Date(), 5),
       stack: [],
     };
 
