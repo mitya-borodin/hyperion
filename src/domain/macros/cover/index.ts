@@ -764,7 +764,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.state.running = this.isRunning();
 
       logger('The next state was set ✅');
-      logger({ state: this.state });
+      logger({ name: this.name, state: this.state });
     }
   }
 
@@ -811,15 +811,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
 
-    // logger('Is illumination ready');
-    // logger(
-    //   stringify({
-    //     illumination,
-    //     boundaries,
-    //     mul,
-    //   }),
-    // );
-
     if (low.closeLux > low.openLux) {
       logger('The low.closeLux should be less then low.openLux 🚨');
     }
@@ -851,6 +842,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     if (closeBySun.illumination.closeLux < closeBySun.illumination.openLux) {
       logger('The closeBySun.illumination.closeLux should be more then closeBySun.illumination.openLux 🚨');
+      logger(
+        stringify({
+          name: this.name,
+        }),
+      );
     }
 
     return (
@@ -967,6 +963,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         if (!Number.isInteger(value)) {
           logger('Skip cover state and position was initialization, because value is not integer ⏭️');
+          logger(stringify({ name: this.name }));
 
           return;
         }
@@ -974,6 +971,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         position += value;
       } else {
         logger('Skip cover state and position was initialization, because control is not available ⏭️');
+        logger(stringify({ name: this.name }));
 
         return;
       }
@@ -1001,7 +999,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.state.position === -1
     ) {
       logger('The cover state and position was initialized 🚀');
-      logger({ position, coverState, positionSettings, state: this.state });
+      logger({ name: this.name, position, coverState, positionSettings, state: this.state });
 
       this.state.prevCoverState = coverState;
       this.state.coverState = coverState;
@@ -1013,6 +1011,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         logger(
           'The cover macro is stuck in the initial intermediate position, the state will be switched to fully open 📖',
         );
+        logger(stringify({ name: this.name }));
 
         this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
       }
@@ -1024,7 +1023,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         this.state.running = running;
 
-        logger(stringify({ state: this.state }));
+        logger(stringify({ name: this.name, state: this.state }));
       }
     }
   };
@@ -1145,6 +1144,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger('The first button change was skipped ⏭️');
       logger(
         stringify({
+          name: this.name,
           isButtonChange,
           buttons,
           skip: this.skip.firstButtonChange,
@@ -1179,6 +1179,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       if (isSwitchHasBeenChange) {
         logger('The switch was closed 🔒');
+        logger(stringify({ name: this.name }));
       }
     }
 
@@ -1187,6 +1188,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       if (isSwitchHasBeenChange) {
         logger('The switch was open 🔓');
+        logger(stringify({ name: this.name }));
       }
     }
 
@@ -1194,6 +1196,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       isSwitchHasBeenChange = true;
 
       logger('The button was touched 👉 🔘');
+      logger(stringify({ name: this.name }));
     }
 
     if (isSwitchHasBeenChange) {
@@ -1255,7 +1258,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         const isLowPrioritySwitcher = switcher.type === SwitchType.SEALED_CONTACT || switcher.type === SwitchType.RELAY;
 
-        logger(stringify({ isLowPrioritySwitcher }));
+        logger(stringify({ name: this.name, isLowPrioritySwitcher }));
 
         /**
          * Запрет переключения, по средством геркона, реле или других
@@ -1440,29 +1443,35 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private sensors = () => {
     let nextCoverState = this.state.coverState;
 
+    logger({
+      name: this.name,
+      isSilence: this.isSilence,
+      state: this.state,
+      isCloseByLighting: this.isCloseByLighting,
+      isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+      isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
+    });
+
     if (this.isCloseByLighting) {
       logger('Close because enabled lighting 💡');
-      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughLightingToClose) {
       logger('Close because enough lighting to close 🌃 or 🌇');
-      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughSunActiveToClose) {
       logger('Close because sun is active 🌅 🌇 🌞 🥵');
-      logger({ name: this.name });
 
       nextCoverState = CoverState.CLOSE;
     } else if (this.isEnoughSunActiveToOpen) {
       logger('Close because sun is not active 🪭 😎 🆒');
-      logger({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
     } else if (this.isEnoughLightingToOpen && !this.isSilence) {
       logger('Open because enough lighting to open 🌅 💡');
-      logger({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
     }
@@ -1473,7 +1482,16 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by sensors was blocked 🚫 😭');
-        logger({ name: this.name });
+        logger({
+          name: this.name,
+          isSilence: this.isSilence,
+          state: this.state,
+          isCloseByLighting: this.isCloseByLighting,
+          isEnoughLightingToClose: this.isEnoughLightingToClose,
+          isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+          isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+          isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
+        });
 
         return;
       }
@@ -1630,7 +1648,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     };
 
     logger('The next output was clean 🧼');
-    logger(stringify({ state: this.state, output: this.output }));
+    logger(stringify({ name: this.name, state: this.state, output: this.output }));
   };
 
   protected destroy() {
