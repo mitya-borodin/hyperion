@@ -1,3 +1,4 @@
+/* eslint-disable for-direction */
 /* eslint-disable prefer-const */
 /* eslint-disable unicorn/no-array-reduce */
 /* eslint-disable unicorn/no-empty-file */
@@ -615,7 +616,17 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }>,
   };
 
-  private timer: NodeJS.Timeout;
+  private timer: {
+    clock: NodeJS.Timeout;
+    movingArrange: NodeJS.Timeout;
+  };
+
+  private movingArrange: {
+    sum: number;
+    avg: number;
+    width: Date;
+    stack: Array<{ date: Date; value: number }>;
+  };
 
   constructor(parameters: CoverMacrosParameters) {
     const settings = CoverMacros.parseSettings(parameters.settings, parameters.version);
@@ -654,7 +665,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 5000,
+      collectingThrottleMs: 250,
     });
 
     this.output = {
@@ -662,7 +673,17 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       positions: [],
     };
 
-    this.timer = setInterval(this.clock, 60 * 1000);
+    this.movingArrange = {
+      sum: 0,
+      avg: 0,
+      width: subMinutes(new Date(), 30),
+      stack: [],
+    };
+
+    this.timer = {
+      clock: setInterval(this.clock, 60 * 1000),
+      movingArrange: setInterval(this.computeMovingArrange, 60 * 1000),
+    };
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
   }
@@ -1040,7 +1061,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
 
-    this.state.illumination = this.getValueByDetection(illuminations, illumination.detection);
+    this.state.illumination = this.computeMovingArrange(
+      this.getValueByDetection(illuminations, illumination.detection),
+    );
   };
 
   private collectMotion = () => {
@@ -1458,6 +1481,57 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
   };
 
+  private computeMovingArrange = (value?: number): number => {
+    if (typeof value === 'number' && value >= 0) {
+      this.movingArrange.stack.push({ date: new Date(), value });
+      this.movingArrange.sum += value;
+      this.movingArrange.avg = this.movingArrange.sum / this.movingArrange.stack.length;
+
+      return this.movingArrange.avg;
+    }
+
+    logger('The procedure for moving the moving average has been started 🛝');
+    logger(
+      stringify({
+        name: this.name,
+        sum: this.movingArrange.sum,
+        avg: this.movingArrange.avg,
+        width: this.movingArrange.width,
+        stack: this.movingArrange.stack.length,
+      }),
+    );
+
+    const stack = [];
+
+    this.movingArrange.width = addMinutes(this.movingArrange.width, 1);
+    this.movingArrange.sum = 0;
+    this.movingArrange.avg = 0;
+
+    for (let index = 0; index < this.movingArrange.stack.length; index++) {
+      const item = this.movingArrange.stack[index];
+
+      if (compareAsc(item.date, this.movingArrange.width) >= 0) {
+        stack.push(item);
+        this.movingArrange.sum += item.value;
+        this.movingArrange.avg = this.movingArrange.sum / stack.length;
+      }
+    }
+
+    this.movingArrange.stack = stack;
+
+    logger(
+      stringify({
+        name: this.name,
+        sum: this.movingArrange.sum,
+        avg: this.movingArrange.avg,
+        width: this.movingArrange.width,
+        stack: this.movingArrange.stack.length,
+      }),
+    );
+
+    return this.movingArrange.avg;
+  };
+
   /**
    * Автоматизации по датчикам.
    */
@@ -1677,7 +1751,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   protected destroy() {
-    clearInterval(this.timer);
+    clearInterval(this.timer.clock);
+    clearInterval(this.timer.movingArrange);
   }
 
   protected isSwitchHasBeenUp(): boolean {
