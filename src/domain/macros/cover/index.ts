@@ -1334,7 +1334,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       logger(stringify({ name: this.name, hours, minutes, fromMin, min, toMin }));
 
-      if (fromMin >= min && min <= toMin) {
+      if (min >= fromMin && min <= toMin) {
         logger('An occurrence in the time range was found 🔘 ✅');
         logger(stringify({ name: this.name, fromMin, min, toMin }));
 
