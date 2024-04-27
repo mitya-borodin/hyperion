@@ -1320,16 +1320,30 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private hitTimeRange = (min: number) => {
+    logger('The hit time range ⏱️');
+    logger(stringify({ name: this.name, hour: min / 60, min }));
+
     if (min > 0 && min < 24 * 60) {
       const hours = this.getDateInClientTimeZone().getHours();
       const minutes = this.getDateInClientTimeZone().getMinutes();
 
-      const from = hours + minutes - 5;
-      const to = hours + minutes + 5;
+      logger('The time for now ℹ️');
+      logger(stringify({ name: this.name, hours, minutes }));
 
-      if (from >= min && min <= to) {
+      const fromMin = hours * 60 + minutes - 5;
+      const toMin = hours * 60 + minutes + 5;
+
+      logger('The time range 🏔️');
+      logger(stringify({ name: this.name, fromMin, min, toMin }));
+
+      if (fromMin >= min && min <= toMin) {
+        logger('An occurrence in the time range was found 🔘 ✅');
+        logger(stringify({ name: this.name, fromMin, min, toMin }));
+
         return true;
       }
+    } else {
+      logger('The time should be in day range 🏙️ 🚨');
     }
   };
 
@@ -1388,6 +1402,19 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.CLOSE;
     }
 
+    logger('The clock was run ⏰');
+    logger(
+      stringify({
+        name: this.name,
+        toClose,
+        toOpen,
+        blockMin,
+        nextCoverState,
+        state: this.state,
+        isSilence: this.isSilence,
+      }),
+    );
+
     if (this.state.coverState !== nextCoverState) {
       /**
        * ! Реализация приоритета блокировок.
@@ -1443,16 +1470,16 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private sensors = () => {
     let nextCoverState = this.state.coverState;
 
-    logger({
-      name: this.name,
-      isSilence: this.isSilence,
-      state: this.state,
-      isCloseByLighting: this.isCloseByLighting,
-      isEnoughLightingToClose: this.isEnoughLightingToClose,
-      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-      isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
-    });
+    // logger({
+    //   name: this.name,
+    //   isSilence: this.isSilence,
+    //   state: this.state,
+    //   isCloseByLighting: this.isCloseByLighting,
+    //   isEnoughLightingToClose: this.isEnoughLightingToClose,
+    //   isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+    //   isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+    //   isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
+    // });
 
     if (this.isCloseByLighting) {
       logger('Close because enabled lighting 💡');
@@ -1482,16 +1509,16 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by sensors was blocked 🚫 😭');
-        logger({
-          name: this.name,
-          isSilence: this.isSilence,
-          state: this.state,
-          isCloseByLighting: this.isCloseByLighting,
-          isEnoughLightingToClose: this.isEnoughLightingToClose,
-          isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-          isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-          isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
-        });
+        // logger({
+        //   name: this.name,
+        //   isSilence: this.isSilence,
+        //   state: this.state,
+        //   isCloseByLighting: this.isCloseByLighting,
+        //   isEnoughLightingToClose: this.isEnoughLightingToClose,
+        //   isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+        //   isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+        //   isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
+        // });
 
         return;
       }
