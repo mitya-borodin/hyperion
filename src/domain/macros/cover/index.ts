@@ -1061,9 +1061,15 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
 
-    this.state.illumination = this.computeMovingArrange(
-      this.getValueByDetection(illuminations, illumination.detection),
-    );
+    if (this.state.lighting === Lighting.OFF) {
+      this.state.illumination = this.computeMovingArrange(
+        this.getValueByDetection(illuminations, illumination.detection),
+      );
+    }
+
+    if (this.state.lighting === Lighting.ON) {
+      this.state.illumination = this.getValueByDetection(illuminations, illumination.detection);
+    }
   };
 
   private collectMotion = () => {
