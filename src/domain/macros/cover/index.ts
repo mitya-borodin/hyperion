@@ -654,7 +654,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 4000,
+      collectingThrottleMs: 5000,
     });
 
     this.output = {
@@ -1007,14 +1007,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       logger({ state: this.state });
 
-      if (position !== positionSettings.open && position !== positionSettings.close) {
-        logger(
-          'The cover macro is stuck in the initial intermediate position, the state will be switched to fully open 📖',
-        );
-        logger(stringify({ name: this.name }));
+      logger('Initializing the initial state as open 📖');
+      logger(stringify({ name: this.name }));
 
-        this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
-      }
+      this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
     } else {
       const running = this.isRunning();
 
@@ -1468,35 +1464,37 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private sensors = () => {
     let nextCoverState = this.state.coverState;
 
-    // logger({
-    //   name: this.name,
-    //   isSilence: this.isSilence,
-    //   state: this.state,
-    //   isCloseByLighting: this.isCloseByLighting,
-    //   isEnoughLightingToClose: this.isEnoughLightingToClose,
-    //   isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-    //   isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-    //   isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
-    // });
-
     if (this.isCloseByLighting) {
-      logger('Close because enabled lighting 💡');
+      if (nextCoverState !== CoverState.CLOSE) {
+        logger('Close because enabled lighting 💡');
+        logger({ name: this.name });
 
-      nextCoverState = CoverState.CLOSE;
+        nextCoverState = CoverState.CLOSE;
+      }
     } else if (this.isEnoughLightingToClose) {
-      logger('Close because enough lighting to close 🌃 or 🌇');
+      if (nextCoverState !== CoverState.CLOSE) {
+        logger('Close because enough lighting to close 🌃 or 🌇');
+        logger({ name: this.name });
 
-      nextCoverState = CoverState.CLOSE;
+        nextCoverState = CoverState.CLOSE;
+      }
     } else if (this.isEnoughSunActiveToClose) {
-      logger('Close because sun is active 🌅 🌇 🌞 🥵');
+      if (nextCoverState !== CoverState.CLOSE) {
+        logger('Close because sun is active 🌅 🌇 🌞 🥵');
+        logger({ name: this.name });
 
-      nextCoverState = CoverState.CLOSE;
+        nextCoverState = CoverState.CLOSE;
+      }
     } else if (this.isEnoughSunActiveToOpen) {
-      logger('Close because sun is not active 🪭 😎 🆒');
+      if (nextCoverState !== CoverState.OPEN) {
+        logger('Close because sun is not active 🪭 😎 🆒');
+        logger({ name: this.name });
 
-      nextCoverState = CoverState.OPEN;
-    } else if (this.isEnoughLightingToOpen && !this.isSilence) {
+        nextCoverState = CoverState.OPEN;
+      }
+    } else if (this.isEnoughLightingToOpen && !this.isSilence && nextCoverState !== CoverState.OPEN) {
       logger('Open because enough lighting to open 🌅 💡');
+      logger({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
     }
@@ -1507,19 +1505,21 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by sensors was blocked 🚫 😭');
-        // logger({
-        //   name: this.name,
-        //   isSilence: this.isSilence,
-        //   state: this.state,
-        //   isCloseByLighting: this.isCloseByLighting,
-        //   isEnoughLightingToClose: this.isEnoughLightingToClose,
-        //   isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-        //   isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-        //   isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
-        // });
+        logger({ name: this.name });
 
         return;
       }
+
+      logger({
+        name: this.name,
+        isSilence: this.isSilence,
+        state: this.state,
+        isCloseByLighting: this.isCloseByLighting,
+        isEnoughLightingToClose: this.isEnoughLightingToClose,
+        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+        isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
+      });
 
       this.setCoverState(nextCoverState);
     }
