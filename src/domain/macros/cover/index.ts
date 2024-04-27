@@ -1320,7 +1320,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private hitTimeRange = (min: number) => {
-    logger('The hit time range ⏱️');
+    logger('A time range hit check has been started ⏱️');
     logger(stringify({ name: this.name, hour: min / 60, min }));
 
     if (min > 0 && min < 24 * 60) {
@@ -1328,13 +1328,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       const minutes = this.getDateInClientTimeZone().getMinutes();
 
       logger('The time for now ℹ️');
-      logger(stringify({ name: this.name, hours, minutes }));
 
       const fromMin = hours * 60 + minutes - 5;
       const toMin = hours * 60 + minutes + 5;
 
-      logger('The time range 🏔️');
-      logger(stringify({ name: this.name, fromMin, min, toMin }));
+      logger(stringify({ name: this.name, hours, minutes, fromMin, min, toMin }));
 
       if (fromMin >= min && min <= toMin) {
         logger('An occurrence in the time range was found 🔘 ✅');
