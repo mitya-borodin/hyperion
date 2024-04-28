@@ -1316,6 +1316,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
           fromMin,
           timePointInMin: min,
           toMin,
+          hitting: min >= fromMin && min <= toMin,
         }),
       );
 
