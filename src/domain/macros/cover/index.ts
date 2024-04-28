@@ -1330,6 +1330,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger('The time should be in day range 🏙️ 🚨');
       logger(stringify({ name: this.name, fromMin: 0, timePointInMin: min, toMin: 24 * 60 }));
     }
+
+    return false;
   };
 
   /**
@@ -1339,6 +1341,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     let toClose = false;
     let toOpen = false;
     let blockMin = 0;
+    let timePointIsHit = false;
 
     /**
      * ! Реализация приоритета закрывания.
@@ -1370,7 +1373,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }
 
       for (const min of timePointMin) {
-        if (this.hitTimeRange(min)) {
+        timePointIsHit = this.hitTimeRange(min);
+
+        if (timePointIsHit) {
           blockMin = block;
 
           if (direction === OpenCloseByTimeDirection.CLOSE) {
@@ -1388,12 +1393,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     let nextCoverState = this.state.coverState;
 
-    if (toOpen) {
-      nextCoverState = CoverState.OPEN;
-    }
-
     if (toClose) {
       nextCoverState = CoverState.CLOSE;
+    }
+
+    if (toOpen) {
+      nextCoverState = CoverState.OPEN;
     }
 
     if (this.state.coverState !== nextCoverState) {
@@ -1445,6 +1450,21 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.setCoverState(nextCoverState);
       this.computeOutput();
       this.send();
+    } else if (timePointIsHit) {
+      logger('Hitting a time point, but next state the same with current state 🚨');
+      logger(
+        stringify({
+          name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          openCloseByTime,
+          toOpen,
+          toClose,
+          blockMin,
+          timePointIsHit,
+          nextCoverState,
+          state: this.state,
+        }),
+      );
     }
   };
 
