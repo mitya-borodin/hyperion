@@ -396,7 +396,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingDebounceMs: 0,
+      collectingDebounceMs: 50,
     });
 
     this.output = {
