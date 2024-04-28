@@ -1299,28 +1299,35 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private hitTimeRange = (min: number) => {
-    logger('A time range hit check has been started ⏱️');
-    logger(stringify({ name: this.name, hour: min / 60, min }));
-
     if (min > 0 && min < 24 * 60) {
       const hours = this.getDateInClientTimeZone().getHours();
       const minutes = this.getDateInClientTimeZone().getMinutes();
 
-      logger('The time for now ℹ️');
+      const fromMin = hours * 60 + minutes - 15;
+      const toMin = hours * 60 + minutes + 15;
 
-      const fromMin = hours * 60 + minutes - 5;
-      const toMin = hours * 60 + minutes + 5;
-
-      logger(stringify({ name: this.name, hours, minutes, fromMin, min, toMin }));
+      logger('Checking for hitting a time point ℹ️');
+      logger(
+        stringify({
+          name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          hours,
+          minutes,
+          fromMin,
+          timePointInMin: min,
+          toMin,
+        }),
+      );
 
       if (min >= fromMin && min <= toMin) {
-        logger('An occurrence in the time range was found 🔘 ✅');
-        logger(stringify({ name: this.name, fromMin, min, toMin }));
+        logger('Hitting a time point 🔘 ✅');
+        logger(stringify({ name: this.name, fromMin, timePointInMin: min, toMin }));
 
         return true;
       }
     } else {
       logger('The time should be in day range 🏙️ 🚨');
+      logger(stringify({ name: this.name, fromMin: 0, timePointInMin: min, toMin: 24 * 60 }));
     }
   };
 
@@ -1346,6 +1353,15 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       return 0;
     });
+
+    logger('The clock was run 🕰️');
+    logger(
+      stringify({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        openCloseByTime,
+      }),
+    );
 
     for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
       if (toClose || toOpen) {
@@ -1379,26 +1395,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.CLOSE;
     }
 
-    logger('The clock was run ⏰');
-    logger(
-      stringify({
-        name: this.name,
-        toClose,
-        toOpen,
-        blockMin,
-        nextCoverState,
-        state: this.state,
-        isSilence: this.isSilence,
-      }),
-    );
-
     if (this.state.coverState !== nextCoverState) {
       /**
        * ! Реализация приоритета блокировок.
        */
       if (this.isBlocked(nextCoverState)) {
         logger('Try to change cover state by time was blocked 🚫 😭');
-        logger({ name: this.name });
+        logger({ name: this.name, toOpen, toClose, blockMin });
 
         return;
       }
@@ -1430,7 +1433,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         stringify({
           name: this.name,
           nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-          openCloseByTime: this.settings.properties.openCloseByTime,
+          openCloseByTime,
+          toOpen,
+          toClose,
+          blockMin,
           state: this.state,
         }),
       );
