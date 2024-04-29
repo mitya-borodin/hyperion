@@ -12,12 +12,12 @@ export type Logger = {
 };
 
 export const getLogger = (scope: string) => {
-  const fatal = getDebug(`error:${scope}`);
+  const fatal = getDebug(`fatal:${scope}`);
   const error = getDebug(`error:${scope}`);
-  const warning = getDebug(`error:${scope}`);
-  const info = getDebug(`error:${scope}`);
-  const debug = getDebug(`error:${scope}`);
-  const trace = getDebug(`error:${scope}`);
+  const warning = getDebug(`warning:${scope}`);
+  const info = getDebug(`info:${scope}`);
+  const debug = getDebug(`debug:${scope}`);
+  const trace = getDebug(`trace:${scope}`);
 
   return {
     fatal(value: string | { [key: string]: unknown }) {
