@@ -1050,6 +1050,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
+  protected getPreviousState(): unknown {
+    return this.state.coverState;
+  }
+
   protected actionBasedComputing = (current?: HyperionDevice) => {
     this.switching(current);
   };
@@ -1057,6 +1061,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   protected sensorBasedComputing = () => {
     this.sensors();
   };
+
+  protected finishComputing(previousSate: unknown): void {
+    if (previousSate !== this.state.coverState) {
+      this.computeOutput();
+      this.send();
+    }
+  }
 
   /**
    * Проверка наличия блокировок.

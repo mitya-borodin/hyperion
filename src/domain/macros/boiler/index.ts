@@ -201,8 +201,10 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
     return false;
   };
 
+  protected getPreviousState = () => {};
   protected actionBasedComputing = () => {};
   protected sensorBasedComputing = () => {};
+  protected finishComputing = () => {};
 
   protected computeOutput = () => {
     const nextOutput: BoilerMacrosNextOutput = {

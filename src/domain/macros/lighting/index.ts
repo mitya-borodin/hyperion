@@ -625,6 +625,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
+  protected getPreviousState(): unknown {
+    return this.state.switch;
+  }
+
   protected actionBasedComputing(current?: HyperionDevice) {
     this.switch(current);
   }
@@ -632,6 +636,13 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   protected sensorBasedComputing() {
     this.autoOn();
     this.autoOff();
+  }
+
+  protected finishComputing(previousSate: unknown): void {
+    if (previousSate !== this.state.switch) {
+      this.computeOutput();
+      this.send();
+    }
   }
 
   /**
@@ -746,6 +757,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isAutoOnBlocked = compareAsc(this.block.on, new Date()) === 1;
     const isAlreadyOn = this.state.switch === Switch.ON;
     const isIlluminationDetected = this.state.illumination >= 0;
+
+    // if (this.name === 'Освещение хозяйственной') {
+    //   logger(
+    //     stringify({
+    //       name: this.name,
+    //       isAutoOnBlocked,
+    //       isAlreadyOn,
+    //       isIlluminationDetected,
+    //       state: this.state,
+    //     }),
+    //   );
+    // }
 
     if (!this.settings.properties.autoOn || isAutoOnBlocked || isAlreadyOn) {
       return;

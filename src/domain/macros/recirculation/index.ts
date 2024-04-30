@@ -221,9 +221,10 @@ export class RecirculationMacros extends Macros<
     return false;
   };
 
+  protected getPreviousState = () => {};
   protected actionBasedComputing = () => {};
-
   protected sensorBasedComputing = () => {};
+  protected finishComputing = () => {};
 
   protected computeOutput = () => {
     const nextOutput: RecirculationMacrosNextOutput = {

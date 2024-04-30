@@ -295,15 +295,11 @@ export abstract class Macros<
       return;
     }
 
-    const previousCoverState = this.state.coverState;
+    const previousState = this.getPreviousState();
 
     this.actionBasedComputing(current);
     this.sensorBasedComputing();
-
-    if (previousCoverState !== this.state.coverState) {
-      this.computeOutput();
-      this.send();
-    }
+    this.finishComputing(previousState)
   };
 
   /**
@@ -322,6 +318,11 @@ export abstract class Macros<
   protected abstract priorityComputation(current?: HyperionDevice): boolean;
 
   /**
+   * Позволяет отреагировать на изменение нужного состояния.
+   */
+  protected abstract getPreviousState(): unknown;
+
+  /**
    * Операция вычисления output основанная не действиях пользователя и всех доступных данных.
    */
   protected abstract actionBasedComputing(current?: HyperionDevice): void;
@@ -330,6 +331,11 @@ export abstract class Macros<
    * Операция вычисления output основанная на данных сенсоров и всех доступных данных.
    */
   protected abstract sensorBasedComputing(): void;
+
+  /**
+   * Позволяет отреагировать на изменение нужного состояния.
+   */
+  protected abstract finishComputing(previousSate: unknown): void;
 
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
