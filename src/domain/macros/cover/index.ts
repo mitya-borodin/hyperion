@@ -1162,7 +1162,18 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       isSwitchHasBeenChange = true;
 
       logger.info('The button was touched 👉 🔘');
-      logger.debug({ name: this.name });
+      logger.debug({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        state: this.state,
+        isSilence: this.isSilence,
+        isIlluminationReady: this.isIlluminationReady,
+        isCloseByLighting: this.isCloseByLighting,
+        isEnoughLightingToClose: this.isEnoughLightingToClose,
+        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+      });
     }
 
     if (isSwitchHasBeenChange) {
