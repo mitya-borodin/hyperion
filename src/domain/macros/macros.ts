@@ -73,6 +73,7 @@ type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly version: number;
   readonly collectingDebounceMs?: number;
   readonly collectingThrottleMs?: number;
+  readonly computationThrottleMs?: number;
 };
 
 export type MacrosAccept = {
@@ -142,6 +143,7 @@ export abstract class Macros<
     state,
     collectingThrottleMs = 0,
     collectingDebounceMs = 0,
+    computationThrottleMs = 0,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
@@ -164,8 +166,15 @@ export abstract class Macros<
 
     this.parseControlTypes(this.settings);
 
-    if (collectingThrottleMs > 0 && collectingDebounceMs <= 0) {
+    if (collectingThrottleMs > 0) {
       this.collecting = throttle(this.collecting.bind(this), collectingThrottleMs, {
+        leading: false,
+        trailing: true,
+      });
+
+      this.collecting();
+    } else if (collectingDebounceMs > 0) {
+      this.collecting = debounce(this.collecting.bind(this), collectingDebounceMs, {
         leading: false,
         trailing: true,
       });
@@ -173,13 +182,11 @@ export abstract class Macros<
       this.collecting();
     }
 
-    if (collectingDebounceMs > 0 && collectingThrottleMs <= 0) {
-      this.collecting = debounce(this.collecting.bind(this), collectingDebounceMs, {
+    if (computationThrottleMs > 0) {
+      this.computation = throttle(this.computation.bind(this), computationThrottleMs, {
         leading: false,
         trailing: true,
       });
-
-      this.collecting();
     }
   }
 

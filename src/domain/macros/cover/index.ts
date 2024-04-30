@@ -665,6 +665,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       controls: parameters.controls,
 
       collectingThrottleMs: 5000,
+      computationThrottleMs: 5000,
     });
 
     this.output = {
@@ -1503,20 +1504,19 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private sensors = () => {
     let nextCoverState = this.state.coverState;
 
-    // if (this.name === 'Штора инженерная') {
-    //   logger({
-    //     name: this.name,
-    //     state: this.state,
-    //     nextCoverState,
-    //     isSilence: this.isSilence,
-    //     isIlluminationReady: this.isIlluminationReady,
-    //     isCloseByLighting: this.isCloseByLighting,
-    //     isEnoughLightingToClose: this.isEnoughLightingToClose,
-    //     isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-    //     isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-    //     isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    //   });
-    // }
+    logger.trace({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+      nextCoverState,
+      isSilence: this.isSilence,
+      isIlluminationReady: this.isIlluminationReady,
+      isCloseByLighting: this.isCloseByLighting,
+      isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    });
 
     if (this.isCloseByLighting) {
       if (nextCoverState !== CoverState.CLOSE) {
