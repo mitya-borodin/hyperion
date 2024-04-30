@@ -299,7 +299,7 @@ export abstract class Macros<
 
     this.actionBasedComputing(current);
     this.sensorBasedComputing();
-    this.finishComputing(previousState)
+    this.finishComputing(previousState);
   };
 
   /**
