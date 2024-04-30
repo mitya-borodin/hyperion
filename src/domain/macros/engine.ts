@@ -136,6 +136,16 @@ export class MacrosEngine {
     const { id, name, description, labels, settings, state, version } = setup;
 
     try {
+      logger('Try to setup macros ⛹️‍♀️');
+      logger(
+        stringify({
+          id,
+          name,
+          description,
+          labels,
+        }),
+      );
+
       const type = toDomainMacrosType(setup.type);
 
       if (type === MacrosType.UNSPECIFIED) {
