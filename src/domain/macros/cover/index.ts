@@ -664,8 +664,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 5000,
-      computationThrottleMs: 5000,
+      collectingThrottleMs: 2000,
+      sensorBasedComputationThrottleMs: 10_000,
     });
 
     this.output = {
@@ -738,6 +738,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
           position,
           controlType,
           control,
+          controls: this.controls.size,
         });
 
         continue;
@@ -1049,16 +1050,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
-  protected computation = (current?: HyperionDevice) => {
-    const previousCoverState = this.state.coverState;
-
+  protected actionBasedComputing = (current?: HyperionDevice) => {
     this.switching(current);
-    this.sensors();
+  };
 
-    if (previousCoverState !== this.state.coverState) {
-      this.computeOutput();
-      this.send();
-    }
+  protected sensorBasedComputing = () => {
+    this.sensors();
   };
 
   /**
@@ -1462,11 +1459,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     logger.info('The procedure for moving the moving average has been started 🛝');
     logger.debug({
-      name: this.name,
-      sum: this.movingArrange.sum,
-      avg: this.movingArrange.avg,
-      width: this.movingArrange.width,
-      stack: this.movingArrange.stack.length,
+      beforeMove: {
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: this.movingArrange.sum,
+        avg: this.movingArrange.avg,
+        width: this.movingArrange.width,
+        stack: this.movingArrange.stack.length,
+      },
     });
 
     const stack = [];
@@ -1488,11 +1488,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.movingArrange.stack = stack;
 
     logger.debug({
-      name: this.name,
-      sum: this.movingArrange.sum,
-      avg: this.movingArrange.avg,
-      width: this.movingArrange.width,
-      stack: this.movingArrange.stack.length,
+      afterMove: {
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: this.movingArrange.sum,
+        avg: this.movingArrange.avg,
+        width: this.movingArrange.width,
+        stack: this.movingArrange.stack.length,
+      },
     });
 
     return this.movingArrange.avg;
@@ -1503,20 +1506,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    */
   private sensors = () => {
     let nextCoverState = this.state.coverState;
-
-    logger.trace({
-      name: this.name,
-      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-      state: this.state,
-      nextCoverState,
-      isSilence: this.isSilence,
-      isIlluminationReady: this.isIlluminationReady,
-      isCloseByLighting: this.isCloseByLighting,
-      isEnoughLightingToClose: this.isEnoughLightingToClose,
-      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    });
 
     if (this.isCloseByLighting) {
       if (nextCoverState !== CoverState.CLOSE) {
@@ -1551,6 +1540,24 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.info({ name: this.name });
 
       nextCoverState = CoverState.OPEN;
+    }
+
+    if (this.name === 'Штора игровая') {
+      logger.trace('Sensor computing 💻');
+      logger.trace({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        state: this.state,
+        nextCoverState,
+        hasCoverStateChange: nextCoverState !== this.state.coverState,
+        isSilence: this.isSilence,
+        isIlluminationReady: this.isIlluminationReady,
+        isCloseByLighting: this.isCloseByLighting,
+        isEnoughLightingToClose: this.isEnoughLightingToClose,
+        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+      });
     }
 
     if (nextCoverState !== this.state.coverState) {

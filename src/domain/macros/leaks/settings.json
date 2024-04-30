@@ -7,7 +7,7 @@
       "properties": {
         "type": {
           "$ref": "#/definitions/ValveType",
-          "description": "Тип управления краном, бывают краны, без контроля положения,  с контролем крайних положений, аналоговое управление 0-10В"
+          "description": "Позволяет понять"
         },
         "analog": {
           "type": "object",
@@ -200,11 +200,11 @@
       },
       "required": ["type", "leaks"],
       "additionalProperties": false,
-      "description": "Защита от протечек.\n\nКран может быть установлен на вводе воды в дом, на конкретных линиях, на холодной и горячей воде."
+      "description": "Защита от протечек.\n\nПозволяет защищать от протечек воды и газа."
     },
     "ValveType": {
       "type": "string",
-      "enum": ["ANALOG", "PHASE"]
+      "enum": ["PHASE", "ANALOG", "ENUM"]
     }
   }
 }

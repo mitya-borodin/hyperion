@@ -164,17 +164,17 @@ export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, Pump
 
   setState = (nextPublicState: string): void => {};
 
+  protected collecting() {}
+
   protected priorityComputation = () => {
     return false;
   };
 
-  protected computation = () => {
-    return false;
-  };
+  protected actionBasedComputing = () => {};
 
-  protected collecting() {}
+  protected sensorBasedComputing = () => {};
 
-  protected computeOutput = (value: string) => {
+  protected computeOutput = () => {
     const nextOutput: PumpMacrosNextOutput = {
       pump: undefined,
     };

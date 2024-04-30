@@ -215,17 +215,17 @@ export class RecirculationMacros extends Macros<
 
   setState = (nextPublicState: string): void => {};
 
+  protected collecting() {}
+
   protected priorityComputation = () => {
     return false;
   };
 
-  protected computation = () => {
-    return false;
-  };
+  protected actionBasedComputing = () => {};
 
-  protected collecting() {}
+  protected sensorBasedComputing = () => {};
 
-  protected computeOutput = (value: string) => {
+  protected computeOutput = () => {
     const nextOutput: RecirculationMacrosNextOutput = {
       pump: undefined,
     };

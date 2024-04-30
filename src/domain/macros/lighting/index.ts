@@ -625,17 +625,13 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  protected computation(current?: HyperionDevice) {
-    const currentSwitchState = this.state.switch;
-
+  protected actionBasedComputing(current?: HyperionDevice) {
     this.switch(current);
+  }
+
+  protected sensorBasedComputing() {
     this.autoOn();
     this.autoOff();
-
-    if (currentSwitchState !== this.state.switch) {
-      this.computeOutput();
-      this.send();
-    }
   }
 
   /**

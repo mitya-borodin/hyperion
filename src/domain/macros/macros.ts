@@ -73,7 +73,7 @@ type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly version: number;
   readonly collectingDebounceMs?: number;
   readonly collectingThrottleMs?: number;
-  readonly computationThrottleMs?: number;
+  readonly sensorBasedComputationThrottleMs?: number;
 };
 
 export type MacrosAccept = {
@@ -143,7 +143,7 @@ export abstract class Macros<
     state,
     collectingThrottleMs = 0,
     collectingDebounceMs = 0,
-    computationThrottleMs = 0,
+    sensorBasedComputationThrottleMs = 0,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
@@ -166,28 +166,20 @@ export abstract class Macros<
 
     this.parseControlTypes(this.settings);
 
-    if (collectingThrottleMs > 0) {
-      this.collecting = throttle(this.collecting.bind(this), collectingThrottleMs, {
-        leading: false,
-        trailing: true,
-      });
+    process.nextTick(() => {
+      if (collectingThrottleMs > 0) {
+        this.collecting = throttle(this.collecting.bind(this), collectingThrottleMs);
+      } else if (collectingDebounceMs > 0) {
+        this.collecting = debounce(this.collecting.bind(this), collectingDebounceMs, {
+          leading: false,
+          trailing: true,
+        });
+      }
 
-      this.collecting();
-    } else if (collectingDebounceMs > 0) {
-      this.collecting = debounce(this.collecting.bind(this), collectingDebounceMs, {
-        leading: false,
-        trailing: true,
-      });
-
-      this.collecting();
-    }
-
-    if (computationThrottleMs > 0) {
-      this.computation = throttle(this.computation.bind(this), computationThrottleMs, {
-        leading: false,
-        trailing: true,
-      });
-    }
+      if (sensorBasedComputationThrottleMs > 0) {
+        this.sensorBasedComputing = throttle(this.sensorBasedComputing.bind(this), sensorBasedComputationThrottleMs);
+      }
+    });
   }
 
   private parseControlTypes = (settings: SettingsBase) => {
@@ -303,7 +295,15 @@ export abstract class Macros<
       return;
     }
 
-    this.computation(current);
+    const previousCoverState = this.state.coverState;
+
+    this.actionBasedComputing(current);
+    this.sensorBasedComputing();
+
+    if (previousCoverState !== this.state.coverState) {
+      this.computeOutput();
+      this.send();
+    }
   };
 
   /**
@@ -322,14 +322,19 @@ export abstract class Macros<
   protected abstract priorityComputation(current?: HyperionDevice): boolean;
 
   /**
-   * Операция вычисления next output исходя из всех имеющихся данных.
+   * Операция вычисления output основанная не действиях пользователя и всех доступных данных.
    */
-  protected abstract computation(current?: HyperionDevice): void;
+  protected abstract actionBasedComputing(current?: HyperionDevice): void;
+
+  /**
+   * Операция вычисления output основанная на данных сенсоров и всех доступных данных.
+   */
+  protected abstract sensorBasedComputing(): void;
 
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.
    */
-  protected abstract computeOutput(value: string): void;
+  protected abstract computeOutput(): void;
 
   /**
    * Метод предназначен отправлять будущее состояние контролов контроллеру.

@@ -83,6 +83,13 @@ export class MacrosEngine {
     this.devices = devices;
     this.controls = controls;
 
+    logger(
+      stringify({
+        devices: this.devices.size,
+        controls: this.controls.size,
+      }),
+    );
+
     const allMacrosSettings = await this.macrosSettingsRepository.getAll();
 
     for (const macrosSettings of allMacrosSettings) {

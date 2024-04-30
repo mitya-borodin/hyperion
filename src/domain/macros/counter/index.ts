@@ -145,15 +145,17 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
 
   setState = (nextPublicState: string): void => {};
 
+  protected collecting() {}
+
   protected priorityComputation = () => {
     return false;
   };
 
-  protected computation = () => {};
+  protected actionBasedComputing = () => {};
 
-  protected collecting() {}
+  protected sensorBasedComputing = () => {};
 
-  protected computeOutput = (value: string) => {
+  protected computeOutput = () => {
     const nextOutput: CounterMacrosNextOutput = {
       value: 0,
       unitOfMeasurement: '',

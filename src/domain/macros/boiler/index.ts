@@ -195,15 +195,16 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
 
   setState = (nextPublicState: string): void => {};
 
+  protected collecting() {}
+
   protected priorityComputation = () => {
     return false;
   };
 
-  protected computation = () => {};
+  protected actionBasedComputing = () => {};
+  protected sensorBasedComputing = () => {};
 
-  protected collecting() {}
-
-  protected computeOutput = (value: string) => {
+  protected computeOutput = () => {
     const nextOutput: BoilerMacrosNextOutput = {
       pump: undefined,
       heat: [],
