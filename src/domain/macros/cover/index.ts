@@ -781,6 +781,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       logger.info('The next state was set ✅');
       logger.debug({ name: this.name, state: this.state });
+
+      this.computeOutput();
+      this.send();
     }
   }
 
@@ -792,8 +795,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectNoise();
     this.collectTemperature();
 
-    // logger('The collecting completed ✅');
-    // logger({ state: this.state });
+    if (this.name === 'Штора кабинет') {
+      logger.info('The collecting completed ✅');
+      logger.debug({ name: this.name, state: this.state });
+    }
   }
 
   private get isSilence(): boolean {
@@ -1050,25 +1055,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
-  protected getPreviousState(): unknown {
-    return this.state.coverState;
-  }
-
-  protected actionBasedComputing = (current?: HyperionDevice) => {
-    this.switching(current);
-  };
-
-  protected sensorBasedComputing = () => {
-    this.sensors();
-  };
-
-  protected finishComputing(previousSate: unknown): void {
-    if (previousSate !== this.state.coverState) {
-      this.computeOutput();
-      this.send();
-    }
-  }
-
   /**
    * Проверка наличия блокировок.
    */
@@ -1144,7 +1130,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   /**
    * Автоматизация по переключателям.
    */
-  private switching = (current?: HyperionDevice): void => {
+  protected actionBasedComputing = (current?: HyperionDevice): boolean => {
     const { switcher, illumination } = this.settings.properties;
 
     let isSwitchHasBeenChange = false;
@@ -1256,7 +1242,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
           logger.info('Try to change cover state was blocked 🚫 😭');
           logger.debug({ name: this.name, state: this.state });
 
-          return;
+          return false;
         }
 
         /**
@@ -1271,7 +1257,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
           logger.info('The illumination is not enough to open by low priority switcher 🚫 😭');
           logger.debug({ name: this.name, illumination, state: this.state });
 
-          return;
+          return false;
         }
 
         if (blockMin > 0) {
@@ -1297,8 +1283,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         }
 
         this.setCoverState(nextCoverState);
+
+        return true;
       }
     }
+
+    return false;
   };
 
   private hitTimeRange = (min: number) => {
@@ -1515,7 +1505,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   /**
    * Автоматизации по датчикам.
    */
-  private sensors = () => {
+  protected sensorBasedComputing = (): boolean => {
     let nextCoverState = this.state.coverState;
 
     if (this.isCloseByLighting) {
@@ -1553,21 +1543,27 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.OPEN;
     }
 
-    logger.trace('Sensor computing 💻');
-    logger.trace({
-      name: this.name,
-      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-      state: this.state,
-      nextCoverState,
-      hasCoverStateChange: nextCoverState !== this.state.coverState,
-      isSilence: this.isSilence,
-      isIlluminationReady: this.isIlluminationReady,
-      isCloseByLighting: this.isCloseByLighting,
-      isEnoughLightingToClose: this.isEnoughLightingToClose,
-      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    });
+    if (this.name === 'Штора кабинет') {
+      logger.trace('Sensor computing 💻');
+      logger.trace({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        state: this.state,
+        nextCoverState,
+        hasCoverStateChange: nextCoverState !== this.state.coverState,
+        isSilence: this.isSilence,
+        isCoverClose: this.isCoverClose,
+        isCoverOpen: this.isCoverOpen,
+        hasOpenBlock: this.hasOpenBlock,
+        hasCloseBlock: this.hasCloseBlock,
+        isIlluminationReady: this.isIlluminationReady,
+        isCloseByLighting: this.isCloseByLighting,
+        isEnoughLightingToClose: this.isEnoughLightingToClose,
+        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+      });
+    }
 
     if (nextCoverState !== this.state.coverState) {
       /**
@@ -1577,22 +1573,17 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         logger.info('Try to change cover state by sensors was blocked 🚫 😭');
         logger.info({ name: this.name });
 
-        return;
+        return false;
       }
 
-      logger.info({
-        name: this.name,
-        isSilence: this.isSilence,
-        state: this.state,
-        isCloseByLighting: this.isCloseByLighting,
-        isEnoughLightingToClose: this.isEnoughLightingToClose,
-        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-        isEnoughLightingToOpen: this.isEnoughLightingToOpen && !this.isSilence,
-      });
+      logger.info('A new state was determined by the sensors 🚀 💻');
 
       this.setCoverState(nextCoverState);
+
+      return true;
     }
+
+    return false;
   };
 
   protected computeOutput = () => {

@@ -272,10 +272,12 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     return false;
   };
 
-  protected getPreviousState = () => {};
-  protected actionBasedComputing = () => {};
-  protected sensorBasedComputing = () => {};
-  protected finishComputing = () => {};
+  protected actionBasedComputing = (): boolean => {
+    return false;
+  };
+  protected sensorBasedComputing = (): boolean => {
+    return false;
+  };
 
   protected computeOutput = () => {
     const nextOutput: LeaksMacrosNextOutput = {

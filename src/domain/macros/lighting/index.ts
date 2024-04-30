@@ -581,7 +581,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  protected priorityComputation = () => {
+  protected priorityComputation = (): boolean => {
     if (this.state.force !== 'UNSPECIFIED') {
       const control = this.getFirstLightingControl();
 
@@ -625,30 +625,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  protected getPreviousState(): unknown {
-    return this.state.switch;
-  }
-
-  protected actionBasedComputing(current?: HyperionDevice) {
-    this.switch(current);
-  }
-
-  protected sensorBasedComputing() {
-    this.autoOn();
-    this.autoOff();
-  }
-
-  protected finishComputing(previousSate: unknown): void {
-    if (previousSate !== this.state.switch) {
-      this.computeOutput();
-      this.send();
-    }
-  }
-
-  /**
-   * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
-   */
-  private switch = (current?: HyperionDevice) => {
+  protected actionBasedComputing = (current?: HyperionDevice): boolean => {
     let isSwitchHasBeenChange = false;
 
     if (this.settings.properties.switcher.trigger === Trigger.UP) {
@@ -673,7 +650,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       if (!control) {
         logger('Not a single lamp will be found 🚨');
 
-        return;
+        return false;
       }
 
       logger(
@@ -746,11 +723,38 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         }
 
         this.state.switch = nextSwitchState;
+
+        this.computeOutput();
+        this.send();
+
+        return true;
       }
     }
+
+    return false;
   };
 
-  private autoOn = () => {
+  protected sensorBasedComputing(): boolean {
+    const previousState = this.state.switch;
+
+    const hasAutoOnChange = this.autoOn();
+    const hasAutoOffChange = this.autoOff();
+
+    if ((hasAutoOnChange || hasAutoOffChange) && previousState !== this.state.switch) {
+      this.computeOutput();
+      this.send();
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
+   */
+
+  private autoOn = (): boolean => {
     /**
      * ! Pre flight check
      */
@@ -771,7 +775,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     // }
 
     if (!this.settings.properties.autoOn || isAutoOnBlocked || isAlreadyOn) {
-      return;
+      return false;
     }
 
     /**
@@ -875,10 +879,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       );
 
       this.state.switch = nextSwitchState;
+
+      return true;
     }
+
+    return false;
   };
 
-  private autoOff = () => {
+  private autoOff = (): boolean => {
     /**
      * ! Pre flight check
      */
@@ -888,7 +896,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const isLightingOn = this.state.switch === Switch.ON;
 
     if (isAutoOffBlocked || isAlreadyOff) {
-      return;
+      return false;
     }
 
     /**
@@ -978,7 +986,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       );
 
       this.state.switch = nextSwitchState;
+
+      return true;
     }
+
+    return false;
   };
 
   protected computeOutput() {

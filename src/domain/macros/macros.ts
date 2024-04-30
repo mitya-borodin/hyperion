@@ -177,7 +177,10 @@ export abstract class Macros<
       }
 
       if (sensorBasedComputationThrottleMs > 0) {
-        this.sensorBasedComputing = throttle(this.sensorBasedComputing.bind(this), sensorBasedComputationThrottleMs);
+        this.sensorBasedComputing = throttle(
+          this.sensorBasedComputing.bind(this),
+          sensorBasedComputationThrottleMs,
+        ) as () => boolean;
       }
     });
   }
@@ -293,13 +296,11 @@ export abstract class Macros<
 
     if (this.priorityComputation(current)) {
       return;
+    } else if (this.actionBasedComputing(current)) {
+      return;
+    } else if (this.sensorBasedComputing()) {
+      return;
     }
-
-    const previousState = this.getPreviousState();
-
-    this.actionBasedComputing(current);
-    this.sensorBasedComputing();
-    this.finishComputing(previousState);
   };
 
   /**
@@ -318,24 +319,14 @@ export abstract class Macros<
   protected abstract priorityComputation(current?: HyperionDevice): boolean;
 
   /**
-   * Позволяет отреагировать на изменение нужного состояния.
-   */
-  protected abstract getPreviousState(): unknown;
-
-  /**
    * Операция вычисления output основанная не действиях пользователя и всех доступных данных.
    */
-  protected abstract actionBasedComputing(current?: HyperionDevice): void;
+  protected abstract actionBasedComputing(current?: HyperionDevice): boolean;
 
   /**
    * Операция вычисления output основанная на данных сенсоров и всех доступных данных.
    */
-  protected abstract sensorBasedComputing(): void;
-
-  /**
-   * Позволяет отреагировать на изменение нужного состояния.
-   */
-  protected abstract finishComputing(previousSate: unknown): void;
+  protected abstract sensorBasedComputing(): boolean;
 
   /**
    * Метод предназначен вычислять будущее состояние контролов, исходя из текущего состояния макроса.

@@ -151,10 +151,12 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
     return false;
   };
 
-  protected getPreviousState = () => {};
-  protected actionBasedComputing = () => {};
-  protected sensorBasedComputing = () => {};
-  protected finishComputing = () => {};
+  protected actionBasedComputing = (): boolean => {
+    return false;
+  };
+  protected sensorBasedComputing = (): boolean => {
+    return false;
+  };
 
   protected computeOutput = () => {
     const nextOutput: CounterMacrosNextOutput = {
