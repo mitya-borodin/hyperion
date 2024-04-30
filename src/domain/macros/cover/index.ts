@@ -1553,23 +1553,21 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.OPEN;
     }
 
-    if (this.name === 'Штора игровая') {
-      logger.trace('Sensor computing 💻');
-      logger.trace({
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        state: this.state,
-        nextCoverState,
-        hasCoverStateChange: nextCoverState !== this.state.coverState,
-        isSilence: this.isSilence,
-        isIlluminationReady: this.isIlluminationReady,
-        isCloseByLighting: this.isCloseByLighting,
-        isEnoughLightingToClose: this.isEnoughLightingToClose,
-        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-      });
-    }
+    logger.trace('Sensor computing 💻');
+    logger.trace({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+      nextCoverState,
+      hasCoverStateChange: nextCoverState !== this.state.coverState,
+      isSilence: this.isSilence,
+      isIlluminationReady: this.isIlluminationReady,
+      isCloseByLighting: this.isCloseByLighting,
+      isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    });
 
     if (nextCoverState !== this.state.coverState) {
       /**
