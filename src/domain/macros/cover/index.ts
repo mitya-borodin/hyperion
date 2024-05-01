@@ -795,10 +795,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectNoise();
     this.collectTemperature();
 
-    if (this.name === 'Штора кабинет') {
-      logger.info('The collecting completed ✅');
-      logger.debug({ name: this.name, state: this.state });
-    }
+    logger.info('The collecting completed ℹ️');
+    logger.debug({ name: this.name, state: this.state });
   }
 
   private get isSilence(): boolean {
@@ -1099,9 +1097,33 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     const isButtonChange = buttons.some(({ deviceId, controlId, controlType }) =>
       current.controls.find(
-        (control) => current.id === deviceId && control.id === controlId && control.type === controlType,
+        (control) =>
+          current.id === deviceId &&
+          control.id === controlId &&
+          control.type === controlType &&
+          control.enum.includes(control.value),
       ),
     );
+
+    const isButtonStatus = buttons.some(({ deviceId, controlId, controlType }) =>
+      current.controls.find(
+        (control) =>
+          current.id === deviceId &&
+          control.id === controlId &&
+          control.type === controlType &&
+          !control.enum.includes(control.value),
+      ),
+    );
+
+    if (isButtonStatus) {
+      logger.info(
+        'A notification about the status of the button has been received, without specifying an action ℹ️ ℹ️ ℹ️',
+      );
+      logger.debug({
+        name: this.name,
+        buttons: buttons.map((button) => this.controls.get(getControlId(button))),
+      });
+    }
 
     if (isButtonChange && this.skip.firstButtonChange.length > 0) {
       logger.info('The first button change was skipped ⏭️');
@@ -1115,7 +1137,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.skip.firstButtonChange = this.skip.firstButtonChange.filter(
         ({ deviceId, controlId, controlType }) =>
           !current.controls.some(
-            (control) => current.id === deviceId && control.id === controlId && control.type === controlType,
+            (control) =>
+              current.id === deviceId &&
+              control.id === controlId &&
+              control.type === controlType &&
+              control.enum.includes(control.value),
           ),
       );
 
@@ -1168,6 +1194,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
         isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
         isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+        button: current?.controls.filter((control) =>
+          this.settings.devices.buttons.some(
+            (button) => button.deviceId === current.id && button.controlId === control.id,
+          ),
+        ),
       });
     }
 
@@ -1543,27 +1574,25 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       nextCoverState = CoverState.OPEN;
     }
 
-    if (this.name === 'Штора кабинет') {
-      logger.trace('Sensor computing 💻');
-      logger.trace({
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        state: this.state,
-        nextCoverState,
-        hasCoverStateChange: nextCoverState !== this.state.coverState,
-        isSilence: this.isSilence,
-        isCoverClose: this.isCoverClose,
-        isCoverOpen: this.isCoverOpen,
-        hasOpenBlock: this.hasOpenBlock,
-        hasCloseBlock: this.hasCloseBlock,
-        isIlluminationReady: this.isIlluminationReady,
-        isCloseByLighting: this.isCloseByLighting,
-        isEnoughLightingToClose: this.isEnoughLightingToClose,
-        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-      });
-    }
+    logger.trace('Sensor computing 💻');
+    logger.trace({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+      nextCoverState,
+      hasCoverStateChange: nextCoverState !== this.state.coverState,
+      isSilence: this.isSilence,
+      isCoverClose: this.isCoverClose,
+      isCoverOpen: this.isCoverOpen,
+      hasOpenBlock: this.hasOpenBlock,
+      hasCloseBlock: this.hasCloseBlock,
+      isIlluminationReady: this.isIlluminationReady,
+      isCloseByLighting: this.isCloseByLighting,
+      isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    });
 
     if (nextCoverState !== this.state.coverState) {
       /**
