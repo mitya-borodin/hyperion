@@ -904,11 +904,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private get isEnoughSunActiveToClose(): boolean {
     const { closeBySun } = this.settings.properties;
 
-    const { illumination } = this.state;
+    const { illumination, temperature } = this.state;
 
     return (
       this.isCloseBySunReady &&
       illumination >= closeBySun.illumination.closeLux &&
+      temperature >= closeBySun.temperature &&
       /**
        * Решение принимается при открытой шторе
        */
@@ -919,11 +920,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private get isEnoughSunActiveToOpen(): boolean {
     const { closeBySun } = this.settings.properties;
 
-    const { illumination } = this.state;
+    const { illumination, temperature } = this.state;
 
     return (
       this.isCloseBySunReady &&
       illumination <= closeBySun.illumination.openLux &&
+      temperature <= closeBySun.temperature &&
       /**
        * Решение принимается при закрытой шторе
        */
@@ -935,11 +937,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
 
-    if (this.isIlluminationReady && this.isCoverClose) {
-      return illumination >= low.openLux && illumination <= hi.openLux;
-    }
-
-    return false;
+    return this.isIlluminationReady && this.isCoverClose && illumination >= low.openLux && illumination <= hi.openLux;
   }
 
   private get hasOpenBlock(): boolean {
@@ -1560,7 +1558,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         nextCoverState = CoverState.CLOSE;
       }
-    } else if (this.isEnoughSunActiveToOpen) {
+    } else if (this.isEnoughSunActiveToOpen && !this.isSilence) {
       if (nextCoverState !== CoverState.OPEN) {
         logger.info('Close because sun is not active 🪭 😎 🆒');
         logger.info({ name: this.name });
