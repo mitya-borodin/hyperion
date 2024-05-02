@@ -799,13 +799,23 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     logger.debug({ name: this.name, state: this.state });
   }
 
+  private get isMotion(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1
+    );
+  }
+
   private get isSilence(): boolean {
     const { silenceMin } = this.settings.properties;
 
     return (
       Number.isInteger(silenceMin) &&
       silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
+      this.isMotion &&
       compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
     );
   }
@@ -1190,6 +1200,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         name: this.name,
         nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         state: this.state,
+        isMotion: this.isMotion,
         isSilence: this.isSilence,
         isIlluminationReady: this.isIlluminationReady,
         isCloseByLighting: this.isCloseByLighting,
@@ -1563,14 +1574,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         nextCoverState = CoverState.CLOSE;
       }
-    } else if (this.isEnoughSunActiveToOpen && !this.isSilence) {
+    } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
       if (nextCoverState !== CoverState.OPEN) {
         logger.info('Close because sun is not active 🪭 😎 🆒');
         logger.info({ name: this.name });
 
         nextCoverState = CoverState.OPEN;
       }
-    } else if (this.isEnoughLightingToOpen && !this.isSilence && nextCoverState !== CoverState.OPEN) {
+    } else if (this.isEnoughLightingToOpen && this.isMotion && nextCoverState !== CoverState.OPEN) {
       logger.info('Open because enough lighting to open 🌅 💡');
       logger.info({ name: this.name });
 
@@ -1584,6 +1595,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       state: this.state,
       nextCoverState,
       hasCoverStateChange: nextCoverState !== this.state.coverState,
+      isMotion: this.isMotion,
       isSilence: this.isSilence,
       isCoverClose: this.isCoverClose,
       isCoverOpen: this.isCoverOpen,
