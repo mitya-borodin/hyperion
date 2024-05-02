@@ -1130,6 +1130,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         isButtonChange,
         buttons,
         skip: this.skip.firstButtonChange,
+        button: current?.controls
+          .filter((control) =>
+            buttons.some((button) => button.deviceId === current.id && button.controlId === control.id),
+          )
+          .map((button) => ({ id: button.id, enum: button.enum, value: button.value })),
       });
 
       this.skip.firstButtonChange = this.skip.firstButtonChange.filter(

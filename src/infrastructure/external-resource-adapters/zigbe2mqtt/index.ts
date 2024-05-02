@@ -517,6 +517,20 @@ export const runZigbee2mqtt = async ({
       const fields = new Set(Object.keys(payload));
 
       for (const control of hyperionDevice.controls) {
+        if (control.type === ControlType.ENUM) {
+          controls[control.id] = fields.has(control.id)
+            ? {
+                id: control.id,
+                value: String(payload[control.id]),
+              }
+            : {
+                id: control.id,
+                value: String(null),
+              };
+
+          continue;
+        }
+
         if (fields.has(control.id)) {
           controls[control.id] = {
             id: control.id,
