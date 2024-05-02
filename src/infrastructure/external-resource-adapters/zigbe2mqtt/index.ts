@@ -544,15 +544,19 @@ export const runZigbee2mqtt = async ({
         controls,
       };
 
-      // logger('The zigbee device was appeared ⛵️ ⛵️ ⛵️');
-      // logger(
-      //   stringify({
-      //     id: hardwareDevice.id,
-      //     title: hardwareDevice.title?.en,
-      //     controls: Object.values(hardwareDevice.controls ?? {})
-      //       .map(({ id, title }) => ({ id, title: title?.en })),
-      //   }),
-      // );
+      logger('Zigbee device has been converted to HardwareDevice 📦');
+      logger(
+        stringify({
+          id: hardwareDevice.id,
+          title: hardwareDevice.title?.en,
+          controls: Object.values(hardwareDevice.controls ?? {}).map((control) => ({
+            id: control.id,
+            title: control.title,
+            enum: control.enum,
+            value: control.value,
+          })),
+        }),
+      );
 
       eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
