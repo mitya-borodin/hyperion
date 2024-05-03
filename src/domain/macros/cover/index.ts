@@ -716,6 +716,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     logger.info('The next state was appeared ⏭️ ⏭️ ⏭️');
     logger.debug({
       name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
       nextPublicState,
       state: this.state,
     });
@@ -725,7 +726,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.state.position = nextPublicState.position;
 
     logger.info('The next state was applied by set state in manual mode ⏭️ ✅ ⏭️');
-    logger.debug({ name: this.name, state: this.state });
+    logger.debug({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+    });
 
     for (const position of this.settings.devices.positions) {
       const controlType = ControlType.VALUE;
@@ -735,6 +740,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         logger.error('The position control specified in the settings was not found 🚨');
         logger.error({
           name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
           position,
           controlType,
           control,
@@ -754,6 +760,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     logger.info('The next output was computed for positions by set state in manual mode ⏭️ 🍋');
     logger.debug({
       name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
       state: this.state,
       output: this.output,
     });
@@ -780,7 +787,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.state.running = this.isRunning();
 
       logger.info('The next state was set ✅');
-      logger.debug({ name: this.name, state: this.state });
+      logger.debug({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        state: this.state,
+      });
 
       this.computeOutput();
       this.send();
@@ -796,7 +807,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectTemperature();
 
     logger.info('The collecting completed ℹ️');
-    logger.debug({ name: this.name, state: this.state });
+    logger.debug({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+    });
   }
 
   private get isMotion(): boolean {
@@ -842,14 +857,17 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     if (low.closeLux > low.openLux) {
       logger.error('The low.closeLux should be less then low.openLux 🚨');
+      logger.error({ properties: this.settings.properties });
     }
 
     if (low.openLux > hi.openLux) {
       logger.error('The low.openLux should be less then hi.openLux 🚨');
+      logger.error({ properties: this.settings.properties });
     }
 
     if (hi.openLux > hi.closeLux) {
       logger.error('The hi.openLux should be less then hi.closeLux 🚨');
+      logger.error({ properties: this.settings.properties });
     }
 
     return (
@@ -871,7 +889,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     if (closeBySun.illumination.closeLux < closeBySun.illumination.openLux) {
       logger.error('The closeBySun.illumination.closeLux should be more then closeBySun.illumination.openLux 🚨');
-      logger.error({ name: this.name });
+      logger.error({ name: this.name, properties: this.settings.properties });
     }
 
     return (
@@ -985,7 +1003,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       this.state.position = 0;
 
       logger.info('Initializing the initial state as open 📖 🚀');
-      logger.debug({ name: this.name, positionSettings, stateSettings, state: this.state });
+      logger.debug({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        positionSettings,
+        stateSettings,
+        state: this.state,
+      });
 
       this.setState(JSON.stringify({ coverState: stateSettings.open, position: positionSettings.open }));
     } else {
@@ -996,7 +1020,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
         this.state.running = running;
 
-        logger.debug({ name: this.name, state: this.state });
+        logger.debug({
+          name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          state: this.state,
+        });
       }
     }
   };
@@ -1129,6 +1157,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       );
       logger.debug({
         name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         buttons: buttons.map((button) => this.controls.get(getControlId(button))),
       });
     }
@@ -1137,6 +1166,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.info('The first button change was skipped ⏭️');
       logger.debug({
         name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         isButtonChange,
         buttons,
         skip: this.skip.firstButtonChange,
@@ -1441,7 +1471,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
        */
       if (this.isBlocked(nextCoverState)) {
         logger.info('Try to change cover state by time was blocked 🚫 😭');
-        logger.debug({ name: this.name, toOpen, toClose, blockMin });
+        logger.debug({
+          name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          toOpen,
+          toClose,
+          blockMin,
+        });
 
         return;
       }
@@ -1641,6 +1677,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         logger.error('The state control specified in the settings was not found, or matches the parameters 🚨');
         logger.error({
           name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
           state,
           controlType,
           control,
@@ -1686,7 +1723,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
 
     logger.info('The output was computed 🍋');
-    logger.debug({ name: this.name, state: this.state, output: this.output, devices: this.settings.devices.states });
+    logger.debug({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+      output: this.output,
+      devices: this.settings.devices.states,
+    });
   };
 
   protected send = () => {
@@ -1701,6 +1744,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         );
         logger.error({
           name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
           state,
           hyperionDevice,
           controlId: getControlId(state),
@@ -1717,6 +1761,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.info('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
       logger.debug({
         name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         topic,
         message,
       });
@@ -1735,6 +1780,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
         );
         logger.error({
           name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
           position,
           hyperionDevice,
           controlId: getControlId(position),
@@ -1751,6 +1797,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.info('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
       logger.debug({
         name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         topic,
         message,
       });
@@ -1764,7 +1811,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     };
 
     logger.info('The next output was clean 🧼');
-    logger.debug({ name: this.name, state: this.state, output: this.output });
+    logger.debug({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      state: this.state,
+      output: this.output,
+    });
   };
 
   protected destroy() {
