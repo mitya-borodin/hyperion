@@ -2,7 +2,7 @@
 /* eslint-disable prefer-const */
 /* eslint-disable unicorn/no-array-reduce */
 /* eslint-disable unicorn/no-empty-file */
-import { addMinutes, compareAsc, format, subMinutes } from 'date-fns';
+import { addMinutes, compareAsc, compareDesc, format, subMinutes } from 'date-fns';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
@@ -820,7 +820,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return (
       Number.isInteger(silenceMin) &&
       silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1
+      compareDesc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1
     );
   }
 
@@ -830,7 +830,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return (
       Number.isInteger(silenceMin) &&
       silenceMin > 0 &&
-      this.isMotion &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
       compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
     );
   }
