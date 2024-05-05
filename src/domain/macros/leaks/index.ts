@@ -40,7 +40,7 @@ export enum ValveType {
   ANALOG = 'ANALOG',
 
   /**
-   * Кран 
+   * Кран
    */
   ENUM = 'ENUM',
 }
