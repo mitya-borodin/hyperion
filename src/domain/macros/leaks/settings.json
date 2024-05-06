@@ -5,206 +5,245 @@
     "LeaksMacrosSettings": {
       "type": "object",
       "properties": {
-        "type": {
-          "$ref": "#/definitions/ValveType",
-          "description": "Позволяет понять"
-        },
-        "analog": {
+        "devices": {
           "type": "object",
           "properties": {
-            "deviceId": {
-              "type": "string"
+            "leaks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "enum": ["switch", "enum"]
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "Датчики протечки\n\nДатчики протечки могут быть проводные реализованные как SWITCH и без проводными возвращающие некий action из предоставленного ENUM значений."
             },
-            "controlId": {
-              "type": "string"
+            "analog": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "range"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "Краны с управлением на аналоговом уровне, на всех кранах должно быть установлено одно закрытое положение."
             },
-            "controlType": {
-              "type": "string",
-              "const": "range"
+            "enum": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "enum",
+                    "description": "Произвольные устройства, у которых может быть несколько состояний и они все перечислены в enum.\n\nПользователь может указать на какие состояния реагировать.\n\nРазработчики могут предложить связать значения из enum с настройками которые используются в макросе, для реализации более сложных сценариев."
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "Список кранов с управлением на уровне приложения, на всех кранах должно быть установлено одно закрытое положение."
+            },
+            "phase": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "open": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch",
+                        "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false,
+                    "description": "open - реле отвечающее за открывание крана, может быть как обычное ON/OFF так и NC/NO."
+                  },
+                  "close": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch",
+                        "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false,
+                    "description": "close - реле отвечающее за закрытие крана, присутствует когда выбрано два ON/OFF реле, отсутствует если используется специальная конфигурация WBIO-DO-R10R-4."
+                  },
+                  "power": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch",
+                        "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false,
+                    "description": "power - реле отвечающее за подачу питания на выбранную фазу, присутствует только в случае использования специальной конфигурации WBIO-DO-R10R-4."
+                  },
+                  "isOpen": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch",
+                        "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false,
+                    "description": "Присутствует в том случае, если у крана есть контакты позволяющие определить открытое состояние."
+                  },
+                  "isClose": {
+                    "type": "object",
+                    "properties": {
+                      "deviceId": {
+                        "type": "string"
+                      },
+                      "controlId": {
+                        "type": "string"
+                      },
+                      "controlType": {
+                        "type": "string",
+                        "const": "switch",
+                        "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                      }
+                    },
+                    "required": ["deviceId", "controlId", "controlType"],
+                    "additionalProperties": false,
+                    "description": "Присутствует в том случае, если у крана есть контакты позволяющие определить закрытое состояние."
+                  }
+                },
+                "required": ["open"],
+                "additionalProperties": false
+              },
+              "description": "Краны с релейным управлением, на всех кранах должно быть установлено одно закрытое положение.\n\nON/OFF - \"обычное\" реле, которое может подключать фаз к одному выходу.\n\nNC/NO - \"специальное\" реле, которое может подключать фазу между двумя разными выходами, подключенных к контактам NC/NO.\n\nNC - normal close, нормально закрытый контакт, это означает, что когда нет питания, контакт находится в замкнутом положении.\n\nNO - normal open, нормально открытый контакт, это означает, что когда нет питания, контакт находится в разомкнутом положении.\n\nДля специальных модулей реле WBIO-DO-R10R-4, имеется возможность ВКЛ/ВЫКЛ и переключать фазу между NC/NO. Позволяет отключить фазу, переключить направление и подать фазу, чтобы исключить случай включения двух фаз сразу. Хотя если реле NC/NO то там и не получится подать одновременно фазу на левую и правую сторону."
             }
           },
-          "required": ["deviceId", "controlId", "controlType"],
-          "additionalProperties": false,
-          "description": "В случае если кран с аналоговым управлением, задается порт выдающий 0-10 вольт, на самом кране выставляется, 0 открыто, 10 закрыто."
+          "required": ["leaks", "analog", "enum", "phase"],
+          "additionalProperties": false
         },
-        "phase": {
-          "anyOf": [
-            {
-              "type": "array",
-              "minItems": 2,
-              "items": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "deviceId": {
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "type": "string",
-                      "const": "switch",
-                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-                    }
-                  },
-                  "required": ["deviceId", "controlId", "controlType"],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "deviceId": {
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "type": "string",
-                      "const": "switch",
-                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-                    }
-                  },
-                  "required": ["deviceId", "controlId", "controlType"],
-                  "additionalProperties": false
-                }
-              ],
-              "maxItems": 2
-            },
-            {
-              "type": "array",
-              "minItems": 3,
-              "items": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "deviceId": {
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "type": "string",
-                      "const": "switch",
-                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-                    }
-                  },
-                  "required": ["deviceId", "controlId", "controlType"],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "deviceId": {
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "type": "string",
-                      "const": "switch",
-                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-                    }
-                  },
-                  "required": ["deviceId", "controlId", "controlType"],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "deviceId": {
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "type": "string",
-                      "const": "switch",
-                      "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-                    }
-                  },
-                  "required": ["deviceId", "controlId", "controlType"],
-                  "additionalProperties": false
-                }
-              ],
-              "maxItems": 3
-            }
-          ],
-          "description": "В случае если кран с фазным управлением, элементов массива может быть 2-3, для двух позиционных кранов.\n\nЕсли элементов 2, то первый это OPEN, второй CLOSE. Если элементов 3, то первый это OPEN, второй CLOSE, третий ON/OFF."
-        },
-        "positions": {
-          "type": "array",
-          "minItems": 2,
-          "items": [
-            {
+        "properties": {
+          "type": "object",
+          "properties": {
+            "leak": {
               "type": "object",
               "properties": {
-                "deviceId": {
-                  "type": "string"
-                },
-                "controlId": {
-                  "type": "string"
-                },
-                "controlType": {
+                "switch": {
                   "type": "string",
-                  "const": "switch",
-                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                  "description": "Для SWITCH это логическая единица и логический ноль, где единица это наличие протечки."
+                },
+                "enum": {
+                  "type": "string",
+                  "description": "Для ENUM это некий action который выбирается пользователь из предоставленного ENUM."
                 }
               },
-              "required": ["deviceId", "controlId", "controlType"],
+              "required": ["switch", "enum"],
               "additionalProperties": false
             },
-            {
+            "analog": {
               "type": "object",
               "properties": {
-                "deviceId": {
+                "open": {
                   "type": "string"
                 },
-                "controlId": {
+                "close": {
                   "type": "string"
-                },
-                "controlType": {
-                  "type": "string",
-                  "const": "switch",
-                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
                 }
               },
-              "required": ["deviceId", "controlId", "controlType"],
+              "required": ["open", "close"],
+              "additionalProperties": false
+            },
+            "enum": {
+              "type": "object",
+              "properties": {
+                "open": {
+                  "type": "string"
+                },
+                "close": {
+                  "type": "string"
+                }
+              },
+              "required": ["open", "close"],
+              "additionalProperties": false
+            },
+            "phase": {
+              "type": "object",
+              "properties": {
+                "durationSec": {
+                  "type": "number"
+                }
+              },
+              "required": ["durationSec"],
               "additionalProperties": false
             }
-          ],
-          "maxItems": 2,
-          "description": "Сигналы положения кранов.\n\nЕсли type: 'PHASE' то должно быть определено две позиции [OPEN, CLOSE], в списке позиций первая всегда OPEN вторая всегда CLOSE, для двух позиционных кранов."
-        },
-        "leaks": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              }
-            },
-            "required": ["deviceId", "controlId"],
-            "additionalProperties": false
           },
-          "description": "Датчики протечки.\n\nСвязь конкретного крана с группой датчиков протечки, если хотя бы один срабатывает, то кран закрывается, и как только пропадает протечка, кран открывается.\n\nTODO Сделать в следующей итерации функцию, разблокировки воды через апрув пользователя.\n\nТак как может возникнуть такая ситуация, протекло, высохло протекло, высохло и так по кругу."
+          "required": ["leak", "analog", "enum", "phase"],
+          "additionalProperties": false
         }
       },
-      "required": ["type", "leaks"],
+      "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "Защита от протечек.\n\nПозволяет защищать от протечек воды и газа."
-    },
-    "ValveType": {
-      "type": "string",
-      "enum": ["PHASE", "ANALOG", "ENUM"]
+      "description": "Защита от протечек.\n\nПозволяет защищать от протечек воды и газа.\n\nМакрос отвечает только за изменение положение крана, и никак не заботится последствиями перекрытия крана.\n\nМакросы управляющие газовым или водяным оборудование должны отслеживать положение требуемых для их работы кранов, и если краны переходят в состояние ЗАКРЫТО, то прекращать работу оборудования."
     }
   }
 }

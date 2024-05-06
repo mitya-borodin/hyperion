@@ -616,11 +616,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   private timer: {
-    clock: NodeJS.Timeout;
-    movingArrange: NodeJS.Timeout;
+    timeBasedComputing: NodeJS.Timeout;
+    illuminationMovingArrange: NodeJS.Timeout;
   };
 
-  private movingArrange: {
+  private illuminationMovingArrange: {
     sum: number;
     avg: number;
     width: Date;
@@ -673,7 +673,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       positions: [],
     };
 
-    this.movingArrange = {
+    this.illuminationMovingArrange = {
       sum: 0,
       avg: 0,
       width: subMinutes(new Date(), 5),
@@ -681,8 +681,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     };
 
     this.timer = {
-      clock: setInterval(this.clock, 60 * 1000),
-      movingArrange: setInterval(this.computeMovingArrange, 60 * 1000),
+      timeBasedComputing: setInterval(this.timeBasedComputing, 60 * 1000),
+      illuminationMovingArrange: setInterval(this.computeIlluminationMovingArrange, 60 * 1000),
     };
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
@@ -798,6 +798,208 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
   }
 
+  /**
+   * Проверка наличия блокировок.
+   */
+  private isBlocked = (nextCoverState: CoverState): boolean => {
+    const { blocks } = this.settings.properties;
+
+    const hasBlockByTimeRange = blocks.some(({ type, fromMin, toMin }) => {
+      if (this.hasHourOverlap(fromMin, toMin, 'min')) {
+        if (nextCoverState === CoverState.OPEN && (type === BlockType.OPEN || type === BlockType.ALL)) {
+          return true;
+        }
+
+        if (nextCoverState === CoverState.CLOSE && (type === BlockType.CLOSE || type === BlockType.ALL)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    if (hasBlockByTimeRange) {
+      return true;
+    }
+
+    if (nextCoverState === CoverState.OPEN && this.hasOpenBlock) {
+      return true;
+    }
+
+    if (nextCoverState === CoverState.CLOSE && this.hasCloseBlock) {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Автоматизация по времени.
+   */
+  private timeBasedComputing = () => {
+    let toClose = false;
+    let toOpen = false;
+    let blockMin = 0;
+    let timePointIsHit = false;
+
+    /**
+     * ! Реализация приоритета закрывания.
+     */
+    const openCloseByTime = this.settings.properties.openCloseByTime.sort((a, b) => {
+      if (a.direction === OpenCloseByTimeDirection.CLOSE) {
+        return 1;
+      }
+
+      if (b.direction === OpenCloseByTimeDirection.OPEN) {
+        return -1;
+      }
+
+      return 0;
+    });
+
+    logger.info('The timeBasedComputing was run 🕰️');
+    logger.debug({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      openCloseByTime,
+    });
+
+    for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
+      if (toClose || toOpen) {
+        break;
+      }
+
+      for (const min of timePointMin) {
+        timePointIsHit = this.hitTimeRange(min);
+
+        if (timePointIsHit) {
+          blockMin = block;
+
+          if (direction === OpenCloseByTimeDirection.CLOSE) {
+            toClose = true;
+          }
+
+          if (direction === OpenCloseByTimeDirection.OPEN) {
+            toOpen = true;
+          }
+
+          break;
+        }
+      }
+    }
+
+    let nextCoverState = this.state.coverState;
+
+    if (toClose) {
+      nextCoverState = CoverState.CLOSE;
+    }
+
+    if (toOpen) {
+      nextCoverState = CoverState.OPEN;
+    }
+
+    if (this.state.coverState !== nextCoverState) {
+      /**
+       * ! Реализация приоритета блокировок.
+       */
+      if (this.isBlocked(nextCoverState)) {
+        logger.info('Try to change cover state by time was blocked 🚫 😭');
+        logger.debug({
+          name: this.name,
+          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+          toOpen,
+          toClose,
+          blockMin,
+        });
+
+        return;
+      }
+
+      if (blockMin > 0) {
+        this.block.close = addMinutes(new Date(), blockMin);
+
+        logger.info('The close block was activated ✅');
+        logger.debug({
+          name: this.name,
+          closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
+        });
+
+        this.block.open = addMinutes(new Date(), blockMin);
+
+        logger.info('The open block was activated ✅');
+        logger.debug({
+          name: this.name,
+          openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
+        });
+      }
+
+      logger.info('Switching has been performed at a given time point ✅');
+      logger.debug({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        openCloseByTime,
+        toOpen,
+        toClose,
+        blockMin,
+        state: this.state,
+      });
+
+      this.setCoverState(nextCoverState);
+      this.computeOutput();
+      this.send();
+    } else if (timePointIsHit) {
+      logger.error('Hitting a time point, but next state the same with current state 🚨');
+      logger.error({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        openCloseByTime,
+        toOpen,
+        toClose,
+        blockMin,
+        timePointIsHit,
+        nextCoverState,
+        state: this.state,
+      });
+    }
+  };
+
+  private hitTimeRange = (min: number) => {
+    if (min > 0 && min < 24 * 60) {
+      const hours = this.getDateInClientTimeZone().getHours();
+      const minutes = this.getDateInClientTimeZone().getMinutes();
+
+      const fromMin = hours * 60 + minutes - 15;
+      const toMin = hours * 60 + minutes + 15;
+
+      logger.info('Checking for hitting a time point ℹ️');
+      logger.debug({
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        hours,
+        minutes,
+        fromMin,
+        timePointInMin: min,
+        toMin,
+        hitting: min >= fromMin && min <= toMin,
+      });
+
+      if (min >= fromMin && min <= toMin) {
+        logger.info('Hitting a time point 🔘 ✅');
+        logger.debug({ name: this.name, fromMin, timePointInMin: min, toMin });
+
+        return true;
+      }
+    } else {
+      logger.info('The time should be in day range 🏙️ 🚨');
+      logger.debug({ name: this.name, fromMin: 0, timePointInMin: min, toMin: 24 * 60 });
+    }
+
+    return false;
+  };
+
+  /**
+   * Сбор данных
+   */
   protected collecting() {
     this.collectPosition();
     this.collectLightings();
@@ -1046,14 +1248,73 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     const { illumination } = this.settings.properties;
 
     if (this.state.lighting === Lighting.OFF) {
-      this.state.illumination = this.computeMovingArrange(
+      this.state.illumination = this.computeIlluminationMovingArrange(
         this.getValueByDetection(illuminations, illumination.detection),
       );
     }
 
     if (this.state.lighting === Lighting.ON) {
+      this.illuminationMovingArrange.stack = [];
+      this.illuminationMovingArrange.sum = 0;
+      this.illuminationMovingArrange.avg = 0;
+      this.illuminationMovingArrange.width = new Date();
+
       this.state.illumination = this.getValueByDetection(illuminations, illumination.detection);
     }
+  };
+
+  private computeIlluminationMovingArrange = (value?: number): number => {
+    if (typeof value === 'number' && value >= 0) {
+      this.illuminationMovingArrange.stack.push({ date: new Date(), value });
+      this.illuminationMovingArrange.sum += value;
+      this.illuminationMovingArrange.avg =
+        this.illuminationMovingArrange.sum / this.illuminationMovingArrange.stack.length;
+
+      return this.illuminationMovingArrange.avg;
+    }
+
+    logger.info('The procedure for moving the moving average has been started 🛝');
+    logger.debug({
+      beforeMove: {
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: this.illuminationMovingArrange.sum,
+        avg: this.illuminationMovingArrange.avg,
+        width: this.illuminationMovingArrange.width,
+        stack: this.illuminationMovingArrange.stack.length,
+      },
+    });
+
+    const stack = [];
+
+    this.illuminationMovingArrange.width = addMinutes(this.illuminationMovingArrange.width, 1);
+    this.illuminationMovingArrange.sum = 0;
+    this.illuminationMovingArrange.avg = 0;
+
+    for (let index = 0; index < this.illuminationMovingArrange.stack.length; index++) {
+      const item = this.illuminationMovingArrange.stack[index];
+
+      if (compareAsc(item.date, this.illuminationMovingArrange.width) >= 0) {
+        stack.push(item);
+        this.illuminationMovingArrange.sum += item.value;
+        this.illuminationMovingArrange.avg = this.illuminationMovingArrange.sum / stack.length;
+      }
+    }
+
+    this.illuminationMovingArrange.stack = stack;
+
+    logger.debug({
+      afterMove: {
+        name: this.name,
+        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: this.illuminationMovingArrange.sum,
+        avg: this.illuminationMovingArrange.avg,
+        width: this.illuminationMovingArrange.width,
+        stack: this.illuminationMovingArrange.stack.length,
+      },
+    });
+
+    return this.illuminationMovingArrange.avg;
   };
 
   private collectMotion = () => {
@@ -1085,116 +1346,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.state.temperature = this.getValueByDetection(temperatures, temperature.detection);
   };
 
+  /**
+   * Приоритетное изменение состояния.
+   */
   protected priorityComputation = () => {
     return false;
   };
-
-  /**
-   * Проверка наличия блокировок.
-   */
-  private isBlocked = (nextCoverState: CoverState): boolean => {
-    const { blocks } = this.settings.properties;
-
-    const hasBlockByTimeRange = blocks.some(({ type, fromMin, toMin }) => {
-      if (this.hasHourOverlap(fromMin, toMin, 'min')) {
-        if (nextCoverState === CoverState.OPEN && (type === BlockType.OPEN || type === BlockType.ALL)) {
-          return true;
-        }
-
-        if (nextCoverState === CoverState.CLOSE && (type === BlockType.CLOSE || type === BlockType.ALL)) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-
-    if (hasBlockByTimeRange) {
-      return true;
-    }
-
-    if (nextCoverState === CoverState.OPEN && this.hasOpenBlock) {
-      return true;
-    }
-
-    if (nextCoverState === CoverState.CLOSE && this.hasCloseBlock) {
-      return true;
-    }
-
-    return false;
-  };
-
-  private isButtonChange(current?: HyperionDevice): boolean {
-    if (!current) {
-      return false;
-    }
-
-    const { buttons } = this.settings.devices;
-
-    const isButtonChange = buttons.some(({ deviceId, controlId, controlType }) =>
-      current.controls.find(
-        (control) =>
-          current.id === deviceId &&
-          control.id === controlId &&
-          control.type === controlType &&
-          control.enum.includes(control.value),
-      ),
-    );
-
-    const isButtonStatus = buttons.some(({ deviceId, controlId, controlType }) =>
-      current.controls.find(
-        (control) =>
-          current.id === deviceId &&
-          control.id === controlId &&
-          control.type === controlType &&
-          !control.enum.includes(control.value),
-      ),
-    );
-
-    if (isButtonStatus) {
-      logger.info(
-        'A notification about the status of the button has been received, without specifying an action ℹ️ ℹ️ ℹ️',
-      );
-      logger.debug({
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        buttons: buttons.map((button) => this.controls.get(getControlId(button))),
-      });
-    }
-
-    if (isButtonChange && this.skip.firstButtonChange.length > 0) {
-      logger.info('The first button change was skipped ⏭️');
-      logger.debug({
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        isButtonChange,
-        buttons,
-        skip: this.skip.firstButtonChange,
-        button: current?.controls
-          .filter((control) =>
-            buttons.some((button) => button.deviceId === current.id && button.controlId === control.id),
-          )
-          .map((button) => ({ id: button.id, enum: button.enum, value: button.value })),
-      });
-
-      this.skip.firstButtonChange = this.skip.firstButtonChange.filter(
-        ({ deviceId, controlId, controlType }) =>
-          !current.controls.some(
-            (control) =>
-              current.id === deviceId &&
-              control.id === controlId &&
-              control.type === controlType &&
-              control.enum.includes(control.value),
-          ),
-      );
-
-      logger.debug({ skip: this.skip.firstButtonChange });
-
-      return false;
-    }
-
-    return isButtonChange;
-  }
 
   /**
    * Автоматизация по переключателям.
@@ -1366,222 +1523,85 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return false;
   };
 
-  private hitTimeRange = (min: number) => {
-    if (min > 0 && min < 24 * 60) {
-      const hours = this.getDateInClientTimeZone().getHours();
-      const minutes = this.getDateInClientTimeZone().getMinutes();
+  protected isSwitchHasBeenUp(): boolean {
+    return super.isSwitchHasBeenUp(this.settings.devices.switchers);
+  }
 
-      const fromMin = hours * 60 + minutes - 15;
-      const toMin = hours * 60 + minutes + 15;
+  protected isSwitchHasBeenDown(): boolean {
+    return super.isSwitchHasBeenDown(this.settings.devices.switchers);
+  }
 
-      logger.info('Checking for hitting a time point ℹ️');
+  private isButtonChange(current?: HyperionDevice): boolean {
+    if (!current) {
+      return false;
+    }
+
+    const { buttons } = this.settings.devices;
+
+    const isButtonChange = buttons.some(({ deviceId, controlId, controlType }) =>
+      current.controls.find(
+        (control) =>
+          current.id === deviceId &&
+          control.id === controlId &&
+          control.type === controlType &&
+          control.enum.includes(control.value),
+      ),
+    );
+
+    const isButtonStatus = buttons.some(({ deviceId, controlId, controlType }) =>
+      current.controls.find(
+        (control) =>
+          current.id === deviceId &&
+          control.id === controlId &&
+          control.type === controlType &&
+          !control.enum.includes(control.value),
+      ),
+    );
+
+    if (isButtonStatus) {
+      logger.info(
+        'A notification about the status of the button has been received, without specifying an action ℹ️ ℹ️ ℹ️',
+      );
       logger.debug({
         name: this.name,
         nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        hours,
-        minutes,
-        fromMin,
-        timePointInMin: min,
-        toMin,
-        hitting: min >= fromMin && min <= toMin,
+        buttons: buttons.map((button) => this.controls.get(getControlId(button))),
       });
-
-      if (min >= fromMin && min <= toMin) {
-        logger.info('Hitting a time point 🔘 ✅');
-        logger.debug({ name: this.name, fromMin, timePointInMin: min, toMin });
-
-        return true;
-      }
-    } else {
-      logger.info('The time should be in day range 🏙️ 🚨');
-      logger.debug({ name: this.name, fromMin: 0, timePointInMin: min, toMin: 24 * 60 });
     }
 
-    return false;
-  };
-
-  /**
-   * Автоматизация по времени.
-   */
-  private clock = () => {
-    let toClose = false;
-    let toOpen = false;
-    let blockMin = 0;
-    let timePointIsHit = false;
-
-    /**
-     * ! Реализация приоритета закрывания.
-     */
-    const openCloseByTime = this.settings.properties.openCloseByTime.sort((a, b) => {
-      if (a.direction === OpenCloseByTimeDirection.CLOSE) {
-        return 1;
-      }
-
-      if (b.direction === OpenCloseByTimeDirection.OPEN) {
-        return -1;
-      }
-
-      return 0;
-    });
-
-    logger.info('The clock was run 🕰️');
-    logger.debug({
-      name: this.name,
-      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-      openCloseByTime,
-    });
-
-    for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
-      if (toClose || toOpen) {
-        break;
-      }
-
-      for (const min of timePointMin) {
-        timePointIsHit = this.hitTimeRange(min);
-
-        if (timePointIsHit) {
-          blockMin = block;
-
-          if (direction === OpenCloseByTimeDirection.CLOSE) {
-            toClose = true;
-          }
-
-          if (direction === OpenCloseByTimeDirection.OPEN) {
-            toOpen = true;
-          }
-
-          break;
-        }
-      }
-    }
-
-    let nextCoverState = this.state.coverState;
-
-    if (toClose) {
-      nextCoverState = CoverState.CLOSE;
-    }
-
-    if (toOpen) {
-      nextCoverState = CoverState.OPEN;
-    }
-
-    if (this.state.coverState !== nextCoverState) {
-      /**
-       * ! Реализация приоритета блокировок.
-       */
-      if (this.isBlocked(nextCoverState)) {
-        logger.info('Try to change cover state by time was blocked 🚫 😭');
-        logger.debug({
-          name: this.name,
-          nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-          toOpen,
-          toClose,
-          blockMin,
-        });
-
-        return;
-      }
-
-      if (blockMin > 0) {
-        this.block.close = addMinutes(new Date(), blockMin);
-
-        logger.info('The close block was activated ✅');
-        logger.debug({
-          name: this.name,
-          closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
-        });
-
-        this.block.open = addMinutes(new Date(), blockMin);
-
-        logger.info('The open block was activated ✅');
-        logger.debug({
-          name: this.name,
-          openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
-        });
-      }
-
-      logger.info('Switching has been performed at a given time point ✅');
+    if (isButtonChange && this.skip.firstButtonChange.length > 0) {
+      logger.info('The first button change was skipped ⏭️');
       logger.debug({
         name: this.name,
         nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        openCloseByTime,
-        toOpen,
-        toClose,
-        blockMin,
-        state: this.state,
+        isButtonChange,
+        buttons,
+        skip: this.skip.firstButtonChange,
+        button: current?.controls
+          .filter((control) =>
+            buttons.some((button) => button.deviceId === current.id && button.controlId === control.id),
+          )
+          .map((button) => ({ id: button.id, enum: button.enum, value: button.value })),
       });
 
-      this.setCoverState(nextCoverState);
-      this.computeOutput();
-      this.send();
-    } else if (timePointIsHit) {
-      logger.error('Hitting a time point, but next state the same with current state 🚨');
-      logger.error({
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        openCloseByTime,
-        toOpen,
-        toClose,
-        blockMin,
-        timePointIsHit,
-        nextCoverState,
-        state: this.state,
-      });
-    }
-  };
+      this.skip.firstButtonChange = this.skip.firstButtonChange.filter(
+        ({ deviceId, controlId, controlType }) =>
+          !current.controls.some(
+            (control) =>
+              current.id === deviceId &&
+              control.id === controlId &&
+              control.type === controlType &&
+              control.enum.includes(control.value),
+          ),
+      );
 
-  private computeMovingArrange = (value?: number): number => {
-    if (typeof value === 'number' && value >= 0) {
-      this.movingArrange.stack.push({ date: new Date(), value });
-      this.movingArrange.sum += value;
-      this.movingArrange.avg = this.movingArrange.sum / this.movingArrange.stack.length;
+      logger.debug({ skip: this.skip.firstButtonChange });
 
-      return this.movingArrange.avg;
+      return false;
     }
 
-    logger.info('The procedure for moving the moving average has been started 🛝');
-    logger.debug({
-      beforeMove: {
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        sum: this.movingArrange.sum,
-        avg: this.movingArrange.avg,
-        width: this.movingArrange.width,
-        stack: this.movingArrange.stack.length,
-      },
-    });
-
-    const stack = [];
-
-    this.movingArrange.width = addMinutes(this.movingArrange.width, 1);
-    this.movingArrange.sum = 0;
-    this.movingArrange.avg = 0;
-
-    for (let index = 0; index < this.movingArrange.stack.length; index++) {
-      const item = this.movingArrange.stack[index];
-
-      if (compareAsc(item.date, this.movingArrange.width) >= 0) {
-        stack.push(item);
-        this.movingArrange.sum += item.value;
-        this.movingArrange.avg = this.movingArrange.sum / stack.length;
-      }
-    }
-
-    this.movingArrange.stack = stack;
-
-    logger.debug({
-      afterMove: {
-        name: this.name,
-        nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        sum: this.movingArrange.sum,
-        avg: this.movingArrange.avg,
-        width: this.movingArrange.width,
-        stack: this.movingArrange.stack.length,
-      },
-    });
-
-    return this.movingArrange.avg;
-  };
+    return isButtonChange;
+  }
 
   /**
    * Автоматизации по датчикам.
@@ -1823,15 +1843,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   protected destroy() {
-    clearInterval(this.timer.clock);
-    clearInterval(this.timer.movingArrange);
-  }
-
-  protected isSwitchHasBeenUp(): boolean {
-    return super.isSwitchHasBeenUp(this.settings.devices.switchers);
-  }
-
-  protected isSwitchHasBeenDown(): boolean {
-    return super.isSwitchHasBeenDown(this.settings.devices.switchers);
+    clearInterval(this.timer.timeBasedComputing);
+    clearInterval(this.timer.illuminationMovingArrange);
   }
 }

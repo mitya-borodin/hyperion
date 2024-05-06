@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
+import { format } from 'date-fns';
 import debug from 'debug';
 import defaultsDeep from 'lodash.defaultsdeep';
 
@@ -18,6 +19,7 @@ const logger = debug('hyperion:macros:leaks');
  * Текущее положение крана
  */
 export enum ValueState {
+  UNSPECIFIED = 'UNSPECIFIED',
   OPEN = 'OPEN',
   ON_WAY = 'ON_WAY',
   CLOSE = 'CLOSE',
@@ -245,7 +247,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       state: defaultsDeep(state, {
         leak: false,
-        valve: ValueState.ON_WAY,
+        valve: ValueState.UNSPECIFIED,
       }),
 
       devices: parameters.devices,
@@ -260,48 +262,31 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   }
 
   static parseSettings = (settings: string, version: number = VERSION): LeaksMacrosSettings => {
-    // if (version === VERSION) {
-    //   logger('Settings in the current version ✅');
-    //   logger(stringify({ from: version, to: VERSION }));
-
-    // /**
-    //  * TODO Проверять через JSON Schema
-    //  */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [() => {}].slice(version, VERSION + 1);
-
-    // logger(mappers);
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return JSON.parse(settings);
+    return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string): LeaksMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): LeaksMacrosState => {
     if (!state) {
       return {
-        valve: ValueState.ON_WAY,
         leak: false,
+        valve: ValueState.UNSPECIFIED,
       };
     }
 
-    /**
-     * TODO Проверять через JSON Schema
-     */
-
-    return JSON.parse(state);
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
-  setState = (nextPublicState: string): void => {};
+  setState = (nextPublicStateJson: string): void => {
+    const nextPublicState = LeaksMacros.parseState(nextPublicStateJson, this.version);
+
+    logger('The next state was appeared ⏭️ ⏭️ ⏭️');
+    logger({
+      name: this.name,
+      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      nextPublicState,
+      state: this.state,
+    });
+  };
 
   protected collecting() {}
 
