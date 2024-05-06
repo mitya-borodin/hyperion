@@ -13,129 +13,160 @@ const logger = debug('hyperion:macros:leaks');
 /**
  * ! SETTINGS
  */
+
+/**
+ * Текущее положение крана
+ */
 export enum ValueState {
   OPEN = 'OPEN',
   ON_WAY = 'ON_WAY',
   CLOSE = 'CLOSE',
 }
 
-export enum ValveType {
-  /**
-   * Кран с фазным управлением, кран в котором повороты в обе стороны,
-   * осуществляются через переключение фазы.
-   *
-   * В таких кранах нельзя подавать питание на обе фазы.
-   *
-   * Для управления используются два реле, или специальное реле где
-   * есть третье реле которое отключается на время переключения реле
-   * отвечающего за направление.
-   */
-  PHASE = 'PHASE',
-
-  /**
-   * Кран с аналоговым 0-10В или порционным управлением.
-   *
-   * Для управление положением используется напряжение постоянного тока 0-10В.
-   */
-  ANALOG = 'ANALOG',
-
-  /**
-   * Кран
-   */
-  ENUM = 'ENUM',
-}
-
 /**
  * Защита от протечек.
  *
  * Позволяет защищать от протечек воды и газа.
+ *
+ * Макрос отвечает только за изменение положение крана,
+ * и никак не заботится последствиями перекрытия крана.
+ *
+ * Макросы управляющие газовым или водяным оборудование
+ * должны отслеживать положение требуемых для их работы кранов,
+ * и если краны переходят в состояние ЗАКРЫТО, то прекращать
+ * работу оборудования.
  */
 export type LeaksMacrosSettings = {
-  /**
-   * Позволяет понять
-   */
-  readonly type: ValveType;
+  readonly devices: {
+    /**
+     * Датчики протечки
+     *
+     * Датчики протечки могут быть проводные реализованные как SWITCH и
+     * без проводными возвращающие некий action из предоставленного ENUM значений.
+     */
+    readonly leaks: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH | ControlType.ENUM;
+    }>;
 
-  /**
-   * В случае если кран с аналоговым управлением, задается порт выдающий 0-10 вольт,
-   * на самом кране выставляется, 0 открыто, 10 закрыто.
-   */
-  readonly analog?: {
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.RANGE;
+    /**
+     * Краны с управлением на аналоговом уровне,
+     * на всех кранах должно быть установлено одно закрытое положение.
+     */
+    readonly analog: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.RANGE;
+    }>;
+
+    /**
+     * Список кранов с управлением на уровне приложения,
+     * на всех кранах должно быть установлено одно закрытое положение.
+     */
+    readonly enum: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.ENUM;
+    }>;
+
+    /**
+     * Краны с релейным управлением,
+     * на всех кранах должно быть установлено одно закрытое положение.
+     *
+     * ON/OFF - "обычное" реле, которое может подключать фаз к одному выходу.
+     *
+     * NC/NO - "специальное" реле, которое может подключать фазу между двумя
+     * разными выходами, подключенных к контактам NC/NO.
+     *
+     * NC - normal close, нормально закрытый контакт, это означает,
+     * что когда нет питания, контакт находится в замкнутом положении.
+     *
+     * NO - normal open, нормально открытый контакт, это означает,
+     * что когда нет питания, контакт находится в разомкнутом положении.
+     *
+     * Для специальных модулей реле WBIO-DO-R10R-4, имеется возможность ВКЛ/ВЫКЛ и переключать фазу между NC/NO.
+     * Позволяет отключить фазу, переключить направление и подать фазу, чтобы исключить случай включения двух фаз сразу.
+     * Хотя если реле NC/NO то там и не получится подать одновременно фазу на левую и правую сторону.
+     */
+    readonly phase: Array<{
+      /**
+       * open - реле отвечающее за открывание крана, может быть как обычное ON/OFF так и NC/NO.
+       */
+      readonly open: {
+        readonly deviceId: string;
+        readonly controlId: string;
+        readonly controlType: ControlType.SWITCH;
+      };
+
+      /**
+       * close - реле отвечающее за закрытие крана,
+       * присутствует когда выбрано два ON/OFF реле,
+       * отсутствует если используется специальная конфигурация WBIO-DO-R10R-4.
+       */
+      readonly close?: {
+        readonly deviceId: string;
+        readonly controlId: string;
+        readonly controlType: ControlType.SWITCH;
+      };
+
+      /**
+       * power - реле отвечающее за подачу питания на выбранную фазу,
+       * присутствует только в случае использования специальной конфигурации WBIO-DO-R10R-4.
+       */
+      readonly power?: {
+        readonly deviceId: string;
+        readonly controlId: string;
+        readonly controlType: ControlType.SWITCH;
+      };
+
+      /**
+       * Присутствует в том случае, если у крана есть контакты позволяющие определить открытое состояние.
+       */
+      readonly isOpen?: {
+        readonly deviceId: string;
+        readonly controlId: string;
+        readonly controlType: ControlType.SWITCH;
+      };
+
+      /**
+       * Присутствует в том случае, если у крана есть контакты позволяющие определить закрытое состояние.
+       */
+      readonly isClose?: {
+        readonly deviceId: string;
+        readonly controlId: string;
+        readonly controlType: ControlType.SWITCH;
+      };
+    }>;
   };
 
-  /**
-   * В случае если кран с фазным управлением, элементов массива может быть 2-3, для двух позиционных кранов.
-   *
-   * Если элементов 2, то первый это OPEN, второй CLOSE.
-   * Если элементов 3, то первый это OPEN, второй CLOSE, третий ON/OFF.
-   */
-  readonly phase?:
-    | [
-        {
-          readonly deviceId: string;
-          readonly controlId: string;
-          readonly controlType: ControlType.SWITCH;
-        },
-        {
-          readonly deviceId: string;
-          readonly controlId: string;
-          readonly controlType: ControlType.SWITCH;
-        },
-      ]
-    | [
-        {
-          readonly deviceId: string;
-          readonly controlId: string;
-          readonly controlType: ControlType.SWITCH;
-        },
-        {
-          readonly deviceId: string;
-          readonly controlId: string;
-          readonly controlType: ControlType.SWITCH;
-        },
-        {
-          readonly deviceId: string;
-          readonly controlId: string;
-          readonly controlType: ControlType.SWITCH;
-        },
-      ];
+  readonly properties: {
+    leak: {
+      /**
+       * Для SWITCH это логическая единица и логический ноль, где единица это наличие протечки.
+       */
+      switch: string;
 
-  /**
-   * Сигналы положения кранов.
-   *
-   * Если type: 'PHASE' то должно быть определено две позиции [OPEN, CLOSE],
-   * в списке позиций первая всегда OPEN вторая всегда CLOSE, для двух позиционных кранов.
-   */
-  readonly positions?: [
-    {
-      readonly deviceId: string;
-      readonly controlId: string;
-      readonly controlType: ControlType.SWITCH;
-    },
-    {
-      readonly deviceId: string;
-      readonly controlId: string;
-      readonly controlType: ControlType.SWITCH;
-    },
-  ];
+      /**
+       * Для ENUM это некий action который выбирается пользователь из предоставленного ENUM.
+       */
+      enum: string;
+    };
 
-  /**
-   * Датчики протечки.
-   *
-   * Связь конкретного крана с группой датчиков протечки, если хотя бы один срабатывает, то кран закрывается,
-   * и как только пропадает протечка, кран открывается.
-   *
-   * TODO Сделать в следующей итерации функцию, разблокировки воды через апрув пользователя.
-   *
-   * Так как может возникнуть такая ситуация, протекло, высохло протекло, высохло и так по кругу.
-   */
-  readonly leaks: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-  }>;
+    analog: {
+      open: string;
+      close: string;
+    };
+
+    enum: {
+      open: string;
+      close: string;
+    };
+
+    phase: {
+      durationSec: number;
+    };
+  };
 };
 
 /**
@@ -144,8 +175,8 @@ export type LeaksMacrosSettings = {
 export type LeaksMacrosPublicState = {};
 
 type LeaksMacrosPrivateState = {
-  valve: ValueState;
   leak: boolean;
+  valve: ValueState;
 };
 
 type LeaksMacrosState = LeaksMacrosPublicState & LeaksMacrosPrivateState;
@@ -154,39 +185,33 @@ type LeaksMacrosState = LeaksMacrosPublicState & LeaksMacrosPrivateState;
  * ! OUTPUT
  */
 type LeaksMacrosNextOutput = {
-  /**
-   * Управление аналоговым краном, 0 открыто, 10 закрыто.
-   */
-  readonly analog?: {
+  readonly analog: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
-  };
-
-  /**
-   * Состояние реле, для фазного управления, двух позиционным краном.
-   *
-   * 0 - Направление к положению открыто
-   * 1 - Направление к положению закрыто
-   * 2 - Подача питания
-   */
-  readonly phase?: [
-    {
+  }>;
+  readonly enum: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly value: string;
+  }>;
+  readonly phase: Array<{
+    readonly open: {
       readonly deviceId: string;
       readonly controlId: string;
-      readonly value: string;
-    },
-    {
+      readonly controlType: ControlType.SWITCH;
+    };
+    readonly close?: {
       readonly deviceId: string;
       readonly controlId: string;
-      readonly value: string;
-    },
-    {
+      readonly controlType: ControlType.SWITCH;
+    };
+    readonly power?: {
       readonly deviceId: string;
       readonly controlId: string;
-      readonly value: string;
-    },
-  ];
+      readonly controlType: ControlType.SWITCH;
+    };
+  }>;
 };
 
 const VERSION = 0;
@@ -219,17 +244,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       settings,
 
       state: defaultsDeep(state, {
-        disable: {
-          coldWater: false,
-          hotWater: false,
-          recirculation: false,
-        },
-        hotWaterTemperature: 60,
-        coldWaterPumps: {},
-        valves: {},
-        boilerPumps: {},
-        heatRequests: {},
-        recirculationPumps: {},
+        leak: false,
+        valve: ValueState.ON_WAY,
       }),
 
       devices: parameters.devices,
@@ -237,8 +253,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     });
 
     this.nextOutput = {
-      analog: undefined,
-      phase: undefined,
+      analog: [],
+      enum: [],
+      phase: [],
     };
   }
 
@@ -301,8 +318,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   protected computeOutput = () => {
     const nextOutput: LeaksMacrosNextOutput = {
-      analog: undefined,
-      phase: undefined,
+      analog: [],
+      enum: [],
+      phase: [],
     };
 
     this.nextOutput = nextOutput;
