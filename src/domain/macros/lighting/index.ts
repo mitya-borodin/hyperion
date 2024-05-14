@@ -1078,7 +1078,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       const { topic } = hyperionControl;
       const message = lighting.value;
 
-      logger('The message has been created and will be sent to the wirenboard controller ⬆️ 📟 📟 📟 ⬆️');
+      logger('The message will be sent to the wirenboard controller 📟');
       logger(
         stringify({
           name: this.name,

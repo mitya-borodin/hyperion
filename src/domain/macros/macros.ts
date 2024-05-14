@@ -4,7 +4,7 @@
 /* eslint-disable unicorn/no-array-for-each */
 import EventEmitter from 'node:events';
 
-import { addHours, addMinutes } from 'date-fns';
+import { addHours, addMinutes, compareAsc, format, subMinutes } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
@@ -73,7 +73,7 @@ type PrivateMacrosParameters<TYPE extends MacrosType> = {
   readonly version: number;
   readonly collectingDebounceMs?: number;
   readonly collectingThrottleMs?: number;
-  readonly sensorBasedComputationThrottleMs?: number;
+  readonly sensorBasedComputingThrottleMs?: number;
 };
 
 export type MacrosAccept = {
@@ -131,6 +131,14 @@ export abstract class Macros<
   readonly controlTypes: Map<string, ControlType>;
   protected readonly state: STATE;
 
+  /**
+   * ! Внутреннее состояние макроса
+   */
+  readonly movingArranges: Map<
+    string,
+    { sum: number; avg: number; width: Date; stack: Array<{ date: Date; value: number }> }
+  >;
+
   constructor({
     version,
     eventBus,
@@ -143,7 +151,7 @@ export abstract class Macros<
     state,
     collectingThrottleMs = 0,
     collectingDebounceMs = 0,
-    sensorBasedComputationThrottleMs = 0,
+    sensorBasedComputingThrottleMs = 0,
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
@@ -162,6 +170,8 @@ export abstract class Macros<
     this.settings = settings;
     this.state = state;
 
+    this.movingArranges = new Map();
+
     this.controlTypes = new Map();
 
     this.parseControlTypes(this.settings);
@@ -176,10 +186,10 @@ export abstract class Macros<
         });
       }
 
-      if (sensorBasedComputationThrottleMs > 0) {
+      if (sensorBasedComputingThrottleMs > 0) {
         this.sensorBasedComputing = throttle(
           this.sensorBasedComputing.bind(this),
-          sensorBasedComputationThrottleMs,
+          sensorBasedComputingThrottleMs,
         ) as () => boolean;
       }
     });
@@ -543,6 +553,10 @@ export abstract class Macros<
     return nowMs >= fromMs && nowMs <= toMs;
   }
 
+  protected get now(): string {
+    return format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO');
+  }
+
   protected getDateInClientTimeZone = () => {
     return utcToZonedTime(new Date(), config.client.timeZone);
   };
@@ -584,5 +598,69 @@ export abstract class Macros<
     }
 
     return result;
+  };
+
+  protected computeMovingArrange = (name: string, value?: number): number => {
+    const movingArrange = this.movingArranges.get(name) ?? {
+      sum: 0,
+      avg: 0,
+      width: subMinutes(new Date(), 5),
+      stack: [],
+    };
+
+    if (typeof value === 'number' && value >= 0) {
+      movingArrange.stack.push({ date: new Date(), value });
+      movingArrange.sum += value;
+      movingArrange.avg = movingArrange.sum / movingArrange.stack.length;
+
+      return movingArrange.avg;
+    }
+
+    logger('The procedure for moving the "moving average" has been started 🛝');
+    logger({
+      beforeMove: {
+        name: this.name,
+        now: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: movingArrange.sum,
+        avg: movingArrange.avg,
+        width: movingArrange.width,
+        stack: movingArrange.stack.length,
+      },
+    });
+
+    const stack = [];
+
+    movingArrange.width = addMinutes(movingArrange.width, 1);
+    movingArrange.sum = 0;
+    movingArrange.avg = 0;
+
+    for (let index = 0; index < movingArrange.stack.length; index++) {
+      const item = movingArrange.stack[index];
+
+      if (compareAsc(item.date, movingArrange.width) >= 0) {
+        stack.push(item);
+        movingArrange.sum += item.value;
+        movingArrange.avg = movingArrange.sum / stack.length;
+      }
+    }
+
+    movingArrange.stack = stack;
+
+    logger({
+      afterMove: {
+        name: this.name,
+        now: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        sum: movingArrange.sum,
+        avg: movingArrange.avg,
+        width: movingArrange.width,
+        stack: movingArrange.stack.length,
+      },
+    });
+
+    return movingArrange.avg;
+  };
+
+  protected clearMovingArrange = (name: string) => {
+    this.movingArranges.delete(name);
   };
 }

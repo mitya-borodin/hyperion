@@ -282,7 +282,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     logger('The next state was appeared ⏭️ ⏭️ ⏭️');
     logger({
       name: this.name,
-      nowInClientTz: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+      now: this.now,
       nextPublicState,
       state: this.state,
     });

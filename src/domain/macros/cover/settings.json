@@ -389,20 +389,12 @@
             "state": {
               "type": "object",
               "properties": {
-                "open": {
-                  "type": "string",
-                  "description": "Выбирается пользователем из enum который предоставляет устройство."
-                },
-                "close": {
-                  "type": "string",
-                  "description": "Выбирается пользователем из enum который предоставляет устройство."
-                },
                 "stop": {
                   "type": "string",
                   "description": "Выбирается пользователем из enum который предоставляет устройство."
                 }
               },
-              "required": ["open", "close", "stop"],
+              "required": ["stop"],
               "additionalProperties": false
             },
             "position": {
