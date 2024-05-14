@@ -2,7 +2,7 @@
 /* eslint-disable for-direction */
 /* eslint-disable prefer-const */
 /* eslint-disable unicorn/no-array-reduce */
-import { addMinutes, compareAsc, compareDesc, format, subMinutes } from 'date-fns';
+import { addMinutes, addSeconds, compareAsc, compareDesc, format, subMinutes } from 'date-fns';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 import throttle from 'lodash.throttle';
@@ -520,6 +520,14 @@ export type CoverMacrosPublicState = {
 
 type CoverMacrosPrivateState = {
   position: number;
+  /**
+   * Хранит последнее направление движения шторы.
+   */
+  direction: 'UNSPECIFIED' | 'OPEN' | 'CLOSE';
+  /**
+   * Если true, то последнее сообщение было STOP.
+   */
+  stop: boolean;
   lighting: Lighting;
   illumination: number;
   motion: number;
@@ -567,6 +575,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private block = {
     open: new Date(),
     close: new Date(),
+    all: new Date(),
   };
 
   private skip = {
@@ -590,11 +599,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     timeBasedComputing: NodeJS.Timeout;
     illuminationMovingArrange: NodeJS.Timeout;
   };
-
-  /**
-   * Хранит последнее направление движения шторы.
-   */
-  private direction: 'UNSPECIFIED' | 'OPEN' | 'CLOSE' = 'UNSPECIFIED';
 
   constructor(parameters: CoverMacrosParameters) {
     const settings = CoverMacros.parseSettings(parameters.settings, parameters.version);
@@ -621,6 +625,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       state: defaultsDeep(state, {
         target: -1,
         position: -1,
+        direction: 'UNSPECIFIED',
+        stop: false,
         lighting: Lighting.OFF,
         illumination: -1,
         motion: -1,
@@ -647,7 +653,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
 
-    this.retryToApplyNextState = throttle(this.retryToApplyNextState, 60 * 1000);
+    this.retryToApplyNextState = throttle(this.retryToApplyNextState, 5 * 60 * 1000);
   }
 
   static parseSettings = (settings: string, version: number = VERSION): CoverMacrosSettings => {
@@ -659,6 +665,8 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return {
         target: -1,
         position: -1,
+        direction: 'UNSPECIFIED',
+        stop: false,
         lighting: Lighting.OFF,
         illumination: -1,
         motion: -1,
@@ -685,11 +693,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.warning('The received state does not differ from the current one 🚨');
     } else {
       this.state.target = nextState.target;
-
-      this.direction = this.getDirection();
+      this.state.direction = this.getDirection();
 
       logger.info('The next state was applied 🫒 by set state in manual mode 🚹');
-      logger.debug({ direction: this.direction, state: this.state });
+      logger.debug({ state: this.state });
 
       this.computeOutput();
       this.send();
@@ -699,14 +706,13 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   private setTarget(target: number) {
     if (this.state.target !== target) {
       this.state.target = target;
-
-      this.direction = this.getDirection();
+      this.state.direction = this.getDirection();
 
       logger.info('The target 🎯 position was set ✅');
       logger.debug({
         name: this.name,
         now: this.now,
-        direction: this.direction,
+        position: this.settings.properties.position,
         state: this.state,
       });
 
@@ -719,15 +725,24 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
    * Проверка наличия блокировок.
    */
   private isBlocked = (target: number): boolean => {
+    if (this.hasAllBlock) {
+      return true;
+    }
+
     const { blocks, position } = this.settings.properties;
+
+    const direction = this.getDirection(target);
 
     const hasBlockByTimeRange = blocks.some(({ type, fromMin, toMin }) => {
       if (this.hasHourOverlap(fromMin, toMin, 'min')) {
-        if (target === position.open && (type === BlockType.OPEN || type === BlockType.ALL)) {
+        if ((direction === 'OPEN' || target === position.open) && (type === BlockType.OPEN || type === BlockType.ALL)) {
           return true;
         }
 
-        if (target === position.close && (type === BlockType.CLOSE || type === BlockType.ALL)) {
+        if (
+          (direction === 'CLOSE' || target === position.close) &&
+          (type === BlockType.CLOSE || type === BlockType.ALL)
+        ) {
           return true;
         }
       }
@@ -739,11 +754,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return true;
     }
 
-    if (target === position.open && this.hasOpenBlock) {
+    if ((direction === 'OPEN' || target === position.open) && this.hasOpenBlock) {
       return true;
     }
 
-    if (target === position.close && this.hasCloseBlock) {
+    if ((direction === 'CLOSE' || target === position.close) && this.hasCloseBlock) {
       return true;
     }
 
@@ -774,7 +789,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return 0;
     });
 
-    logger.info('The timeBasedComputing was run 🕰️');
+    logger.info('The timeBasedComputing was run ⏰ 🏌️‍♂️ 🏃‍♀️‍➡️ ⏯️');
     logger.debug({
       name: this.name,
       now: this.now,
@@ -815,7 +830,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       target = this.settings.properties.position.open;
     }
 
-    if (this.state.target !== target) {
+    if ((toClose || toOpen) && this.state.target !== target) {
       if (this.isBlocked(target)) {
         logger.info('Try to change position by time was blocked 🚫 😭');
         logger.debug({
@@ -922,12 +937,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.collectNoise();
     this.collectTemperature();
 
-    logger.info('The collecting completed ℹ️');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      state: this.state,
-    });
+    // logger.info('The collecting completed ℹ️');
+    // logger.debug({
+    //   name: this.name,
+    //   now: this.now,
+    //   state: this.state,
+    // });
   }
 
   private get isMotion(): boolean {
@@ -951,23 +966,23 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     );
   }
 
-  private getPosition(): number {
+  private getPosition = (): number => {
     const { positions } = this.settings.devices;
 
     return positions.reduce((accumulator, device, index) => {
-      if (index === positions.length - 1) {
-        return accumulator / index;
-      }
-
       const control = this.controls.get(getControlId(device));
 
       if (control) {
+        if (index === positions.length - 1) {
+          return (accumulator + Number.parseInt(control.value)) / positions.length;
+        }
+
         return accumulator + Number.parseInt(control.value);
       }
 
       return accumulator;
     }, 0);
-  }
+  };
 
   private get isRunning(): boolean {
     return this.state.position !== this.state.target;
@@ -989,34 +1004,48 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return this.state.position === this.settings.properties.position.close;
   }
 
-  private getDirection(): 'OPEN' | 'CLOSE' | 'UNSPECIFIED' {
-    const direction = this.state.position - this.state.target;
+  private getDirection(target = this.state.target): 'OPEN' | 'CLOSE' | 'UNSPECIFIED' {
+    const direction = this.state.position - target;
+
+    if (direction === 0) {
+      return this.state.direction;
+    }
 
     const { open, close } = this.settings.properties.position;
 
     /**
      * close: 0, open: 100
+     *
+     * Например, position 100 (open), target 0 (close), 100 - 0 = 100 > 0 -> CLOSE
+     * Например, position 0 (close), target 100 (open), 0 - 100 = -100 < 0 -> OPEN
+     * Например, position 30 , target 60, 30 - 60 = -30 < 0 -> OPEN
+     * Например, position 30 , target 10, 30 - 10 = 20 > 0 -> CLOSE
      */
     if (close < open) {
       if (direction > 0) {
-        return 'OPEN';
+        return 'CLOSE';
       }
 
       if (direction < 0) {
-        return 'CLOSE';
+        return 'OPEN';
       }
     }
 
     /**
      * close: 100, open: 0
+     *
+     * Например, position 100 (close), target 0 (open), 100 - 0 = 100 > 0 -> OPEN
+     * Например, position 0 (open), target 100 (close), 0 - 100 = -100 < 0 -> CLOSE
+     * Например, position 30 , target 60, 30 - 60 = -30 < 0 -> CLOSE
+     * Например, position 30 , target 10, 30 - 10 = 20 > 0 -> OPEN
      */
     if (close > open) {
       if (direction > 0) {
-        return 'CLOSE';
+        return 'OPEN';
       }
 
       if (direction < 0) {
-        return 'OPEN';
+        return 'CLOSE';
       }
     }
 
@@ -1168,6 +1197,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     return compareAsc(this.block.close, new Date()) === 1;
   }
 
+  private get hasAllBlock(): boolean {
+    return compareAsc(this.block.all, new Date()) === 1;
+  }
+
   private collectPosition = () => {
     const current = this.getPosition();
 
@@ -1181,20 +1214,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
       this.state.position = current;
 
-      if (this.state.target === current) {
-        logger.info('The curtain has successfully reached the target ✅ 🔁 🪟');
-      } else {
-        logger.warning(
-          // eslint-disable-next-line max-len
-          'The curtain was stopped or the direction of movement was changed through external control relative to the macro 🚨 🔁 🪟',
-        );
+      if (this.state.stop) {
+        this.state.target = current;
       }
-
-      this.state.target = current;
 
       logger.debug({
         name: this.name,
         now: this.now,
+        current,
         state: this.state,
       });
     }
@@ -1300,62 +1327,16 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
 
     let target = this.state.position;
 
-    /**
-     * TODO Нужно решить как поступать при среднем положении шторы.
-     *
-     * * Можно разделить все на зоны открытая (75-100), средняя (25-50), закрытая (0-25)
-     * * И уже в рамках этих зон принимать решение.
-     *
-     * ? Но все ровно остается, что делать в средней зоне, можно просто ничего не делать.
-     */
-
-    if (this.isCloseByLighting) {
-      if (target !== position.close) {
-        logger.info('Close because enabled lighting 💡');
-        logger.info({ name: this.name });
-
-        target = position.close;
-      }
-    } else if (this.isEnoughLightingToClose) {
-      if (target !== position.close) {
-        logger.info('Close because enough lighting to close 🌃 or 🌇');
-        logger.info({ name: this.name });
-
-        target = position.close;
-      }
-    } else if (this.isEnoughSunActiveToClose) {
-      if (target !== position.close) {
-        logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
-        logger.info({ name: this.name });
-
-        target = position.close;
-      }
-    } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
-      if (target !== position.open) {
-        logger.info('Close because sun is not active 🪭 😎 🆒');
-        logger.info({ name: this.name });
-
-        target = position.open;
-      }
-    } else if (this.isEnoughLightingToOpen && this.isMotion && target !== position.open) {
-      logger.info('Open because enough lighting to open 🌅 💡');
-      logger.info({ name: this.name });
-
-      target = position.open;
-    }
-
-    logger.trace('Sensor 📡 based computing 💻');
-    logger.trace({
+    const context = {
       name: this.name,
       now: this.now,
-      position,
-      target,
-      hasTargetChange: this.state.target !== target,
-      currentPositionOfControls: this.getPosition(),
+      settings: { position },
       state: this.state,
+      currentPositionOfControls: this.getPosition(),
       isBlocked: this.isBlocked(target),
       hasOpenBlock: this.hasOpenBlock,
       hasCloseBlock: this.hasCloseBlock,
+      hasAllBlock: this.hasAllBlock,
       isMotion: this.isMotion,
       isSilence: this.isSilence,
       lastMotion: this.last.motion,
@@ -1363,7 +1344,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       isCoverClose: this.isCoverClose,
       isCoverMiddle: this.isCoverMiddle,
       isCoverOpen: this.isCoverOpen,
-      direction: this.direction,
       isIlluminationReady: this.isIlluminationReady,
       isCloseBySunReady: this.isCloseBySunReady,
       isCloseByLighting: this.isCloseByLighting,
@@ -1371,7 +1351,45 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
       isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
       isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    });
+    };
+
+    if (this.isCloseByLighting) {
+      if (target !== position.close) {
+        target = position.close;
+
+        logger.info('Close because enabled lighting 💡');
+        logger.trace(context);
+      }
+    } else if (this.isEnoughLightingToClose) {
+      if (target !== position.close) {
+        target = position.close;
+
+        logger.info('Close because enough lighting to close 🌃 or 🌇');
+        logger.trace(context);
+      }
+    } else if (this.isEnoughSunActiveToClose) {
+      if (target !== position.close) {
+        target = position.close;
+
+        logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
+        logger.trace(context);
+      }
+    } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
+      if (target !== position.open) {
+        target = position.open;
+
+        logger.info('Close because sun is not active 🪭 😎 🆒');
+        logger.trace(context);
+      }
+    } else if (this.isEnoughLightingToOpen && this.isMotion && target !== position.open) {
+      target = position.open;
+
+      logger.info('Open because enough lighting to open 🌅 💡');
+      logger.trace(context);
+    }
+
+    logger.debug('Sensor 📡 based computing 💻');
+    logger.trace({ currentTarget: this.state.target, nextTarget: target });
 
     if (this.state.target === target) {
       this.retryToApplyNextState();
@@ -1379,7 +1397,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       return true;
     } else {
       if (this.isBlocked(target)) {
-        logger.info('Try to change cover state by sensors was blocked 🚫 😭');
+        logger.info('Try to change position by sensors was blocked 🚫 😭');
 
         return false;
       }
@@ -1425,10 +1443,23 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       logger.debug({
         name: this.name,
         now: this.now,
+        position,
+        currentPositionOfControls: this.getPosition(),
         state: this.state,
+      });
+      logger.trace({
+        hasOpenBlock: this.hasOpenBlock,
+        hasCloseBlock: this.hasCloseBlock,
+        hasAllBlock: this.hasAllBlock,
+        isCoverClose: this.isCoverClose,
+        isCoverMiddle: this.isCoverMiddle,
+        isCoverOpen: this.isCoverOpen,
         isMotion: this.isMotion,
         isSilence: this.isSilence,
+        lastMotion: this.last.motion,
+        lastNoise: this.last.noise,
         isIlluminationReady: this.isIlluminationReady,
+        isCloseBySunReady: this.isCloseBySunReady,
         isCloseByLighting: this.isCloseByLighting,
         isEnoughLightingToClose: this.isEnoughLightingToClose,
         isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
@@ -1456,41 +1487,51 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       if (this.isCoverOpen) {
         target = position.close;
 
-        this.direction = 'CLOSE';
+        this.state.direction = 'CLOSE';
+
+        logger.info('The curtain will be closed as it is in a fully open state 🔒 🚹');
       } else if (this.isCoverClose) {
         target = position.open;
 
-        this.direction = 'OPEN';
+        this.state.direction = 'OPEN';
+
+        logger.info('The curtain will be open since it is in a completely closed state 🔓 🚹');
       } else if (this.isCoverMiddle) {
-        if (this.direction === 'OPEN') {
-          target = position.close;
+        switch (this.state.direction) {
+          case 'OPEN': {
+            target = position.close;
 
-          this.direction = 'CLOSE';
-        }
+            this.state.direction = 'CLOSE';
 
-        if (this.direction === 'CLOSE') {
-          target = position.open;
+            logger.info('The curtain will be closed, as it was opened before ⏪ 🚹');
 
-          this.direction = 'OPEN';
-        }
+            break;
+          }
+          case 'CLOSE': {
+            target = position.open;
 
-        if (this.direction === 'UNSPECIFIED') {
-          logger.error('The last direction is not defined 🚨');
-          logger.error({
-            name: this.name,
-            direction: this.direction,
-            state: this.state,
-          });
+            this.state.direction = 'OPEN';
 
-          return true;
+            logger.info('The curtain will be open, as it was closed before ⏩ 🚹');
+
+            break;
+          }
+          case 'UNSPECIFIED': {
+            logger.warning('The last direction is not defined 🚨');
+
+            target = position.open;
+
+            this.state.direction = 'OPEN';
+
+            break;
+          }
+          // No default
         }
       }
 
-      logger.debug({ name: this.name, direction: this.direction, target, state: this.state });
+      logger.debug({ name: this.name, target, state: this.state });
 
       if (this.state.target !== target) {
-        logger.info('The next target was obtained by user action 🚹 🎚️ 🎛️');
-
         const isLowPrioritySwitcher = switcher.type === SwitchType.SEALED_CONTACT || switcher.type === SwitchType.RELAY;
 
         /**
@@ -1525,20 +1566,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
             this.block.close = addMinutes(new Date(), blockMin);
 
             logger.info('The close block 🚫 was activated ✅');
-            logger.debug({
-              name: this.name,
-              closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
-            });
+            logger.debug({ closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO') });
           }
 
           if (target === position.close) {
             this.block.open = addMinutes(new Date(), blockMin);
 
             logger.info('The open block 🚫 was activated ✅');
-            logger.debug({
-              name: this.name,
-              openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
-            });
+            logger.debug({ openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO') });
           }
         }
 
@@ -1656,6 +1691,12 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       }),
     });
 
+    if (this.hasAllBlock) {
+      logger.info('Skip retry to apply target to control ⏩, because all block enabled');
+
+      return;
+    }
+
     const { devices } = this.settings;
 
     for (const item of devices.positions) {
@@ -1714,6 +1755,14 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       output: this.output,
     });
 
+    if (this.output.states.length > 0) {
+      this.state.stop = true;
+      this.block.all = addSeconds(new Date(), 30);
+
+      logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
+      logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+    }
+
     this.send();
   };
 
@@ -1753,6 +1802,10 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
       state: this.state,
       output: this.output,
     });
+
+    if (this.output.positions.length > 0) {
+      this.state.stop = false;
+    }
   };
 
   protected send = () => {
@@ -1830,14 +1883,6 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     }
 
     this.output = { states: [], positions: [] };
-
-    logger.info('The next output was clean 🧼');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      state: this.state,
-      output: this.output,
-    });
   };
 
   protected destroy() {
