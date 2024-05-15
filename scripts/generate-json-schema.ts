@@ -127,16 +127,16 @@ Promise.all([
    * ! COVER MACROS
    */
   generate({
-    type: 'CoverMacrosSettings',
+    type: 'CurtainMacrosSettings',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'cover/index.ts'),
-    output: resolve(basePath, 'cover/settings.json'),
+    path: resolve(basePath, 'curtain/index.ts'),
+    output: resolve(basePath, 'curtain/settings.json'),
   }),
   generate({
-    type: 'CoverMacrosPublicState',
+    type: 'CurtainMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'cover/index.ts'),
-    output: resolve(basePath, 'cover/state.json'),
+    path: resolve(basePath, 'curtain/index.ts'),
+    output: resolve(basePath, 'curtain/state.json'),
   }),
 ])
   .then(() => {

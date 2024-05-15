@@ -4,7 +4,7 @@ import BoilerMacrosPublicState from './boiler/state.json';
 import { CounterMacros } from './counter';
 import CounterMacrosSettings from './counter/settings.json';
 import CounterMacrosPublicState from './counter/state.json';
-import { CoverMacros } from './cover';
+import { CurtainMacros } from './curtain';
 import { LeaksMacros } from './leaks';
 import LeaksMacrosSettings from './leaks/settings.json';
 import LeaksMacrosPublicState from './leaks/state.json';
@@ -137,7 +137,7 @@ export const toDomainMacrosType = (input: unknown): MacrosType => {
  */
 export const macrosByType = {
   [MacrosType.LIGHTING]: LightingMacros,
-  [MacrosType.COVER]: CoverMacros,
+  [MacrosType.COVER]: CurtainMacros,
   [MacrosType.HEATING]: LightingMacros,
   [MacrosType.COUNTER]: CounterMacros,
   [MacrosType.LEAKS]: LeaksMacros,

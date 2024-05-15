@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/definitions/CoverMacrosSettings",
+  "$ref": "#/definitions/CurtainMacrosSettings",
   "definitions": {
-    "CoverMacrosSettings": {
+    "CurtainMacrosSettings": {
       "type": "object",
       "properties": {
         "devices": {

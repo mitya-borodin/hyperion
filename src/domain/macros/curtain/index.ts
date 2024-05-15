@@ -15,7 +15,7 @@ import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
-const logger = getLogger('hyperion:macros:cover');
+const logger = getLogger('hyperion:macros:curtain');
 
 /**
  * TODO Добавить блокировку открывания, по датчиком открытия окна.
@@ -187,7 +187,7 @@ export enum BlockType {
  * Позволяет закрыть штору, если освещенность, температура
  * выше уставок и установилась полная тишина.
  */
-export type CoverMacrosSettings = {
+export type CurtainMacrosSettings = {
   readonly devices: {
     readonly switchers: Array<{
       readonly deviceId: string;
@@ -496,7 +496,7 @@ export type CoverMacrosSettings = {
 /**
  * ! STATE
  */
-export type CoverMacrosPublicState = {
+export type CurtainMacrosPublicState = {
   /**
    * Положение шторы, от 0 до 100.
    *
@@ -504,8 +504,8 @@ export type CoverMacrosPublicState = {
    *
    * Реверс настраивается на самом устройстве, а так же можно
    * выполнить реверс через настройки, путем указания параметров
-   * CoverMacrosSettings.position.open и
-   * CoverMacrosSettings.position.close
+   * CurtainMacrosSettings.position.open и
+   * CurtainMacrosSettings.position.close
    *
    * Возможно для каждой шторы задать значение открытого и
    * закрытого положения, исходя из этого макросу будет понятно, в
@@ -518,7 +518,7 @@ export type CoverMacrosPublicState = {
   target: number;
 };
 
-type CoverMacrosPrivateState = {
+type CurtainMacrosPrivateState = {
   position: number;
   /**
    * Хранит последнее направление движения шторы.
@@ -535,7 +535,7 @@ type CoverMacrosPrivateState = {
   temperature: number;
 };
 
-type CoverMacrosState = CoverMacrosPublicState & CoverMacrosPrivateState;
+type CurtainMacrosState = CurtainMacrosPublicState & CurtainMacrosPrivateState;
 
 /**
  * ! OUTPUT
@@ -545,7 +545,7 @@ type CoverMacrosState = CoverMacrosPublicState & CoverMacrosPrivateState;
  * указать положение через position, либо задать state чтобы контроллер крышки
  * сделал всю работу, и полностью открыл, закрыл, остановил крышку.
  */
-type CoverMacrosOutput = {
+type CurtainMacrosOutput = {
   states: Array<{
     readonly deviceId: string;
     readonly controlId: string;
@@ -562,10 +562,10 @@ type CoverMacrosOutput = {
 
 const VERSION = 0;
 
-type CoverMacrosParameters = MacrosParameters<string, string | undefined>;
+type CurtainMacrosParameters = MacrosParameters<string, string | undefined>;
 
-export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, CoverMacrosState> {
-  private output: CoverMacrosOutput;
+export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSettings, CurtainMacrosState> {
+  private output: CurtainMacrosOutput;
 
   private last = {
     motion: subMinutes(new Date(), 60),
@@ -600,9 +600,9 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     illuminationMovingArrange: NodeJS.Timeout;
   };
 
-  constructor(parameters: CoverMacrosParameters) {
-    const settings = CoverMacros.parseSettings(parameters.settings, parameters.version);
-    const state = CoverMacros.parseState(parameters.state);
+  constructor(parameters: CurtainMacrosParameters) {
+    const settings = CurtainMacros.parseSettings(parameters.settings, parameters.version);
+    const state = CurtainMacros.parseState(parameters.state);
 
     super({
       /**
@@ -656,11 +656,11 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
     this.retryToApplyNextState = throttle(this.retryToApplyNextState, 5 * 60 * 1000);
   }
 
-  static parseSettings = (settings: string, version: number = VERSION): CoverMacrosSettings => {
+  static parseSettings = (settings: string, version: number = VERSION): CurtainMacrosSettings => {
     return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string, version: number = VERSION): CoverMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): CurtainMacrosState => {
     if (!state) {
       return {
         target: -1,
@@ -679,7 +679,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
   };
 
   setState = (nextStateJson: string): void => {
-    const nextState = CoverMacros.parseState(nextStateJson, this.version);
+    const nextState = CurtainMacros.parseState(nextStateJson, this.version);
 
     logger.info('The next state was supplied 📥');
     logger.debug({
@@ -1541,7 +1541,7 @@ export class CoverMacros extends Macros<MacrosType.COVER, CoverMacrosSettings, C
          * ! Реализация приоритета блокировок.
          */
         if (isLowPrioritySwitcher && this.isBlocked(target)) {
-          logger.info('Try to change cover state was blocked 🚫 😭');
+          logger.info('Try to change curtain state was blocked 🚫 😭');
 
           return false;
         }
