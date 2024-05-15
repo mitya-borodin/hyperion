@@ -989,19 +989,19 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   }
 
   private get isCoverOpen(): boolean {
-    return this.state.position === this.settings.properties.position.open;
+    return this.state.position === this.settings.properties.position.open && !this.state.stop;
   }
 
   private get isCoverMiddle(): boolean {
     const { position: settings } = this.settings.properties;
 
-    const { position } = this.state;
+    const { position, stop } = this.state;
 
-    return position !== settings.close && position !== settings.open;
+    return (position !== settings.close && position !== settings.open) || stop;
   }
 
   private get isCoverClose(): boolean {
-    return this.state.position === this.settings.properties.position.close;
+    return this.state.position === this.settings.properties.position.close && !this.state.stop;
   }
 
   private getDirection(target = this.state.target): 'OPEN' | 'CLOSE' | 'UNSPECIFIED' {
@@ -1517,7 +1517,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
             break;
           }
           case 'UNSPECIFIED': {
-            logger.warning('The last direction is not defined 🚨');
+            logger.info('The last direction is not defined 🚨');
 
             target = position.open;
 
@@ -1525,7 +1525,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
             break;
           }
-          // No default
+          default: {
+            logger.info('The direction is undefined 🚨');
+          }
         }
       }
 
