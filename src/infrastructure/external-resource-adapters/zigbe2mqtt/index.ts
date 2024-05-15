@@ -56,7 +56,7 @@ const fillIeeeAddressByFriendlyName = async (
         return new Error(ErrorType.ATTEMPTS_ENDED);
       }
 
-      logger('Try to get initial state of hyperion devices ⬇️ ⛵️ ⛵️ ⛵️ ⬇️');
+      logger('Try to get initial state of hyperion devices ⬇️');
 
       const hyperionState = await hyperionDeviceRepository.getHyperionState();
 
@@ -68,7 +68,7 @@ const fillIeeeAddressByFriendlyName = async (
 
       hyperionDevices = hyperionState.devices;
 
-      logger('The initial state of hyperion devices has been obtained ⬇️ ✅ ⬇️');
+      logger('The initial state of hyperion devices has been obtained ⬇️ 📟');
     },
     {
       baseMs: 5000,
@@ -93,7 +93,7 @@ export const runZigbee2mqtt = async ({
   eventBus,
   hyperionDeviceRepository,
 }: RunZigbee2mqtt): Promise<Error | RunZigbee2mqttResult> => {
-  logger('Run zigbee2mqtt converter ⛵️ ⛵️ ⛵️');
+  logger('Run zigbee2mqtt converter 🚀');
 
   /**
    * ! FILL ADDRESS MAP
@@ -167,7 +167,7 @@ export const runZigbee2mqtt = async ({
      * https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html#zigbee2mqtt-bridge-devices
      */
     if (isDevicesTopic) {
-      logger('Information about all zigbee devices has been received ⬇️ ✅ ⬇️');
+      logger('Information about all zigbee devices has been received ⬇️ ⛴️');
 
       const devices = JSON.parse(message);
 

@@ -985,7 +985,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   };
 
   private get isRunning(): boolean {
-    return this.state.position !== this.state.target;
+    return this.state.position !== this.state.target && !this.state.stop;
   }
 
   private get isCoverOpen(): boolean {
