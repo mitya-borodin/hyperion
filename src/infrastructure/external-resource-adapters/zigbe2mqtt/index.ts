@@ -56,7 +56,7 @@ const fillIeeeAddressByFriendlyName = async (
         return new Error(ErrorType.ATTEMPTS_ENDED);
       }
 
-      logger('Try to get initial state of hyperion devices ⬇️');
+      logger('Try to get initial state of hyperion devices 🧲 📟');
 
       const hyperionState = await hyperionDeviceRepository.getHyperionState();
 
@@ -93,7 +93,7 @@ export const runZigbee2mqtt = async ({
   eventBus,
   hyperionDeviceRepository,
 }: RunZigbee2mqtt): Promise<Error | RunZigbee2mqttResult> => {
-  logger('Run zigbee2mqtt converter 🚀');
+  logger('Run zigbee2mqtt converter 🎡 🚀');
 
   /**
    * ! FILL ADDRESS MAP
