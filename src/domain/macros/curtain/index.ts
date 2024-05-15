@@ -1378,7 +1378,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (target !== position.open) {
         target = position.open;
 
-        logger.info('Close because sun is not active 🪭 😎 🆒');
+        logger.info('Open because sun is not active 🪭 😎 🆒');
         logger.trace(context);
       }
     } else if (this.isEnoughLightingToOpen && this.isMotion && target !== position.open) {
