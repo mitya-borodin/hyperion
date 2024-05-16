@@ -57,7 +57,7 @@ export type HyperionState = {
 export interface IHyperionDeviceRepository {
   apply(hardwareDevice: HardwareDevice): Error | HyperionStateUpdate;
 
-  getHyperionState(): Promise<HyperionState>;
+  getHyperionState(bypass?: boolean): Promise<HyperionState>;
 
   markupDevice(parameters: MarkupHyperionDevice): Promise<Error | HyperionStateUpdate>;
 

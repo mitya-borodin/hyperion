@@ -433,7 +433,9 @@ export const getResolvers = ({
           return toGraphQlDevice(device);
         }
 
-        if (!control.topic) {
+        const topic = control.topic.write;
+
+        if (!topic) {
           logger('Control is not readonly, but topic is empty 🚨');
           logger(JSON.stringify({ input, device }, null, 2));
 
@@ -441,7 +443,7 @@ export const getResolvers = ({
         }
 
         emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
-        emitWirenboardMessage({ eventBus, topic: control.topic, message: input.value });
+        emitWirenboardMessage({ eventBus, topic, message: input.value });
         emitGqlDeviceSubscriptionEvent({ eventBus, hyperionDevice: device, type: SubscriptionDeviceType.VALUE_IS_SET });
 
         return toGraphQlDevice(device);

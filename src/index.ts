@@ -4,7 +4,7 @@ import EventEmitter from 'node:events';
 import { exit } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
-import { forever } from 'abort-controller-x';
+import { delay, forever } from 'abort-controller-x';
 
 import { runCollectHardwareDevice } from './application-services/run-collect-hardware-device';
 import { EventBus } from './domain/event-bus';
@@ -13,6 +13,7 @@ import { config } from './infrastructure/config';
 import { entrypoint } from './infrastructure/entrypoint';
 import { runWirenboard } from './infrastructure/external-resource-adapters/wirenboard';
 import { runZigbee2mqtt } from './infrastructure/external-resource-adapters/zigbe2mqtt';
+import { getLogger } from './infrastructure/logger';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
 import { HyperionDeviceRepository } from './infrastructure/postgres/repository/hyperion-device-repository';
 import { MacrosSettingsRepository } from './infrastructure/postgres/repository/macros-settings-repository';
@@ -21,6 +22,8 @@ import { UserRepository } from './infrastructure/postgres/repository/user-reposi
 import { createHttpInterface } from './interfaces/http';
 
 EventEmitter.defaultMaxListeners = 100;
+
+const logger = getLogger('hyperion-main');
 
 export const run = () => {
   entrypoint(async ({ signal, defer }) => {
@@ -63,6 +66,12 @@ export const run = () => {
     }
 
     defer(() => zigbee2mqtt.stop());
+
+    logger.info('We wait 10 seconds before starting the macro engine to get data from mqtt 🧲 📡 ⏰ 📟');
+
+    await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+
+    logger.info('The pre-flight check is over, you can take off 🚀');
 
     /**
      * ! RUN MACROS ENGINE

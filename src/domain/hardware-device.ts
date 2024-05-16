@@ -83,8 +83,10 @@ export type HardwareControl = {
    * The topic contains a pre-configured mqtt topic for the current control.
    * Allows you not to configure topic in the client code.
    */
-  topic?: string;
-
+  topic?: {
+    read?: string;
+    write?: string;
+  };
   /**
    * Control error data in string format
    */

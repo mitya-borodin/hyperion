@@ -58,7 +58,7 @@ const fillIeeeAddressByFriendlyName = async (
 
       logger('Try to get initial state of hyperion devices 🧲 📟');
 
-      const hyperionState = await hyperionDeviceRepository.getHyperionState();
+      const hyperionState = await hyperionDeviceRepository.getHyperionState(true);
 
       for (const device of hyperionState.devices.values()) {
         if (device.driver === DRIVER) {
@@ -121,8 +121,13 @@ export const runZigbee2mqtt = async ({
     const isDevicesTopic = topic.startsWith(`${config.zigbee2mqtt.baseTopic}/bridge/devices`);
     const isAvailabilityTopic = isBaseTopic && topic.endsWith('/availability');
     const isSetTopic = isBaseTopic && topic.includes('/set/');
+    const isGetTopic = isBaseTopic && topic.includes('/get/');
 
     if (!isBaseTopic) {
+      return;
+    }
+
+    if (isGetTopic) {
       return;
     }
 
@@ -268,7 +273,10 @@ export const runZigbee2mqtt = async ({
               off: expose.value_off,
               toggle: expose.value_toggle,
 
-              topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              topic: {
+                read: `${config.zigbee2mqtt.baseTopic}/${friendlyName}/get/${expose.topic}`,
+                write: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              },
             };
           }
 
@@ -293,7 +301,10 @@ export const runZigbee2mqtt = async ({
 
               presets: expose.presets,
 
-              topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              topic: {
+                read: `${config.zigbee2mqtt.baseTopic}/${friendlyName}/get/${expose.topic}`,
+                write: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              },
             };
           }
 
@@ -312,7 +323,10 @@ export const runZigbee2mqtt = async ({
 
               enum: expose.values,
 
-              topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              topic: {
+                read: `${config.zigbee2mqtt.baseTopic}/${friendlyName}/get/${expose.topic}`,
+                write: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              },
             };
           }
 
@@ -329,7 +343,10 @@ export const runZigbee2mqtt = async ({
 
               readonly: !canBeSet,
 
-              topic: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              topic: {
+                read: `${config.zigbee2mqtt.baseTopic}/${friendlyName}/get/${expose.topic}`,
+                write: canBeSet ? `${config.zigbee2mqtt.baseTopic}/${friendlyName}/set/${expose.topic}` : undefined,
+              },
             };
           }
 

@@ -121,7 +121,7 @@ export const fromPrismaToHyperionDevice = (
           value: control.value,
           presets: JSON.parse(control.presets),
 
-          topic: control.topic,
+          topic: JSON.parse(control.topic),
 
           error: control.error,
 

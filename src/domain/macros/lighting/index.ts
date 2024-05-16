@@ -1003,7 +1003,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       const control = this.controls.get(getControlId(lighting));
 
-      if (!control || control.type !== type || !control.topic) {
+      if (!control || control.type !== type || !control.topic.write) {
         logger('The control specified in the settings was not found, or matches the parameters 🚨');
         logger(
           stringify({
@@ -1051,12 +1051,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   protected send() {
     for (const lighting of this.output.lightings) {
       const hyperionDevice = this.devices.get(lighting.deviceId);
+      const hyperionControl = this.controls.get(getControlId(lighting));
+      const topic = hyperionControl?.topic.write;
+      const message = lighting.value;
 
-      const controlId = getControlId({ deviceId: lighting.deviceId, controlId: lighting.controlId });
-
-      const hyperionControl = this.controls.get(controlId);
-
-      if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
+      if (!hyperionDevice || !hyperionControl || !topic) {
         logger(
           // eslint-disable-next-line max-len
           'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
@@ -1064,19 +1063,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         logger(
           stringify({
             name: this.name,
-            lighting,
+            now: this.now,
             hyperionDevice,
-            controlId,
+            controlId: getControlId(lighting),
             hyperionControl,
-            topic: hyperionControl?.topic,
+            lighting,
           }),
         );
 
         continue;
       }
-
-      const { topic } = hyperionControl;
-      const message = lighting.value;
 
       logger('The message will be sent to the wirenboard controller 📟');
       logger(

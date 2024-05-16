@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/naming-convention */
+
 import { PrismaClient } from '@prisma/client';
 import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
@@ -91,7 +92,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     };
   }
 
-  async getHyperionState(): Promise<HyperionState> {
+  async getHyperionState(bypass: boolean = false): Promise<HyperionState> {
     try {
       if (this.devices.size === 0 && this.controls.size === 0) {
         logger('Try to get hyperion state from db 🧯');
@@ -102,9 +103,52 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
           },
         });
 
+        logger(JSON.stringify({ devices: this.devices.size, controls: this.controls.size, bypass }, null, 2));
+
+        if (bypass) {
+          const devices = new Map<string, HyperionDevice>();
+          const controls = new Map<string, HyperionDeviceControl>();
+
+          const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
+
+          for (const device of hyperionDevices) {
+            devices.set(device.id, device);
+
+            for (const control of device.controls) {
+              controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+            }
+          }
+
+          logger(
+            'The state of hyperion devices was obtained by a bypass pipeline, without affecting the local state 🧲 🚇',
+          );
+          logger(devices.size, controls.size);
+
+          return {
+            devices,
+            controls,
+          };
+        }
+
         if (this.devices.size > 0 || this.controls.size > 0) {
           for (const device of prismaDevices) {
-            this.apply(fromPrismaToHardwareDevice(device));
+            if (!this.devices.has(device.deviceId)) {
+              logger(device.deviceId);
+
+              this.apply(fromPrismaToHardwareDevice(device));
+
+              continue;
+            }
+
+            const skippedControls = device.controls.filter(({ controlId }) => !this.controls.has(controlId));
+
+            if (skippedControls.length > 0) {
+              logger(device.deviceId, skippedControls);
+
+              this.apply(fromPrismaToHardwareDevice({ ...device, controls: skippedControls }));
+
+              continue;
+            }
           }
         } else {
           const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
@@ -118,7 +162,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
           }
         }
 
-        logger('The hyperion state from db was obtained ✅');
+        logger('The hyperion state from DB was obtained ✅');
       }
 
       return {

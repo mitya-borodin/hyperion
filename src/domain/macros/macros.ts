@@ -604,6 +604,9 @@ export abstract class Macros<
     const movingArrange = this.movingArranges.get(name) ?? {
       sum: 0,
       avg: 0,
+      /**
+       * Ширина скользящей в минутах.
+       */
       width: subMinutes(new Date(), 5),
       stack: [],
     };

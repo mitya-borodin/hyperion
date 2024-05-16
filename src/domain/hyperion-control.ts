@@ -31,7 +31,10 @@ export type HyperionDeviceControl = {
   value: string;
   presets: JsonObject;
 
-  topic?: string;
+  topic: {
+    read?: string;
+    write?: string;
+  };
 
   error: string;
 

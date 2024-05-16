@@ -35,7 +35,7 @@ export const fromPrismaToHardwareDevice = (
         toggle: control.toggle,
         value: control.value,
         presets: JSON.parse(control.presets),
-        topic: control.topic,
+        topic: JSON.parse(control.topic),
         error: control.error,
         meta: JSON.parse(control.meta),
       };

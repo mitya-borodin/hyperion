@@ -653,7 +653,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
 
-    this.retryToApplyNextState = throttle(this.retryToApplyNextState, 5 * 60 * 1000);
+    this.retryToApplyNextState = throttle(this.retryToApplyNextState, 60 * 1000);
   }
 
   static parseSettings = (settings: string, version: number = VERSION): CurtainMacrosSettings => {
@@ -703,12 +703,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
   };
 
-  private setTarget(target: number) {
-    if (this.state.target !== target) {
-      this.state.target = target;
+  private setTarget(nextTarget: number) {
+    if (this.state.target !== nextTarget) {
+      this.state.target = nextTarget;
       this.state.direction = this.getDirection();
 
-      logger.info('The target 🎯 position was set ✅');
+      logger.info('The next target 🎯 position was set ✅');
       logger.debug({
         name: this.name,
         now: this.now,
@@ -969,19 +969,22 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   private getPosition = (): number => {
     const { positions } = this.settings.devices;
 
-    return positions.reduce((accumulator, device, index) => {
-      const control = this.controls.get(getControlId(device));
+    return (
+      positions.reduce((accumulator, device, index) => {
+        const control = this.controls.get(getControlId(device));
+        const value = Number.parseInt(control?.value ?? '');
 
-      if (control) {
-        if (index === positions.length - 1) {
-          return (accumulator + Number.parseInt(control.value)) / positions.length;
+        if (Number.isInteger(value)) {
+          if (index === positions.length - 1) {
+            return (accumulator + value) / positions.length;
+          }
+
+          return accumulator + value;
         }
 
-        return accumulator + Number.parseInt(control.value);
-      }
-
-      return accumulator;
-    }, 0);
+        return accumulator;
+      }, -1) + 1
+    );
   };
 
   private get isRunning(): boolean {
@@ -1207,6 +1210,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.position === -1 || this.state.target === -1) {
       this.state.position = current;
       this.state.target = current;
+
+      this.requestPositions();
     }
 
     if (this.state.position !== current) {
@@ -1325,7 +1330,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   protected sensorBasedComputing = (): boolean => {
     const { position } = this.settings.properties;
 
-    let target = this.state.position;
+    /**
+     * Для установки следующего целевого положения используется position
+     * так как он обновляется через обратную связь с устройствами
+     * и может изменяться внешним относительно макроса способом.
+     */
+    let nextTarget = this.state.position;
 
     const context = {
       name: this.name,
@@ -1333,7 +1343,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       settings: { position },
       state: this.state,
       currentPositionOfControls: this.getPosition(),
-      isBlocked: this.isBlocked(target),
+      isBlocked: this.isBlocked(nextTarget),
       hasOpenBlock: this.hasOpenBlock,
       hasCloseBlock: this.hasCloseBlock,
       hasAllBlock: this.hasAllBlock,
@@ -1354,49 +1364,49 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     };
 
     if (this.isCloseByLighting) {
-      if (target !== position.close) {
-        target = position.close;
+      if (nextTarget !== position.close) {
+        nextTarget = position.close;
 
         logger.info('Close because enabled lighting 💡');
         logger.trace(context);
       }
     } else if (this.isEnoughLightingToClose) {
-      if (target !== position.close) {
-        target = position.close;
+      if (nextTarget !== position.close) {
+        nextTarget = position.close;
 
         logger.info('Close because enough lighting to close 🌃 or 🌇');
         logger.trace(context);
       }
     } else if (this.isEnoughSunActiveToClose) {
-      if (target !== position.close) {
-        target = position.close;
+      if (nextTarget !== position.close) {
+        nextTarget = position.close;
 
         logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
         logger.trace(context);
       }
     } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
-      if (target !== position.open) {
-        target = position.open;
+      if (nextTarget !== position.open) {
+        nextTarget = position.open;
 
         logger.info('Open because sun is not active 🪭 😎 🆒');
         logger.trace(context);
       }
-    } else if (this.isEnoughLightingToOpen && this.isMotion && target !== position.open) {
-      target = position.open;
+    } else if (this.isEnoughLightingToOpen && this.isMotion && nextTarget !== position.open) {
+      nextTarget = position.open;
 
       logger.info('Open because enough lighting to open 🌅 💡');
       logger.trace(context);
     }
 
     logger.debug('Sensor 📡 based computing 💻');
-    logger.trace({ currentTarget: this.state.target, nextTarget: target });
+    logger.trace({ currentTarget: this.state.target, nextTarget });
 
-    if (this.state.target === target) {
+    if (this.state.target === nextTarget) {
       this.retryToApplyNextState();
 
       return true;
     } else {
-      if (this.isBlocked(target)) {
+      if (this.isBlocked(nextTarget)) {
         logger.info('Try to change position by sensors was blocked 🚫 😭');
 
         return false;
@@ -1404,7 +1414,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       logger.info('A target was determined by the sensors 📡');
 
-      this.setTarget(target);
+      this.setTarget(nextTarget);
 
       return true;
     }
@@ -1731,7 +1741,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       const controlType = ControlType.ENUM;
       const control = this.controls.get(getControlId(device));
 
-      if (!control || control.type !== controlType || !control.topic) {
+      if (!control || control.type !== controlType || !control.topic.write) {
         logger.error('The state control specified in the settings was not found 🚨');
         logger.error({
           name: this.name,
@@ -1768,6 +1778,48 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.send();
   };
 
+  private requestPositions = () => {
+    for (const device of this.settings.devices.positions) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.read;
+      const message = '';
+
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error({
+          name: this.name,
+          now: this.now,
+          hyperionDevice,
+          controlId: getControlId(device),
+          hyperionControl,
+          device,
+        });
+
+        continue;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        state: this.state,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    this.block.all = addSeconds(new Date(), 30);
+
+    logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
+    logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+  };
+
   protected computeOutput = () => {
     this.output.positions = [];
 
@@ -1775,7 +1827,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       const controlType = ControlType.VALUE;
       const control = this.controls.get(getControlId(position));
 
-      if (!control || control.type !== controlType || !control.topic) {
+      if (!control || control.type !== controlType || !control.topic.write) {
         logger.error('The position control specified in the settings was not found 🚨');
         logger.error({
           name: this.name,
@@ -1814,8 +1866,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     for (const state of this.output.states) {
       const hyperionDevice = this.devices.get(state.deviceId);
       const hyperionControl = this.controls.get(getControlId(state));
+      const topic = hyperionControl?.topic.write;
+      const message = state.value;
 
-      if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
+      if (!hyperionDevice || !hyperionControl || !topic) {
         logger.error(
           // eslint-disable-next-line max-len
           'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
@@ -1826,15 +1880,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           hyperionDevice,
           controlId: getControlId(state),
           hyperionControl,
-          topic: hyperionControl?.topic,
           state,
         });
 
         continue;
       }
-
-      const { topic } = hyperionControl;
-      const message = state.value;
 
       logger.info('The message will be sent to the wirenboard controller 📟');
       logger.debug({
@@ -1851,8 +1901,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     for (const position of this.output.positions) {
       const hyperionDevice = this.devices.get(position.deviceId);
       const hyperionControl = this.controls.get(getControlId(position));
+      const topic = hyperionControl?.topic.write;
+      const message = String(position.value);
 
-      if (!hyperionDevice || !hyperionControl || !hyperionControl.topic) {
+      if (!hyperionDevice || !hyperionControl || !topic) {
         logger.error(
           // eslint-disable-next-line max-len
           'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
@@ -1863,15 +1915,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           hyperionDevice,
           controlId: getControlId(position),
           hyperionControl,
-          topic: hyperionControl?.topic,
           position,
         });
 
         continue;
       }
-
-      const { topic } = hyperionControl;
-      const message = String(position.value);
 
       logger.info('The message will be sent to the wirenboard controller 📟');
       logger.debug({

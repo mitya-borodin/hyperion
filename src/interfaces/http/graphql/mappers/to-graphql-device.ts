@@ -38,7 +38,7 @@ export const toGraphQlDevice = (hyperionDevice: HyperionDevice): GraphQlDevice =
         min: control.min,
         precision: control.precision,
         value: control.value,
-        topic: control.topic,
+        topic: control.topic.write,
         error: control.error,
         meta: JSON.stringify(control.meta),
         labels: control.labels,

@@ -44,7 +44,7 @@ export const fromHyperionToPrisma = (
         enum: control.enum.map(String),
         value: String(control.value),
         presets: JSON.stringify(control.presets),
-        topic: String(control.topic),
+        topic: JSON.stringify(control.topic),
         error: String(control.error),
         meta: JSON.stringify(control.meta),
         labels: control.labels.map(String),

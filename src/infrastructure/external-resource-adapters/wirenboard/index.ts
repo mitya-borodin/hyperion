@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 
 import { compareAsc, differenceInMilliseconds, subSeconds } from 'date-fns';
 import debug from 'debug';
+import throttle from 'lodash.throttle';
 
 import { EventBus } from '../../../domain/event-bus';
 import { HardwareDevice } from '../../../domain/hardware-device';
@@ -13,7 +14,7 @@ import { Config } from '../../config';
 import { getMqttClient } from '../get-mqtt-client';
 import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
-const logger = debug('hyperion-run-wirenboard');
+const logger = throttle(debug('hyperion-run-wirenboard'), 1000);
 
 type RunWirenboard = {
   config: Config;
@@ -32,7 +33,7 @@ let lastHardwareDeviceAppeared = new Date();
  * ! https://github.com/wirenboard/conventions
  */
 export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
-  logger('Run wirenboard converter 📟 📟 📟');
+  logger('Run wirenboard converter 📟');
 
   const client = await getMqttClient({ config, rootTopic: ROOT_TOPIC });
 
@@ -94,7 +95,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               meta,
             };
 
-            // logger('The wirenboard device was appeared 📟 📟 📟');
+            logger('The wirenboard device meta was appeared 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -122,7 +123,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 error: JSON.parse(message),
               };
 
-              // logger('The wirenboard device was appeared 📟 📟 📟');
+              logger('The wirenboard device json-error-meta was appeared ');
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -133,7 +134,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 error: message,
               };
 
-              // logger('The wirenboard device was appeared 📟 📟 📟');
+              logger('The wirenboard device string-error-meta was appeared 🥝 📟');
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -184,13 +185,16 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                   precision,
                   on: '1',
                   off: '0',
-                  topic: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
+                  topic: {
+                    read: undefined,
+                    write: readonly ? undefined : `/devices/${device}/controls/${control}/on`,
+                  },
                   meta,
                 },
               },
             };
 
-            // logger('The wirenboard device was appeared 📟 📟 📟');
+            logger('The wirenboard device control-meta was appeared ℹ️ 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -227,7 +231,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               },
             };
 
-            // logger('The wirenboard device was appeared 📟 📟 📟');
+            logger('The wirenboard device controls-meta-error was appeared 🚨 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -272,7 +276,12 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           },
         };
 
-        // logger('The wirenboard device was appeared 📟 📟 📟');
+        /**
+         * ! При старте соединение по mqtt, возвращается последнее
+         * ! состояние всех устройств, и после этого прилетают все изменения
+         */
+
+        logger('The wirenboard device value was appeared 📟');
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -295,7 +304,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
   eventBus.on(EventBus.WB_PUBLISH_MESSAGE, publishMessage);
 
   const healthcheck = setInterval(() => {
-    logger('Last wirenboard device was appeared at 📟 📟 📟');
+    logger('Last wirenboard device was appeared at 📟');
     logger(
       stringify({
         isAlive: compareAsc(lastHardwareDeviceAppeared, subSeconds(new Date(), 30)) === 1,
@@ -315,7 +324,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
       client.unsubscribe(ROOT_TOPIC);
       client.end();
 
-      logger('The wirenboard converter was stopped 👷‍♂️ 🛑');
+      logger('The wirenboard converter was stopped 🛑');
     },
   };
 };

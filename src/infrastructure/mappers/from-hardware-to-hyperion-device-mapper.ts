@@ -75,7 +75,10 @@ export const fromHardwareToHyperionDevice = ({
         value: hardwareControl.value ?? hyperionDeviceControl?.value ?? '',
         presets: hardwareControl.presets ?? hyperionDeviceControl?.presets ?? {},
 
-        topic: hardwareControl.topic ?? hyperionDeviceControl?.topic,
+        topic: {
+          read: hardwareControl.topic?.read ?? hyperionDeviceControl?.topic.read,
+          write: hardwareControl.topic?.write ?? hyperionDeviceControl?.topic.write,
+        },
 
         error: hardwareControl.error ?? hyperionDeviceControl?.error ?? '',
 
