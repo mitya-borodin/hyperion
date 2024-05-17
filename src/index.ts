@@ -4,7 +4,7 @@ import EventEmitter from 'node:events';
 import { exit } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
-import { delay, forever } from 'abort-controller-x';
+import { forever } from 'abort-controller-x';
 
 import { runCollectHardwareDevice } from './application-services/run-collect-hardware-device';
 import { EventBus } from './domain/event-bus';

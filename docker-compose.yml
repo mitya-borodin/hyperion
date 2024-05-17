@@ -23,7 +23,7 @@ services:
       - FASTIFY_HOST=0.0.0.0
       - FASTIFY_PORT=8080
       - NODE_ENV=development
-      - DEBUG=hyperion*,fatal:hyperion:macros:curtain,error:hyperion:macros:curtain,warning:hyperion:macros:curtain,info:hyperion:macros:curtain,debug:hyperion:macros:curtain,trace:hyperion:macros:curtain
+      - DEBUG=hyperion-main,hyperion*,fatal:hyperion:macros:curtain,error:hyperion:macros:curtain,warning:hyperion:macros:curtain,info:hyperion:macros:curtain,debug:hyperion:macros:curtain,trace:hyperion:macros:curtain
     networks:
       - hyperion
 
