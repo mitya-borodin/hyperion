@@ -665,7 +665,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private showSate = () => {
-    logger.info('The calculation of the state is completed ℹ️');
+    logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
     logger.debug({
       name: this.name,
       now: this.now,
