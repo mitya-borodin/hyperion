@@ -21,7 +21,7 @@ import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
 import { decodeAccessBitMask } from './decode-access-bit-mask';
 
-const logger = debug('hyperion-run-zigbee2mqtt');
+const logger = debug('hyperion:zigbee2mqtt');
 
 type RunZigbee2mqtt = {
   signal: AbortSignal;

@@ -5,7 +5,7 @@ import { ErrorType } from '../../helpers/error-type';
 import { stringify } from '../../helpers/json-stringify';
 import { Config } from '../config';
 
-const logger = debug('hyperion-get-mqtt-client');
+const logger = debug('hyperion:mqtt');
 
 type GetMqttClient = {
   config: Config;

@@ -4,7 +4,7 @@ import EventEmitter from 'node:events';
 import { exit } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
-import { forever } from 'abort-controller-x';
+import { delay, forever } from 'abort-controller-x';
 
 import { runCollectHardwareDevice } from './application-services/run-collect-hardware-device';
 import { EventBus } from './domain/event-bus';
@@ -23,7 +23,7 @@ import { createHttpInterface } from './interfaces/http';
 
 EventEmitter.defaultMaxListeners = 100;
 
-const logger = getLogger('hyperion-main');
+const logger = getLogger('hyperion:main');
 
 export const run = () => {
   entrypoint(async ({ signal, defer }) => {
@@ -56,6 +56,14 @@ export const run = () => {
 
     defer(() => wirenboard.stop());
 
+    logger.info(
+      'We wait 5 seconds before starting the zigbee2mqtt connection, for getting data from wirenboard 📡 ⏰ 📟',
+    );
+
+    await delay(signal, 5000);
+
+    logger.info('We believe that all data from wirenboard 📟 has been downloaded 💾');
+
     /**
      * ! RUN ZIGBEE_2_MQTT
      */
@@ -67,11 +75,11 @@ export const run = () => {
 
     defer(() => zigbee2mqtt.stop());
 
-    logger.info('We wait 10 seconds before starting the macro engine to get data from mqtt 🧲 📡 ⏰ 📟');
+    logger.info('We wait 5 seconds before starting the macro engine to get data from zigbee2mqtt 📡 ⏰ 🐝');
 
-    await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+    await delay(signal, 5000);
 
-    logger.info('The pre-flight check is over, you can take off 🚀');
+    logger.info('We believe that all data from zigbee2mqtt 🐝 has been downloaded 💾');
 
     /**
      * ! RUN MACROS ENGINE

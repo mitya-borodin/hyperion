@@ -1,6 +1,8 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/naming-convention */
 
+import { exit } from 'node:process';
+
 import { PrismaClient } from '@prisma/client';
 import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
@@ -26,7 +28,7 @@ import { fromHyperionToPrisma } from '../../mappers/from-hyperion-to-prisma-mapp
 import { fromPrismaToHardwareDevice } from '../../mappers/from-prisma-to-hardware-device-mapper';
 import { fromPrismaToHyperionDevice } from '../../mappers/from-prisma-to-hyperion-device-mapper';
 
-const logger = debug('hyperion-device-repository');
+const logger = debug('hyperion:repository:device');
 
 type HyperionDeviceRepositoryParameters = {
   client: PrismaClient;
@@ -94,76 +96,81 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
   async getHyperionState(bypass: boolean = false): Promise<HyperionState> {
     try {
-      if (this.devices.size === 0 && this.controls.size === 0) {
-        logger('Try to get hyperion state from db 🧯');
+      logger('Try to get hyperion state from db 🧯');
 
-        const prismaDevices = await this.client.device.findMany({
-          include: {
-            controls: true,
-          },
-        });
+      const prismaDevices = await this.client.device.findMany({
+        include: {
+          controls: true,
+        },
+      });
 
-        logger(JSON.stringify({ devices: this.devices.size, controls: this.controls.size, bypass }, null, 2));
+      if (bypass) {
+        const devices = new Map<string, HyperionDevice>();
+        const controls = new Map<string, HyperionDeviceControl>();
 
-        if (bypass) {
-          const devices = new Map<string, HyperionDevice>();
-          const controls = new Map<string, HyperionDeviceControl>();
+        for (const device of prismaDevices) {
+          const inMemoryDevice = this.devices.get(device.deviceId);
 
-          const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
-
-          for (const device of hyperionDevices) {
-            devices.set(device.id, device);
-
-            for (const control of device.controls) {
-              controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
-            }
-          }
-
-          logger(
-            'The state of hyperion devices was obtained by a bypass pipeline, without affecting the local state 🧲 🚇',
-          );
-          logger(devices.size, controls.size);
-
-          return {
-            devices,
-            controls,
-          };
-        }
-
-        if (this.devices.size > 0 || this.controls.size > 0) {
-          for (const device of prismaDevices) {
-            if (!this.devices.has(device.deviceId)) {
-              logger(device.deviceId);
-
-              this.apply(fromPrismaToHardwareDevice(device));
-
-              continue;
-            }
-
-            const skippedControls = device.controls.filter(({ controlId }) => !this.controls.has(controlId));
-
-            if (skippedControls.length > 0) {
-              logger(device.deviceId, skippedControls);
-
-              this.apply(fromPrismaToHardwareDevice({ ...device, controls: skippedControls }));
-
-              continue;
-            }
-          }
-        } else {
-          const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
-
-          for (const device of hyperionDevices) {
-            this.devices.set(device.id, device);
-
-            for (const control of device.controls) {
-              this.controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
-            }
+          if (inMemoryDevice) {
+            devices.set(inMemoryDevice.id, inMemoryDevice);
+          } else {
+            devices.set(device.deviceId, fromPrismaToHyperionDevice(device));
           }
         }
 
-        logger('The hyperion state from DB was obtained ✅');
+        for (const device of devices.values()) {
+          for (const control of device.controls) {
+            controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+          }
+        }
+
+        logger('The hyperion devices was loaded from the DB and merged with devices from memory 🧲 📝');
+        logger(JSON.stringify({ devices: [...devices.values()] }, null, 2));
+
+        return {
+          devices,
+          controls,
+        };
       }
+
+      if (this.devices.size > 0 || this.controls.size > 0) {
+        for (const device of prismaDevices) {
+          if (!this.devices.has(device.deviceId)) {
+            this.apply(fromPrismaToHardwareDevice(device));
+
+            continue;
+          }
+
+          const skippedControls = device.controls.filter(
+            ({ controlId }) => !this.controls.has(getControlId({ deviceId: device.deviceId, controlId })),
+          );
+
+          if (skippedControls.length > 0) {
+            this.apply(fromPrismaToHardwareDevice({ ...device, controls: skippedControls }));
+
+            continue;
+          }
+        }
+
+        logger('The state of hyperion devices was partially loaded from the database 🪩 ✅');
+
+        await this.saveDevices(true);
+      } else {
+        const hyperionDevices = prismaDevices.map((element) => fromPrismaToHyperionDevice(element));
+
+        for (const device of hyperionDevices) {
+          this.devices.set(device.id, device);
+
+          for (const control of device.controls) {
+            this.controls.set(getControlId({ deviceId: device.id, controlId: control.id }), control);
+          }
+        }
+
+        logger('The state of hyperion devices has been fully loaded from the database 🧲 ✅');
+      }
+
+      logger('The state recorded in memory 📝 💾');
+      logger(JSON.stringify({ devices: [...this.devices.values()] }, null, 2));
 
       return {
         devices: this.devices,

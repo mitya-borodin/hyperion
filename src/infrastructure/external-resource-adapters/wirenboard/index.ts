@@ -14,7 +14,7 @@ import { Config } from '../../config';
 import { getMqttClient } from '../get-mqtt-client';
 import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
-const logger = throttle(debug('hyperion-run-wirenboard'), 1000);
+const logger = throttle(debug('hyperion:wirenboard'), 1000);
 
 type RunWirenboard = {
   config: Config;
