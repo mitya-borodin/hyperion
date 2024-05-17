@@ -794,6 +794,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       name: this.name,
       now: this.now,
       openCloseByTime,
+      state: this.state,
     });
 
     for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
