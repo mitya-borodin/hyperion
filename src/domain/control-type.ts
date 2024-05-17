@@ -29,6 +29,7 @@ export enum ControlType {
   ATMOSPHERIC_PRESSURE = 'atmospheric_pressure',
   HEAT_SOURCE = 'HEAT_SOURCE',
   MOTOR_STATE = 'motor_state',
+  CO2 = 'concentration',
 }
 
 export const toDomainControlType = (controlType: unknown) => {
@@ -86,6 +87,10 @@ export const toDomainControlType = (controlType: unknown) => {
 
   if (controlType === ControlType.HEAT_SOURCE) {
     return ControlType.HEAT_SOURCE;
+  }
+
+  if (controlType === ControlType.CO2) {
+    return ControlType.CO2;
   }
 
   return ControlType.UNSPECIFIED;
