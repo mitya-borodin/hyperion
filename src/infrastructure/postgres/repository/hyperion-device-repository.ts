@@ -125,7 +125,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         }
 
         logger('The hyperion devices was loaded from the DB and merged with devices from memory 🧲 📝');
-        logger(JSON.stringify({ devices: [...devices.values()] }, null, 2));
+        // logger(JSON.stringify({ devices: [...devices.values()] }, null, 2));
 
         return {
           devices,
@@ -170,7 +170,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       }
 
       logger('The state recorded in memory 📝 💾');
-      logger(JSON.stringify({ devices: [...this.devices.values()] }, null, 2));
+      // logger(JSON.stringify({ devices: [...this.devices.values()] }, null, 2));
 
       return {
         devices: this.devices,
