@@ -486,8 +486,8 @@ export abstract class Macros<
         message: 'The devices are not ready for use in this macro 🚨',
         name: this.name,
         labels: this.labels,
-        controlTypes: [...this.controlTypes.entries()],
-        controls: [...this.controlTypes.entries()].map(([id]) => this.controls.get(id)?.type),
+        devices: this.devices.size,
+        controls: this.controls.size,
       });
     }
 
