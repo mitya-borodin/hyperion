@@ -167,7 +167,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (!error) {
             const { title, order, readonly, type, units, max, min, precision, ...meta } = JSON.parse(message);
 
-            logger({ device, control, type });
+            logger(`Control data received ${device} ${control} ${type}`);
 
             const hardwareDevice: HardwareDevice = {
               id: device,
