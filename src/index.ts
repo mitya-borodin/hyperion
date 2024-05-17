@@ -57,10 +57,10 @@ export const run = () => {
     defer(() => wirenboard.stop());
 
     logger.info(
-      'We wait 5 seconds before starting the zigbee2mqtt connection, for getting data from wirenboard 📡 ⏰ 📟',
+      'We wait 10 seconds before starting the zigbee2mqtt connection, for getting data from wirenboard 📡 ⏰ 📟',
     );
 
-    await delay(signal, 5000);
+    await delay(signal, 10_000);
 
     logger.info('We believe that all data from wirenboard 📟 has been downloaded 💾');
 
@@ -75,9 +75,9 @@ export const run = () => {
 
     defer(() => zigbee2mqtt.stop());
 
-    logger.info('We wait 5 seconds before starting the macro engine to get data from zigbee2mqtt 📡 ⏰ 🐝');
+    logger.info('We wait 10 seconds before starting the macro engine to get data from zigbee2mqtt 📡 ⏰ 🐝');
 
-    await delay(signal, 5000);
+    await delay(signal, 10_000);
 
     logger.info('We believe that all data from zigbee2mqtt 🐝 has been downloaded 💾');
 
