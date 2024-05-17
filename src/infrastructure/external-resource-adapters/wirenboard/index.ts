@@ -32,10 +32,10 @@ let lastHardwareDeviceAppeared = new Date();
 /**
  * ! https://github.com/wirenboard/conventions
  */
-export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promise<RunWirenboardResult> => {
+export const runWirenboard = ({ config, eventBus }: RunWirenboard): RunWirenboardResult => {
   logger('Run wirenboard converter 📟');
 
-  const client = await getMqttClient({ config, rootTopic: ROOT_TOPIC });
+  const client = getMqttClient({ config, rootTopic: ROOT_TOPIC });
 
   /**
    * ! Получение состояние контроллера

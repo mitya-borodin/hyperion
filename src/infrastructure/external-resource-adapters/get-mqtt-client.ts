@@ -1,7 +1,6 @@
 import debug from 'debug';
-import { MqttClient, connect } from 'mqtt';
+import { connect } from 'mqtt';
 
-import { ErrorType } from '../../helpers/error-type';
 import { stringify } from '../../helpers/json-stringify';
 import { Config } from '../config';
 
@@ -12,7 +11,7 @@ type GetMqttClient = {
   rootTopic: string;
 };
 
-export const getMqttClient = async ({ config, rootTopic }: GetMqttClient) => {
+export const getMqttClient = ({ config, rootTopic }: GetMqttClient) => {
   logger('Try to establish connection with mqtt broker 🛜');
   logger(
     stringify({
@@ -29,38 +28,29 @@ export const getMqttClient = async ({ config, rootTopic }: GetMqttClient) => {
     password: config.mosquitto.password,
   });
 
-  await new Promise<MqttClient>((resolve, reject) => {
-    client.on('connect', () => {
-      client.subscribe(rootTopic, (error) => {
-        if (error) {
-          logger('Unable to establish connection with mqtt broker 🚨');
-          logger(stringify({ rootTopic, error }));
+  client.on('connect', () => {
+    client.subscribe(rootTopic, (error) => {
+      if (error) {
+        logger('Unable to establish connection with mqtt broker 🚨');
+        logger(stringify({ error }));
+      }
 
-          return reject(new Error(ErrorType.UNEXPECTED_BEHAVIOR));
-        }
-
-        logger('The connection with mqtt broker was established 🛜 ✅');
-        logger(stringify({ rootTopic }));
-
-        resolve(client);
-      });
+      logger('The connection with mqtt broker was established 🛜 ✅');
     });
   });
 
   client.on('disconnect', () => {
     logger('The connection with mqtt broker was disconnected 👷‍♂️');
-    logger(stringify({ rootTopic }));
   });
 
   client.on('reconnect', () => {
     logger('The connection to the mqtt broker was reconnected ✅ 🚀');
-    logger(stringify({ rootTopic }));
   });
 
   client.on('error', (error) => {
     if (error) {
       logger('An error occurred in connecting to the mqtt broker 🚨');
-      logger(stringify({ rootTopic, error }));
+      logger(stringify({ error }));
     }
   });
 

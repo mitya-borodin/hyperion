@@ -52,7 +52,7 @@ export const run = () => {
     /**
      * ! RUN WIRENBOARD
      */
-    const wirenboard = await runWirenboard({ config, eventBus });
+    const wirenboard = runWirenboard({ config, eventBus });
 
     defer(() => wirenboard.stop());
 
