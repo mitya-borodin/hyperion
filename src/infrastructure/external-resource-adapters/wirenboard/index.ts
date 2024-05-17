@@ -14,7 +14,7 @@ import { Config } from '../../config';
 import { getMqttClient } from '../get-mqtt-client';
 import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
 
-const logger = throttle(debug('hyperion:wirenboard'), 1000);
+const logger = debug('hyperion:wirenboard');
 
 type RunWirenboard = {
   config: Config;
@@ -95,7 +95,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               meta,
             };
 
-            logger('The wirenboard device meta was appeared 📟');
+            // logger('The wirenboard device meta was appeared 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -123,7 +123,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 error: JSON.parse(message),
               };
 
-              logger('The wirenboard device json-error-meta was appeared ');
+              // logger('The wirenboard device json-error-meta was appeared ');
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -134,7 +134,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
                 error: message,
               };
 
-              logger('The wirenboard device string-error-meta was appeared 🥝 📟');
+              // logger('The wirenboard device string-error-meta was appeared 🥝 📟');
 
               eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -167,6 +167,8 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
           if (!error) {
             const { title, order, readonly, type, units, max, min, precision, ...meta } = JSON.parse(message);
 
+            logger({ device, control, type });
+
             const hardwareDevice: HardwareDevice = {
               id: device,
               controls: {
@@ -194,7 +196,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               },
             };
 
-            logger('The wirenboard device control-meta was appeared ℹ️ 📟');
+            // logger('The wirenboard device control-meta was appeared ℹ️ 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -231,7 +233,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
               },
             };
 
-            logger('The wirenboard device controls-meta-error was appeared 🚨 📟');
+            // logger('The wirenboard device controls-meta-error was appeared 🚨 📟');
 
             eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
@@ -281,7 +283,7 @@ export const runWirenboard = async ({ config, eventBus }: RunWirenboard): Promis
          * ! состояние всех устройств, и после этого прилетают все изменения
          */
 
-        logger('The wirenboard device value was appeared 📟');
+        // logger('The wirenboard device value was appeared 📟');
 
         eventBus.emit(EventBus.HARDWARE_DEVICE_APPEARED, hardwareDevice);
 
