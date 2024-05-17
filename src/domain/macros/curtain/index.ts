@@ -751,14 +751,23 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     });
 
     if (hasBlockByTimeRange) {
+      logger.info('Position change is blocked 🚫 by time range ⏱️');
+      logger.debug({ direction, target, blocks });
+
       return true;
     }
 
     if ((direction === 'OPEN' || target === position.open) && this.hasOpenBlock) {
+      logger.info('The opening is blocked 🚫 until the set time ⏱️');
+      logger.debug({ direction, target, hasOpenBlock: this.hasOpenBlock, block: this.block });
+
       return true;
     }
 
     if ((direction === 'CLOSE' || target === position.close) && this.hasCloseBlock) {
+      logger.info('The close is blocked 🚫 until the set time ⏱️');
+      logger.debug({ direction, target, hasCloseBlock: this.hasCloseBlock, block: this.block });
+
       return true;
     }
 
@@ -1348,10 +1357,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       hasOpenBlock: this.hasOpenBlock,
       hasCloseBlock: this.hasCloseBlock,
       hasAllBlock: this.hasAllBlock,
+      block: this.block,
       isMotion: this.isMotion,
       isSilence: this.isSilence,
-      lastMotion: this.last.motion,
-      lastNoise: this.last.noise,
+      last: this.last,
       isCoverClose: this.isCoverClose,
       isCoverMiddle: this.isCoverMiddle,
       isCoverOpen: this.isCoverOpen,
@@ -1368,12 +1377,16 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
+        context.isBlocked = this.isBlocked(nextTarget);
+
         logger.info('Close because enabled lighting 💡');
         logger.trace(context);
       }
     } else if (this.isEnoughLightingToClose) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
+
+        context.isBlocked = this.isBlocked(nextTarget);
 
         logger.info('Close because enough lighting to close 🌃 or 🌇');
         logger.trace(context);
@@ -1382,6 +1395,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
+        context.isBlocked = this.isBlocked(nextTarget);
+
         logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
         logger.trace(context);
       }
@@ -1389,11 +1404,15 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.open) {
         nextTarget = position.open;
 
+        context.isBlocked = this.isBlocked(nextTarget);
+
         logger.info('Open because sun is not active 🪭 😎 🆒');
         logger.trace(context);
       }
     } else if (this.isEnoughLightingToOpen && this.isMotion && nextTarget !== position.open) {
       nextTarget = position.open;
+
+      context.isBlocked = this.isBlocked(nextTarget);
 
       logger.info('Open because enough lighting to open 🌅 💡');
       logger.trace(context);
