@@ -654,8 +654,34 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
 
     this.retryToApplyNextState = throttle(this.retryToApplyNextState, 60 * 1000);
+
+    this.showSate = throttle(this.showSate, 60 * 1000);
+    this.showSensorContext = throttle(this.showSensorContext, 60 * 1000);
   }
 
+  /**
+   * Высокочастотные логи.
+   */
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private showSate = () => {
+    logger.info('The calculation of the state is completed ℹ️');
+    logger.debug({
+      name: this.name,
+      now: this.now,
+      state: this.state,
+    });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private showSensorContext = (context: any) => {
+    logger.info('The context of sensor 📡 based computing 💻');
+    logger.debug(context);
+  };
+
+  /**
+   * Изменение состояния.
+   */
   static parseSettings = (settings: string, version: number = VERSION): CurtainMacrosSettings => {
     return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
@@ -947,12 +973,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.collectNoise();
     this.collectTemperature();
 
-    // logger.info('The collecting completed ℹ️');
-    // logger.debug({
-    //   name: this.name,
-    //   now: this.now,
-    //   state: this.state,
-    // });
+    this.showSate();
   }
 
   private get isMotion(): boolean {
@@ -1353,6 +1374,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       settings: { position },
       state: this.state,
       currentPositionOfControls: this.getPosition(),
+      nextTarget,
       isBlocked: this.isBlocked(nextTarget),
       hasOpenBlock: this.hasOpenBlock,
       hasCloseBlock: this.hasCloseBlock,
@@ -1377,6 +1399,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
+        context.nextTarget = nextTarget;
         context.isBlocked = this.isBlocked(nextTarget);
 
         logger.info('Close because enabled lighting 💡');
@@ -1386,6 +1409,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
+        context.nextTarget = nextTarget;
         context.isBlocked = this.isBlocked(nextTarget);
 
         logger.info('Close because enough lighting to close 🌃 or 🌇');
@@ -1395,6 +1419,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
+        context.nextTarget = nextTarget;
         context.isBlocked = this.isBlocked(nextTarget);
 
         logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
@@ -1404,6 +1429,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.open) {
         nextTarget = position.open;
 
+        context.nextTarget = nextTarget;
         context.isBlocked = this.isBlocked(nextTarget);
 
         logger.info('Open because sun is not active 🪭 😎 🆒');
@@ -1412,14 +1438,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     } else if (this.isEnoughLightingToOpen && this.isMotion && nextTarget !== position.open) {
       nextTarget = position.open;
 
+      context.nextTarget = nextTarget;
       context.isBlocked = this.isBlocked(nextTarget);
 
       logger.info('Open because enough lighting to open 🌅 💡');
       logger.trace(context);
     }
 
-    logger.debug('Sensor 📡 based computing 💻');
-    logger.trace({ currentTarget: this.state.target, nextTarget });
+    this.showSensorContext(context);
 
     if (this.state.target === nextTarget) {
       this.retryToApplyNextState();
