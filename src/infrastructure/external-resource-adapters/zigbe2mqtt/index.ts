@@ -112,7 +112,7 @@ export const runZigbee2mqtt = async ({
   /**
    * ! PROCESSING STATE CHANGES OF END DEVICES
    */
-  const client = await getMqttClient({ config, rootTopic: `${config.zigbee2mqtt.baseTopic}/#` });
+  const client = getMqttClient({ config, rootTopic: `${config.zigbee2mqtt.baseTopic}/#` });
 
   client.on('message', (topic: string, messageBuffer: Buffer) => {
     const isBaseTopic = topic.startsWith(config.zigbee2mqtt.baseTopic);
