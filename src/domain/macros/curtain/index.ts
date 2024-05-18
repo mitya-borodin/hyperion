@@ -1275,6 +1275,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const nextLightingState = isLightingOn ? Lighting.ON : Lighting.OFF;
 
     if (this.state.lighting !== nextLightingState) {
+      logger.info('The lighting condition has changed 💡');
+      logger.debug({ name: this.name, now: this.now, nextLightingState });
+
       this.state.lighting = nextLightingState;
 
       if (nextLightingState === Lighting.ON) {
@@ -1295,8 +1298,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       }
 
       if (nextLightingState === Lighting.OFF) {
-        // TODO забыть значение освещения.
-        // TODO В течении следующих 30 секунд не записывать значение освещенности.
+        this.block.all = addSeconds(new Date(), 5 * 60);
+
+        logger.info('The all block 🚫 was activated for 5 ⏱️ minutes ✅');
+        logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
       }
     }
   };
