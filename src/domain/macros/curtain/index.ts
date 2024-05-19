@@ -1291,7 +1291,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.info('The lighting is on 💡');
         logger.debug({ name: this.name, now: this.now });
 
-        this.state.illumination.beforeTurningOnLighting = this.state.illumination.average;
+        this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
       }
 
       if (nextLighting === Lighting.OFF) {
