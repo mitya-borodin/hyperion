@@ -529,7 +529,12 @@ type CurtainMacrosPrivateState = {
    */
   stop: boolean;
   lighting: Lighting;
-  illumination: number;
+  illumination: {
+    measured: number;
+    average: number;
+    beforeTurningOnLighting: number;
+    compensated: number;
+  };
   motion: number;
   noise: number;
   temperature: number;
@@ -628,7 +633,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         direction: 'UNSPECIFIED',
         stop: false,
         lighting: Lighting.OFF,
-        illumination: -1,
+        illumination: {
+          measured: -1,
+          average: -1,
+          beforeTurningOnLighting: 0,
+          compensated: -1,
+        },
         motion: -1,
         noise: -1,
         temperature: -1,
@@ -637,7 +647,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       devices: parameters.devices,
       controls: parameters.controls,
 
-      collectingThrottleMs: 2000,
+      collectingThrottleMs: 500,
       sensorBasedComputingThrottleMs: 10_000,
     });
 
@@ -694,7 +704,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         direction: 'UNSPECIFIED',
         stop: false,
         lighting: Lighting.OFF,
-        illumination: -1,
+        illumination: {
+          measured: -1,
+          average: -1,
+          beforeTurningOnLighting: 0,
+          compensated: -1,
+        },
         motion: -1,
         noise: -1,
         temperature: -1,
@@ -1106,7 +1121,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     return (
-      illumination >= 0 &&
+      illumination.average >= 0 &&
       low.closeLux > 0 &&
       low.openLux > 0 &&
       hi.closeLux > 0 &&
@@ -1136,17 +1151,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     );
   }
 
-  private get isCloseByLighting(): boolean {
-    const { lighting } = this.state;
-
-    /**
-     * TODO тут нужно учитывать изменение освещенности,
-     * TODO так как свет можно включить в достаточное светлое время или днем.
-     */
-
-    return lighting === Lighting.ON;
-  }
-
   private get isEnoughLightingToClose(): boolean {
     const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
@@ -1155,14 +1159,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при любом положении шторы
        */
-      const isEnoughToCloseByLow = illumination <= low.closeLux;
+      const isEnoughToCloseByLow = illumination.average <= low.closeLux;
 
       /**
        * Решение принимается при открытой шторе
        *
        * ? Что должно в случае среднего положения ?
        */
-      const isEnoughToCloseByHi = illumination >= hi.closeLux && this.isCoverOpen;
+      const isEnoughToCloseByHi = illumination.average >= hi.closeLux && this.isCoverOpen;
 
       return isEnoughToCloseByLow || isEnoughToCloseByHi;
     }
@@ -1177,7 +1181,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     return (
       this.isCloseBySunReady &&
-      illumination >= closeBySun.illumination.closeLux &&
+      illumination.average >= closeBySun.illumination.closeLux &&
       temperature >= closeBySun.temperature &&
       /**
        * Решение принимается при открытой шторе
@@ -1195,7 +1199,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     return (
       this.isCloseBySunReady &&
-      illumination <= closeBySun.illumination.openLux &&
+      illumination.average <= closeBySun.illumination.openLux &&
       temperature <= closeBySun.temperature &&
       /**
        * Решение принимается при закрытой шторе
@@ -1212,8 +1216,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     return (
       this.isIlluminationReady &&
-      illumination >= low.openLux &&
-      illumination <= hi.openLux &&
+      illumination.average >= low.openLux &&
+      illumination.average <= hi.openLux &&
       /**
        * Решение принимается при закрытой шторе
        *
@@ -1272,37 +1276,35 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       return control?.value === control?.on;
     });
 
-    const nextLightingState = isLightingOn ? Lighting.ON : Lighting.OFF;
+    const nextLighting = isLightingOn ? Lighting.ON : Lighting.OFF;
 
-    if (this.state.lighting !== nextLightingState) {
-      logger.info('The lighting condition has changed 💡');
-      logger.debug({ name: this.name, now: this.now, nextLightingState });
+    if (this.state.lighting !== nextLighting) {
+      if (nextLighting === Lighting.ON) {
+        logger.info('The lighting is on 💡');
+        logger.debug({ name: this.name, now: this.now });
 
-      this.state.lighting = nextLightingState;
-
-      if (nextLightingState === Lighting.ON) {
-        /**
-         * Если свет включается в момент когда текущего освещения было
-         * достаточно для нахождения штор в открытом состоянии, нужно
-         * блокировать закрытие штор, но как только солнечного освещения стало
-         * меньше чем надо, шторы нужно закрыть.
-         *
-         * Выходит нужно запомнить, сколько было освещенности, потом посмотреть
-         * сколько добавилось после включения освещения.
-         *
-         * И вычитать из общего освещения значение добавившегося освещения и как
-         * станет <= low.closeLux значит пора закрывать шторы.
-         *
-         *
-         */
+        this.state.illumination.beforeTurningOnLighting = this.state.illumination.average;
       }
 
-      if (nextLightingState === Lighting.OFF) {
-        this.block.all = addSeconds(new Date(), 5 * 60);
+      if (nextLighting === Lighting.OFF) {
+        logger.info('The lighting is off 🕯️');
+        logger.debug({ name: this.name, now: this.now });
 
-        logger.info('The all block 🚫 was activated for 5 ⏱️ minutes ✅');
-        logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+        this.state.illumination.beforeTurningOnLighting = 0;
+        this.state.illumination.compensated = -1;
+
+        this.block.all = addSeconds(new Date(), 30);
+
+        logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
       }
+
+      logger.debug({
+        allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO'),
+        nextLighting,
+        state: this.state,
+      });
+
+      this.state.lighting = nextLighting;
     }
   };
 
@@ -1312,15 +1314,20 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
 
+    this.state.illumination.measured = this.getValueByDetection(illuminations, illumination.detection);
+
     if (this.state.lighting === Lighting.ON) {
-      this.state.illumination = this.getValueByDetection(illuminations, illumination.detection);
+      this.state.illumination.compensated =
+        this.state.illumination.measured - this.state.illumination.beforeTurningOnLighting;
+
+      this.state.illumination.average = this.computeMovingArrange(
+        'illumination',
+        this.state.illumination.compensated > 0 ? this.state.illumination.compensated : 0,
+      );
     }
 
     if (this.state.lighting === Lighting.OFF) {
-      this.state.illumination = this.computeMovingArrange(
-        'illumination',
-        this.getValueByDetection(illuminations, illumination.detection),
-      );
+      this.state.illumination.average = this.computeMovingArrange('illumination', this.state.illumination.measured);
     }
   };
 
@@ -1393,24 +1400,13 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       isCoverOpen: this.isCoverOpen,
       isIlluminationReady: this.isIlluminationReady,
       isCloseBySunReady: this.isCloseBySunReady,
-      isCloseByLighting: this.isCloseByLighting,
       isEnoughLightingToClose: this.isEnoughLightingToClose,
       isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
       isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
       isEnoughLightingToOpen: this.isEnoughLightingToOpen,
     };
 
-    if (this.isCloseByLighting) {
-      if (nextTarget !== position.close) {
-        nextTarget = position.close;
-
-        context.nextTarget = nextTarget;
-        context.isBlocked = this.isBlocked(nextTarget);
-
-        logger.info('Close because enabled lighting 💡');
-        logger.trace(context);
-      }
-    } else if (this.isEnoughLightingToClose) {
+    if (this.isEnoughLightingToClose) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
@@ -1521,7 +1517,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         lastNoise: this.last.noise,
         isIlluminationReady: this.isIlluminationReady,
         isCloseBySunReady: this.isCloseBySunReady,
-        isCloseByLighting: this.isCloseByLighting,
         isEnoughLightingToClose: this.isEnoughLightingToClose,
         isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
         isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
