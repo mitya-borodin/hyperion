@@ -616,6 +616,8 @@ export abstract class Macros<
       movingArrange.sum += value;
       movingArrange.avg = movingArrange.sum / movingArrange.stack.length;
 
+      this.movingArranges.set(name, movingArrange);
+
       return movingArrange.avg;
     }
 
@@ -659,6 +661,8 @@ export abstract class Macros<
         stack: movingArrange.stack.length,
       },
     });
+
+    this.movingArranges.set(name, movingArrange);
 
     return movingArrange.avg;
   };

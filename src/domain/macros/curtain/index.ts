@@ -1151,6 +1151,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     );
   }
 
+  private get isCloseByLighting(): boolean {
+    const { low } = this.settings.properties.illumination;
+
+    const { lighting, illumination } = this.state;
+
+    return lighting === Lighting.ON && illumination.beforeTurningOnLighting <= low.closeLux;
+  }
+
   private get isEnoughLightingToClose(): boolean {
     const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
@@ -1405,8 +1413,17 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
       isEnoughLightingToOpen: this.isEnoughLightingToOpen,
     };
+    if (this.isCloseByLighting) {
+      if (nextTarget !== position.close) {
+        nextTarget = position.close;
 
-    if (this.isEnoughLightingToClose) {
+        context.nextTarget = nextTarget;
+        context.isBlocked = this.isBlocked(nextTarget);
+
+        logger.info('Close because enabled lighting 💡');
+        logger.trace(context);
+      }
+    } else if (this.isEnoughLightingToClose) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
