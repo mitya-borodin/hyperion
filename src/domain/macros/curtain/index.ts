@@ -534,6 +534,7 @@ type CurtainMacrosPrivateState = {
     average: number;
     beforeTurningOnLighting: number;
     compensation: number;
+    descent: number;
   };
   motion: number;
   noise: number;
@@ -638,6 +639,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           average: -1,
           beforeTurningOnLighting: 0,
           compensation: -1,
+          descent: -1,
         },
         motion: -1,
         noise: -1,
@@ -709,6 +711,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           average: -1,
           beforeTurningOnLighting: 0,
           compensation: -1,
+          descent: -1,
         },
         motion: -1,
         noise: -1,
@@ -1049,6 +1052,22 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return (position !== settings.close && position !== settings.open) || stop;
   }
 
+  private get isCoverCloserToOpen(): boolean {
+    const { position: settings } = this.settings.properties;
+
+    const { position, stop } = this.state;
+
+    if (settings.open > settings.close) {
+      return position > settings.open / 2 || stop;
+    }
+
+    return position < settings.close / 2 || stop;
+  }
+
+  private get isCoverCloserToClose(): boolean {
+    return !this.isCoverCloserToOpen;
+  }
+
   private get isCoverClose(): boolean {
     return this.state.position === this.settings.properties.position.close && !this.state.stop;
   }
@@ -1171,10 +1190,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       /**
        * Решение принимается при открытой шторе
-       *
-       * ? Что должно в случае среднего положения ?
        */
-      const isEnoughToCloseByHi = illumination.average >= hi.closeLux && this.isCoverOpen;
+      const isEnoughToCloseByHi = illumination.average >= hi.closeLux && (this.isCoverOpen || this.isCoverCloserToOpen);
 
       return isEnoughToCloseByLow || isEnoughToCloseByHi;
     }
@@ -1193,10 +1210,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       temperature >= closeBySun.temperature &&
       /**
        * Решение принимается при открытой шторе
-       *
-       * ? Что должно в случае среднего положения ?
        */
-      this.isCoverOpen
+      (this.isCoverOpen || this.isCoverCloserToOpen)
     );
   }
 
@@ -1211,10 +1226,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       temperature <= closeBySun.temperature &&
       /**
        * Решение принимается при закрытой шторе
-       *
-       * ? Что должно в случае среднего положения ?
        */
-      this.isCoverClose
+      (this.isCoverClose || this.isCoverCloserToClose)
     );
   }
 
@@ -1228,10 +1241,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       illumination.average <= hi.openLux &&
       /**
        * Решение принимается при закрытой шторе
-       *
-       * ? Что должно в случае среднего положения ?
        */
-      this.isCoverClose
+      (this.isCoverClose || this.isCoverCloserToClose)
     );
   }
 
@@ -1308,6 +1319,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
         this.state.illumination.beforeTurningOnLighting = 0;
         this.state.illumination.compensation = -1;
+        this.state.illumination.descent = -1;
 
         this.block.all = addSeconds(new Date(), 30);
 
@@ -1332,9 +1344,39 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     this.state.illumination.measured = this.getValueByDetection(illuminations, illumination.detection);
 
+    /**
+     * Спускаемся с горы освещенности
+     */
+    const isDescent = this.state.illumination.beforeTurningOnLighting > this.state.illumination.measured;
+
+    if (isDescent) {
+      const isTangibleChange = this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured > 5;
+
+      if (isTangibleChange) {
+        this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
+      } else {
+        this.state.illumination.descent += 1;
+
+        if (this.state.illumination.descent > 100) {
+          logger.info('The completion of the descent from the mountain of illumination has been detected 🎯 🎲');
+
+          /**
+           * TODO Измерить, если освещенность за улице 100, 50, 25, 10 и включить освещение, какое будет значение ?
+           * TODO Лампочки + улица или просто будет лампочки ?
+           */
+
+          this.state.illumination.beforeTurningOnLighting *= 0.01;
+          this.state.illumination.descent = 0;
+
+          logger.debug({ name: this.name, now: this.now, state: this.state });
+        }
+      }
+    }
+
     if (this.state.lighting === Lighting.ON) {
-      this.state.illumination.compensation =
-        this.state.illumination.measured - this.state.illumination.beforeTurningOnLighting;
+      this.state.illumination.compensation = Math.abs(
+        this.state.illumination.measured - this.state.illumination.beforeTurningOnLighting,
+      );
 
       const illumination = this.state.illumination.measured - this.state.illumination.compensation;
 
