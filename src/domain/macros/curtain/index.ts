@@ -533,7 +533,7 @@ type CurtainMacrosPrivateState = {
     measured: number;
     average: number;
     beforeTurningOnLighting: number;
-    compensated: number;
+    compensation: number;
   };
   motion: number;
   noise: number;
@@ -637,7 +637,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           measured: -1,
           average: -1,
           beforeTurningOnLighting: 0,
-          compensated: -1,
+          compensation: -1,
         },
         motion: -1,
         noise: -1,
@@ -708,7 +708,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           measured: -1,
           average: -1,
           beforeTurningOnLighting: 0,
-          compensated: -1,
+          compensation: -1,
         },
         motion: -1,
         noise: -1,
@@ -1307,7 +1307,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.debug({ name: this.name, now: this.now });
 
         this.state.illumination.beforeTurningOnLighting = 0;
-        this.state.illumination.compensated = -1;
+        this.state.illumination.compensation = -1;
 
         this.block.all = addSeconds(new Date(), 30);
 
@@ -1333,13 +1333,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.state.illumination.measured = this.getValueByDetection(illuminations, illumination.detection);
 
     if (this.state.lighting === Lighting.ON) {
-      this.state.illumination.compensated =
+      this.state.illumination.compensation =
         this.state.illumination.measured - this.state.illumination.beforeTurningOnLighting;
 
-      this.state.illumination.average = this.computeMovingArrange(
-        'illumination',
-        this.state.illumination.compensated > 0 ? this.state.illumination.compensated : 0,
-      );
+      const illumination = this.state.illumination.measured - this.state.illumination.compensation;
+
+      this.state.illumination.average = this.computeMovingArrange('illumination', illumination >= 0 ? illumination : 0);
     }
 
     if (this.state.lighting === Lighting.OFF) {
