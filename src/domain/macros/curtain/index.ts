@@ -1254,6 +1254,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.state.position = current;
       this.state.target = current;
 
+      logger.info('The starting position of the curtain has been determined 🩻');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        current,
+        state: this.state,
+      });
+
       this.requestPositions();
     }
 
@@ -1407,8 +1415,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       isCoverMiddle: this.isCoverMiddle,
       isCoverOpen: this.isCoverOpen,
       isIlluminationReady: this.isIlluminationReady,
-      isCloseBySunReady: this.isCloseBySunReady,
+      isCloseByLighting: this.isCloseByLighting,
       isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isCloseBySunReady: this.isCloseBySunReady,
       isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
       isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
       isEnoughLightingToOpen: this.isEnoughLightingToOpen,
@@ -1842,6 +1851,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   };
 
   private requestPositions = () => {
+    logger.info('An attempt has begun to request the current position of the curtain 💎');
+
     for (const device of this.settings.devices.positions) {
       const hyperionDevice = this.devices.get(device.deviceId);
       const hyperionControl = this.controls.get(getControlId(device));
@@ -1880,7 +1891,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.block.all = addSeconds(new Date(), 30);
 
     logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
-    logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+    logger.debug({ name: this.name, now: this.now, allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
   };
 
   protected computeOutput = () => {
