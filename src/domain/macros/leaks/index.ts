@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
-import { format } from 'date-fns';
 import debug from 'debug';
 import defaultsDeep from 'lodash.defaultsdeep';
 
