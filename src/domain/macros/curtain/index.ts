@@ -1354,19 +1354,17 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       if (isTangibleChange) {
         this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
+        this.state.illumination.descent = 0;
       } else {
         this.state.illumination.descent += 1;
 
-        if (this.state.illumination.descent > 100) {
-          logger.info('The completion of the descent from the mountain of illumination has been detected 🎯 🎲');
+        if (this.state.illumination.descent > 600) {
+          logger.info(
+            // eslint-disable-next-line max-len
+            'The descent from the mountain of illumination has been completed, which means that it has darkened outside 🌅 🌙',
+          );
 
-          /**
-           * TODO Измерить, если освещенность за улице 100, 50, 25, 10 и включить освещение, какое будет значение ?
-           * TODO Лампочки + улица или просто будет лампочки ?
-           */
-
-          this.state.illumination.beforeTurningOnLighting *= 0.01;
-          this.state.illumination.descent = 0;
+          this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured * 2;
 
           logger.debug({ name: this.name, now: this.now, state: this.state });
         }

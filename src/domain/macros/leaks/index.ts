@@ -64,12 +64,23 @@ export type LeaksMacrosSettings = {
 
     /**
      * Список кранов с управлением на уровне приложения,
+     * реализует логику перехода по состояниям перечисленным в enum
      * на всех кранах должно быть установлено одно закрытое положение.
      */
     readonly enum: Array<{
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.ENUM;
+    }>;
+
+    /**
+     * Список кранов с управлением на уровне приложения,
+     * реализует логику переключателя.
+     */
+    readonly switch: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
     }>;
 
     /**
@@ -197,6 +208,11 @@ type LeaksMacrosNextOutput = {
     readonly controlId: string;
     readonly value: string;
   }>;
+  readonly switch: Array<{
+    readonly deviceId: string;
+    readonly controlId: string;
+    readonly value: string;
+  }>;
   readonly phase: Array<{
     readonly open: {
       readonly deviceId: string;
@@ -257,6 +273,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     this.nextOutput = {
       analog: [],
       enum: [],
+      switch: [],
       phase: [],
     };
   }
@@ -305,6 +322,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     const nextOutput: LeaksMacrosNextOutput = {
       analog: [],
       enum: [],
+      switch: [],
       phase: [],
     };
 
