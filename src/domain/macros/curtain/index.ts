@@ -570,6 +570,24 @@ const VERSION = 0;
 
 type CurtainMacrosParameters = MacrosParameters<string, string | undefined>;
 
+const defaultState: CurtainMacrosState = {
+  target: -1,
+  position: -1,
+  direction: 'UNSPECIFIED',
+  stop: false,
+  lighting: Lighting.OFF,
+  illumination: {
+    measured: -1,
+    average: -1,
+    beforeTurningOnLighting: 0,
+    compensation: -1,
+    descent: -1,
+  },
+  motion: -1,
+  noise: -1,
+  temperature: -1,
+};
+
 export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSettings, CurtainMacrosState> {
   private output: CurtainMacrosOutput;
 
@@ -628,23 +646,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       settings,
 
-      state: defaultsDeep(state, {
-        target: -1,
-        position: -1,
-        direction: 'UNSPECIFIED',
-        stop: false,
-        lighting: Lighting.OFF,
-        illumination: {
-          measured: -1,
-          average: -1,
-          beforeTurningOnLighting: 0,
-          compensation: -1,
-          descent: -1,
-        },
-        motion: -1,
-        noise: -1,
-        temperature: -1,
-      }),
+      state: defaultsDeep(state, defaultState),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -700,32 +702,27 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   static parseState = (state?: string, version: number = VERSION): CurtainMacrosState => {
     if (!state) {
-      return {
-        target: -1,
-        position: -1,
-        direction: 'UNSPECIFIED',
-        stop: false,
-        lighting: Lighting.OFF,
-        illumination: {
-          measured: -1,
-          average: -1,
-          beforeTurningOnLighting: 0,
-          compensation: -1,
-          descent: -1,
-        },
-        motion: -1,
-        noise: -1,
-        temperature: -1,
-      };
+      return defaultState;
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
-  setState = (nextStateJson: string): void => {
-    const nextState = CurtainMacros.parseState(nextStateJson, this.version);
+  static parsePublicState = (state?: string, version: number = VERSION): CurtainMacrosPublicState => {
+    if (!state) {
+      return defaultState;
+    }
 
-    logger.info('The next state was supplied 📥');
+    /**
+     * TODO Передать схему, только для публичного стейта
+     */
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
+
+  setState = (nextStateJson: string): void => {
+    const nextState = CurtainMacros.parsePublicState(nextStateJson, this.version);
+
+    logger.info('The next public state was supplied 📥');
     logger.debug({
       name: this.name,
       now: this.now,

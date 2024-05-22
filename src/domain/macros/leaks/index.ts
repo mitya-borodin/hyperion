@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
-import debug from 'debug';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
+import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
+import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
-const logger = debug('hyperion:macros:leaks');
+const logger = getLogger('hyperion:macros:leaks');
 
 /**
  * ! SETTINGS
@@ -184,7 +185,24 @@ export type LeaksMacrosSettings = {
 /**
  * ! STATE
  */
-export type LeaksMacrosPublicState = {};
+export type LeaksMacrosPublicState = {
+  /**
+   * Жесткое закрытие/открытие крана, закрывает или открывает, и прерывает вычисление дальнейших стадий.
+   */
+  force: 'UNSPECIFIED' | 'OPEN' | 'CLOSE';
+
+  /**
+   * Мягкое закрытие крана, работает так же как и жесткое, только на уровне sensorBasedComputing
+   * и может быть перебито открытием крана по расписанию.
+   */
+  soft: 'UNSPECIFIED' | 'OPEN' | 'CLOSE';
+
+  /**
+   * Состояние ожидание подтверждения на открытие крана, в случае отмены возвращается в UNSPECIFIED
+   * и при следующей попытке открыть, создается запрос.
+   */
+  approve: 'UNSPECIFIED' | 'WAIT' | 'APPROVED' | 'CANCELED';
+};
 
 type LeaksMacrosPrivateState = {
   leak: boolean;
@@ -235,6 +253,14 @@ const VERSION = 0;
 
 type LeaksMacrosParameters = MacrosParameters<string, string | undefined>;
 
+const defaultState: LeaksMacrosState = {
+  force: 'UNSPECIFIED',
+  soft: 'UNSPECIFIED',
+  leak: false,
+  approve: 'UNSPECIFIED',
+  valve: ValueState.UNSPECIFIED,
+};
+
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
   private nextOutput: LeaksMacrosNextOutput;
 
@@ -260,10 +286,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       settings,
 
-      state: defaultsDeep(state, {
-        leak: false,
-        valve: ValueState.UNSPECIFIED,
-      }),
+      state: defaultsDeep(state, defaultState),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -283,37 +306,143 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   static parseState = (state?: string, version: number = VERSION): LeaksMacrosState => {
     if (!state) {
-      return {
-        leak: false,
-        valve: ValueState.UNSPECIFIED,
-      };
+      return defaultState;
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
-  setState = (nextPublicStateJson: string): void => {
-    const nextPublicState = LeaksMacros.parseState(nextPublicStateJson, this.version);
+  static parsePublicState = (state?: string, version: number = VERSION): LeaksMacrosPublicState => {
+    if (!state) {
+      return defaultState;
+    }
 
-    logger('The next state was appeared ⏭️ ⏭️ ⏭️');
-    logger({
-      name: this.name,
-      now: this.now,
-      nextPublicState,
-      state: this.state,
-    });
+    /**
+     * TODO Передать схему, только для публичного стейта
+     */
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
-  protected collecting() {}
+  setState = (nextPublicStateJson: string): void => {
+    const nextPublicState = LeaksMacros.parsePublicState(nextPublicStateJson, this.version);
 
+    logger.info('The next public state was appeared ⏭️');
+
+    if (this.state.force !== nextPublicState.force) {
+      if (nextPublicState.force === 'UNSPECIFIED') {
+        logger.info('Forced behavior is disabled 🆓');
+      }
+
+      if (nextPublicState.force === 'OPEN') {
+        logger.info('Forced behavior is open 💧');
+      }
+
+      if (nextPublicState.force === 'CLOSE') {
+        logger.info('Forced behavior is close 🌵');
+      }
+
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        nextPublicState,
+        state: this.state,
+      });
+
+      this.state.force = nextPublicState.force;
+
+      this.execute();
+    }
+  };
+
+  protected collecting() {
+    this.collectLeaks();
+  }
+
+  private collectLeaks() {
+    const { leaks } = this.settings.devices;
+
+    const { leak } = this.settings.properties;
+
+    const nextLeak = leaks.some((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === leak.switch || control.value === leak.enum;
+      }
+
+      return false;
+    });
+
+    if (this.state.leak !== nextLeak) {
+      if (nextLeak) {
+        logger.info('A leak has been detected 💧 🐬');
+      } else {
+        logger.info('The leak has been fixed 🌵 🍸');
+      }
+
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        nextLeak,
+        state: this.state,
+      });
+
+      this.state.leak = nextLeak;
+    }
+  }
+
+  /**
+   * Задается на уровне FE приложения
+   */
   protected priorityComputation = () => {
+    if (this.state.force !== 'UNSPECIFIED') {
+      if (this.state.force === 'OPEN' && this.state.valve === ValueState.CLOSE) {
+        logger.info('The valves will be forcibly closed 🌵');
+        logger.debug({
+          name: this.name,
+          now: this.now,
+          state: this.state,
+        });
+
+        this.computeOutput();
+        this.send();
+      }
+
+      if (this.state.force === 'CLOSE' && this.state.valve === ValueState.OPEN) {
+        logger.info('The valves will be forcibly open 💧');
+        logger.debug({
+          name: this.name,
+          now: this.now,
+          state: this.state,
+        });
+
+        this.computeOutput();
+        this.send();
+      }
+
+      return true;
+    }
+
     return false;
   };
 
+  /**
+   * У нас нет непосредственных элементов управления.
+   */
   protected actionBasedComputing = (): boolean => {
     return false;
   };
+
   protected sensorBasedComputing = (): boolean => {
+    /**
+     * TODO 2. Закрыть воду, будет реализован по отслеживанию наличия в сети и геопозиции через
+     * TODO мобильное приложение + полная тишина, если никого дома нет в течении часа, вода
+     * TODO закрывается, насос останавливается
+     *
+     * TODO 3. Открывать воду во время промывки фильтра, например в 2-3 часа ночи, учитывать
+     * TODO протечки, при протечках не открывать и уведомлять по всем каналам
+     * TODO (push, telegram, SMS, email, мигание (красный, желтый) + писк сигнализирующий о протечке)
+     */
     return false;
   };
 
@@ -327,8 +456,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
     this.nextOutput = nextOutput;
 
-    logger('The next output was computed ⏭️ 🍋');
-    logger(
+    logger.info('The next output was computed ⏭️ 🍋');
+    logger.debug(
       stringify({
         name: this.name,
         nextState: this.state,
@@ -340,8 +469,4 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   protected send = () => {};
 
   protected destroy() {}
-
-  /**
-   * ! INTERNAL_IMPLEMENTATION
-   */
 }

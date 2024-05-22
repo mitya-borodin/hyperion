@@ -3,6 +3,7 @@
 import { addDays, addMinutes, compareAsc, format, subDays } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
+import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
 import { config } from '../../../infrastructure/config';
@@ -342,6 +343,15 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
  */
 const VERSION = 6;
 
+const defaultState: LightingMacrosState = {
+  force: LightingForce.UNSPECIFIED,
+  switch: Switch.OFF,
+  illumination: -1,
+  motion: -1,
+  noise: -1,
+  time: 1,
+};
+
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private output: LightingMacrosOutput;
 
@@ -384,14 +394,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       settings,
 
-      state: {
-        force: state.force,
-        switch: Switch.OFF,
-        illumination: -1,
-        motion: -1,
-        noise: -1,
-        time: 1,
-      },
+      state: defaultsDeep(state, defaultState),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -430,18 +433,27 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     );
   };
 
-  static parseState = (state?: string, version: number = VERSION): LightingMacrosPublicState => {
+  static parseState = (state?: string, version: number = VERSION): LightingMacrosState => {
     if (!state) {
-      return {
-        force: LightingForce.UNSPECIFIED,
-      };
+      return defaultsDeep(state, defaultState);
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
+  static parsePublicState = (state?: string, version: number = VERSION): LightingMacrosPublicState => {
+    if (!state) {
+      return defaultsDeep(state, defaultState);
+    }
+
+    /**
+     * TODO Передать схему, только для публичного стейта
+     */
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
+
   setState = (nextPublicState: string): void => {
-    const nextState: LightingMacrosPublicState = LightingMacros.parseState(nextPublicState, this.version);
+    const nextState: LightingMacrosPublicState = LightingMacros.parsePublicState(nextPublicState, this.version);
 
     logger('The next state was appeared ⏭️ ⏭️ ⏭️');
     logger(
