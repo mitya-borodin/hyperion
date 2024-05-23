@@ -1018,7 +1018,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     );
   }
 
-  private getPosition(): number {
+  private getPosition = (): number => {
     const { positions } = this.settings.devices;
 
     return (
@@ -1037,7 +1037,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         return accumulator;
       }, -1) + 1
     );
-  }
+  };
 
   private get isRunning(): boolean {
     return this.state.position !== this.state.target && !this.state.stop;
@@ -1440,7 +1440,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   /**
    * Автоматизации по датчикам.
    */
-  protected sensorBasedComputing(): boolean {
+  protected sensorBasedComputing = (): boolean => {
     const { position } = this.settings.properties;
 
     /**
@@ -1545,7 +1545,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       return true;
     }
-  }
+  };
 
   /**
    * Автоматизация по переключателям.
