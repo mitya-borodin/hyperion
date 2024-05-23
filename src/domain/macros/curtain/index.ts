@@ -1355,8 +1355,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
        * Как только освещенность перестанет падать на 10 единиц в течении 5 минут, считаем, что наступила ночь.
        */
       if (this.state.illumination.descent < 1200) {
-        const isTangibleChange =
-          Math.abs(this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured) > 10;
+        const diff = Math.abs(this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured);
+        const isTangibleChange = diff > 10;
 
         if (isTangibleChange) {
           this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
@@ -1377,7 +1377,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           }
         }
 
-        logger.debug({ name: this.name, now: this.now, state: this.state });
+        logger.debug({ name: this.name, now: this.now, diff, state: this.state });
       }
 
       this.state.illumination.average = this.computeMovingArrange(
