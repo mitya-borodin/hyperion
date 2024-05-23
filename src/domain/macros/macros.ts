@@ -356,7 +356,7 @@ export abstract class Macros<
   /**
    * Метод предназначен извлекать из макроса информацию, которая предназначена для хранения в БД.
    */
-  toJS = (): MacrosEject<SETTINGS, STATE> => {
+  toJS(): MacrosEject<SETTINGS, STATE> {
     return cloneDeep({
       type: this.type,
 
@@ -369,7 +369,7 @@ export abstract class Macros<
 
       state: this.state,
     });
-  };
+  }
 
   /**
    * Проверяет, есть ли в устройстве контролы которые используются в текущем макросе,
@@ -557,9 +557,9 @@ export abstract class Macros<
     return format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO');
   }
 
-  protected getDateInClientTimeZone = () => {
+  protected getDateInClientTimeZone() {
     return utcToZonedTime(new Date(), config.client.timeZone);
-  };
+  }
 
   protected getValueByDetection = (
     devices: Array<{ deviceId: string; controlId: string }>,

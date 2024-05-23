@@ -518,7 +518,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     );
   }
 
-  private collectSwitchers = () => {
+  private collectSwitchers() {
     /**
      * Актуализация состояния освещения по внешнему состоянию каждой группы освещения.
      */
@@ -556,14 +556,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.state.switch = nextState;
   };
 
-  private collectIllumination = () => {
+  private collectIllumination() {
     const { detection } = this.settings.properties.illumination;
     const { illuminations } = this.settings.devices;
 
     this.state.illumination = this.getValueByDetection(illuminations, detection);
   };
 
-  private collectMotion = () => {
+  private collectMotion() {
     const { trigger } = this.settings.properties.motion;
 
     if (trigger > 0) {
@@ -578,7 +578,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  private collectNoise = () => {
+  private collectNoise() {
     const { trigger } = this.settings.properties.noise;
 
     if (trigger > 0) {
@@ -593,7 +593,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
   };
 
-  protected priorityComputation = (): boolean => {
+  protected priorityComputation (): boolean {
     if (this.state.force !== 'UNSPECIFIED') {
       const control = this.getFirstLightingControl();
 
@@ -766,7 +766,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
 
-  private autoOn = (): boolean => {
+  private autoOn(): boolean {
     /**
      * ! Pre flight check
      */
@@ -898,7 +898,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   };
 
-  private autoOff = (): boolean => {
+  private autoOff (): boolean {
     /**
      * ! Pre flight check
      */
@@ -1111,7 +1111,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return super.isSwitchHasBeenDown(this.settings.devices.switchers);
   }
 
-  private getFirstLightingControl = () => {
+  private getFirstLightingControl() {
     let control: HyperionDeviceControl | undefined;
 
     for (const item of this.settings.devices.lightings) {
@@ -1126,7 +1126,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   /**
    * Настройка this.block.autoOff.day
    */
-  private setupAutoOffTime = () => {
+  private setupAutoOffTime() {
     /**
      * offByTime - количество часов указано в временной зоне клиента
      */
@@ -1202,7 +1202,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * Обработчик счетчика часов, в рамках этого обработчика, будут случаться
    * все действия связанные с течением времени.
    */
-  private tic = () => {
+  private tic() {
     /**
      * offByTime - количество часов указано в временной зоне клиента
      */
