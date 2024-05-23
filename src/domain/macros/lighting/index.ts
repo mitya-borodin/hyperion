@@ -3,6 +3,7 @@
 import { addDays, addMinutes, compareAsc, format, subDays } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import debug from 'debug';
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
@@ -352,6 +353,10 @@ const defaultState: LightingMacrosState = {
   time: 1,
 };
 
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
+
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private output: LightingMacrosOutput;
 
@@ -394,7 +399,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       settings,
 
-      state: defaultsDeep(state, defaultState),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -435,7 +440,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
   static parseState = (state?: string, version: number = VERSION): LightingMacrosState => {
     if (!state) {
-      return defaultsDeep(state, defaultState);
+      return defaultsDeep(state, createDefaultState());
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
@@ -443,7 +448,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
   static parsePublicState = (state?: string, version: number = VERSION): LightingMacrosPublicState => {
     if (!state) {
-      return defaultsDeep(state, defaultState);
+      return defaultsDeep(state, createDefaultState());
     }
 
     /**

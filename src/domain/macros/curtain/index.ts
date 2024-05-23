@@ -590,6 +590,10 @@ const defaultState: CurtainMacrosState = {
   temperature: -1,
 };
 
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
+
 export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSettings, CurtainMacrosState> {
   private output: CurtainMacrosOutput;
 
@@ -648,7 +652,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       settings,
 
-      state: defaultsDeep(state, defaultState),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -704,7 +708,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   static parseState = (state?: string, version: number = VERSION): CurtainMacrosState => {
     if (!state) {
-      return defaultState;
+      return createDefaultState();
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
@@ -712,7 +716,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   static parsePublicState = (state?: string, version: number = VERSION): CurtainMacrosPublicState => {
     if (!state) {
-      return defaultState;
+      return createDefaultState();
     }
 
     /**
@@ -1294,7 +1298,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   }
 
   private collectLightings() {
-    const { lightings } = this.settings.devices;
+    const { lightings, illuminations } = this.settings.devices;
 
     const isLightingOn = lightings.some((lighting) => {
       const control = this.controls.get(getControlId(lighting));

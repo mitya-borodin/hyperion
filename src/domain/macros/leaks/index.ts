@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { getLogger } from '../../../infrastructure/logger';
@@ -253,6 +254,10 @@ const defaultState: LeaksMacrosState = {
   valve: ValueState.UNSPECIFIED,
 };
 
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
+
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
   private output: LeaksMacrosNextOutput;
 
@@ -278,7 +283,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       settings,
 
-      state: defaultsDeep(state, defaultState),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -298,7 +303,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   static parseState = (state?: string, version: number = VERSION): LeaksMacrosState => {
     if (!state) {
-      return defaultState;
+      return createDefaultState();
     }
 
     return Macros.migrate(state, version, VERSION, [], 'state');
@@ -306,7 +311,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
   static parsePublicState = (state?: string, version: number = VERSION): LeaksMacrosPublicState => {
     if (!state) {
-      return defaultState;
+      return createDefaultState();
     }
 
     /**
