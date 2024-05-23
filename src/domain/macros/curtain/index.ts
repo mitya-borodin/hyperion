@@ -1370,13 +1370,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
             );
 
             this.state.illumination.beforeTurningOnLighting = 0;
-
-            logger.debug({ name: this.name, now: this.now, state: this.state });
           } else {
             logger.info('Counting down to nightfall 🔄 🌃 🌙');
-            logger.debug({ name: this.name, now: this.now, state: this.state });
           }
         }
+
+        logger.debug({ name: this.name, now: this.now, state: this.state });
       }
 
       this.state.illumination.average = this.computeMovingArrange(
