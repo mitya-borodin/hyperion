@@ -1,4 +1,4 @@
-FROM node:lts-alpine as builder
+FROM node:20.11.0 as builder
 
 ENV NODE_ENV=development
 
@@ -13,7 +13,7 @@ COPY . .
 RUN yarn prisma:generate
 RUN yarn build
 
-FROM node:lts-alpine as runner
+FROM node:20.11.0 as runner
 
 ENV NODE_ENV=production
 

@@ -684,14 +684,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
    */
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private showSate() {
+  private showSate = () => {
     logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
     logger.debug({
       name: this.name,
       now: this.now,
       state: this.state,
     });
-  }
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private showSensorContext = (context: any) => {
@@ -824,7 +824,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   /**
    * Автоматизация по времени.
    */
-  private timeBasedComputing() {
+  private timeBasedComputing = () => {
     let toClose = false;
     let toOpen = false;
     let blockMin = 0;
@@ -947,7 +947,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         state: this.state,
       });
     }
-  }
+  };
 
   private hitTimeRange = (min: number) => {
     if (min > 0 && min < 24 * 60) {
@@ -1261,7 +1261,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return compareAsc(this.block.all, new Date()) === 1;
   }
 
-  private collectPosition() {
+  private collectPosition = () => {
     const current = this.getPosition();
 
     if (this.state.position === -1 || this.state.target === -1) {
@@ -1295,10 +1295,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         state: this.state,
       });
     }
-  }
+  };
 
-  private collectLightings() {
-    const { lightings, illuminations } = this.settings.devices;
+
+  private collectLightings = () => {
+    const { lightings } = this.settings.devices;
 
     const isLightingOn = lightings.some((lighting) => {
       const control = this.controls.get(getControlId(lighting));
@@ -1338,9 +1339,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       this.state.lighting = nextLighting;
     }
-  }
+  };
 
-  private collectIllumination() {
+  private collectIllumination = () => {
     this.collectLightings();
 
     const { illuminations } = this.settings.devices;
@@ -1398,9 +1399,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.lighting === Lighting.OFF) {
       this.state.illumination.average = this.computeMovingArrange('illumination', this.state.illumination.measured);
     }
-  }
+  };
 
-  private collectMotion() {
+  private collectMotion = () => {
     const { motions } = this.settings.devices;
     const { motion } = this.settings.properties;
 
@@ -1409,9 +1410,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.motion >= motion.trigger) {
       this.last.motion = new Date();
     }
-  }
+  };
 
-  private collectNoise() {
+  private collectNoise = () => {
     const { noises } = this.settings.devices;
     const { noise } = this.settings.properties;
 
@@ -1420,21 +1421,21 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.noise >= noise.trigger) {
       this.last.noise = new Date();
     }
-  }
+  };
 
-  private collectTemperature() {
+  private collectTemperature = () => {
     const { temperatures } = this.settings.devices;
     const { temperature } = this.settings.properties;
 
     this.state.temperature = this.getValueByDetection(temperatures, temperature.detection);
-  }
+  };
 
   /**
    * Приоритетное изменение состояния.
    */
-  protected priorityComputation() {
+  protected priorityComputation = () => {
     return false;
-  }
+  };
 
   /**
    * Автоматизации по датчикам.
@@ -1806,7 +1807,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   /**
    * Отправка сообщений.
    */
-  private retryToApplyNextState() {
+  private retryToApplyNextState = () => {
     logger.info('Retry to apply target to control 🔁');
     logger.debug({
       state: this.state,
@@ -1849,7 +1850,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           'A discrepancy between the control position of the curtain and the internal position of the curtain macro was found ‼ 🪟',
         );
         logger.info('All curtains will be updated according to the internal state of the curtain macro 🪟');
-        logger.debug({ name: this.name, now: this.now, state: this.state, positionFromControl: control?.value });
+        logger.debug({ state: this.state, positionFromControl: control?.value });
 
         this.computeOutput();
         this.send();
@@ -1857,9 +1858,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         return;
       }
     }
-  }
+  };
 
-  private stopCurtains() {
+  private stopCurtains = () => {
     this.output.states = [];
 
     for (const device of this.settings.devices.states) {
@@ -1901,9 +1902,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     this.send();
-  }
+  };
 
-  private requestPositions() {
+  private requestPositions = () => {
     logger.info('An attempt has begun to request the current position of the curtain 💎');
 
     for (const device of this.settings.devices.positions) {
@@ -1945,9 +1946,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
     logger.debug({ name: this.name, now: this.now, allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
-  }
+  };
 
-  protected computeOutput() {
+  protected computeOutput = () => {
     this.output.positions = [];
 
     for (const position of this.settings.devices.positions) {
@@ -1987,9 +1988,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.output.positions.length > 0) {
       this.state.stop = false;
     }
-  }
+  };
 
-  protected send() {
+  protected send = () => {
     for (const state of this.output.states) {
       const hyperionDevice = this.devices.get(state.deviceId);
       const hyperionControl = this.controls.get(getControlId(state));
@@ -2060,7 +2061,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     this.output = { states: [], positions: [] };
-  }
+  };
 
   protected destroy() {
     clearInterval(this.timer.timeBasedComputing);
