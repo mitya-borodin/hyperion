@@ -554,14 +554,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     );
 
     this.state.switch = nextState;
-  };
+  }
 
   private collectIllumination() {
     const { detection } = this.settings.properties.illumination;
     const { illuminations } = this.settings.devices;
 
     this.state.illumination = this.getValueByDetection(illuminations, detection);
-  };
+  }
 
   private collectMotion() {
     const { trigger } = this.settings.properties.motion;
@@ -576,7 +576,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         this.lastMotionDetected = new Date();
       }
     }
-  };
+  }
 
   private collectNoise() {
     const { trigger } = this.settings.properties.noise;
@@ -591,9 +591,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         this.lastNoseDetected = new Date();
       }
     }
-  };
+  }
 
-  protected priorityComputation (): boolean {
+  protected priorityComputation(): boolean {
     if (this.state.force !== 'UNSPECIFIED') {
       const control = this.getFirstLightingControl();
 
@@ -635,7 +635,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     return false;
-  };
+  }
 
   protected actionBasedComputing = (current?: HyperionDevice): boolean => {
     let isSwitchHasBeenChange = false;
@@ -896,9 +896,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     return false;
-  };
+  }
 
-  private autoOff (): boolean {
+  private autoOff(): boolean {
     /**
      * ! Pre flight check
      */
@@ -1003,7 +1003,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     return false;
-  };
+  }
 
   protected computeOutput() {
     const output: LightingMacrosOutput = {
@@ -1121,7 +1121,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         return control;
       }
     }
-  };
+  }
 
   /**
    * Настройка this.block.autoOff.day
@@ -1196,7 +1196,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       this.day = [addDays(from, 1), addDays(to, 1)];
     }
-  };
+  }
 
   /**
    * Обработчик счетчика часов, в рамках этого обработчика, будут случаться
@@ -1269,5 +1269,5 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         this.send();
       }
     }
-  };
+  }
 }
