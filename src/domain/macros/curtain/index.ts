@@ -1297,7 +1297,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
   };
 
-
   private collectLightings = () => {
     const { lightings } = this.settings.devices;
 
