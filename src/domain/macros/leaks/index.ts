@@ -2,7 +2,6 @@
 /* eslint-disable unicorn/no-empty-file */
 import defaultsDeep from 'lodash.defaultsdeep';
 
-import { stringify } from '../../../helpers/json-stringify';
 import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
 import { getControlId } from '../get-control-id';
@@ -53,13 +52,13 @@ export type LeaksMacrosSettings = {
     }>;
 
     /**
-     * Краны с управлением на аналоговом уровне,
-     * на всех кранах должно быть установлено одно закрытое положение.
+     * Список кранов с управлением на уровне приложения,
+     * реализует логику переключателя.
      */
-    readonly analog: Array<{
+    readonly switch: Array<{
       readonly deviceId: string;
       readonly controlId: string;
-      readonly controlType: ControlType.RANGE;
+      readonly controlType: ControlType.SWITCH;
     }>;
 
     /**
@@ -74,13 +73,13 @@ export type LeaksMacrosSettings = {
     }>;
 
     /**
-     * Список кранов с управлением на уровне приложения,
-     * реализует логику переключателя.
+     * Краны с управлением на аналоговом уровне,
+     * на всех кранах должно быть установлено одно закрытое положение.
      */
-    readonly switch: Array<{
+    readonly analog: Array<{
       readonly deviceId: string;
       readonly controlId: string;
-      readonly controlType: ControlType.SWITCH;
+      readonly controlType: ControlType.RANGE;
     }>;
 
     /**
@@ -166,12 +165,12 @@ export type LeaksMacrosSettings = {
       enum: string;
     };
 
-    analog: {
+    enum: {
       open: string;
       close: string;
     };
 
-    enum: {
+    analog: {
       open: string;
       close: string;
     };
@@ -190,12 +189,6 @@ export type LeaksMacrosPublicState = {
    * Жесткое закрытие/открытие крана, закрывает или открывает, и прерывает вычисление дальнейших стадий.
    */
   force: 'UNSPECIFIED' | 'OPEN' | 'CLOSE';
-
-  /**
-   * Мягкое закрытие крана, работает так же как и жесткое, только на уровне sensorBasedComputing
-   * и может быть перебито открытием крана по расписанию.
-   */
-  soft: 'UNSPECIFIED' | 'OPEN' | 'CLOSE';
 
   /**
    * Состояние ожидание подтверждения на открытие крана, в случае отмены возвращается в UNSPECIFIED
@@ -255,14 +248,13 @@ type LeaksMacrosParameters = MacrosParameters<string, string | undefined>;
 
 const defaultState: LeaksMacrosState = {
   force: 'UNSPECIFIED',
-  soft: 'UNSPECIFIED',
   leak: false,
   approve: 'UNSPECIFIED',
   valve: ValueState.UNSPECIFIED,
 };
 
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
-  private nextOutput: LeaksMacrosNextOutput;
+  private output: LeaksMacrosNextOutput;
 
   constructor(parameters: LeaksMacrosParameters) {
     const settings = LeaksMacros.parseSettings(parameters.settings, parameters.version);
@@ -292,7 +284,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       controls: parameters.controls,
     });
 
-    this.nextOutput = {
+    this.output = {
       analog: [],
       enum: [],
       switch: [],
@@ -391,13 +383,64 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     }
   }
 
+  private get isSwitchOpen(): boolean {
+    return this.settings.devices.switch.some((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === control.on;
+      }
+
+      return false;
+    });
+  }
+
+  private get isSwitchClose(): boolean {
+    return this.settings.devices.switch.every((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === control.off;
+      }
+
+      return false;
+    });
+  }
+
+  private get isEnumOpen(): boolean {
+    return this.settings.devices.enum.some((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === this.settings.properties.enum.open;
+      }
+
+      return false;
+    });
+  }
+
+  private get isEnumClose(): boolean {
+    return this.settings.devices.enum.every((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === this.settings.properties.enum.close;
+      }
+
+      return false;
+    });
+  }
+
   /**
-   * Задается на уровне FE приложения
+   * Задается на уровне FE приложения.
    */
   protected priorityComputation = () => {
     if (this.state.force !== 'UNSPECIFIED') {
       if (this.state.force === 'OPEN' && this.state.valve === ValueState.CLOSE) {
         logger.info('The valves will be forcibly closed 🌵');
+
+        this.state.valve = ValueState.CLOSE;
+
         logger.debug({
           name: this.name,
           now: this.now,
@@ -410,6 +453,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       if (this.state.force === 'CLOSE' && this.state.valve === ValueState.OPEN) {
         logger.info('The valves will be forcibly open 💧');
+
+        this.state.valve = ValueState.OPEN;
+
         logger.debug({
           name: this.name,
           now: this.now,
@@ -434,36 +480,185 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   protected sensorBasedComputing = (): boolean => {
-    /**
-     * TODO 2. Закрыть воду, будет реализован по отслеживанию наличия в сети и геопозиции через
-     * TODO мобильное приложение + полная тишина, если никого дома нет в течении часа, вода
-     * TODO закрывается, насос останавливается
-     *
-     * TODO 3. Открывать воду во время промывки фильтра, например в 2-3 часа ночи, учитывать
-     * TODO протечки, при протечках не открывать и уведомлять по всем каналам
-     * TODO (push, telegram, SMS, email, мигание (красный, желтый) + писк сигнализирующий о протечке)
-     */
+    let nextValueState = this.state.valve;
+
+    if (this.state.leak && this.state.valve === ValueState.OPEN) {
+      logger.info('The valves will be closed 🏜️ 🌵');
+
+      nextValueState = ValueState.CLOSE;
+    }
+
+    if (!this.state.leak && this.state.valve === ValueState.CLOSE) {
+      logger.info('The valves will be opened 🌊 💧');
+
+      nextValueState = ValueState.OPEN;
+    }
+
+    if (this.state.valve !== nextValueState) {
+      logger.info('The condition of the valve has been changed 🎲 🎯 💾');
+
+      this.state.valve = nextValueState;
+
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        state: this.state,
+      });
+
+      this.computeOutput();
+      this.send();
+    }
+
     return false;
   };
 
   protected computeOutput = () => {
-    const nextOutput: LeaksMacrosNextOutput = {
-      analog: [],
-      enum: [],
+    this.output = {
       switch: [],
+      enum: [],
+      analog: [],
       phase: [],
     };
 
-    this.nextOutput = nextOutput;
+    for (const device of this.settings.devices.switch) {
+      const controlType = ControlType.SWITCH;
+      const control = this.controls.get(getControlId(device));
 
-    logger.info('The next output was computed ⏭️ 🍋');
-    logger.debug(
-      stringify({
-        name: this.name,
-        nextState: this.state,
-        nextOutput: this.nextOutput,
-      }),
-    );
+      if (!control || control.type !== controlType || !control.topic.write) {
+        logger.error('The switch control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          device,
+          controlType,
+          control,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      let value = control.off;
+
+      if (this.state.valve === ValueState.OPEN) {
+        value = control.on;
+      }
+
+      if (this.state.valve === ValueState.CLOSE) {
+        value = control.off;
+      }
+
+      if (String(control.value) !== String(value)) {
+        this.output.switch.push({ ...device, value });
+      }
+    }
+
+    for (const device of this.settings.devices.enum) {
+      const controlType = ControlType.SWITCH;
+      const control = this.controls.get(getControlId(device));
+
+      if (!control || control.type !== controlType || !control.topic.write) {
+        logger.error('The enum control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          device,
+          controlType,
+          control,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      let value = this.settings.properties.enum.close;
+
+      if (this.state.valve === ValueState.OPEN) {
+        value = this.settings.properties.enum.open;
+      }
+
+      if (this.state.valve === ValueState.CLOSE) {
+        value = this.settings.properties.enum.close;
+      }
+
+      if (String(control.value) !== String(value)) {
+        this.output.enum.push({ ...device, value });
+      }
+    }
+
+    for (const device of this.settings.devices.analog) {
+      const controlType = ControlType.RANGE;
+      const control = this.controls.get(getControlId(device));
+
+      if (!control || control.type !== controlType || !control.topic.write) {
+        logger.error('The range control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          device,
+          controlType,
+          control,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      let value = this.settings.properties.analog.close;
+
+      if (this.state.valve === ValueState.OPEN) {
+        value = this.settings.properties.analog.open;
+      }
+
+      if (this.state.valve === ValueState.CLOSE) {
+        value = this.settings.properties.analog.close;
+      }
+
+      if (String(control.value) !== String(value)) {
+        this.output.analog.push({ ...device, value });
+      }
+    }
+
+    // for (const device of this.settings.devices.phase) {
+    //   const controlType = ControlType.SWITCH;
+    //   const control = this.controls.get(getControlId(device));
+
+    //   if (!control || control.type !== controlType || !control.topic.write) {
+    //     logger.error('The analog control specified in the settings was not found 🚨');
+    //     logger.error({
+    //       name: this.name,
+    //       now: this.now,
+    //       device,
+    //       controlType,
+    //       control,
+    //       controls: this.controls.size,
+    //     });
+
+    //     continue;
+    //   }
+
+    //   let value = this.settings.properties.analog.close;
+
+    //   if (this.state.valve === ValueState.OPEN) {
+    //     value = this.settings.properties.analog.open;
+    //   }
+
+    //   if (this.state.valve === ValueState.CLOSE) {
+    //     value = this.settings.properties.analog.close;
+    //   }
+
+    //   if (String(control.value) !== String(value)) {
+    //     this.output.analog.push({ ...device, value });
+    //   }
+    // }
+
+    logger.info('The output was computed 🍋 🧪 ✊🏻');
+    logger.debug({
+      name: this.name,
+      now: this.now,
+      state: this.state,
+      output: this.output,
+    });
   };
 
   protected send = () => {};

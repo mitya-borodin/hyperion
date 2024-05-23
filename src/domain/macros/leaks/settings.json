@@ -257,9 +257,29 @@
               },
               "required": ["durationSec"],
               "additionalProperties": false
+            },
+            "schedule": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["OPEN", "CLOSE"]
+                  },
+                  "openMin": {
+                    "type": "number"
+                  },
+                  "closeMin": {
+                    "type": "number"
+                  }
+                },
+                "required": ["type", "openMin", "closeMin"],
+                "additionalProperties": false
+              }
             }
           },
-          "required": ["leak", "analog", "enum", "phase"],
+          "required": ["leak", "analog", "enum", "phase", "schedule"],
           "additionalProperties": false
         }
       },

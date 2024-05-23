@@ -532,8 +532,11 @@ type CurtainMacrosPrivateState = {
   illumination: {
     measured: number;
     average: number;
+    /**
+     * Знание о том, какой уровень освещенности был до включения освещения полезен,
+     * для того, чтобы не "задирать" скользящую среднюю.
+     */
     beforeTurningOnLighting: number;
-    compensation: number;
     descent: number;
   };
   motion: number;
@@ -580,7 +583,6 @@ const defaultState: CurtainMacrosState = {
     measured: -1,
     average: -1,
     beforeTurningOnLighting: 0,
-    compensation: -1,
     descent: -1,
   },
   motion: -1,
@@ -1315,7 +1317,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.debug({ name: this.name, now: this.now });
 
         this.state.illumination.beforeTurningOnLighting = 0;
-        this.state.illumination.compensation = -1;
         this.state.illumination.descent = -1;
 
         this.block.all = addSeconds(new Date(), 30);
@@ -1341,41 +1342,47 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     this.state.illumination.measured = this.getValueByDetection(illuminations, illumination.detection);
 
-    /**
-     * Спускаемся с горы освещенности
-     */
-    const isDescent = this.state.illumination.beforeTurningOnLighting > this.state.illumination.measured;
+    if (this.state.lighting === Lighting.ON) {
+      /**
+       * Следуем за освещенностью.
+       *
+       * Процедура collecting тротлится с задержкой 2000 мс, и фактически она запускается каждые 2000 мс,
+       * так как данные с датчиков освещенности прилетают каждые несколько десятков мс,
+       * выходит, что 1200 тактов это 10 минут.
+       *
+       * Как только освещенность перестанет падать на 10 единиц в течении 5 минут, считаем, что наступила ночь.
+       */
+      if (this.state.illumination.descent < 1200) {
+        const isTangibleChange =
+          Math.abs(this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured) > 10;
 
-    if (isDescent) {
-      const isTangibleChange = this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured > 5;
+        if (isTangibleChange) {
+          this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
+          this.state.illumination.descent = 0;
 
-      if (isTangibleChange) {
-        this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
-        this.state.illumination.descent = 0;
-      } else {
-        this.state.illumination.descent += 1;
+          logger.info('After following the illumination 🌅 🌇, the nightfall counter will be reset 🆑');
+        } else {
+          this.state.illumination.descent += 1;
 
-        if (this.state.illumination.descent > 600) {
-          logger.info(
-            // eslint-disable-next-line max-len
-            'The descent from the mountain of illumination has been completed, which means that it has darkened outside 🌅 🌙',
-          );
+          if (this.state.illumination.descent >= 1200) {
+            logger.info(
+              'The illumination has stopped changing in the last 10 minutes, which means that night has fallen. 🌃 🌙',
+            );
 
-          this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured * 2;
+            this.state.illumination.beforeTurningOnLighting = 0;
 
-          logger.debug({ name: this.name, now: this.now, state: this.state });
+            logger.debug({ name: this.name, now: this.now, state: this.state });
+          } else {
+            logger.info('Counting down to nightfall 🔄 🌃 🌙');
+            logger.debug({ name: this.name, now: this.now, state: this.state });
+          }
         }
       }
-    }
 
-    if (this.state.lighting === Lighting.ON) {
-      this.state.illumination.compensation = Math.abs(
-        this.state.illumination.measured - this.state.illumination.beforeTurningOnLighting,
+      this.state.illumination.average = this.computeMovingArrange(
+        'illumination',
+        this.state.illumination.beforeTurningOnLighting,
       );
-
-      const illumination = this.state.illumination.measured - this.state.illumination.compensation;
-
-      this.state.illumination.average = this.computeMovingArrange('illumination', illumination >= 0 ? illumination : 0);
     }
 
     if (this.state.lighting === Lighting.OFF) {

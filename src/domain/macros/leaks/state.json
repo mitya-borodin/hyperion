@@ -4,6 +4,24 @@
   "definitions": {
     "LeaksMacrosPublicState": {
       "type": "object",
+      "properties": {
+        "force": {
+          "type": "string",
+          "enum": ["UNSPECIFIED", "OPEN", "CLOSE"],
+          "description": "Жесткое закрытие/открытие крана, закрывает или открывает, и прерывает вычисление дальнейших стадий."
+        },
+        "soft": {
+          "type": "string",
+          "enum": ["UNSPECIFIED", "OPEN", "CLOSE"],
+          "description": "Мягкое закрытие крана, работает так же как и жесткое, только на уровне sensorBasedComputing и может быть перебито открытием крана по расписанию."
+        },
+        "approve": {
+          "type": "string",
+          "enum": ["UNSPECIFIED", "WAIT", "APPROVED", "CANCELED"],
+          "description": "Состояние ожидание подтверждения на открытие крана, в случае отмены возвращается в UNSPECIFIED и при следующей попытке открыть, создается запрос."
+        }
+      },
+      "required": ["force", "soft", "approve"],
       "additionalProperties": false,
       "description": "! STATE"
     }
