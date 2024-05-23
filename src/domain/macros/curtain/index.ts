@@ -1342,30 +1342,35 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
 
-    this.state.illumination.measured = this.getValueByDetection(illuminations, illumination.detection);
+    const measured = this.getValueByDetection(illuminations, illumination.detection);
+
+    this.state.illumination.measured = measured;
 
     if (this.state.lighting === Lighting.ON) {
       /**
        * Следуем за освещенностью.
        *
-       * Процедура collecting тротлится с задержкой 2000 мс, и фактически она запускается каждые 2000 мс,
+       * Процедура collecting тротлится с задержкой 500 мс, и фактически она запускается каждые 500 мс,
        * так как данные с датчиков освещенности прилетают каждые несколько десятков мс,
        * выходит, что 1200 тактов это 10 минут.
        *
        * Как только освещенность перестанет падать на 10 единиц в течении 5 минут, считаем, что наступила ночь.
        */
       if (this.state.illumination.descent < 1200) {
-        const diff = Math.abs(this.state.illumination.beforeTurningOnLighting - this.state.illumination.measured);
-        const isTangibleChange = diff > 10;
+        const { beforeTurningOnLighting } = this.state.illumination;
+        const { measured } = this.state.illumination;
+        const diff = Math.abs(beforeTurningOnLighting - measured);
+        const isTangibleChange = diff > (measured > 100 ? 20 : 10);
 
         if (isTangibleChange) {
-          this.state.illumination.beforeTurningOnLighting = this.state.illumination.measured;
+          this.state.illumination.beforeTurningOnLighting = measured;
           this.state.illumination.descent = 0;
 
           logger.info('After following the illumination 🌅 🌇, the nightfall counter will be reset 🆑');
         } else {
           this.state.illumination.descent += 1;
 
+          // eslint-disable-next-line unicorn/consistent-destructuring
           if (this.state.illumination.descent >= 1200) {
             logger.info(
               'The illumination has stopped changing in the last 10 minutes, which means that night has fallen. 🌃 🌙',
@@ -1377,7 +1382,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           }
         }
 
-        logger.debug({ name: this.name, now: this.now, diff, state: this.state });
+        logger.debug({ name: this.name, now: this.now, beforeTurningOnLighting, measured, diff, state: this.state });
       }
 
       this.state.illumination.average = this.computeMovingArrange(
