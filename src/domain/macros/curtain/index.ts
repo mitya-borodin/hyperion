@@ -1324,8 +1324,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
       }
 
-      this.state.lighting = nextLighting;
-
       logger.debug({
         name: this.name,
         now: this.now,
@@ -1333,6 +1331,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         nextLighting,
         state: this.state,
       });
+
+      this.state.lighting = nextLighting;
     }
   }
 
