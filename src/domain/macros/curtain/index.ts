@@ -1325,6 +1325,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       }
 
       logger.debug({
+        name: this.name,
+        now: this.now,
         allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO'),
         nextLighting,
         state: this.state,
@@ -1886,7 +1888,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.block.all = addSeconds(new Date(), 30);
 
       logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
-      logger.debug({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+      logger.debug({ name: this.name, now: this.now, allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
     }
 
     this.send();
