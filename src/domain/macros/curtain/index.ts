@@ -1414,6 +1414,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     if (this.state.lighting === Lighting.OFF) {
+      this.state.illumination.measured = nextMeasured;
       this.state.illumination.average = this.computeMovingArrange('illumination', nextMeasured);
     }
   };
