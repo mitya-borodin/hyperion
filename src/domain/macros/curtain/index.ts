@@ -1361,11 +1361,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
-    const { beforeTurningOnLighting, descent } = this.state.illumination;
+    const { beforeTurningOnLighting, descent, measured: lastMeasured } = this.state.illumination;
 
-    const measured = this.getValueByDetection(illuminations, illumination.detection);
-
-    this.state.illumination.measured = measured;
+    const nextMeasured = this.getValueByDetection(illuminations, illumination.detection);
 
     if (this.state.lighting === Lighting.ON) {
       /**
@@ -1377,13 +1375,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
        *
        * Как только освещенность перестанет падать на 10 единиц в течении 5 минут, считаем, что наступила ночь.
        */
-      if (beforeTurningOnLighting > measured && descent < 1200) {
-        const { measured } = this.state.illumination;
-        const diff = Math.abs(beforeTurningOnLighting - measured);
-        const isTangibleChange = diff > (measured > 100 ? 20 : 10);
+      if (lastMeasured > nextMeasured && descent < 1200) {
+        const diff = Math.abs(lastMeasured - nextMeasured);
+        const isTangibleChange = diff > (nextMeasured > 100 ? 20 : 10);
 
         if (isTangibleChange) {
-          this.state.illumination.beforeTurningOnLighting = measured;
+          this.state.illumination.measured = nextMeasured;
           this.state.illumination.descent = 0;
 
           logger.info('After following the illumination 🌅 🌇, the nightfall counter will be reset 🆑');
@@ -1402,17 +1399,22 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           }
         }
 
-        logger.debug({ name: this.name, now: this.now, beforeTurningOnLighting, measured, diff, state: this.state });
+        logger.debug({
+          name: this.name,
+          now: this.now,
+          beforeTurningOnLighting,
+          lastMeasured,
+          nextMeasured,
+          diff,
+          state: this.state,
+        });
       }
 
-      this.state.illumination.average = this.computeMovingArrange(
-        'illumination',
-        this.state.illumination.beforeTurningOnLighting,
-      );
+      this.state.illumination.average = this.computeMovingArrange('illumination', beforeTurningOnLighting);
     }
 
     if (this.state.lighting === Lighting.OFF) {
-      this.state.illumination.average = this.computeMovingArrange('illumination', this.state.illumination.measured);
+      this.state.illumination.average = this.computeMovingArrange('illumination', nextMeasured);
     }
   };
 
