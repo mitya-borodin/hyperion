@@ -1074,13 +1074,13 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   private get isCoverCloserToOpen(): boolean {
     const { position: settings } = this.settings.properties;
 
-    const { position, stop } = this.state;
+    const { position } = this.state;
 
     if (settings.open > settings.close) {
-      return position > settings.open / 2 || stop;
+      return position > settings.open / 2;
     }
 
-    return position < settings.close / 2 || stop;
+    return position < settings.close / 2;
   }
 
   private get isCoverCloserToClose(): boolean {
