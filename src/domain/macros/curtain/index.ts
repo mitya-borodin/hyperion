@@ -799,21 +799,35 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     if (hasBlockByTimeRange) {
       logger.info('Position change is blocked 🚫 by time range ⏱️');
-      logger.debug({ direction, target, blocks });
+      logger.debug({ name: this.name, now: this.now, direction, target, blocks });
 
       return true;
     }
 
     if ((direction === 'OPEN' || target === position.open) && this.hasOpenBlock) {
       logger.info('The opening is blocked 🚫 until the set time ⏱️');
-      logger.debug({ direction, target, hasOpenBlock: this.hasOpenBlock, block: this.block });
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        direction,
+        target,
+        hasOpenBlock: this.hasOpenBlock,
+        block: this.block,
+      });
 
       return true;
     }
 
     if ((direction === 'CLOSE' || target === position.close) && this.hasCloseBlock) {
       logger.info('The close is blocked 🚫 until the set time ⏱️');
-      logger.debug({ direction, target, hasCloseBlock: this.hasCloseBlock, block: this.block });
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        direction,
+        target,
+        hasCloseBlock: this.hasCloseBlock,
+        block: this.block,
+      });
 
       return true;
     }
@@ -907,6 +921,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.info('The close block 🚫 was activated ✅');
         logger.debug({
           name: this.name,
+          now: this.now,
           closeBlock: format(this.block.close, 'yyyy.MM.dd HH:mm:ss OOOO'),
         });
 
@@ -915,6 +930,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.info('The open block 🚫 was activated ✅');
         logger.debug({
           name: this.name,
+          now: this.now,
           openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
         });
       }
@@ -1345,6 +1361,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     const { illuminations } = this.settings.devices;
     const { illumination } = this.settings.properties;
+    const { beforeTurningOnLighting, descent } = this.state.illumination;
 
     const measured = this.getValueByDetection(illuminations, illumination.detection);
 
@@ -1352,7 +1369,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     if (this.state.lighting === Lighting.ON) {
       /**
-       * Следуем за освещенностью.
+       * Следуем вниз за освещенностью.
        *
        * Процедура collecting тротлится с задержкой 500 мс, и фактически она запускается каждые 500 мс,
        * так как данные с датчиков освещенности прилетают каждые несколько десятков мс,
@@ -1360,8 +1377,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
        *
        * Как только освещенность перестанет падать на 10 единиц в течении 5 минут, считаем, что наступила ночь.
        */
-      if (this.state.illumination.descent < 1200) {
-        const { beforeTurningOnLighting } = this.state.illumination;
+      if (beforeTurningOnLighting > measured && descent < 1200) {
         const { measured } = this.state.illumination;
         const diff = Math.abs(beforeTurningOnLighting - measured);
         const isTangibleChange = diff > (measured > 100 ? 20 : 10);
@@ -1467,6 +1483,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       isCoverClose: this.isCoverClose,
       isCoverMiddle: this.isCoverMiddle,
       isCoverOpen: this.isCoverOpen,
+      isCoverCloserToOpen: this.isCoverCloserToOpen,
+      isCoverCloserToClose: this.isCoverCloserToClose,
       isIlluminationReady: this.isIlluminationReady,
       isCloseByLighting: this.isCloseByLighting,
       isEnoughLightingToClose: this.isEnoughLightingToClose,
@@ -1590,6 +1608,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         isCoverClose: this.isCoverClose,
         isCoverMiddle: this.isCoverMiddle,
         isCoverOpen: this.isCoverOpen,
+        isCoverCloserToOpen: this.isCoverCloserToOpen,
+        isCoverCloserToClose: this.isCoverCloserToClose,
         isMotion: this.isMotion,
         isSilence: this.isSilence,
         lastMotion: this.last.motion,
@@ -1809,6 +1829,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   private retryToApplyNextState = () => {
     logger.info('Retry to apply target to control 🔁');
     logger.debug({
+      name: this.name,
+      now: this.now,
       state: this.state,
       positions: this.settings.devices.positions.map((item) => {
         const control = this.controls.get(getControlId(item));
