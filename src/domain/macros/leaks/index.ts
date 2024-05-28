@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
+import { addSeconds, compareAsc } from 'date-fns';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
+import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
 import { getControlId } from '../get-control-id';
@@ -21,7 +23,6 @@ const logger = getLogger('hyperion:macros:leaks');
 export enum ValueState {
   UNSPECIFIED = 'UNSPECIFIED',
   OPEN = 'OPEN',
-  ON_WAY = 'ON_WAY',
   CLOSE = 'CLOSE',
 }
 
@@ -76,6 +77,8 @@ export type LeaksMacrosSettings = {
     /**
      * Краны с управлением на аналоговом уровне,
      * на всех кранах должно быть установлено одно закрытое положение.
+     *
+     * Все краны должны иметь общую землю с модулем управления.
      */
     readonly analog: Array<{
       readonly deviceId: string;
@@ -84,10 +87,11 @@ export type LeaksMacrosSettings = {
     }>;
 
     /**
-     * Краны с релейным управлением,
-     * на всех кранах должно быть установлено одно закрытое положение.
+     * Краны с релейным управлением.
      *
-     * ON/OFF - "обычное" реле, которое может подключать фаз к одному выходу.
+     * На всех кранах должно быть установлено одинаковое закрытое положение, в рамках макроса.
+     *
+     * ON/OFF - "обычное" реле, которое может подключать/отключить фазу к одному выходу.
      *
      * NC/NO - "специальное" реле, которое может подключать фазу между двумя
      * разными выходами, подключенных к контактам NC/NO.
@@ -98,13 +102,30 @@ export type LeaksMacrosSettings = {
      * NO - normal open, нормально открытый контакт, это означает,
      * что когда нет питания, контакт находится в разомкнутом положении.
      *
-     * Для специальных модулей реле WBIO-DO-R10R-4, имеется возможность ВКЛ/ВЫКЛ и переключать фазу между NC/NO.
-     * Позволяет отключить фазу, переключить направление и подать фазу, чтобы исключить случай включения двух фаз сразу.
-     * Хотя если реле NC/NO то там и не получится подать одновременно фазу на левую и правую сторону.
+     * Для специальных модулей реле WBIO-DO-R10R-4, имеется возможность подать/снять питание
+     * и переключать фазу между NC/NO, нет питания фаза идет через NC, есть питание через NO.
+     *
+     * Позволяет отключить фазу, переключить направление, и подать фазу, чтобы исключить
+     * случай включения двух фаз сразу.
+     *
+     * Такая схема защищает NO/NC реле от переходных электрических процессов.
+     *
+     * https://wirenboard.com/ru/product/WBIO-DO-R10R-4/
      */
     readonly phase: Array<{
       /**
        * open - реле отвечающее за открывание крана, может быть как обычное ON/OFF так и NC/NO.
+       *
+       * В случае ON/OFF реле подключает или отключает фазу которая предназначена для открывания крана,
+       * если фаза подключена, кран пытается закрыться.
+       *
+       * В случае NC/NO реле переключает условно "левое и правое" или "открытое и закрытое" положение
+       * крана, но не управляет подключением фазы ни к одному из выходов. В итоге получается, что в положении
+       * open.on подключается NO контакт, который подключен к скажем фазе открывания, то в положении
+       * open.off подключается NC контакт, который подключен к скажем фазе закрывания.
+       *
+       * Подключение может быть и на оборот, и в этом случае нужно поменять местами провода, чтобы открывание было
+       * на NO контакте, а закрывание на NC контакте.
        */
       readonly open: {
         readonly deviceId: string;
@@ -154,30 +175,30 @@ export type LeaksMacrosSettings = {
   };
 
   readonly properties: {
-    leak: {
+    readonly leak: {
       /**
        * Для SWITCH это логическая единица и логический ноль, где единица это наличие протечки.
        */
-      switch: string;
+      readonly switch: string;
 
       /**
        * Для ENUM это некий action который выбирается пользователь из предоставленного ENUM.
        */
-      enum: string;
+      readonly enum: string;
     };
 
-    enum: {
-      open: string;
-      close: string;
+    readonly enum: {
+      readonly open: string;
+      readonly close: string;
     };
 
-    analog: {
-      open: string;
-      close: string;
+    readonly analog: {
+      readonly open: string;
+      readonly close: string;
     };
 
-    phase: {
-      durationSec: number;
+    readonly phase: {
+      readonly durationSec: number;
     };
   };
 };
@@ -209,7 +230,7 @@ type LeaksMacrosState = LeaksMacrosPublicState & LeaksMacrosPrivateState;
  * ! OUTPUT
  */
 type LeaksMacrosNextOutput = {
-  readonly analog: Array<{
+  readonly switch: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
@@ -219,26 +240,32 @@ type LeaksMacrosNextOutput = {
     readonly controlId: string;
     readonly value: string;
   }>;
-  readonly switch: Array<{
+  readonly analog: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
   }>;
-  readonly phase: Array<{
-    readonly open: {
+  phase: Array<{
+    readonly open?: {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.SWITCH;
+      readonly delaySec: number;
+      readonly value: string;
     };
     readonly close?: {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.SWITCH;
+      readonly delaySec: number;
+      readonly value: string;
     };
     readonly power?: {
       readonly deviceId: string;
       readonly controlId: string;
       readonly controlType: ControlType.SWITCH;
+      readonly delaySec: number;
+      readonly value: string;
     };
   }>;
 };
@@ -260,6 +287,14 @@ const createDefaultState = () => {
 
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
   private output: LeaksMacrosNextOutput;
+
+  private phase = {
+    durationOfActivation: new Date(),
+  };
+
+  private timer: {
+    controlProgressDuration: NodeJS.Timeout;
+  };
 
   constructor(parameters: LeaksMacrosParameters) {
     const settings = LeaksMacros.parseSettings(parameters.settings, parameters.version);
@@ -290,12 +325,79 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     });
 
     this.output = {
-      analog: [],
-      enum: [],
       switch: [],
+      enum: [],
+      analog: [],
       phase: [],
     };
+
+    this.timer = {
+      controlProgressDuration: setInterval(this.controlProgressDuration, 1000),
+    };
+
+    this.checkPhaseCombination();
   }
+
+  private checkPhaseCombination = () => {
+    for (const phase of this.settings.devices.phase) {
+      const open = this.controls.get(getControlId(phase.open));
+      const close = this.controls.get(getControlId(phase.close ?? { deviceId: '', controlId: '' }));
+      const power = this.controls.get(getControlId(phase.power ?? { deviceId: '', controlId: '' }));
+      const isOpen = this.controls.get(getControlId(phase.isOpen ?? { deviceId: '', controlId: '' }));
+      const isClose = this.controls.get(getControlId(phase.isClose ?? { deviceId: '', controlId: '' }));
+
+      let hasError = false;
+
+      /**
+       * Проверка линий управления.
+       */
+      if (!open) {
+        logger.error('The valve opening phase was not found 🚨');
+
+        hasError = true;
+      }
+
+      if (open && !close && !power) {
+        logger.error('No phases were found for  supplying power 🚨');
+
+        hasError = true;
+      }
+
+      if (open && close && power) {
+        logger.info('An erroneous configuration is selected, it is not clear which control method is selected 🚨');
+
+        hasError = true;
+      }
+
+      /**
+       * Проверка наличия сигнальных линий.
+       */
+      if (!isOpen || !isClose) {
+        logger.error(
+          'The position control method via signals is selected, but controls for both positions are not selected 🚨',
+        );
+
+        hasError = true;
+      }
+
+      if (hasError) {
+        logger.error({
+          name: this.name,
+          now: this.now,
+          phase,
+          open: Boolean(open),
+          close: Boolean(close),
+          power: Boolean(power),
+          isOpen: Boolean(isOpen),
+          isClose: Boolean(isClose),
+        });
+
+        this.destroy();
+
+        throw new Error('Unable to start leaks macros');
+      }
+    }
+  };
 
   static parseSettings = (settings: string, version: number = VERSION): LeaksMacrosSettings => {
     return Macros.migrate(settings, version, VERSION, [], 'settings');
@@ -351,6 +453,26 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     }
   };
 
+  private getDebugContext = (mixin = {}) => {
+    return {
+      name: this.name,
+      now: this.now,
+      ...mixin,
+      state: this.state,
+      phase: this.phase,
+      isSwitchOpen: this.isSwitchOpen,
+      isSwitchClose: this.isSwitchClose,
+      isEnumOpen: this.isEnumOpen,
+      isEnumClose: this.isEnumClose,
+      isAnalogOpen: this.isAnalogOpen,
+      isAnalogClose: this.isAnalogClose,
+      isPhaseOpen: this.isPhaseOpen,
+      isPhaseOnWay: this.isPhaseOnWay,
+      isPhaseClose: this.isPhaseClose,
+      output: this.output,
+    };
+  };
+
   protected collecting() {
     this.collectLeaks();
   }
@@ -377,12 +499,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
         logger.info('The leak has been fixed 🌵 🍸');
       }
 
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        nextLeak,
-        state: this.state,
-      });
+      logger.debug(this.getDebugContext({ nextLeak }));
 
       this.state.leak = nextLeak;
     }
@@ -436,6 +553,130 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     });
   }
 
+  private get isAnalogOpen(): boolean {
+    return this.settings.devices.analog.some((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === this.settings.properties.analog.open;
+      }
+
+      return false;
+    });
+  }
+
+  private get isAnalogClose(): boolean {
+    return this.settings.devices.analog.every((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === this.settings.properties.analog.close;
+      }
+
+      return false;
+    });
+  }
+
+  private get isPhaseOpen(): boolean {
+    return this.settings.devices.phase.some((devices) => {
+      const open = this.controls.get(getControlId(devices.open));
+      const close = this.controls.get(getControlId(devices.close ?? { deviceId: '', controlId: '' }));
+      const power = this.controls.get(getControlId(devices.power ?? { deviceId: '', controlId: '' }));
+      const isOpen = this.controls.get(getControlId(devices.isOpen ?? { deviceId: '', controlId: '' }));
+      const isClose = this.controls.get(getControlId(devices.isClose ?? { deviceId: '', controlId: '' }));
+
+      if (isOpen && isClose) {
+        /**
+         * Управление через реле + сигнальные линии.
+         */
+
+        return isOpen.value === isOpen.on && isClose.value === isClose.off;
+      } else if (open && close && !power) {
+        /**
+         * Управление при помощи двух реле, и временной задержки на переключение крана.
+         */
+
+        return this.state.valve === ValueState.OPEN && open.value === open.off && close.value === close.off;
+      } else if (open && !close && power) {
+        /**
+         * Управление при переключающегося реле и реле подключения питания, и временной задержки на переключение крана.
+         */
+
+        return this.state.valve === ValueState.OPEN && open.value === open.off && power.value === power.off;
+      }
+
+      return false;
+    });
+  }
+
+  private get isPhaseOnWay(): boolean {
+    return this.settings.devices.phase.some((devices) => {
+      const open = this.controls.get(getControlId(devices.open));
+      const close = this.controls.get(getControlId(devices.close ?? { deviceId: '', controlId: '' }));
+      const power = this.controls.get(getControlId(devices.power ?? { deviceId: '', controlId: '' }));
+      const isOpen = this.controls.get(getControlId(devices.isOpen ?? { deviceId: '', controlId: '' }));
+      const isClose = this.controls.get(getControlId(devices.isClose ?? { deviceId: '', controlId: '' }));
+
+      if (isOpen && isClose) {
+        /**
+         * Управление через реле + сигнальные линии.
+         */
+
+        return isOpen.value === isOpen.off && isClose.value === isClose.off;
+      } else if (open && close && !power) {
+        /**
+         * Управление при помощи двух реле, и временной задержки на
+         * переключение крана.
+         */
+
+        return open.value !== open.off || close.value !== close.off;
+      } else if (open && !close && power) {
+        /**
+         * Управление через переключающееся реле и реле подключения питания, и
+         * временной задержки на переключение крана.
+         */
+
+        return open.value !== open.off || power.value === power.on;
+      }
+
+      return false;
+    });
+  }
+
+  private get isPhaseClose(): boolean {
+    return this.settings.devices.phase.some((devices) => {
+      const open = this.controls.get(getControlId(devices.open));
+      const close = this.controls.get(getControlId(devices.close ?? { deviceId: '', controlId: '' }));
+      const power = this.controls.get(getControlId(devices.power ?? { deviceId: '', controlId: '' }));
+      const isOpen = this.controls.get(getControlId(devices.isOpen ?? { deviceId: '', controlId: '' }));
+      const isClose = this.controls.get(getControlId(devices.isClose ?? { deviceId: '', controlId: '' }));
+
+      if (isOpen && isClose) {
+        /**
+         * Управление через реле + сигнальные линии.
+         */
+
+        return isOpen.value === isOpen.off && isClose.value === isClose.on;
+      } else if (open && close && !power) {
+        /**
+         * Управление при помощи двух реле, и временной задержки на переключение
+         * крана.
+         */
+
+        return this.state.valve === ValueState.CLOSE && open.value === open.off && close.value === close.off;
+      } else if (open && !close && power) {
+        /**
+         * Управление при переключающегося реле и реле подключения питания,
+         * и временной задержки на переключение крана.
+         */
+
+        return this.state.valve === ValueState.CLOSE && open.value === open.off && power.value === power.off;
+      }
+
+      return false;
+    });
+  }
+
   /**
    * Задается на уровне FE приложения.
    */
@@ -444,13 +685,13 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       if (this.state.force === 'OPEN' && this.state.valve === ValueState.CLOSE) {
         logger.info('The valves will be forcibly closed 🌵');
 
-        this.state.valve = ValueState.CLOSE;
+        this.state.valve = ValueState.OPEN;
 
-        logger.debug({
-          name: this.name,
-          now: this.now,
-          state: this.state,
-        });
+        logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
+
+        this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+
+        logger.debug(this.getDebugContext());
 
         this.computeOutput();
         this.send();
@@ -459,13 +700,13 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       if (this.state.force === 'CLOSE' && this.state.valve === ValueState.OPEN) {
         logger.info('The valves will be forcibly open 💧');
 
-        this.state.valve = ValueState.OPEN;
+        this.state.valve = ValueState.CLOSE;
 
-        logger.debug({
-          name: this.name,
-          now: this.now,
-          state: this.state,
-        });
+        logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
+
+        this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+
+        logger.debug(this.getDebugContext());
 
         this.computeOutput();
         this.send();
@@ -485,36 +726,50 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   protected sensorBasedComputing = (): boolean => {
-    let nextValueState = this.state.valve;
+    let nextValve = this.state.valve;
 
     if (this.state.leak && this.state.valve === ValueState.OPEN) {
       logger.info('The valves will be closed 🏜️ 🌵');
 
-      nextValueState = ValueState.CLOSE;
+      nextValve = ValueState.CLOSE;
     }
 
     if (!this.state.leak && this.state.valve === ValueState.CLOSE) {
       logger.info('The valves will be opened 🌊 💧');
 
-      nextValueState = ValueState.OPEN;
+      nextValve = ValueState.OPEN;
     }
 
-    if (this.state.valve !== nextValueState) {
+    if (this.state.valve !== nextValve) {
       logger.info('The condition of the valve has been changed 🎲 🎯 💾');
 
-      this.state.valve = nextValueState;
+      this.state.valve = nextValve;
 
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        state: this.state,
-      });
+      logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
+
+      this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+
+      logger.debug(this.getDebugContext());
 
       this.computeOutput();
       this.send();
     }
 
     return false;
+  };
+
+  private controlProgressDuration = () => {
+    const valveOnWay = compareAsc(new Date(), this.phase.durationOfActivation) === -1;
+
+    if (this.isPhaseOnWay && !valveOnWay) {
+      logger.info('The time for activating on the phases has expired ⏰');
+
+      this.computePhaseOutput(true);
+
+      logger.debug(this.getDebugContext());
+
+      this.send();
+    }
   };
 
   protected computeOutput = () => {
@@ -624,49 +879,375 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       }
     }
 
-    // for (const device of this.settings.devices.phase) {
-    //   const controlType = ControlType.SWITCH;
-    //   const control = this.controls.get(getControlId(device));
-
-    //   if (!control || control.type !== controlType || !control.topic.write) {
-    //     logger.error('The analog control specified in the settings was not found 🚨');
-    //     logger.error({
-    //       name: this.name,
-    //       now: this.now,
-    //       device,
-    //       controlType,
-    //       control,
-    //       controls: this.controls.size,
-    //     });
-
-    //     continue;
-    //   }
-
-    //   let value = this.settings.properties.analog.close;
-
-    //   if (this.state.valve === ValueState.OPEN) {
-    //     value = this.settings.properties.analog.open;
-    //   }
-
-    //   if (this.state.valve === ValueState.CLOSE) {
-    //     value = this.settings.properties.analog.close;
-    //   }
-
-    //   if (String(control.value) !== String(value)) {
-    //     this.output.analog.push({ ...device, value });
-    //   }
-    // }
+    this.computePhaseOutput();
 
     logger.info('The output was computed 🍋 🧪 ✊🏻');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      state: this.state,
-      output: this.output,
-    });
+    logger.debug(this.getDebugContext());
   };
 
-  protected send = () => {};
+  private computePhaseOutput = (forceOff = false) => {
+    this.output.phase = [];
 
-  protected destroy() {}
+    for (const devices of this.settings.devices.phase) {
+      const controlType = ControlType.SWITCH;
+
+      const open = this.controls.get(getControlId(devices.open));
+      const close = this.controls.get(getControlId(devices.close ?? { deviceId: '', controlId: '' }));
+      const power = this.controls.get(getControlId(devices.power ?? { deviceId: '', controlId: '' }));
+
+      if (!open || open.type !== controlType || !open.topic.write) {
+        logger.error('The open control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          devices,
+          controlType,
+          open,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      if (!close || close.type !== controlType || !close.topic.write) {
+        logger.error('The close control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          devices,
+          controlType,
+          close,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      if (power && (power.type !== controlType || !power.topic.write)) {
+        logger.error('The power control specified in the settings was not found 🚨');
+        logger.error({
+          name: this.name,
+          now: this.now,
+          devices,
+          controlType,
+          power,
+          controls: this.controls.size,
+        });
+
+        continue;
+      }
+
+      /**
+       * Управление через два отдельных реле.
+       */
+      if (open && close && devices.close && !power) {
+        if (forceOff && (open.value === open.on || close.value === close.on)) {
+          this.output.phase.push({
+            ...(open.value === open.on
+              ? {
+                  open: {
+                    ...devices.open,
+                    delaySec: 0,
+                    value: open.off,
+                  },
+                }
+              : {}),
+            ...(close.value === close.on
+              ? {
+                  close: {
+                    ...devices.close,
+                    delaySec: 0,
+                    value: close.off,
+                  },
+                }
+              : {}),
+          });
+
+          continue;
+        }
+
+        if (this.isPhaseOnWay) {
+          logger.info('Skipping the command for phase control, as the valve is in the process 👩‍🔬');
+          logger.debug(this.getDebugContext({ devices }));
+
+          continue;
+        }
+
+        if (this.state.valve === ValueState.OPEN && open.value === open.off) {
+          this.output.phase.push({
+            open: {
+              ...devices.open,
+              delaySec: close.value === close.on ? 1 : 0,
+              value: open.on,
+            },
+            ...(close.value === close.on
+              ? {
+                  close: {
+                    ...devices.close,
+                    delaySec: 0,
+                    value: close.off,
+                  },
+                }
+              : {}),
+          });
+        }
+
+        if (this.state.valve === ValueState.CLOSE && close.value === close.off) {
+          this.output.phase.push({
+            ...(open.value === open.on
+              ? {
+                  open: {
+                    ...devices.open,
+                    delaySec: 0,
+                    value: open.off,
+                  },
+                }
+              : {}),
+            close: {
+              ...devices.close,
+              delaySec: open.value === open.on ? 1 : 0,
+              value: close.on,
+            },
+          });
+        }
+      }
+
+      /**
+       * Управление через NO/NC + Power комплект реле.
+       */
+      if (open && !close && power && devices.power) {
+        if (forceOff && (open.value === open.on || power.value === power.on)) {
+          this.output.phase.push({
+            ...(open.value === open.on
+              ? {
+                  open: {
+                    ...devices.open,
+                    delaySec: 0,
+                    value: open.off,
+                  },
+                }
+              : {}),
+            ...(power.value === power.on
+              ? {
+                  power: {
+                    ...devices.power,
+                    delaySec: 0,
+                    value: power.off,
+                  },
+                }
+              : {}),
+          });
+
+          continue;
+        }
+
+        if (this.isPhaseOnWay) {
+          logger.info('Skipping the command for phase control, as the valve is in the process 👩‍🔬');
+          logger.debug(this.getDebugContext({ devices }));
+
+          continue;
+        }
+
+        if (this.state.valve === ValueState.OPEN) {
+          this.output.phase.push(
+            {
+              open: {
+                ...devices.open,
+                delaySec: 1,
+                value: open.on,
+              },
+              power: {
+                ...devices.power,
+                delaySec: 0,
+                value: power.off,
+              },
+            },
+            {
+              power: {
+                ...devices.power,
+                delaySec: 2,
+                value: power.on,
+              },
+            },
+          );
+        }
+
+        if (this.state.valve === ValueState.CLOSE) {
+          this.output.phase.push(
+            {
+              open: {
+                ...devices.open,
+                delaySec: 1,
+                value: open.off,
+              },
+              power: {
+                ...devices.power,
+                delaySec: 0,
+                value: power.off,
+              },
+            },
+            {
+              power: {
+                ...devices.power,
+                delaySec: 2,
+                value: power.on,
+              },
+            },
+          );
+        }
+      }
+    }
+  };
+
+  protected send = async () => {
+    for (const device of this.output.switch) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.write;
+      const message = device.value;
+
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error(this.getDebugContext({ device }));
+
+        continue;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    for (const device of this.output.enum) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.write;
+      const message = device.value;
+
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error(this.getDebugContext({ device }));
+
+        continue;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    for (const device of this.output.analog) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.write;
+      const message = device.value;
+
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error(this.getDebugContext({ device }));
+
+        continue;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    let phase: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+      readonly delaySec: number;
+      readonly value: string;
+    }> = [];
+
+    for (const { open, close, power } of this.output.phase) {
+      if (open) {
+        phase.push(open);
+      }
+
+      if (close) {
+        phase.push(close);
+      }
+
+      if (power) {
+        phase.push(power);
+      }
+    }
+
+    phase = phase.sort((a, b) => {
+      return a.delaySec < b.delaySec ? -1 : 1;
+    });
+
+    for (const device of phase) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.write;
+      const message = device.value;
+
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error(this.getDebugContext({ device }));
+
+        continue;
+      }
+
+      if (device.delaySec > 0) {
+        logger.info('Waiting before sending a message ⏳');
+        logger.debug({
+          name: this.name,
+          now: this.now,
+          device,
+        });
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, device.delaySec * 1000));
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        device,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+  };
+
+  protected destroy() {
+    clearInterval(this.timer.controlProgressDuration);
+  }
 }
