@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
-import { addSeconds, compareAsc } from 'date-fns';
+import { addMinutes, addSeconds, compareAsc, format } from 'date-fns';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
@@ -289,11 +289,16 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   private output: LeaksMacrosNextOutput;
 
   private phase = {
-    durationOfActivation: new Date(),
+    durationOfValveMovement: new Date(),
   };
 
   private timer: {
     controlProgressDuration: NodeJS.Timeout;
+  };
+
+  private block = {
+    open: new Date(),
+    matching: new Date(),
   };
 
   constructor(parameters: LeaksMacrosParameters) {
@@ -332,12 +337,15 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     };
 
     this.timer = {
-      controlProgressDuration: setInterval(this.controlProgressDuration, 1000),
+      controlProgressDuration: setInterval(this.controlProgressDuration, 5000),
     };
 
     this.checkPhaseCombination();
   }
 
+  /**
+   * Контроль целостности настроек фазного управления
+   */
   private checkPhaseCombination = () => {
     for (const phase of this.settings.devices.phase) {
       const open = this.controls.get(getControlId(phase.open));
@@ -469,10 +477,32 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       isPhaseOpen: this.isPhaseOpen,
       isPhaseOnWay: this.isPhaseOnWay,
       isPhaseClose: this.isPhaseClose,
+      hasMatchingBlock: this.hasMatchingBlock,
       output: this.output,
     };
   };
 
+  /**
+   * Автоматизация по времени
+   */
+  private controlProgressDuration = () => {
+    if (this.isPhaseOnWay && this.isDurationOfValveMovementTooLong) {
+      logger.info('Duration of valve movement too long, need to stop movement 🛑 ✋');
+
+      this.setMatchingBlock();
+      this.setOpenBlock();
+
+      this.computePhaseOutput(true);
+
+      logger.debug(this.getDebugContext());
+
+      this.send();
+    }
+  };
+
+  /**
+   * Сбор данных
+   */
   protected collecting() {
     this.collectLeaks();
   }
@@ -677,8 +707,48 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     });
   }
 
+  private get hasMatchingBlock(): boolean {
+    return compareAsc(new Date(), this.block.matching) === -1;
+  }
+
+  private get hasOpenBlock(): boolean {
+    return compareAsc(new Date(), this.block.open) === -1;
+  }
+
+  private get isDurationOfValveMovementTooLong(): boolean {
+    return compareAsc(new Date(), this.phase.durationOfValveMovement) === 1;
+  }
+
+  private setDurationOfValveMovement = () => {
+    logger.info('The duration of value movement on the phases is set ⏱️ 🎯 💾');
+
+    this.phase.durationOfValveMovement = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+  };
+
+  private setOpenBlock = () => {
+    this.block.open = addMinutes(new Date(), 5);
+
+    logger.info('The open block 🚫 was activated ✅');
+    logger.debug({
+      name: this.name,
+      now: this.now,
+      openBlock: format(this.block.open, 'yyyy.MM.dd HH:mm:ss OOOO'),
+    });
+  };
+
+  private setMatchingBlock = () => {
+    this.block.matching = addMinutes(new Date(), 5);
+
+    logger.info('The matching block 🚫 was activated ✅');
+    logger.debug({
+      name: this.name,
+      now: this.now,
+      matchingBlock: format(this.block.matching, 'yyyy.MM.dd HH:mm:ss OOOO'),
+    });
+  };
+
   /**
-   * Задается на уровне FE приложения.
+   * Приоритетное изменение состояния.
    */
   protected priorityComputation = () => {
     if (this.state.force !== 'UNSPECIFIED') {
@@ -687,9 +757,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
         this.state.valve = ValueState.OPEN;
 
-        logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
-
-        this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+        this.setDurationOfValveMovement();
 
         logger.debug(this.getDebugContext());
 
@@ -702,9 +770,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
         this.state.valve = ValueState.CLOSE;
 
-        logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
-
-        this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+        this.setDurationOfValveMovement();
 
         logger.debug(this.getDebugContext());
 
@@ -719,11 +785,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   /**
-   * У нас нет непосредственных элементов управления.
+   * Автоматизации по датчикам.
    */
-  protected actionBasedComputing = (): boolean => {
-    return false;
-  };
 
   protected sensorBasedComputing = (): boolean => {
     let nextValve = this.state.valve;
@@ -740,14 +803,61 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       nextValve = ValueState.OPEN;
     }
 
+    if (
+      this.state.valve === nextValve &&
+      this.state.valve === ValueState.OPEN &&
+      (this.isSwitchClose || this.isEnumClose || this.isAnalogClose || this.isPhaseClose) &&
+      !this.isPhaseOnWay &&
+      !this.hasMatchingBlock &&
+      !this.hasOpenBlock
+    ) {
+      logger.info('The open state and actual position of the cranes are different, matching the open state 💪 🚥');
+
+      this.setMatchingBlock();
+      this.setOpenBlock();
+      this.setDurationOfValveMovement();
+
+      logger.debug(this.getDebugContext());
+
+      this.computeOutput();
+      this.send();
+    }
+
+    if (
+      this.state.valve === nextValve &&
+      this.state.valve === ValueState.CLOSE &&
+      (this.isSwitchOpen || this.isEnumOpen || this.isAnalogOpen || this.isPhaseOpen) &&
+      !this.isPhaseOnWay &&
+      !this.hasMatchingBlock
+    ) {
+      logger.info('The close state and actual position of the values are different, matching the close state 💪 🚥');
+
+      this.setMatchingBlock();
+      this.setOpenBlock();
+      this.setDurationOfValveMovement();
+
+      logger.debug(this.getDebugContext());
+
+      this.computeOutput();
+      this.send();
+    }
+
     if (this.state.valve !== nextValve) {
       logger.info('The condition of the valve has been changed 🎲 🎯 💾');
 
       this.state.valve = nextValve;
 
-      logger.info('The duration of activation on the phases is set ⏱️ 🎯 💾');
+      if (this.state.valve === ValueState.OPEN && this.hasOpenBlock) {
+        logger.info('The opening by sensors is blocked 🚫');
 
-      this.phase.durationOfActivation = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+        return false;
+      }
+
+      if (this.state.valve === ValueState.CLOSE) {
+        this.setOpenBlock();
+      }
+
+      this.setDurationOfValveMovement();
 
       logger.debug(this.getDebugContext());
 
@@ -758,18 +868,11 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     return false;
   };
 
-  private controlProgressDuration = () => {
-    const valveOnWay = compareAsc(new Date(), this.phase.durationOfActivation) === -1;
-
-    if (this.isPhaseOnWay && !valveOnWay) {
-      logger.info('The time for activating on the phases has expired ⏰');
-
-      this.computePhaseOutput(true);
-
-      logger.debug(this.getDebugContext());
-
-      this.send();
-    }
+  /**
+   * Автоматизация по переключателям.
+   */
+  protected actionBasedComputing = (): boolean => {
+    return false;
   };
 
   protected computeOutput = () => {
@@ -909,7 +1012,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
         continue;
       }
 
-      if (!close || close.type !== controlType || !close.topic.write) {
+      if (close && (close.type !== controlType || !close.topic.write)) {
         logger.error('The close control specified in the settings was not found 🚨');
         logger.error({
           name: this.name,
@@ -962,13 +1065,6 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
                 }
               : {}),
           });
-
-          continue;
-        }
-
-        if (this.isPhaseOnWay) {
-          logger.info('Skipping the command for phase control, as the valve is in the process 👩‍🔬');
-          logger.debug(this.getDebugContext({ devices }));
 
           continue;
         }
@@ -1037,13 +1133,6 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
                 }
               : {}),
           });
-
-          continue;
-        }
-
-        if (this.isPhaseOnWay) {
-          logger.info('Skipping the command for phase control, as the valve is in the process 👩‍🔬');
-          logger.debug(this.getDebugContext({ devices }));
 
           continue;
         }
