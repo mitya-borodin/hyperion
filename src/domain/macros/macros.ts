@@ -149,6 +149,8 @@ export abstract class Macros<
     type,
     settings,
     state,
+    devices,
+    controls,
     collectingThrottleMs = 0,
     collectingDebounceMs = 0,
     sensorBasedComputingThrottleMs = 0,
@@ -158,8 +160,8 @@ export abstract class Macros<
     this.eventBus = eventBus;
 
     this.previous = new Map();
-    this.devices = new Map();
-    this.controls = new Map();
+    this.devices = devices;
+    this.controls = controls;
 
     this.id = id ?? v4();
     this.name = name;

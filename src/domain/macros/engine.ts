@@ -143,6 +143,8 @@ export class MacrosEngine {
           name,
           description,
           labels,
+          devices: this.devices.size,
+          controls: this.controls.size,
         }),
       );
 

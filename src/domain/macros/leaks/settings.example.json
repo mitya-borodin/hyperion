@@ -1,0 +1,70 @@
+{
+  "devices": {
+    "leaks": [
+      {
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN2",
+        "controlType": "switch"
+      },
+      {
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN3",
+        "controlType": "switch"
+      },
+      {
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN4",
+        "controlType": "switch"
+      },
+      {
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN5",
+        "controlType": "switch"
+      }
+    ],
+    "switch": [],
+    "enum": [],
+    "analog": [],
+    "phase": [
+      {
+        "open": {
+          "deviceId": "wb-mio-gpio_52:1",
+          "controlId": "DIR1",
+          "controlType": "switch"
+        },
+        "power": {
+          "deviceId": "wb-mio-gpio_52:1",
+          "controlId": "ON1",
+          "controlType": "switch"
+        },
+        "isOpen": {
+          "deviceId": "wb-gpio",
+          "controlId": "EXT3_IN8",
+          "controlType": "switch"
+        },
+        "isClose": {
+          "deviceId": "wb-gpio",
+          "controlId": "EXT3_IN9",
+          "controlType": "switch"
+        }
+      }
+    ]
+  },
+  "properties": {
+    "leak": {
+      "switch": "1",
+      "enum": "UNSPECIFIED"
+    },
+    "enum": {
+      "open": "UNSPECIFIED",
+      "close": "UNSPECIFIED"
+    },
+    "analog": {
+      "open": "10000",
+      "close": "0"
+    },
+    "phase": {
+      "durationSec": 30
+    }
+  }
+}
