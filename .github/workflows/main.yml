@@ -55,8 +55,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/hyperion/back-end:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/hyperion/back-end:${{ github.sha }}
+          tags: ghcr.io/mitya-borodin/hyperion:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/mitya-borodin/hyperion:${{ github.sha }}
           cache-to: type=inline
 
   deploy:
