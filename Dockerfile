@@ -1,5 +1,9 @@
 FROM node:20.11.0 as builder
 
+LABEL "org.opencontainers.image.source"="https://github.com/mitya-borodin/hyperion"
+LABEL "org.opencontainers.image.description"="Home automation platform"
+LABEL "org.opencontainers.image.licenses"="AGPL-3.0-only"
+
 ENV NODE_ENV=development
 
 USER node
@@ -14,6 +18,10 @@ RUN yarn prisma:generate
 RUN yarn build
 
 FROM node:20.11.0 as runner
+
+LABEL "org.opencontainers.image.source"="https://github.com/mitya-borodin/hyperion"
+LABEL "org.opencontainers.image.description"="Home automation platform"
+LABEL "org.opencontainers.image.licenses"="AGPL-3.0-only"
 
 ENV NODE_ENV=production
 

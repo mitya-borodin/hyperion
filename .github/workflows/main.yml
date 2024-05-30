@@ -46,16 +46,17 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         if: github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: borodindmitriy/hyperion:${{ github.sha }}
-          cache-from: type=registry,ref=borodindmitriy/hyperion:${{ github.sha }}
+          tags: ghcr.io/hyperion/back-end:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/hyperion/back-end:${{ github.sha }}
           cache-to: type=inline
 
   deploy:
@@ -73,8 +74,7 @@ jobs:
           private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
-            docker info;
-            docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }};
+            docker login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }};
             export GITHUB_SHA=${{ github.sha }};
             cd ${{ secrets.PROJECT_FOLDER }};
             git checkout master;
