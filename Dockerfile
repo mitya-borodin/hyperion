@@ -14,6 +14,8 @@ RUN yarn --frozen-lockfile
 
 COPY . .
 
+RUN chown -R node /tmp
+
 RUN yarn prisma:generate
 RUN yarn build
 
