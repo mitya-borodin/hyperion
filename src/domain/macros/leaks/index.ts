@@ -177,11 +177,6 @@ export type LeaksMacrosSettings = {
   readonly properties: {
     readonly leak: {
       /**
-       * Для SWITCH это логическая единица и логический ноль, где единица это наличие протечки.
-       */
-      readonly switch: string;
-
-      /**
        * Для ENUM это некий action который выбирается пользователь из предоставленного ENUM.
        */
       readonly enum: string;
@@ -529,10 +524,12 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
         logger.info('An open valve has been detected 🚰');
 
         this.state.valve = ValveState.OPEN;
-      }
-
-      if (this.isSwitchClose || this.isEnumClose || this.isAnalogClose || this.isPhaseClose) {
+      } else if (this.isSwitchClose || this.isEnumClose || this.isAnalogClose || this.isPhaseClose) {
         logger.info('All valves are closed 🚰 🚫 ');
+
+        this.state.valve = ValveState.CLOSE;
+      } else {
+        logger.info('The position of the valves could not be determined, a closed position was selected 🛑 🔒 🚰');
 
         this.state.valve = ValveState.CLOSE;
       }
@@ -550,7 +547,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       const control = this.controls.get(getControlId(device));
 
       if (control) {
-        return control.value === leak.switch || control.value === leak.enum;
+        return control.value === control.on || control.value === leak.enum;
       }
 
       return false;
@@ -891,6 +888,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       this.computeOutput();
       this.send();
+
+      return false;
     }
 
     if (
@@ -910,11 +909,21 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       this.computeOutput();
       this.send();
+
+      return false;
     }
 
     if (this.state.valve !== nextValve) {
+      if (this.hasMatchingBlock) {
+        logger.info('The changing by sensors is blocked 🚫');
+        logger.debug(this.getDebugContext());
+
+        return false;
+      }
+
       if (nextValve === ValveState.OPEN && this.hasOpenBlock) {
         logger.info('The opening by sensors is blocked 🚫');
+        logger.debug(this.getDebugContext());
 
         return false;
       }
