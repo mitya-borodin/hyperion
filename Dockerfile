@@ -12,7 +12,7 @@ WORKDIR '/tmp'
 COPY --chown=node:node package.json yarn.lock ./
 RUN yarn --frozen-lockfile
 
-COPY . .
+COPY --chown=node:node . .
 
 RUN yarn prisma:generate
 RUN yarn build
