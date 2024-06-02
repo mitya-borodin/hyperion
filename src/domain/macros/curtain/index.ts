@@ -679,18 +679,42 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.showSensorContext = throttle(this.showSensorContext, 60 * 1000);
   }
 
-  /**
-   * Высокочастотные логи.
-   */
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private showSate = () => {
-    logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
-    logger.debug({
+  private getDebugContext = (mixin = {}) => {
+    return {
       name: this.name,
       now: this.now,
       state: this.state,
-    });
+      ...mixin,
+      currentPositionOfControls: this.getPosition(),
+      block: this.block,
+      hasOpenBlock: this.hasOpenBlock,
+      hasCloseBlock: this.hasCloseBlock,
+      hasAllBlock: this.hasAllBlock,
+      last: this.last,
+      isMotion: this.isMotion,
+      isSilence: this.isSilence,
+      isCoverClose: this.isCoverClose,
+      isCoverMiddle: this.isCoverMiddle,
+      isCoverOpen: this.isCoverOpen,
+      isCoverCloserToOpen: this.isCoverCloserToOpen,
+      isCoverCloserToClose: this.isCoverCloserToClose,
+      isIlluminationReady: this.isIlluminationReady,
+      isCloseBySunReady: this.isCloseBySunReady,
+      isCloseByLighting: this.isCloseByLighting,
+      isEnoughLightingToClose: this.isEnoughLightingToClose,
+      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
+      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
+      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
+    };
+  };
+
+  /**
+   * Высокочастотные логи.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private showSate = () => {
+    logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
+    logger.debug(this.getDebugContext());
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -729,12 +753,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const nextState = CurtainMacros.parsePublicState(nextStateJson, this.version);
 
     logger.info('The next public state was supplied 📥');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      nextState,
-      state: this.state,
-    });
+    logger.debug(this.getDebugContext({ nextState }));
 
     if (this.state.target === nextState.target) {
       logger.warning('The received state does not differ from the current one 🚨');
@@ -743,7 +762,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.state.direction = this.getDirection();
 
       logger.info('The next state was applied 🫒 by set state in manual mode 🚹');
-      logger.debug({ state: this.state });
+      logger.debug(this.getDebugContext());
 
       this.computeOutput();
       this.send();
@@ -756,12 +775,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.state.direction = this.getDirection();
 
       logger.info('The next target 🎯 position was set ✅');
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        position: this.settings.properties.position,
-        state: this.state,
-      });
+      logger.debug(this.getDebugContext({ position: this.settings.properties.position }));
 
       this.computeOutput();
       this.send();
@@ -805,7 +819,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     if ((direction === 'OPEN' || target === position.open) && this.hasOpenBlock) {
-      logger.info('The opening is blocked 🚫 until the set time ⏱️');
+      logger.info('The OPEN is blocked 🚫 until the set time ⏱️');
       logger.debug({
         name: this.name,
         now: this.now,
@@ -819,7 +833,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     if ((direction === 'CLOSE' || target === position.close) && this.hasCloseBlock) {
-      logger.info('The close is blocked 🚫 until the set time ⏱️');
+      logger.info('The CLOSE is blocked 🚫 until the set time ⏱️');
       logger.debug({
         name: this.name,
         now: this.now,
@@ -859,13 +873,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       return 0;
     });
 
-    logger.info('The timeBasedComputing was run ⏰ 🏌️‍♂️ 🏃‍♀️‍➡️ ⏯️');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      openCloseByTime,
-      state: this.state,
-    });
+    logger.info('The time based computing was run ⏰');
+    logger.debug(this.getDebugContext({ openCloseByTime }));
 
     for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
       if (toClose || toOpen) {
@@ -904,13 +913,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if ((toClose || toOpen) && this.state.target !== target) {
       if (this.isBlocked(target)) {
         logger.info('Try to change position by time was blocked 🚫 😭');
-        logger.debug({
-          name: this.name,
-          now: this.now,
-          toOpen,
-          toClose,
-          blockMin,
-        });
+        logger.debug(this.getDebugContext({ toOpen, toClose, blockMin }));
 
         return;
       }
@@ -935,33 +938,22 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         });
       }
 
-      logger.info('Switching has been performed at a given time point ⏰');
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        openCloseByTime,
-        toOpen,
-        toClose,
-        blockMin,
-        timePointIsHit,
-        target,
-        state: this.state,
-      });
+      logger.info('Switching has been performed at a given time point ⏱️');
+      logger.debug(this.getDebugContext({ openCloseByTime, toOpen, toClose, blockMin, timePointIsHit, target }));
 
       this.setTarget(target);
     } else if (timePointIsHit) {
       logger.error('Hitting a time point, but next state the same with current state 🚨');
-      logger.error({
-        name: this.name,
-        now: this.now,
-        openCloseByTime,
-        toOpen,
-        toClose,
-        blockMin,
-        timePointIsHit,
-        target,
-        state: this.state,
-      });
+      logger.error(
+        this.getDebugContext({
+          openCloseByTime,
+          toOpen,
+          toClose,
+          blockMin,
+          timePointIsHit,
+          target,
+        }),
+      );
     }
   };
 
@@ -973,27 +965,39 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       const fromMin = hours * 60 + minutes - 15;
       const toMin = hours * 60 + minutes + 15;
 
-      logger.info('Checking for hitting a time point ℹ️');
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        hours,
-        minutes,
-        fromMin,
-        timePointInMin: min,
-        toMin,
-        hitting: min >= fromMin && min <= toMin,
-      });
+      logger.info('Checking for hitting a time point ⏱️');
+      logger.debug(
+        this.getDebugContext({
+          hours,
+          minutes,
+          fromMin,
+          timePointInMin: min,
+          toMin,
+          hitting: min >= fromMin && min <= toMin,
+        }),
+      );
 
       if (min >= fromMin && min <= toMin) {
         logger.info('Hitting a time point 🔘 ✅');
-        logger.debug({ name: this.name, fromMin, timePointInMin: min, toMin });
+        logger.debug(
+          this.getDebugContext({
+            fromMin,
+            timePointInMin: min,
+            toMin,
+          }),
+        );
 
         return true;
       }
     } else {
       logger.info('The time should be in day range 🏙️ 🚨');
-      logger.debug({ name: this.name, fromMin: 0, timePointInMin: min, toMin: 24 * 60 });
+      logger.debug(
+        this.getDebugContext({
+          fromMin: 0,
+          timePointInMin: min,
+          toMin: 24 * 60,
+        }),
+      );
     }
 
     return false;
@@ -1145,17 +1149,17 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     if (low.closeLux > low.openLux) {
       logger.error('The low.closeLux should be less then low.openLux 🚨');
-      logger.error({ properties: this.settings.properties });
+      logger.error(this.getDebugContext({ properties: this.settings.properties }));
     }
 
     if (low.openLux > hi.openLux) {
       logger.error('The low.openLux should be less then hi.openLux 🚨');
-      logger.error({ properties: this.settings.properties });
+      logger.error(this.getDebugContext({ properties: this.settings.properties }));
     }
 
     if (hi.openLux > hi.closeLux) {
       logger.error('The hi.openLux should be less then hi.closeLux 🚨');
-      logger.error({ properties: this.settings.properties });
+      logger.error(this.getDebugContext({ properties: this.settings.properties }));
     }
 
     return (
@@ -1177,7 +1181,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     if (closeBySun.illumination.closeLux < closeBySun.illumination.openLux) {
       logger.error('The closeBySun.illumination.closeLux should be more then closeBySun.illumination.openLux 🚨');
-      logger.error({ name: this.name, properties: this.settings.properties });
+      logger.error(this.getDebugContext({ properties: this.settings.properties }));
     }
 
     return (
@@ -1285,12 +1289,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.state.target = current;
 
       logger.info('The starting position of the curtain has been determined 🩻');
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        current,
-        state: this.state,
-      });
+      logger.debug(this.getDebugContext({ current }));
 
       this.requestPositions();
     }
@@ -1304,12 +1303,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         this.state.target = current;
       }
 
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        current,
-        state: this.state,
-      });
+      logger.debug(this.getDebugContext({ current }));
     }
   };
 
@@ -1327,14 +1321,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.lighting !== nextLighting) {
       if (nextLighting === Lighting.ON) {
         logger.info('The lighting is on 💡');
-        logger.debug({ name: this.name, now: this.now });
 
         this.state.illumination.beforeTurningOnLighting = this.state.illumination.average;
       }
 
       if (nextLighting === Lighting.OFF) {
         logger.info('The lighting is off 🕯️');
-        logger.debug({ name: this.name, now: this.now });
 
         this.state.illumination.beforeTurningOnLighting = 0;
         this.state.illumination.descent = -1;
@@ -1344,13 +1336,12 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
       }
 
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO'),
-        nextLighting,
-        state: this.state,
-      });
+      logger.debug(
+        this.getDebugContext({
+          allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO'),
+          nextLighting,
+        }),
+      );
 
       this.state.lighting = nextLighting;
     }
@@ -1399,15 +1390,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           }
         }
 
-        logger.debug({
-          name: this.name,
-          now: this.now,
-          beforeTurningOnLighting,
-          lastMeasured,
-          nextMeasured,
-          diff,
-          state: this.state,
-        });
+        logger.debug(
+          this.getDebugContext({
+            beforeTurningOnLighting,
+            lastMeasured,
+            nextMeasured,
+            diff,
+          }),
+        );
       }
 
       this.state.illumination.average = this.computeMovingArrange('illumination', beforeTurningOnLighting);
@@ -1468,85 +1458,42 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
      */
     let nextTarget = this.state.position;
 
-    const context = {
-      name: this.name,
-      now: this.now,
-      settings: { position },
-      state: this.state,
-      currentPositionOfControls: this.getPosition(),
-      nextTarget,
-      isBlocked: this.isBlocked(nextTarget),
-      hasOpenBlock: this.hasOpenBlock,
-      hasCloseBlock: this.hasCloseBlock,
-      hasAllBlock: this.hasAllBlock,
-      block: this.block,
-      isMotion: this.isMotion,
-      isSilence: this.isSilence,
-      last: this.last,
-      isCoverClose: this.isCoverClose,
-      isCoverMiddle: this.isCoverMiddle,
-      isCoverOpen: this.isCoverOpen,
-      isCoverCloserToOpen: this.isCoverCloserToOpen,
-      isCoverCloserToClose: this.isCoverCloserToClose,
-      isIlluminationReady: this.isIlluminationReady,
-      isCloseByLighting: this.isCloseByLighting,
-      isEnoughLightingToClose: this.isEnoughLightingToClose,
-      isCloseBySunReady: this.isCloseBySunReady,
-      isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-      isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-      isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-    };
     if (this.isCloseByLighting) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
-        context.nextTarget = nextTarget;
-        context.isBlocked = this.isBlocked(nextTarget);
-
         logger.info('Close because enabled lighting 💡');
-        logger.trace(context);
+        logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
     } else if (this.isEnoughLightingToClose) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
-        context.nextTarget = nextTarget;
-        context.isBlocked = this.isBlocked(nextTarget);
-
         logger.info('Close because enough lighting to close 🌃 or 🌇');
-        logger.trace(context);
+        logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
     } else if (this.isEnoughSunActiveToClose) {
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
-        context.nextTarget = nextTarget;
-        context.isBlocked = this.isBlocked(nextTarget);
-
         logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
-        logger.trace(context);
+        logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
     } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
       if (nextTarget !== position.open) {
         nextTarget = position.open;
 
-        context.nextTarget = nextTarget;
-        context.isBlocked = this.isBlocked(nextTarget);
-
         logger.info('Open because sun is not active 🪭 😎 🆒');
-        logger.trace(context);
+        logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
     } else if (this.isEnoughLightingToOpen && this.isMotion && nextTarget !== position.open) {
       nextTarget = position.open;
 
-      context.nextTarget = nextTarget;
-      context.isBlocked = this.isBlocked(nextTarget);
-
       logger.info('Open because enough lighting to open 🌅 💡');
-      logger.trace(context);
+      logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
     }
 
-    this.showSensorContext(context);
+    this.showSensorContext(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
 
     if (this.state.target === nextTarget) {
       this.retryToApplyNextState();
@@ -1597,38 +1544,15 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       isSwitchHasBeenChange = true;
 
       logger.info('The button was touched 👉 🔘');
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        position,
-        currentPositionOfControls: this.getPosition(),
-        state: this.state,
-      });
-      logger.trace({
-        hasOpenBlock: this.hasOpenBlock,
-        hasCloseBlock: this.hasCloseBlock,
-        hasAllBlock: this.hasAllBlock,
-        isCoverClose: this.isCoverClose,
-        isCoverMiddle: this.isCoverMiddle,
-        isCoverOpen: this.isCoverOpen,
-        isCoverCloserToOpen: this.isCoverCloserToOpen,
-        isCoverCloserToClose: this.isCoverCloserToClose,
-        isMotion: this.isMotion,
-        isSilence: this.isSilence,
-        lastMotion: this.last.motion,
-        lastNoise: this.last.noise,
-        isIlluminationReady: this.isIlluminationReady,
-        isCloseBySunReady: this.isCloseBySunReady,
-        isEnoughLightingToClose: this.isEnoughLightingToClose,
-        isEnoughSunActiveToClose: this.isEnoughSunActiveToClose,
-        isEnoughSunActiveToOpen: this.isEnoughSunActiveToOpen,
-        isEnoughLightingToOpen: this.isEnoughLightingToOpen,
-        button: current?.controls.filter((control) =>
-          this.settings.devices.buttons.some(
-            (button) => button.deviceId === current.id && button.controlId === control.id,
+      logger.debug(
+        this.getDebugContext({
+          button: current?.controls.filter((control) =>
+            this.settings.devices.buttons.some(
+              (button) => button.deviceId === current.id && button.controlId === control.id,
+            ),
           ),
-        ),
-      });
+        }),
+      );
     }
 
     if (isSwitchHasBeenChange) {
@@ -1689,7 +1613,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         }
       }
 
-      logger.debug({ name: this.name, target, state: this.state });
+      logger.debug(this.getDebugContext());
 
       if (this.state.target !== target) {
         const isLowPrioritySwitcher = switcher.type === SwitchType.SEALED_CONTACT || switcher.type === SwitchType.RELAY;
@@ -1831,27 +1755,26 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
    */
   private retryToApplyNextState = () => {
     logger.info('Retry to apply target to control 🔁');
-    logger.debug({
-      name: this.name,
-      now: this.now,
-      state: this.state,
-      positions: this.settings.devices.positions.map((item) => {
-        const control = this.controls.get(getControlId(item));
+    logger.debug(
+      this.getDebugContext({
+        positions: this.settings.devices.positions.map((item) => {
+          const control = this.controls.get(getControlId(item));
 
-        if (control) {
-          return {
-            ...item,
-            max: control.max,
-            min: control.min,
-            enum: control.enum,
-            on: control.on,
-            off: control.off,
-            toggle: control.toggle,
-            value: control.value,
-          };
-        }
+          if (control) {
+            return {
+              ...item,
+              max: control.max,
+              min: control.min,
+              enum: control.enum,
+              on: control.on,
+              off: control.off,
+              toggle: control.toggle,
+              value: control.value,
+            };
+          }
+        }),
       }),
-    });
+    );
 
     if (this.hasAllBlock) {
       logger.info('Skip retry to apply target to control ⏩, because all block enabled');
@@ -1875,6 +1798,13 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         );
         logger.info('All curtains will be updated according to the internal state of the curtain macro 🪟');
         logger.debug({ state: this.state, positionFromControl: control?.value });
+
+        if (this.isBlocked(this.state.target)) {
+          logger.info('Try to change position by (retry to apply next state) was blocked 🚫 😭');
+          logger.debug(this.getDebugContext());
+
+          continue;
+        }
 
         this.computeOutput();
         this.send();
@@ -1922,7 +1852,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.block.all = addSeconds(new Date(), 30);
 
       logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
-      logger.debug({ name: this.name, now: this.now, allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+      logger.debug(this.getDebugContext({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') }));
     }
 
     this.send();
@@ -1969,7 +1899,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     this.block.all = addSeconds(new Date(), 30);
 
     logger.info('The all block 🚫 was activated for 30 ⏱️ seconds ✅');
-    logger.debug({ name: this.name, now: this.now, allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') });
+    logger.debug(this.getDebugContext({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') }));
   };
 
   protected computeOutput = () => {
@@ -2002,10 +1932,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     logger.info('The output for change 🏃‍♀️‍➡️ position was computed 💻');
     logger.debug({
-      name: this.name,
-      now: this.now,
-      devices: this.settings.devices.positions,
-      state: this.state,
+      ...this.getDebugContext(),
       output: this.output,
     });
 
@@ -2040,9 +1967,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       logger.info('The message will be sent to the wirenboard controller 📟');
       logger.debug({
-        name: this.name,
-        now: this.now,
-        state: this.state,
+        ...this.getDebugContext(),
         topic,
         message,
       });
@@ -2075,8 +2000,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       logger.info('The message will be sent to the wirenboard controller 📟');
       logger.debug({
-        name: this.name,
-        now: this.now,
+        ...this.getDebugContext(),
         topic,
         message,
       });
