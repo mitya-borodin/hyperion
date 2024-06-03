@@ -488,6 +488,13 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   /**
    * Автоматизация по времени
    */
+  private runExecution = () => {
+    logger.info('Starting execution by timer 🚥');
+    logger.debug(this.getDebugContext());
+
+    this.execute();
+  };
+
   private controlProgressDuration = () => {
     if (this.isPhaseOnWay && this.isDurationOfValveMovementTooLong) {
       logger.info('Duration of valve movement too long, need to stop movement 🛑 ✋');
@@ -501,13 +508,6 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       this.send();
     }
-  };
-
-  private runExecution = () => {
-    logger.info('Starting execution by timer 🚥');
-    logger.debug(this.getDebugContext());
-
-    this.execute();
   };
 
   /**

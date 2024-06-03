@@ -210,16 +210,12 @@
             "leak": {
               "type": "object",
               "properties": {
-                "switch": {
-                  "type": "string",
-                  "description": "Для SWITCH это логическая единица и логический ноль, где единица это наличие протечки."
-                },
                 "enum": {
                   "type": "string",
                   "description": "Для ENUM это некий action который выбирается пользователь из предоставленного ENUM."
                 }
               },
-              "required": ["switch", "enum"],
+              "required": ["enum"],
               "additionalProperties": false
             },
             "enum": {

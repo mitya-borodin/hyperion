@@ -1,106 +1,144 @@
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable unicorn/no-empty-file */
-import debug from 'debug';
+import { addMinutes, compareAsc, compareDesc, format, subMinutes } from 'date-fns';
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
-import { stringify } from '../../../helpers/json-stringify';
+import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
+import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
+import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
-const logger = debug('hyperion:macros:recirculation');
+const logger = getLogger('hyperion:macros:recirculation');
 
 /**
  * ! SETTINGS
  */
-export enum Trigger {
-  UP = 'UP',
-  DOWN = 'DOWN',
-}
 
-export enum DeviceState {
+/**
+ * Состояние насоса
+ */
+export enum PumpState {
+  UNSPECIFIED = 'UNSPECIFIED',
   ON = 'ON',
   OFF = 'OFF',
+}
+
+/**
+ * Правило определения числового значения по нескольким датчикам
+ * MAX - берем максимальное среди всех
+ * MIN - берем минимальное среди всех
+ * AVG - берем среднее среди всех
+ */
+export enum LevelDetection {
+  MAX = 'MAX',
+  MIN = 'MIN',
+  AVG = 'AVG',
 }
 
 /**
  * Рециркуляция ГВС.
  */
 export type RecirculationMacrosSettings = {
-  /**
-   * Насос.
-   */
-  readonly pump: {
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
+  readonly devices: {
+    /**
+     * Насос.
+     */
+    readonly pump: {
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    };
+
+    /**
+     * В случае реакции на переключатель (Кнопка, Открытие двери) запускается насос на delayMin.
+     */
+    readonly switcher: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    }>;
+
+    /**
+     * В случае реакции на движение запускается насос на delayMin.
+     */
+    readonly motions: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.VALUE;
+    }>;
+
+    /**
+     * Устройства, для определения полной тишины.
+     */
+    readonly noises: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.VALUE;
+    }>;
+
+    /**
+     * При возникновении протечки, насос отключается.
+     */
+    readonly leaks: Array<{
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    }>;
   };
 
-  /**
-   * В случае реакции на переключатель (Кнопка, Открытие двери) запускается насос на delayMin.
-   */
-  readonly switcher: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
-    readonly trigger: Trigger;
-    readonly delayMin: number;
-  }>;
+  readonly properties: {
+    /**
+     * Время работы насоса после получения сигнала на включение.
+     */
+    readonly runMin: number;
 
-  /**
-   * В случае реакции на движение запускается насос на delayMin.
-   */
-  readonly motion: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.VALUE;
-    readonly trigger: number;
-    readonly delayMin: number;
-  }>;
+    /**
+     * Время в течении которого вода в трубах ещё не успела остыть,
+     * это позволяет не включать насос пока вода не остынет.
+     */
+    readonly hotMin: number;
 
-  /**
-   * В случае реакции на шум запускается насос на delayMin.
-   */
-  readonly noise: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.VALUE;
-    readonly trigger: number;
-    readonly delayMin: number;
-  }>;
+    /**
+     * Порог реакции на движение.
+     */
+    readonly motion: {
+      trigger: number;
+      detection: LevelDetection;
+    };
 
-  /**
-   * При возникновении протечки, насос отключается.
-   */
-  readonly leaks: Array<{
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
-  }>;
+    /**
+     * Порог реакции на шум.
+     */
+    readonly noise: {
+      trigger: number;
+      detection: LevelDetection;
+    };
 
-  /**
-   * Расписание включения рециркуляции.
-   *
-   * Если список пустой, то рециркуляция включается по датчикам.
-   *
-   * Если указаны диапазоны времени, то если хотя бы в один диапазон попадает
-   * текущее время в которое требуется включить насос, насос включается вне зависимости от датчиков.
-   *
-   * Требуется указание часов в сутках от 0 до 23.
-   */
-  readonly schedule: Array<{
-    from: string;
-    to: string;
-  }>;
+    /**
+     * Спустя это время, при отсутствия движения, устанавливается полная тишина.
+     */
+    readonly silenceMin: number;
+
+    readonly leak: {
+      /**
+       * Для ENUM это некий action который выбирается пользователь из предоставленного ENUM.
+       */
+      readonly enum: string;
+    };
+  };
 };
 
 /**
  * ! STATE
  */
-export type RecirculationMacrosPublicState = {};
+export type RecirculationMacrosPublicState = object;
 
 type RecirculationMacrosPrivateState = {
-  pump: DeviceState;
+  pump: PumpState;
+  leak: boolean;
+  motion: number;
+  noise: number;
 };
 
 type RecirculationMacrosState = RecirculationMacrosPublicState & RecirculationMacrosPrivateState;
@@ -120,12 +158,38 @@ const VERSION = 0;
 
 type RecirculationMacrosParameters = MacrosParameters<string, string | undefined>;
 
+const defaultState: RecirculationMacrosState = {
+  pump: PumpState.UNSPECIFIED,
+  leak: false,
+  motion: -1,
+  noise: -1,
+};
+
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
+
 export class RecirculationMacros extends Macros<
   MacrosType.RECIRCULATION,
   RecirculationMacrosSettings,
   RecirculationMacrosState
 > {
-  private nextOutput: RecirculationMacrosNextOutput;
+  private output: RecirculationMacrosNextOutput;
+
+  private last = {
+    motion: subMinutes(new Date(), 60),
+    noise: subMinutes(new Date(), 60),
+  };
+
+  private block = {
+    pumpRunOut: new Date(),
+  };
+
+  private pumpRunOutTime = subMinutes(new Date(), 60);
+
+  private timer: {
+    pumpRunOutTimer: NodeJS.Timeout;
+  };
 
   constructor(parameters: RecirculationMacrosParameters) {
     const settings = RecirculationMacros.parseSettings(parameters.settings, parameters.version);
@@ -148,108 +212,311 @@ export class RecirculationMacros extends Macros<
       labels: parameters.labels,
 
       settings,
-
-      state: defaultsDeep(state, {
-        disable: {
-          coldWater: false,
-          hotWater: false,
-          recirculation: false,
-        },
-        hotWaterTemperature: 60,
-        coldWaterPumps: {},
-        valves: {},
-        boilerPumps: {},
-        heatRequests: {},
-        recirculationPumps: {},
-      }),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
     });
 
-    this.nextOutput = {
+    this.output = {
       pump: undefined,
+    };
+
+    this.timer = {
+      pumpRunOutTimer: setInterval(this.pumpRunOutTimer, 60 * 1000),
     };
   }
 
-  static parseSettings = (settings: string, version: number = VERSION): RecirculationMacrosSettings => {
-    // if (version === VERSION) {
-    //   logger('Settings in the current version ✅');
-    //   logger(stringify({ from: version, to: VERSION }));
+  private getDebugContext = (mixin = {}) => {
+    const timeFormat = 'yyyy.MM.dd HH:mm:ss OOOO';
 
-    // /**
-    //  * TODO Проверять через JSON Schema
-    //  */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [() => {}].slice(version, VERSION + 1);
-
-    // logger(mappers);
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return JSON.parse(settings);
+    return {
+      name: this.name,
+      now: this.now,
+      ...mixin,
+      state: this.state,
+      block: {
+        pumpRunOut: format(this.block.pumpRunOut, timeFormat),
+      },
+      pumpRunOutTime: format(this.pumpRunOutTime, timeFormat),
+      isPumpRunOut: this.isPumpRunOut,
+      isMotion: this.isMotion,
+      isSilence: this.isSilence,
+      output: this.output,
+    };
   };
 
-  static parseState = (state?: string): RecirculationMacrosState => {
+  static parseSettings = (settings: string, version: number = VERSION): RecirculationMacrosSettings => {
+    return Macros.migrate(settings, version, VERSION, [], 'settings');
+  };
+
+  static parseState = (state?: string, version: number = VERSION): RecirculationMacrosState => {
     if (!state) {
-      return {
-        pump: DeviceState.OFF,
-      };
+      return createDefaultState();
+    }
+
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
+
+  static parsePublicState = (state?: string, version: number = VERSION): RecirculationMacrosPublicState => {
+    if (!state) {
+      return createDefaultState();
     }
 
     /**
-     * TODO Проверять через JSON Schema
+     * TODO Передать схему, только для публичного стейта
      */
-
-    return JSON.parse(state);
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
   setState = (nextPublicState: string): void => {};
 
-  protected collecting() {}
+  /**
+   * Автоматизация по времени.
+   */
+  private pumpRunOutTimer = () => {
+    logger.info('Checking the pump run-out time ⏱️');
+
+    if (this.state.pump === PumpState.ON && !this.isPumpRunOut) {
+      logger.info('The pump will be stopped because the pump run-out time has ended 🛑');
+
+      this.state.pump = PumpState.OFF;
+
+      logger.info('The pump start lock is installed 🌵');
+
+      this.block.pumpRunOut = addMinutes(new Date(), this.settings.properties.hotMin);
+
+      logger.debug(this.getDebugContext());
+
+      this.computeOutput();
+      this.send();
+    }
+  };
+
+  protected collecting() {
+    this.collectLeaks();
+    this.collectMotion();
+    this.collectNoise();
+  }
+
+  private collectLeaks() {
+    const { leaks } = this.settings.devices;
+
+    const { leak } = this.settings.properties;
+
+    const nextLeak = leaks.some((device) => {
+      const control = this.controls.get(getControlId(device));
+
+      if (control) {
+        return control.value === control.on || control.value === leak.enum;
+      }
+
+      return false;
+    });
+
+    if (this.state.leak !== nextLeak) {
+      if (nextLeak) {
+        logger.info('A leak has been detected 💧 🐬');
+      } else {
+        logger.info('The leak has been fixed 🌵 🍸');
+      }
+
+      logger.debug(this.getDebugContext({ nextLeak }));
+
+      this.state.leak = nextLeak;
+    }
+  }
+
+  private collectMotion = () => {
+    const { motions } = this.settings.devices;
+    const { motion } = this.settings.properties;
+
+    this.state.motion = this.getValueByDetection(motions, motion.detection);
+
+    if (this.state.motion >= motion.trigger) {
+      this.last.motion = new Date();
+    }
+  };
+
+  private collectNoise = () => {
+    const { noises } = this.settings.devices;
+    const { noise } = this.settings.properties;
+
+    this.state.noise = this.getValueByDetection(noises, noise.detection);
+
+    if (this.state.noise >= noise.trigger) {
+      this.last.noise = new Date();
+    }
+  };
+
+  private get hasBlock(): boolean {
+    if (this.state.leak) {
+      logger.info('The pump is blocked by a leak 💧');
+      logger.debug(this.getDebugContext());
+
+      return true;
+    }
+
+    if (this.isPumpRunOutLocked) {
+      logger.info('The pump run-out is blocked by hot 🥵 water in tubes 💧');
+      logger.debug(this.getDebugContext());
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private get isPumpRunOutLocked(): boolean {
+    return compareAsc(this.block.pumpRunOut, new Date()) === 1;
+  }
+
+  private get isPumpRunOut(): boolean {
+    return compareAsc(this.pumpRunOutTime, new Date()) === 1;
+  }
+
+  private get isMotion(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareDesc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1
+    );
+  }
+
+  private get isSilence(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
+    );
+  }
 
   protected priorityComputation = () => {
     return false;
   };
 
   protected actionBasedComputing = (): boolean => {
+    /**
+     * TODO Добавить когда появятся двери.
+     */
+
     return false;
   };
+
   protected sensorBasedComputing = (): boolean => {
+    if (this.state.pump === PumpState.OFF && this.isMotion && !this.hasBlock) {
+      logger.info('The pump will be turned ON because motion is detected 🔄');
+
+      this.state.pump = PumpState.ON;
+
+      logger.info('The pump run-out time is set ⏱️ 🎯');
+
+      this.pumpRunOutTime = addMinutes(new Date(), this.settings.properties.runMin);
+
+      logger.debug(this.getDebugContext());
+
+      this.computeOutput();
+      this.send();
+
+      return false;
+    }
+
+    if (this.state.pump === PumpState.ON && this.state.leak) {
+      logger.info('The pump will be turned OFF because leak is detected 🛑');
+
+      this.state.pump = PumpState.OFF;
+
+      this.pumpRunOutTime = subMinutes(new Date(), 60);
+
+      logger.debug(this.getDebugContext());
+
+      this.computeOutput();
+      this.send();
+
+      return false;
+    }
+
     return false;
   };
 
   protected computeOutput = () => {
-    const nextOutput: RecirculationMacrosNextOutput = {
-      pump: undefined,
-    };
+    this.output.pump = undefined;
 
-    this.nextOutput = nextOutput;
+    const device = this.settings.devices.pump;
+    const controlType = ControlType.SWITCH;
+    const control = this.controls.get(getControlId(device));
 
-    logger('The next output was computed ⏭️ 🍋');
-    logger(
-      stringify({
+    if (!control || control.type !== controlType || !control.topic.write) {
+      logger.error('The switch control specified in the settings was not found 🚨');
+      logger.error({
         name: this.name,
-        nextState: this.state,
-        nextOutput: this.nextOutput,
-      }),
-    );
+        now: this.now,
+        device,
+        controlType,
+        control,
+        controls: this.controls.size,
+      });
+
+      return;
+    }
+
+    let value = control.off;
+
+    if (this.state.pump === PumpState.ON) {
+      value = control.on;
+    }
+
+    if (this.state.pump === PumpState.OFF) {
+      value = control.off;
+    }
+
+    if (String(control.value) !== String(value)) {
+      this.output.pump = { ...device, value };
+    }
+
+    logger.info('The next output was computed ⏭️ 🍋');
+    logger.debug(this.getDebugContext());
   };
 
-  protected send = () => {};
+  protected send = () => {
+    if (this.output.pump) {
+      const device = this.output.pump;
 
-  protected destroy() {}
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.write;
+      const message = device.value;
 
-  /**
-   * ! INTERNAL_IMPLEMENTATION
-   */
+      if (!hyperionDevice || !hyperionControl || !topic) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error(this.getDebugContext({ device }));
+
+        return;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+
+      this.output.pump = undefined;
+    }
+  };
+
+  protected destroy() {
+    clearInterval(this.timer.pumpRunOutTimer);
+  }
 }

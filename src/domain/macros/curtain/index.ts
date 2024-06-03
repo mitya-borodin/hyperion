@@ -683,8 +683,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return {
       name: this.name,
       now: this.now,
-      state: this.state,
       ...mixin,
+      state: this.state,
       currentPositionOfControls: this.getPosition(),
       block: this.block,
       hasOpenBlock: this.hasOpenBlock,
@@ -711,7 +711,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   /**
    * Высокочастотные логи.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private showSate = () => {
     logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
     logger.debug(this.getDebugContext());

@@ -5,155 +5,185 @@
     "RecirculationMacrosSettings": {
       "type": "object",
       "properties": {
-        "pump": {
+        "devices": {
           "type": "object",
           "properties": {
-            "deviceId": {
-              "type": "string"
+            "pump": {
+              "type": "object",
+              "properties": {
+                "deviceId": {
+                  "type": "string"
+                },
+                "controlId": {
+                  "type": "string"
+                },
+                "controlType": {
+                  "type": "string",
+                  "const": "switch",
+                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                }
+              },
+              "required": ["deviceId", "controlId", "controlType"],
+              "additionalProperties": false,
+              "description": "Насос."
             },
-            "controlId": {
-              "type": "string"
+            "switcher": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch",
+                    "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "В случае реакции на переключатель (Кнопка, Открытие двери) запускается насос на delayMin."
             },
-            "controlType": {
-              "type": "string",
-              "const": "switch",
-              "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+            "motions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "value"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "В случае реакции на движение запускается насос на delayMin."
+            },
+            "noises": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "value"
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "Устройства, для определения полной тишины."
+            },
+            "leaks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "controlId": {
+                    "type": "string"
+                  },
+                  "controlType": {
+                    "type": "string",
+                    "const": "switch",
+                    "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                  }
+                },
+                "required": ["deviceId", "controlId", "controlType"],
+                "additionalProperties": false
+              },
+              "description": "При возникновении протечки, насос отключается."
             }
           },
-          "required": ["deviceId", "controlId", "controlType"],
-          "additionalProperties": false,
-          "description": "Насос."
+          "required": ["pump", "switcher", "motions", "noises", "leaks"],
+          "additionalProperties": false
         },
-        "switcher": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "switch",
-                "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-              },
-              "trigger": {
-                "$ref": "#/definitions/Trigger"
-              },
-              "delayMin": {
-                "type": "number"
-              }
+        "properties": {
+          "type": "object",
+          "properties": {
+            "runMin": {
+              "type": "number",
+              "description": "Время работы насоса после получения сигнала на включение."
             },
-            "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
-            "additionalProperties": false
-          },
-          "description": "В случае реакции на переключатель (Кнопка, Открытие двери) запускается насос на delayMin."
-        },
-        "motion": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
-              },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "value"
-              },
-              "trigger": {
-                "type": "number"
-              },
-              "delayMin": {
-                "type": "number"
-              }
+            "hotMin": {
+              "type": "number",
+              "description": "Время в течении которого вода в трубах ещё не успела остыть, это позволяет не включать насос пока вода не остынет."
             },
-            "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
-            "additionalProperties": false
-          },
-          "description": "В случае реакции на движение запускается насос на delayMin."
-        },
-        "noise": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
+            "motion": {
+              "type": "object",
+              "properties": {
+                "trigger": {
+                  "type": "number"
+                },
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
               },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "value"
-              },
-              "trigger": {
-                "type": "number"
-              },
-              "delayMin": {
-                "type": "number"
-              }
+              "required": ["trigger", "detection"],
+              "additionalProperties": false,
+              "description": "Порог реакции на движение."
             },
-            "required": ["deviceId", "controlId", "controlType", "trigger", "delayMin"],
-            "additionalProperties": false
-          },
-          "description": "В случае реакции на шум запускается насос на delayMin."
-        },
-        "leaks": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "deviceId": {
-                "type": "string"
+            "noise": {
+              "type": "object",
+              "properties": {
+                "trigger": {
+                  "type": "number"
+                },
+                "detection": {
+                  "$ref": "#/definitions/LevelDetection"
+                }
               },
-              "controlId": {
-                "type": "string"
-              },
-              "controlType": {
-                "type": "string",
-                "const": "switch",
-                "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-              }
+              "required": ["trigger", "detection"],
+              "additionalProperties": false,
+              "description": "Порог реакции на шум."
             },
-            "required": ["deviceId", "controlId", "controlType"],
-            "additionalProperties": false
-          },
-          "description": "При возникновении протечки, насос отключается."
-        },
-        "schedule": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "from": {
-                "type": "string"
-              },
-              "to": {
-                "type": "string"
-              }
+            "silenceMin": {
+              "type": "number",
+              "description": "Спустя это время, при отсутствия движения, устанавливается полная тишина."
             },
-            "required": ["from", "to"],
-            "additionalProperties": false
+            "leak": {
+              "type": "object",
+              "properties": {
+                "enum": {
+                  "type": "string",
+                  "description": "Для ENUM это некий action который выбирается пользователь из предоставленного ENUM."
+                }
+              },
+              "required": ["enum"],
+              "additionalProperties": false
+            }
           },
-          "description": "Расписание включения рециркуляции.\n\nЕсли список пустой, то рециркуляция включается по датчикам.\n\nЕсли указаны диапазоны времени, то если хотя бы в один диапазон попадает текущее время в которое требуется включить насос, насос включается вне зависимости от датчиков.\n\nТребуется указание часов в сутках от 0 до 23."
+          "required": ["runMin", "hotMin", "motion", "noise", "silenceMin", "leak"],
+          "additionalProperties": false
         }
       },
-      "required": ["pump", "switcher", "motion", "noise", "leaks", "schedule"],
+      "required": ["devices", "properties"],
       "additionalProperties": false,
       "description": "Рециркуляция ГВС."
     },
-    "Trigger": {
+    "LevelDetection": {
       "type": "string",
-      "enum": ["UP", "DOWN"],
-      "description": "! SETTINGS"
+      "enum": ["MAX", "MIN", "AVG"],
+      "description": "Правило определения числового значения по нескольким датчикам MAX - берем максимальное среди всех MIN - берем минимальное среди всех AVG - берем среднее среди всех"
     }
   }
 }
