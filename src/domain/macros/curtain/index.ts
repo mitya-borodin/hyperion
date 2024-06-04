@@ -685,6 +685,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       now: this.now,
       ...mixin,
       state: this.state,
+      time: this.time,
+      isDay: this.isDay,
+      isNight: this.isNight,
       currentPositionOfControls: this.getPosition(),
       block: this.block,
       hasOpenBlock: this.hasOpenBlock,
@@ -958,8 +961,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   private hitTimeRange = (min: number) => {
     if (min > 0 && min < 24 * 60) {
-      const hours = this.getDateInClientTimeZone().getHours();
-      const minutes = this.getDateInClientTimeZone().getMinutes();
+      const hours = this.getDate().getHours();
+      const minutes = this.getDate().getMinutes();
 
       const fromMin = hours * 60 + minutes - 15;
       const toMin = hours * 60 + minutes + 15;
@@ -1066,14 +1069,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return this.state.position === this.settings.properties.position.open && !this.state.stop;
   }
 
-  private get isCoverMiddle(): boolean {
-    const { position: settings } = this.settings.properties;
-
-    const { position, stop } = this.state;
-
-    return (position !== settings.close && position !== settings.open) || stop;
-  }
-
   private get isCoverCloserToOpen(): boolean {
     const { position: settings } = this.settings.properties;
 
@@ -1084,6 +1079,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     return position < settings.close / 2;
+  }
+
+  private get isCoverMiddle(): boolean {
+    const { position: settings } = this.settings.properties;
+
+    const { position, stop } = this.state;
+
+    return (position !== settings.close && position !== settings.open) || stop;
   }
 
   private get isCoverCloserToClose(): boolean {
@@ -1193,6 +1196,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   }
 
   private get isCloseByLighting(): boolean {
+    /**
+     * TODO LIGHTING Удалить, если определение дня и ночи будет работать верно.
+     */
+
     const { low } = this.settings.properties.illumination;
 
     const { lighting, illumination } = this.state;
@@ -1221,6 +1228,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return false;
   }
 
+  /**
+   * Когда стало слишком солнечно и жарко, штора закрывается.
+   */
   private get isEnoughSunActiveToClose(): boolean {
     const { closeBySun } = this.settings.properties;
 
@@ -1237,6 +1247,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     );
   }
 
+  /**
+   * Когда стало менее жарко и менее солнечно, штора отрывается.
+   */
   private get isEnoughSunActiveToOpen(): boolean {
     const { closeBySun } = this.settings.properties;
 
@@ -1249,10 +1262,18 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при закрытой шторе
        */
-      (this.isCoverClose || this.isCoverCloserToClose)
+      (this.isCoverClose || this.isCoverCloserToClose) &&
+      /**
+       * Открывание шторы возможно только при наличии движения.
+       */
+      this.isMotion
     );
   }
 
+  /**
+   * Если освещенность больше нижнего порога открытия и меньше верхнего порога открытия, и штора закрыта,
+   * можно открыть штору.
+   */
   private get isEnoughLightingToOpen(): boolean {
     const { low, hi } = this.settings.properties.illumination;
     const { illumination } = this.state;
@@ -1264,7 +1285,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при закрытой шторе
        */
-      (this.isCoverClose || this.isCoverCloserToClose)
+      (this.isCoverClose || this.isCoverCloserToClose) &&
+      /**
+       * Открывание шторы возможно только при наличии движения.
+       */
+      this.isMotion
     );
   }
 
@@ -1307,6 +1332,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   };
 
   private collectLightings = () => {
+    /**
+     * TODO LIGHTING Оставить определение включения освещения, для того, чтобы запоминать
+     * освещенность в момент включения освещения и не подмешивать его в скользящую
+     */
+
     const { lightings } = this.settings.devices;
 
     const isLightingOn = lightings.some((lighting) => {
@@ -1356,6 +1386,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const nextMeasured = this.getValueByDetection(illuminations, illumination.detection);
 
     if (this.state.lighting === Lighting.ON) {
+      /**
+       * TODO LIGHTING Убрать этот расчет и оставить присвоения в скользящую значения освещенности до включения
+       */
       /**
        * Следуем вниз за освещенностью.
        *
@@ -1457,7 +1490,20 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
      */
     let nextTarget = this.state.position;
 
-    if (this.isCloseByLighting) {
+    /**
+     * Порядок следования условия важен, не стоит бездумно перемешивать его.
+     */
+    if (this.isNight) {
+      if (nextTarget !== position.close) {
+        nextTarget = position.close;
+
+        logger.info('Close because night has fallen 🌙');
+        logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
+      }
+    } else if (this.isCloseByLighting) {
+      /**
+       * TODO LIGHTING Убрать если определение дня и ночи будет работать верно
+       */
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
@@ -1475,20 +1521,20 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.close) {
         nextTarget = position.close;
 
-        logger.info('Close because sun is active 🌅 🌇 🌞 🥵');
+        logger.info('Closes because sun is so active 🌇 🥵');
         logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
-    } else if (this.isEnoughSunActiveToOpen && this.isMotion) {
+    } else if (this.isEnoughSunActiveToOpen) {
       if (nextTarget !== position.open) {
         nextTarget = position.open;
 
-        logger.info('Open because sun is not active 🪭 😎 🆒');
+        logger.info('Open because sun is not so active 🪭');
         logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
-    } else if (this.isEnoughLightingToOpen && this.isMotion && nextTarget !== position.open) {
+    } else if (this.isEnoughLightingToOpen && nextTarget !== position.open) {
       nextTarget = position.open;
 
-      logger.info('Open because enough lighting to open 🌅 💡');
+      logger.info('Open because enough lighting to open 🌅');
       logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
     }
 

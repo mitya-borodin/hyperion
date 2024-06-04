@@ -10,6 +10,7 @@ import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
+import { getTimes, GetTimesResult } from 'suncalc';
 import { v4 } from 'uuid';
 
 import { stringify } from '../../helpers/json-stringify';
@@ -302,7 +303,6 @@ export abstract class Macros<
    *    если новое состояние вычислено, то процесс прерывается на этом этапе.
    * 3. computation - вычисление нового состояния контрола.
    */
-
   protected execute = (current?: HyperionDevice) => {
     this.collecting(current);
 
@@ -556,12 +556,34 @@ export abstract class Macros<
   }
 
   protected get now(): string {
-    return format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO');
+    return format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO');
   }
 
-  protected getDateInClientTimeZone = () => {
+  protected getDate = () => {
     return utcToZonedTime(new Date(), config.client.timeZone);
   };
+
+  protected get time(): { sunrise: Date; sunset: Date } {
+    /**
+     * SunCalc
+     *
+     * https://www.npmjs.com/package/suncalc
+     *
+     * sunriseEnd - bottom edge of the sun touches the horizon
+     * sunset - sun disappears below the horizon, evening civil twilight starts
+     */
+    const { sunriseEnd, sunset } = getTimes(this.getDate(), 55.428_947, 49.223_72, 90);
+
+    return { sunrise: sunriseEnd, sunset };
+  }
+
+  protected get isDay(): boolean {
+    return compareAsc(this.getDate(), this.time.sunrise) === 1 && !this.isNight;
+  }
+
+  protected get isNight(): boolean {
+    return compareAsc(this.getDate(), this.time.sunset) === 1 || compareAsc(this.getDate(), this.time.sunrise) === -1;
+  }
 
   protected getValueByDetection = (
     devices: Array<{ deviceId: string; controlId: string }>,
@@ -627,7 +649,7 @@ export abstract class Macros<
     logger({
       beforeMove: {
         name: this.name,
-        now: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         sum: movingArrange.sum,
         avg: movingArrange.avg,
         width: movingArrange.width,
@@ -656,7 +678,7 @@ export abstract class Macros<
     logger({
       afterMove: {
         name: this.name,
-        now: format(this.getDateInClientTimeZone(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
         sum: movingArrange.sum,
         avg: movingArrange.avg,
         width: movingArrange.width,
