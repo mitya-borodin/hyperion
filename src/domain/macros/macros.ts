@@ -574,7 +574,10 @@ export abstract class Macros<
      */
     const { sunriseEnd, sunset } = getTimes(this.getDate(), 55.428_947, 49.223_72, 90);
 
-    return { sunrise: sunriseEnd, sunset };
+    return {
+      sunrise: utcToZonedTime(sunriseEnd, config.client.timeZone),
+      sunset: utcToZonedTime(sunset, config.client.timeZone),
+    };
   }
 
   protected get isDay(): boolean {
