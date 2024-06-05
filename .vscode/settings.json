@@ -42,7 +42,7 @@
     "editor.defaultFormatter": "ms-azuretools.vscode-docker"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

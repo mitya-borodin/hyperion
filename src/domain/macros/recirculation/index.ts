@@ -1,6 +1,7 @@
 import { addMinutes, compareAsc, compareDesc, format, subMinutes } from 'date-fns';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
+import throttle from 'lodash.throttle';
 
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
 import { getLogger } from '../../../infrastructure/logger';
@@ -233,8 +234,8 @@ export class RecirculationMacros extends Macros<
     return {
       name: this.name,
       now: this.now,
-      ...mixin,
       state: this.state,
+      mixin,
       block: {
         pumpRunOut: format(this.block.pumpRunOut, timeFormat),
       },
@@ -294,9 +295,32 @@ export class RecirculationMacros extends Macros<
   };
 
   protected collecting() {
+    this.collectPump();
     this.collectLeaks();
     this.collectMotion();
     this.collectNoise();
+  }
+
+  private collectPump() {
+    const { pump } = this.settings.devices;
+
+    const control = this.controls.get(getControlId(pump));
+
+    const nextPump = control?.value === control?.on ? PumpState.ON : PumpState.OFF;
+
+    if (this.state.pump === PumpState.UNSPECIFIED) {
+      if (nextPump === PumpState.ON) {
+        logger.info('The pump was found to be switched on 🧴');
+      }
+
+      if (nextPump === PumpState.OFF) {
+        logger.info('The pump was found to be switched off 🛑');
+      }
+
+      logger.debug(this.getDebugContext({ nextPump }));
+
+      this.state.pump = nextPump;
+    }
   }
 
   private collectLeaks() {
@@ -349,17 +373,25 @@ export class RecirculationMacros extends Macros<
     }
   };
 
+  private hasBlockByLeakLog = throttle(() => {
+    logger.info('The pump is blocked by a leak 💧');
+    logger.debug(this.getDebugContext());
+  }, 10_000);
+
+  private hasBlockPumpRunOutLockedLog = throttle(() => {
+    logger.info('The pump run-out is blocked by hot 🥵 water in tubes 💧');
+    logger.debug(this.getDebugContext());
+  }, 10_000);
+
   private get hasBlock(): boolean {
     if (this.state.leak) {
-      logger.info('The pump is blocked by a leak 💧');
-      logger.debug(this.getDebugContext());
+      this.hasBlockByLeakLog();
 
       return true;
     }
 
     if (this.isPumpRunOutLocked) {
-      logger.info('The pump run-out is blocked by hot 🥵 water in tubes 💧');
-      logger.debug(this.getDebugContext());
+      this.hasBlockPumpRunOutLockedLog();
 
       return true;
     }

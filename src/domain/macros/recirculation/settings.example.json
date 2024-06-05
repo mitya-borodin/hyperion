@@ -1,0 +1,122 @@
+{
+  "devices": {
+    "pump": {
+      "controlId": "K5",
+      "controlType": "switch",
+      "deviceId": "wb-mr6cu_16"
+    },
+    "switcher": [],
+    "motions": [
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_102"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_108"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_121"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_122"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_123"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_128"
+      },
+      {
+        "controlId": "Current Motion",
+        "controlType": "value",
+        "deviceId": "wb-msw-v3_129"
+      }
+    ],
+    "noises": [
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_102"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_108"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_121"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_122"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_123"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_128"
+      },
+      {
+        "controlId": "Sound Level",
+        "controlType": "sound_level",
+        "deviceId": "wb-msw-v3_129"
+      }
+    ],
+    "leaks": [
+      {
+        "controlId": "EXT3_IN2",
+        "controlType": "switch",
+        "deviceId": "wb-gpio"
+      },
+      {
+        "controlId": "EXT3_IN3",
+        "controlType": "switch",
+        "deviceId": "wb-gpio"
+      },
+      {
+        "controlId": "EXT3_IN4",
+        "controlType": "switch",
+        "deviceId": "wb-gpio"
+      },
+      {
+        "controlId": "EXT3_IN5",
+        "controlType": "switch",
+        "deviceId": "wb-gpio"
+      }
+    ]
+  },
+  "properties": {
+    "runMin": 30,
+    "hotMin": 120,
+    "motion": {
+      "trigger": 75,
+      "detection": "MAX"
+    },
+    "noise": {
+      "trigger": 60,
+      "detection": "MAX"
+    },
+    "silenceMin": 1,
+    "leak": {
+      "enum": "UNSPECIFIED"
+    }
+  }
+}

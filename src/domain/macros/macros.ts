@@ -653,6 +653,7 @@ export abstract class Macros<
       beforeMove: {
         name: this.name,
         now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        value,
         sum: movingArrange.sum,
         avg: movingArrange.avg,
         width: movingArrange.width,
@@ -682,6 +683,7 @@ export abstract class Macros<
       afterMove: {
         name: this.name,
         now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+        value,
         sum: movingArrange.sum,
         avg: movingArrange.avg,
         width: movingArrange.width,

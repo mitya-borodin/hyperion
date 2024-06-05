@@ -4,54 +4,64 @@
       {
         "controlId": "action",
         "controlType": "enum",
-        "deviceId": "0x00158d000ae4d4cb"
+        "deviceId": "0x00158d000977cc98"
       }
     ],
     "illuminations": [
       {
         "controlId": "Illuminance",
         "controlType": "lux",
-        "deviceId": "wb-msw-v3_129"
+        "deviceId": "wb-msw-v3_122"
       }
     ],
     "lightings": [
       {
+        "controlId": "K1",
+        "controlType": "switch",
+        "deviceId": "wb-mr6cu_21"
+      },
+      {
+        "controlId": "K2",
+        "controlType": "switch",
+        "deviceId": "wb-mr6cu_21"
+      },
+      {
         "controlId": "K3",
         "controlType": "switch",
-        "deviceId": "wb-mr6cu_37"
+        "deviceId": "wb-mr6cu_21"
       },
       {
         "controlId": "K4",
         "controlType": "switch",
-        "deviceId": "wb-mr6cu_37"
+        "deviceId": "wb-mr6cu_21"
       }
     ],
     "motions": [
       {
         "controlId": "Current Motion",
         "controlType": "value",
-        "deviceId": "wb-msw-v3_129"
+        "deviceId": "wb-msw-v3_122"
       }
     ],
     "noises": [
       {
         "controlId": "Sound Level",
         "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_129"
+        "deviceId": "wb-msw-v3_122"
       }
     ],
     "positions": [
       {
         "controlId": "position",
         "controlType": "value",
-        "deviceId": "0x00158d00070b2d33"
+        "deviceId": "0x00158d00071154ed"
       }
     ],
     "states": [
       {
         "controlId": "state",
         "controlType": "enum",
-        "deviceId": "0x00158d00070b2d33"
+        "deviceId": "0x00158d00071154ed"
       }
     ],
     "switchers": [],
@@ -59,7 +69,12 @@
       {
         "controlId": "Temperature",
         "controlType": "temperature",
-        "deviceId": "wb-msw-v3_129"
+        "deviceId": "wb-msw-v3_122"
+      },
+      {
+        "controlId": "temperature",
+        "controlType": "value",
+        "deviceId": "0x00158d000ae42f62"
       }
     ]
   },
@@ -67,31 +82,28 @@
     "blocks": [
       {
         "fromMin": 0,
-        "toMin": 660,
+        "toMin": 600,
         "type": "OPEN"
+      },
+      {
+        "fromMin": 960,
+        "toMin": 1140,
+        "type": "CLOSE"
       }
     ],
     "closeBySun": {
-      "illumination": {
-        "closeLux": 1000,
-        "openLux": 150
-      },
-      "temperature": 30
+      "tooSunnyLux": 2500,
+      "lightEnoughLux": 500,
+      "temperature": 27
     },
     "illumination": {
       "detection": "MAX",
-      "hi": {
-        "closeLux": 1000,
-        "openLux": 150
-      },
-      "low": {
-        "closeLux": 10,
-        "openLux": 50
-      }
+      "tooSunnyLux": 5000,
+      "lightEnoughLux": 500
     },
     "motion": {
       "detection": "MAX",
-      "trigger": 100
+      "trigger": 60
     },
     "noise": {
       "detection": "MAX",
@@ -101,26 +113,28 @@
       {
         "blockMin": 180,
         "direction": "OPEN",
-        "timePointMin": [660]
+        "timePointMin": [
+          600
+        ]
       }
     ],
     "position": {
       "close": 0,
       "open": 100
     },
-    "silenceMin": 1,
+    "silenceMin": 5,
     "state": {
       "close": "CLOSE",
       "open": "OPEN",
       "stop": "STOP"
     },
     "switcher": {
-      "blockMin": 30,
+      "blockMin": 120,
       "trigger": "UP",
       "type": "BUTTON"
     },
     "temperature": {
-      "detection": "MAX"
+      "detection": "MIN"
     }
   }
 }
