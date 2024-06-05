@@ -280,42 +280,18 @@
                 "detection": {
                   "$ref": "#/definitions/LevelDetection"
                 },
-                "low": {
-                  "type": "object",
-                  "properties": {
-                    "closeLux": {
-                      "type": "number",
-                      "description": "Если значение меньше closeLux штора закрывается. Значение рассматривается только при открытой шторе."
-                    },
-                    "openLux": {
-                      "type": "number",
-                      "description": "Если значение больше openLux штора откроется при появлении движения. Значение рассматривается только при закрытой шторе."
-                    }
-                  },
-                  "required": ["closeLux", "openLux"],
-                  "additionalProperties": false,
-                  "description": "Позволяет определить день или ночь."
+                "lightEnoughLux": {
+                  "type": "number",
+                  "description": "Порог достаточной солнечной активности, чтобы вернуть штору в открытое положение в рамках светового дня, это значение оценивается при открытой шторе."
                 },
-                "hi": {
-                  "type": "object",
-                  "properties": {
-                    "closeLux": {
-                      "type": "number",
-                      "description": "Если значение больше closeLux штора закроется. Значение рассматривается только при открытой шторе."
-                    },
-                    "openLux": {
-                      "type": "number",
-                      "description": "Если значение меньше openLux штора откроется. Значение рассматривается только при закрытой шторе."
-                    }
-                  },
-                  "required": ["closeLux", "openLux"],
-                  "additionalProperties": false,
-                  "description": "Позволяет определить излишне солнечный день или нет."
+                "tooSunnyLux": {
+                  "type": "number",
+                  "description": "Порог высокой солнечной активности, если он превышен, штора закрывается, это значение оценивается при открытой шторе."
                 }
               },
-              "required": ["detection", "low", "hi"],
+              "required": ["detection", "lightEnoughLux", "tooSunnyLux"],
               "additionalProperties": false,
-              "description": "* 5. Открыть/Закрыть по освещенности Позволяет закрывать штору при наступлении ночи и в излишне солнечный день."
+              "description": "* 5. Открыть/Закрыть по освещенности Позволяет закрывать штору при излишней освещенности и открыть при возврате к достаточному уровню освещенности в рамках дня."
             },
             "motion": {
               "type": "object",
@@ -363,26 +339,20 @@
             "closeBySun": {
               "type": "object",
               "properties": {
-                "illumination": {
-                  "type": "object",
-                  "properties": {
-                    "closeLux": {
-                      "type": "number",
-                      "description": "Если освещенность больше closeLux и температура больше temperature штора закрывается.\n\nЗначение рассматривается только при открытой шторе."
-                    },
-                    "openLux": {
-                      "type": "number",
-                      "description": "Если освещенность меньше openLux штора закрывается.\n\nЗначение рассматривается только при закрытой шторе."
-                    }
-                  },
-                  "required": ["closeLux", "openLux"],
-                  "additionalProperties": false
+                "lightEnoughLux": {
+                  "type": "number",
+                  "description": "Порог достаточной солнечной активности, чтобы вернуть штору в открытое положение в рамках светового дня, это значение оценивается при закрытой шторе."
+                },
+                "tooSunnyLux": {
+                  "type": "number",
+                  "description": "Порог высокой солнечной активности, если он превышен, штора закрывается, это значение оценивается при открытой шторе."
                 },
                 "temperature": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Температура, свыше которой штора закрывается."
                 }
               },
-              "required": ["illumination", "temperature"],
+              "required": ["lightEnoughLux", "tooSunnyLux", "temperature"],
               "additionalProperties": false,
               "description": "* 7. Закрыть по солнечной активности Позволяет закрыть штору, если освещенность и температура выше уставок."
             },
