@@ -308,9 +308,9 @@ export class RecirculationMacros extends Macros<
 
     const nextPump = control?.value === control?.on ? PumpState.ON : PumpState.OFF;
 
-    if (this.state.pump === PumpState.UNSPECIFIED) {
+    if (this.state.pump !== nextPump) {
       if (nextPump === PumpState.ON) {
-        logger.info('The pump was found to be switched on 🧴');
+        logger.info('The pump was found to be switched on 🔄 🧴');
       }
 
       if (nextPump === PumpState.OFF) {
@@ -511,7 +511,7 @@ export class RecirculationMacros extends Macros<
       this.output.pump = { ...device, value };
     }
 
-    logger.info('The next output was computed ⏭️ 🍋');
+    logger.info('The next output was computed 🍋');
     logger.debug(this.getDebugContext());
   };
 
