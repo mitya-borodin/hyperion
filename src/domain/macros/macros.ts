@@ -627,7 +627,7 @@ export abstract class Macros<
     return result;
   };
 
-  protected computeMovingArrange = (name: string, value?: number): number => {
+  protected computeMovingArrange = (name: string, value: number): number => {
     const movingArrange = this.movingArranges.get(name) ?? {
       sum: 0,
       avg: 0,

@@ -71,17 +71,20 @@ export enum UnitOfMeasurement {
   POWER = 'kW/h',
 
   /**
-   * Время работы.
+   * Время работы, сумма временных отрезков, от включения реле до выключения.
    */
   WORK_TIME = 'sec',
 
   /**
-   * Количество раз.
+   * Количество переключений.
    */
   TIMES = 'times',
 }
 
-export enum CounterTrigger {
+/**
+ * Типа реакции.
+ */
+export enum Trigger {
   /**
    * Реакция только на замкнутый контакт, после разомкнутого.
    */
@@ -116,7 +119,11 @@ export type CounterMacrosSettings = {
 
   readonly properties: {
     readonly type: CounterType;
-    readonly trigger: CounterTrigger;
+    readonly trigger: Trigger;
+
+    /**
+     * Стоимость одного импульса.
+     */
     readonly price: number;
   };
 };
@@ -124,12 +131,21 @@ export type CounterMacrosSettings = {
 /**
  * ! STATE
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type CounterMacrosPublicState = {
-  value: number;
+  /**
+   * Значение в единицах измерения, которое пользователь может задать, чтобы синхронизовать значение
+   * физического счетчика и счетчика импульсов.
+   */
+  readonly amount: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type CounterMacrosPrivateState = {};
+type CounterMacrosPrivateState = {
+  /**
+   * Количество импульсов.
+   */
+  counter: number;
+};
 
 type CounterMacrosState = CounterMacrosPublicState & CounterMacrosPrivateState;
 
@@ -137,7 +153,15 @@ type CounterMacrosState = CounterMacrosPublicState & CounterMacrosPrivateState;
  * ! OUTPUT
  */
 type CounterMacrosNextOutput = {
-  readonly value: number;
+  /**
+   * Количество импульсов.
+   */
+  readonly counter: number;
+
+  /**
+   * Значение в единицах измерения.
+   */
+  readonly amount: number;
   readonly unitOfMeasurement: UnitOfMeasurement;
 };
 
@@ -146,7 +170,8 @@ const VERSION = 0;
 type CounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
 const defaultState: CounterMacrosState = {
-  value: 0,
+  counter: 0,
+  amount: 0,
 };
 
 const createDefaultState = () => {
@@ -185,7 +210,8 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
     });
 
     this.output = {
-      value: 0,
+      counter: -1,
+      amount: -1,
       unitOfMeasurement: UnitOfMeasurement.UNSPECIFIED,
     };
   }
@@ -229,7 +255,8 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
 
   protected computeOutput = () => {
     const output: CounterMacrosNextOutput = {
-      value: 0,
+      counter: -1,
+      amount: -1,
       unitOfMeasurement: UnitOfMeasurement.UNSPECIFIED,
     };
 

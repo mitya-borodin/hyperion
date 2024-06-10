@@ -648,7 +648,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     this.timer = {
       timeBasedComputing: setInterval(this.timeBasedComputing, 60 * 1000),
-      illuminationMovingArrange: setInterval(() => this.computeMovingArrange('illumination'), 60 * 1000),
+      illuminationMovingArrange: setInterval(() => this.computeMovingArrange('illumination', -1), 60 * 1000),
     };
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
@@ -1913,6 +1913,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
 
+    this.output.states = [];
+
     for (const position of this.output.positions) {
       const hyperionDevice = this.devices.get(position.deviceId);
       const hyperionControl = this.controls.get(getControlId(position));
@@ -1946,7 +1948,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
 
-    this.output = { states: [], positions: [] };
+    this.output.positions = [];
   };
 
   protected destroy() {

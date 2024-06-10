@@ -327,7 +327,7 @@ type LightingMacrosState = LightingMacrosPublicState & LightingMacrosPrivateStat
  * Будущее состояние контролов, передается в контроллер по средством MQTT
  */
 type LightingMacrosOutput = {
-  readonly lightings: Array<{
+  lightings: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
@@ -1102,6 +1102,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
+
+    this.output.lightings = [];
   }
 
   protected destroy() {

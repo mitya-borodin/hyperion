@@ -225,17 +225,17 @@ type LeaksMacrosState = LeaksMacrosPublicState & LeaksMacrosPrivateState;
  * ! OUTPUT
  */
 type LeaksMacrosNextOutput = {
-  readonly switch: Array<{
+  switch: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
   }>;
-  readonly enum: Array<{
+  enum: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
   }>;
-  readonly analog: Array<{
+  analog: Array<{
     readonly deviceId: string;
     readonly controlId: string;
     readonly value: string;
@@ -1295,6 +1295,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
 
+    this.output.switch = [];
+
     for (const device of this.output.enum) {
       const hyperionDevice = this.devices.get(device.deviceId);
       const hyperionControl = this.controls.get(getControlId(device));
@@ -1322,6 +1324,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
 
+    this.output.enum = [];
+
     for (const device of this.output.analog) {
       const hyperionDevice = this.devices.get(device.deviceId);
       const hyperionControl = this.controls.get(getControlId(device));
@@ -1348,6 +1352,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
+
+    this.output.analog = [];
 
     let phase: Array<{
       readonly deviceId: string;
@@ -1413,6 +1419,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
+
+    this.output.phase = [];
 
     this.output = {
       switch: [],
