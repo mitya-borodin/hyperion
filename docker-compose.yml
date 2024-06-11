@@ -30,7 +30,7 @@ services:
 
   hyperion_pg_db:
     container_name: hyperion_pg_db
-    image: postgres:14
+    image: postgres:14-alpine
     environment:
       POSTGRES_DB: hyperion
       POSTGRES_USER: hyperion
