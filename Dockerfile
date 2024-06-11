@@ -1,4 +1,4 @@
-FROM node:20.11.0 as builder
+FROM node:lts-alpine as builder
 
 LABEL "org.opencontainers.image.source"="https://github.com/mitya-borodin/hyperion"
 LABEL "org.opencontainers.image.description"="Home automation platform"
@@ -17,7 +17,7 @@ COPY --chown=node:node . .
 RUN yarn prisma:generate
 RUN yarn build
 
-FROM node:20.11.0 as runner
+FROM node:lts-alpine as runner
 
 LABEL "org.opencontainers.image.source"="https://github.com/mitya-borodin/hyperion"
 LABEL "org.opencontainers.image.description"="Home automation platform"
