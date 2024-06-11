@@ -5,11 +5,12 @@
     "CounterMacrosPublicState": {
       "type": "object",
       "properties": {
-        "value": {
-          "type": "number"
+        "amount": {
+          "type": "number",
+          "description": "Значение в единицах измерения, которое пользователь может задать, чтобы синхронизовать значение физического счетчика и счетчика импульсов."
         }
       },
-      "required": ["value"],
+      "required": ["amount"],
       "additionalProperties": false,
       "description": "! STATE"
     }

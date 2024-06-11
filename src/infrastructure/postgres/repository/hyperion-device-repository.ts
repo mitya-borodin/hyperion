@@ -396,7 +396,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         this.history.clear();
         this.lastHistorySave = new Date();
 
-        logger('Try to save history ⬆️ 🛟 ', history.length);
+        logger('Try to save history ⬆️ 🛟 ', history.length, this.history.size);
 
         this.saveDevices(true)
           .then(() => {

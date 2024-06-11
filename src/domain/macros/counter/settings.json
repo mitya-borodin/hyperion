@@ -5,36 +5,65 @@
     "CounterMacrosSettings": {
       "type": "object",
       "properties": {
-        "deviceId": {
-          "type": "string"
+        "devices": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string"
+            },
+            "controlId": {
+              "type": "string"
+            },
+            "controlType": {
+              "type": "string",
+              "const": "switch",
+              "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+            }
+          },
+          "required": ["deviceId", "controlId", "controlType"],
+          "additionalProperties": false
         },
-        "controlId": {
-          "type": "string"
-        },
-        "controlType": {
-          "type": "string",
-          "const": "switch",
-          "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
-        },
-        "type": {
-          "$ref": "#/definitions/CounterType"
-        },
-        "trigger": {
-          "$ref": "#/definitions/CounterTrigger"
+        "properties": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "$ref": "#/definitions/CounterType"
+            },
+            "trigger": {
+              "$ref": "#/definitions/Trigger"
+            },
+            "price": {
+              "type": "number",
+              "description": "Стоимость одного импульса."
+            }
+          },
+          "required": ["type", "trigger", "price"],
+          "additionalProperties": false
         }
       },
-      "required": ["deviceId", "controlId", "controlType", "type", "trigger"],
+      "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "Счетчики воды, газа, электричества, тепла, количества (верхних, нижних) уровней на переключателях,  время работы, простоя реле."
+      "description": "Импульсный счетчик воды, газа, электричества, тепла, количества (верхних, нижних) уровней на переключателях, время работы и/или простоя реле."
     },
     "CounterType": {
       "type": "string",
-      "enum": ["COLD_WATER", "HOT_WATER", "GAS", "ELECTRICITY", "HEAT", "SWITCH", "RELAY_ON"],
-      "description": "! SETTINGS"
+      "enum": [
+        "UNSPECIFIED",
+        "COLD_WATER",
+        "HOT_WATER",
+        "GAS",
+        "ELECTRICITY",
+        "HEAT",
+        "RELAY_ON",
+        "RELAY_OFF",
+        "SWITCH"
+      ],
+      "description": "Тип счетчика, по типу уже определяется единица измерения и поведение."
     },
-    "CounterTrigger": {
+    "Trigger": {
       "type": "string",
-      "enum": ["FRONT", "BACK", "BOTH"]
+      "enum": ["FRONT", "BACK", "BOTH"],
+      "description": "Типа реакции."
     }
   }
 }
