@@ -1,0 +1,24 @@
+version: '3.8'
+
+volumes:
+  postgres-data:
+
+services:
+  hyperion_pg_db:
+    container_name: hyperion_pg_db
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: hyperion
+      POSTGRES_USER: hyperion
+      POSTGRES_PASSWORD: hyperion
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5566:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hyperion -d hyperion']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
