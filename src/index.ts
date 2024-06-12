@@ -52,17 +52,17 @@ export const run = () => {
     /**
      * ! RUN WIRENBOARD
      */
-    // const wirenboard = runWirenboard({ config, eventBus });
+    const wirenboard = runWirenboard({ config, eventBus });
 
-    // defer(() => wirenboard.stop());
+    defer(() => wirenboard.stop());
 
-    // logger.info(
-    //   'We wait 5 seconds before starting the zigbee2mqtt connection, for getting data from wirenboard 📡 ⏰ 📟',
-    // );
+    logger.info(
+      'We wait 5 seconds before starting the zigbee2mqtt connection, for getting data from wirenboard 📡 ⏰ 📟',
+    );
 
-    // await delay(signal, 5000);
+    await delay(signal, 5000);
 
-    // logger.info('We believe that all data from wirenboard 📟 has been downloaded 💾');
+    logger.info('We believe that all data from wirenboard 📟 has been downloaded 💾');
 
     /**
      * ! RUN ZIGBEE_2_MQTT
@@ -84,9 +84,9 @@ export const run = () => {
     /**
      * ! RUN MACROS ENGINE
      */
-    // await macrosEngine.start();
+    await macrosEngine.start();
 
-    // defer(() => macrosEngine.stop());
+    defer(() => macrosEngine.stop());
 
     const fastify = await createHttpInterface({
       config,
