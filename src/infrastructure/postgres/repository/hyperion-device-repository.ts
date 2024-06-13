@@ -366,17 +366,13 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //     error: String(control.error),
     //     createdAt: new Date(),
     //   };
-
     //   const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
     //   const histories = this.history.get(controlId);
-
     //   if (histories) {
     //     const last = histories.at(-1);
-
     //     if (!last) {
     //       return;
     //     }
-
     //     if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
     //       histories.push(history);
     //     } else if (last.value !== history.value) {
@@ -385,19 +381,14 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //   } else {
     //     this.history.set(controlId, [history]);
     //   }
-
     //   if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
     //     const history: History[] = [];
-
     //     for (const item of this.history.values()) {
     //       history.push(...item);
     //     }
-
     //     this.history.clear();
     //     this.lastHistorySave = new Date();
-
     //     logger('Try to save history ⬆️ 🛟 ', history.length, this.history.size);
-
     //     this.saveDevices(true)
     //       .then(() => {
     //         this.client.history
@@ -421,11 +412,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   private async saveDevices(force: boolean = false) {
     // if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
     //   logger('Try to save devices and controls ⬆️ 🛟 ');
-
     //   const { devices, controls } = fromHyperionToPrisma(this.devices.values());
-
     //   this.lastDeviceSave = new Date();
-
     //   for (const device of devices) {
     //     await this.client.device.upsert({
     //       where: {
@@ -435,7 +423,6 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //       update: device,
     //     });
     //   }
-
     //   for (const control of controls) {
     //     await this.client.control.upsert({
     //       where: {
@@ -448,7 +435,6 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //       update: control,
     //     });
     //   }
-
     //   logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
     // }
   }
