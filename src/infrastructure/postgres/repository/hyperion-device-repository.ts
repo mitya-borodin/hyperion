@@ -439,7 +439,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         });
       }
 
-      this.nextDeviceSave = addSeconds(new Date(), 5);
+      this.nextDeviceSave = addSeconds(new Date(), 1);
 
       this.isDeviceSavingInProgress = false;
 
