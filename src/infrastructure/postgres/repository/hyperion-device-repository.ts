@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { PrismaClient } from '@prisma/client';
-import { addSeconds, compareAsc, compareDesc, subSeconds } from 'date-fns';
+import { addMinutes, addSeconds, compareAsc, compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -411,7 +411,10 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
                 logger(error);
               })
               .finally(() => {
-                this.nextHistorySave = addSeconds(new Date(), 5);
+                /**
+                 * Запись в базу каждый 5 минут.
+                 */
+                this.nextHistorySave = addMinutes(new Date(), 5);
                 this.isHistorySavingInProgress = false;
               });
           })
@@ -419,7 +422,10 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
             logger('The devices was not saved 🚨 🚨 🚨');
             logger(error);
 
-            this.nextHistorySave = addSeconds(new Date(), 5);
+            /**
+             * Запись в базу каждый 5 минут.
+             */
+            this.nextHistorySave = addMinutes(new Date(), 5);
             this.isHistorySavingInProgress = false;
           });
       }
@@ -462,9 +468,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       }
 
       /**
-       * Запись в базу каждый 10 секунд.
+       * Запись в базу каждую минуту.
        */
-      this.nextDeviceSave = addSeconds(new Date(), 10);
+      this.nextDeviceSave = addMinutes(new Date(), 1);
 
       this.isDeviceSavingInProgress = false;
 
