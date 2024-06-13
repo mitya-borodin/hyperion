@@ -358,98 +358,98 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private addToHistory(device: HyperionDevice) {
-    for (const control of device.controls) {
-      const history: History = {
-        deviceId: String(device.id),
-        controlId: String(control.id),
-        value: String(control.value),
-        error: String(control.error),
-        createdAt: new Date(),
-      };
+    // for (const control of device.controls) {
+    //   const history: History = {
+    //     deviceId: String(device.id),
+    //     controlId: String(control.id),
+    //     value: String(control.value),
+    //     error: String(control.error),
+    //     createdAt: new Date(),
+    //   };
 
-      const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
-      const histories = this.history.get(controlId);
+    //   const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
+    //   const histories = this.history.get(controlId);
 
-      if (histories) {
-        const last = histories.at(-1);
+    //   if (histories) {
+    //     const last = histories.at(-1);
 
-        if (!last) {
-          return;
-        }
+    //     if (!last) {
+    //       return;
+    //     }
 
-        if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
-          histories.push(history);
-        } else if (last.value !== history.value) {
-          histories.push(history);
-        }
-      } else {
-        this.history.set(controlId, [history]);
-      }
+    //     if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
+    //       histories.push(history);
+    //     } else if (last.value !== history.value) {
+    //       histories.push(history);
+    //     }
+    //   } else {
+    //     this.history.set(controlId, [history]);
+    //   }
 
-      if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
-        const history: History[] = [];
+    //   if (compareDesc(this.lastHistorySave, subSeconds(new Date(), 5 * 60)) === 1) {
+    //     const history: History[] = [];
 
-        for (const item of this.history.values()) {
-          history.push(...item);
-        }
+    //     for (const item of this.history.values()) {
+    //       history.push(...item);
+    //     }
 
-        this.history.clear();
-        this.lastHistorySave = new Date();
+    //     this.history.clear();
+    //     this.lastHistorySave = new Date();
 
-        logger('Try to save history ⬆️ 🛟 ', history.length, this.history.size);
+    //     logger('Try to save history ⬆️ 🛟 ', history.length, this.history.size);
 
-        this.saveDevices(true)
-          .then(() => {
-            this.client.history
-              .createMany({ data: history })
-              .then(() => {
-                logger('The history was saved ⬆️ 🛟 ✅');
-              })
-              .catch((error) => {
-                logger('The history was not saved 🚨 🚨 🚨');
-                logger(error);
-              });
-          })
-          .catch((error) => {
-            logger('The devices was not saved 🚨 🚨 🚨');
-            logger(error);
-          });
-      }
-    }
+    //     this.saveDevices(true)
+    //       .then(() => {
+    //         this.client.history
+    //           .createMany({ data: history })
+    //           .then(() => {
+    //             logger('The history was saved ⬆️ 🛟 ✅');
+    //           })
+    //           .catch((error) => {
+    //             logger('The history was not saved 🚨 🚨 🚨');
+    //             logger(error);
+    //           });
+    //       })
+    //       .catch((error) => {
+    //         logger('The devices was not saved 🚨 🚨 🚨');
+    //         logger(error);
+    //       });
+    //   }
+    // }
   }
 
   private async saveDevices(force: boolean = false) {
-    if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
-      logger('Try to save devices and controls ⬆️ 🛟 ');
+    // if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
+    //   logger('Try to save devices and controls ⬆️ 🛟 ');
 
-      const { devices, controls } = fromHyperionToPrisma(this.devices.values());
+    //   const { devices, controls } = fromHyperionToPrisma(this.devices.values());
 
-      this.lastDeviceSave = new Date();
+    //   this.lastDeviceSave = new Date();
 
-      for (const device of devices) {
-        await this.client.device.upsert({
-          where: {
-            deviceId: device.deviceId,
-          },
-          create: device,
-          update: device,
-        });
-      }
+    //   for (const device of devices) {
+    //     await this.client.device.upsert({
+    //       where: {
+    //         deviceId: device.deviceId,
+    //       },
+    //       create: device,
+    //       update: device,
+    //     });
+    //   }
 
-      for (const control of controls) {
-        await this.client.control.upsert({
-          where: {
-            deviceId_controlId: {
-              deviceId: control.deviceId,
-              controlId: control.controlId,
-            },
-          },
-          create: control,
-          update: control,
-        });
-      }
+    //   for (const control of controls) {
+    //     await this.client.control.upsert({
+    //       where: {
+    //         deviceId_controlId: {
+    //           deviceId: control.deviceId,
+    //           controlId: control.controlId,
+    //         },
+    //       },
+    //       create: control,
+    //       update: control,
+    //     });
+    //   }
 
-      logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
-    }
+    //   logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
+    // }
   }
 }
