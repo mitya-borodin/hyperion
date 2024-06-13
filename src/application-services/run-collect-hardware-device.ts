@@ -23,18 +23,18 @@ let lastHardwareDeviceAppeared: Date = new Date();
 
 export const runCollectHardwareDevice = ({ hyperionDeviceRepository, eventBus }: RunCollectHardwareDevice) => {
   const hardwareDeviceHandler = async (hardwareDevice: HardwareDevice) => {
-    const hyperionStateUpdate = hyperionDeviceRepository.apply(hardwareDevice);
+    // const hyperionStateUpdate = hyperionDeviceRepository.apply(hardwareDevice);
 
-    if (hyperionStateUpdate instanceof Error) {
-      return hyperionStateUpdate;
-    }
+    // if (hyperionStateUpdate instanceof Error) {
+    //   return hyperionStateUpdate;
+    // }
 
-    emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
-    emitGqlDeviceSubscriptionEvent({
-      eventBus,
-      hyperionDevice: hyperionStateUpdate.current,
-      type: SubscriptionDeviceType.APPEARED,
-    });
+    // emitHyperionStateUpdate({ eventBus, hyperionStateUpdate });
+    // emitGqlDeviceSubscriptionEvent({
+    //   eventBus,
+    //   hyperionDevice: hyperionStateUpdate.current,
+    //   type: SubscriptionDeviceType.APPEARED,
+    // });
 
     lastHardwareDeviceAppeared = new Date();
   };
