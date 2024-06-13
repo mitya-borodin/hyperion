@@ -410,32 +410,37 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private async saveDevices(force: boolean = false) {
-    // if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
-    //   logger('Try to save devices and controls ⬆️ 🛟 ');
-    //   const { devices, controls } = fromHyperionToPrisma(this.devices.values());
-    //   this.lastDeviceSave = new Date();
-    //   for (const device of devices) {
-    //     await this.client.device.upsert({
-    //       where: {
-    //         deviceId: device.deviceId,
-    //       },
-    //       create: device,
-    //       update: device,
-    //     });
-    //   }
-    //   for (const control of controls) {
-    //     await this.client.control.upsert({
-    //       where: {
-    //         deviceId_controlId: {
-    //           deviceId: control.deviceId,
-    //           controlId: control.controlId,
-    //         },
-    //       },
-    //       create: control,
-    //       update: control,
-    //     });
-    //   }
-    //   logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
-    // }
+    if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 60)) === 1) {
+      logger('Try to save devices and controls ⬆️ 🛟 ');
+
+      const { devices, controls } = fromHyperionToPrisma(this.devices.values());
+
+      this.lastDeviceSave = new Date();
+
+      for (const device of devices) {
+        await this.client.device.upsert({
+          where: {
+            deviceId: device.deviceId,
+          },
+          create: device,
+          update: device,
+        });
+      }
+
+      for (const control of controls) {
+        await this.client.control.upsert({
+          where: {
+            deviceId_controlId: {
+              deviceId: control.deviceId,
+              controlId: control.controlId,
+            },
+          },
+          create: control,
+          update: control,
+        });
+      }
+
+      logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
+    }
   }
 }
