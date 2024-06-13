@@ -411,7 +411,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
   private async saveDevices(force: boolean = false) {
     if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 1)) === 1) {
-      logger('Try to save devices and controls ⬆️ 🛟 ');
+      logger('Try to save devices and controls ⬆️ 🛟');
 
       const { devices, controls } = fromHyperionToPrisma(this.devices.values());
 
@@ -440,7 +440,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
       this.lastDeviceSave = new Date();
 
-      logger('The devices and controls was saved ⬆️ 🛟 ✅ ', devices.length, controls.length);
+      logger('The devices and controls was saved ⬆️ 🛟 ✅', devices.length, controls.length);
     }
   }
 }
