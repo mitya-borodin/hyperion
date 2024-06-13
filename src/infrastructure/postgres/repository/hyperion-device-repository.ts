@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { PrismaClient } from '@prisma/client';
-import { compareDesc, subSeconds } from 'date-fns';
+import { addSeconds, compareAsc, compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -40,7 +40,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
   private devices = new Map<string, HyperionDevice>();
   private controls = new Map<string, HyperionDeviceControl>();
-  private lastDeviceSave = new Date();
+  private nextDeviceSave = new Date();
   private isDeviceSavingInProgress = false;
 
   constructor({ client }: HyperionDeviceRepositoryParameters) {
@@ -409,7 +409,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       return;
     }
 
-    if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 1)) === 1) {
+    if (force || compareDesc(this.nextDeviceSave, new Date()) === 1) {
       logger('Try to save devices and controls ⬆️ 🛟');
 
       this.isDeviceSavingInProgress = true;
@@ -439,7 +439,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         });
       }
 
-      this.lastDeviceSave = new Date();
+      this.nextDeviceSave = addSeconds(new Date(), 5);
 
       this.isDeviceSavingInProgress = false;
 
