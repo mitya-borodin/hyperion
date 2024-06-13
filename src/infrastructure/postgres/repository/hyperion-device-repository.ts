@@ -412,9 +412,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
               })
               .finally(() => {
                 /**
-                 * Запись в базу каждый 5 минут.
+                 * Запись в базу каждую минуту.
                  */
-                this.nextHistorySave = addMinutes(new Date(), 5);
+                this.nextHistorySave = addMinutes(new Date(), 1);
                 this.isHistorySavingInProgress = false;
               });
           })
@@ -423,9 +423,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
             logger(error);
 
             /**
-             * Запись в базу каждый 5 минут.
+             * Запись в базу каждую минуту.
              */
-            this.nextHistorySave = addMinutes(new Date(), 5);
+            this.nextHistorySave = addMinutes(new Date(), 1);
             this.isHistorySavingInProgress = false;
           });
       }
@@ -470,7 +470,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       /**
        * Запись в базу каждую минуту.
        */
-      this.nextDeviceSave = addMinutes(new Date(), 1);
+      this.nextDeviceSave = addMinutes(new Date(), 30);
 
       this.isDeviceSavingInProgress = false;
 
