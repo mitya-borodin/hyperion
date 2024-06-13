@@ -1,8 +1,6 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { exit } from 'node:process';
-
 import { PrismaClient } from '@prisma/client';
 import { compareDesc, subSeconds } from 'date-fns';
 import debug from 'debug';
@@ -40,19 +38,16 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   private history: Map<string, History[]>;
   private lastHistorySave: Date;
 
-  private devices: Map<string, HyperionDevice>;
-  private controls: Map<string, HyperionDeviceControl>;
-  private lastDeviceSave: Date;
+  private devices = new Map<string, HyperionDevice>();
+  private controls = new Map<string, HyperionDeviceControl>();
+  private lastDeviceSave = new Date();
+  private isDeviceSavingInProgress = false;
 
   constructor({ client }: HyperionDeviceRepositoryParameters) {
     this.client = client;
 
     this.history = new Map();
     this.lastHistorySave = new Date();
-
-    this.devices = new Map();
-    this.controls = new Map();
-    this.lastDeviceSave = new Date();
   }
 
   apply(hardwareDevice: HardwareDevice): Error | HyperionStateUpdate {
@@ -410,8 +405,14 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private async saveDevices(force: boolean = false) {
+    if (this.isDeviceSavingInProgress) {
+      return;
+    }
+
     if (force || compareDesc(this.lastDeviceSave, subSeconds(new Date(), 1)) === 1) {
       logger('Try to save devices and controls ⬆️ 🛟');
+
+      this.isDeviceSavingInProgress = true;
 
       const { devices, controls } = fromHyperionToPrisma(this.devices.values());
 
@@ -439,6 +440,8 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
       }
 
       this.lastDeviceSave = new Date();
+
+      this.isDeviceSavingInProgress = false;
 
       logger('The devices and controls was saved ⬆️ 🛟 ✅', devices.length, controls.length);
     }
