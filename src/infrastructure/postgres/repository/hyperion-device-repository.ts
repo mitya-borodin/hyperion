@@ -401,6 +401,9 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
         this.saveDevices(true)
           .then(() => {
+            /**
+             * Использовать SQL запрос для массовой вставки, так как createMany текет по памяти
+             */
             this.client.history
               .createMany({ data: history })
               .then(() => {
