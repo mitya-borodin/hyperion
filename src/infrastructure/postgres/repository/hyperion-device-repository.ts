@@ -351,88 +351,88 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
   }
 
   private addToHistory(device: HyperionDevice) {
-    for (const control of device.controls) {
-      const history: History = {
-        deviceId: String(device.id),
-        controlId: String(control.id),
-        value: String(control.value),
-        error: String(control.error),
-        createdAt: new Date(),
-      };
+    // for (const control of device.controls) {
+    //   const history: History = {
+    //     deviceId: String(device.id),
+    //     controlId: String(control.id),
+    //     value: String(control.value),
+    //     error: String(control.error),
+    //     createdAt: new Date(),
+    //   };
 
-      const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
+    //   const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
 
-      const histories = this.history.get(controlId);
+    //   const histories = this.history.get(controlId);
 
-      if (histories) {
-        const last = histories.at(-1);
+    //   if (histories) {
+    //     const last = histories.at(-1);
 
-        if (!last) {
-          return;
-        }
+    //     if (!last) {
+    //       return;
+    //     }
 
-        if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
-          histories.push(history);
-        } else if (last.value !== history.value) {
-          histories.push(history);
-        }
-      } else {
-        this.history.set(controlId, [history]);
-      }
+    //     if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
+    //       histories.push(history);
+    //     } else if (last.value !== history.value) {
+    //       histories.push(history);
+    //     }
+    //   } else {
+    //     this.history.set(controlId, [history]);
+    //   }
 
-      if (compareDesc(this.nextHistorySave, new Date()) === 1) {
-        if (this.isHistorySavingInProgress) {
-          return;
-        }
+    //   if (compareDesc(this.nextHistorySave, new Date()) === 1) {
+    //     if (this.isHistorySavingInProgress) {
+    //       return;
+    //     }
 
-        this.isHistorySavingInProgress = true;
+    //     this.isHistorySavingInProgress = true;
 
-        const history: History[] = [];
+    //     const history: History[] = [];
 
-        for (const item of this.history.values()) {
-          history.push(...item);
-        }
+    //     for (const item of this.history.values()) {
+    //       history.push(...item);
+    //     }
 
-        logger('Try to save history ⬆️ 🛟', history.length, this.history.size);
+    //     logger('Try to save history ⬆️ 🛟', history.length, this.history.size);
 
-        this.history.clear();
+    //     this.history.clear();
 
-        logger('The history map was clear 🆑', history.length, this.history.size);
+    //     logger('The history map was clear 🆑', history.length, this.history.size);
 
-        this.saveDevices(true)
-          .then(() => {
-            /**
-             * Использовать SQL запрос для массовой вставки, так как createMany текет по памяти
-             */
-            this.client.history
-              .createMany({ data: history })
-              .then(() => {
-                logger('The history was saved ⬆️ 🛟 ✅');
-              })
-              .catch((error) => {
-                logger('The history was not saved 🚨 🚨 🚨');
-                logger(error);
-              })
-              .finally(() => {
-                /**
-                 * Запись в базу каждую минуту.
-                 */
-                this.nextHistorySave = addMinutes(new Date(), 1);
-                this.isHistorySavingInProgress = false;
-              });
-          })
-          .catch((error) => {
-            logger('The devices was not saved 🚨 🚨 🚨');
-            logger(error);
+    //     this.saveDevices(true)
+    //       .then(() => {
+    //         /**
+    //          * Использовать SQL запрос для массовой вставки, так как createMany текет по памяти
+    //          */
+    //         this.client.history
+    //           .createMany({ data: history })
+    //           .then(() => {
+    //             logger('The history was saved ⬆️ 🛟 ✅');
+    //           })
+    //           .catch((error) => {
+    //             logger('The history was not saved 🚨 🚨 🚨');
+    //             logger(error);
+    //           })
+    //           .finally(() => {
+    //             /**
+    //              * Запись в базу каждую минуту.
+    //              */
+    //             this.nextHistorySave = addMinutes(new Date(), 1);
+    //             this.isHistorySavingInProgress = false;
+    //           });
+    //       })
+    //       .catch((error) => {
+    //         logger('The devices was not saved 🚨 🚨 🚨');
+    //         logger(error);
 
-            /**
-             * Запись в базу каждую минуту.
-             */
-            this.nextHistorySave = addMinutes(new Date(), 1);
-            this.isHistorySavingInProgress = false;
-          });
-      }
-    }
+    //         /**
+    //          * Запись в базу каждую минуту.
+    //          */
+    //         this.nextHistorySave = addMinutes(new Date(), 1);
+    //         this.isHistorySavingInProgress = false;
+    //       });
+    //   }
+    // }
   }
 
   private async saveDevices(force: boolean = false) {
