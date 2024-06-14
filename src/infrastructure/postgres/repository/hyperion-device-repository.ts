@@ -359,18 +359,13 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //     error: String(control.error),
     //     createdAt: new Date(),
     //   };
-
     //   const controlId = getControlId({ deviceId: history.deviceId, controlId: history.controlId });
-
     //   const histories = this.history.get(controlId);
-
     //   if (histories) {
     //     const last = histories.at(-1);
-
     //     if (!last) {
     //       return;
     //     }
-
     //     if (compareDesc(last.createdAt, subSeconds(new Date(), 10)) === 1) {
     //       histories.push(history);
     //     } else if (last.value !== history.value) {
@@ -379,26 +374,18 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //   } else {
     //     this.history.set(controlId, [history]);
     //   }
-
     //   if (compareDesc(this.nextHistorySave, new Date()) === 1) {
     //     if (this.isHistorySavingInProgress) {
     //       return;
     //     }
-
     //     this.isHistorySavingInProgress = true;
-
     //     const history: History[] = [];
-
     //     for (const item of this.history.values()) {
     //       history.push(...item);
     //     }
-
     //     logger('Try to save history ⬆️ 🛟', history.length, this.history.size);
-
     //     this.history.clear();
-
     //     logger('The history map was clear 🆑', history.length, this.history.size);
-
     //     this.saveDevices(true)
     //       .then(() => {
     //         /**
@@ -414,9 +401,6 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //             logger(error);
     //           })
     //           .finally(() => {
-    //             /**
-    //              * Запись в базу каждую минуту.
-    //              */
     //             this.nextHistorySave = addMinutes(new Date(), 1);
     //             this.isHistorySavingInProgress = false;
     //           });
@@ -424,10 +408,6 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
     //       .catch((error) => {
     //         logger('The devices was not saved 🚨 🚨 🚨');
     //         logger(error);
-
-    //         /**
-    //          * Запись в базу каждую минуту.
-    //          */
     //         this.nextHistorySave = addMinutes(new Date(), 1);
     //         this.isHistorySavingInProgress = false;
     //       });
@@ -470,10 +450,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
         });
       }
 
-      /**
-       * Запись в базу каждую минуту.
-       */
-      this.nextDeviceSave = addMinutes(new Date(), 30);
+      this.nextDeviceSave = addMinutes(new Date(), 1);
 
       this.isDeviceSavingInProgress = false;
 
