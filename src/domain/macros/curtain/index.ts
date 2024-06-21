@@ -1696,27 +1696,27 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
    * Отправка сообщений.
    */
   private retryToApplyNextState = () => {
-    logger.info('Retry to apply target to control 🔁');
-    logger.debug(
-      this.getDebugContext({
-        positions: this.settings.devices.positions.map((item) => {
-          const control = this.controls.get(getControlId(item));
+    // logger.info('Retry to apply target to control 🔁');
+    // logger.debug(
+    //   this.getDebugContext({
+    //     positions: this.settings.devices.positions.map((item) => {
+    //       const control = this.controls.get(getControlId(item));
 
-          if (control) {
-            return {
-              ...item,
-              max: control.max,
-              min: control.min,
-              enum: control.enum,
-              on: control.on,
-              off: control.off,
-              toggle: control.toggle,
-              value: control.value,
-            };
-          }
-        }),
-      }),
-    );
+    //       if (control) {
+    //         return {
+    //           ...item,
+    //           max: control.max,
+    //           min: control.min,
+    //           enum: control.enum,
+    //           on: control.on,
+    //           off: control.off,
+    //           toggle: control.toggle,
+    //           value: control.value,
+    //         };
+    //       }
+    //     }),
+    //   }),
+    // );
 
     if (this.hasAllBlock) {
       logger.info('Skip retry to apply target to control ⏩, because all block enabled');
