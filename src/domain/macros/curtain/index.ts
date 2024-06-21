@@ -694,14 +694,14 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
    * Высокочастотные логи.
    */
   private showSate = () => {
-    logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
-    logger.debug(this.getDebugContext());
+    // logger.info('The calculation 💻 of the state 🇺🇸 is completed ✅');
+    // logger.debug(this.getDebugContext());
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private showSensorContext = (context: any) => {
-    logger.info('The context of sensor 📡 based computing 💻');
-    logger.debug(context);
+    // logger.info('The context of sensor 📡 based computing 💻');
+    // logger.debug(context);
   };
 
   /**
@@ -733,17 +733,18 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   setState = (nextStateJson: string): void => {
     const nextState = CurtainMacros.parsePublicState(nextStateJson, this.version);
 
-    logger.info('The next public state was supplied 📥');
-    logger.debug(this.getDebugContext({ nextState }));
+    // logger.info('The next public state was supplied 📥');
+    // logger.debug(this.getDebugContext({ nextState }));
 
     if (this.state.target === nextState.target) {
       logger.warning('The received state does not differ from the current one 🚨');
+      logger.debug(this.getDebugContext({ nextState }));
     } else {
       this.state.target = nextState.target;
       this.state.direction = this.getDirection();
 
       logger.info('The next state was applied 🫒 by set state in manual mode 🚹');
-      logger.debug(this.getDebugContext());
+      logger.debug(this.getDebugContext({ nextState }));
 
       this.computeOutput();
       this.send();
@@ -755,8 +756,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       this.state.target = nextTarget;
       this.state.direction = this.getDirection();
 
-      logger.info('The next target 🎯 position was set ✅');
-      logger.debug(this.getDebugContext({ position: this.settings.properties.position }));
+      // logger.info('The next target 🎯 position was set ✅');
+      // logger.debug(this.getDebugContext({ nextTarget, position: this.settings.properties.position }));
 
       this.computeOutput();
       this.send();
@@ -866,8 +867,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       return 0;
     });
 
-    logger.info('The time based computing was run ⏰');
-    logger.debug(this.getDebugContext({ openCloseByTime }));
+    // logger.info('The time based computing was run ⏰');
+    // logger.debug(this.getDebugContext({ openCloseByTime }));
 
     for (const { direction, blockMin: block, timePointMin } of openCloseByTime) {
       if (toClose || toOpen) {
@@ -931,8 +932,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         });
       }
 
-      logger.info('Switching has been performed at a given time point ⏱️');
-      logger.debug(this.getDebugContext({ openCloseByTime, toOpen, toClose, blockMin, timePointIsHit, target }));
+      // logger.info('Switching has been performed at a given time point ⏱️');
+      // logger.debug(this.getDebugContext({ openCloseByTime, toOpen, toClose, blockMin, timePointIsHit, target }));
 
       this.setTarget(target);
     } else if (timePointIsHit) {
@@ -958,20 +959,20 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       const fromMin = hours * 60 + minutes - 15;
       const toMin = hours * 60 + minutes + 15;
 
-      logger.info('Checking for hitting a time point ⏱️');
-      logger.debug(
-        this.getDebugContext({
-          hours,
-          minutes,
-          fromMin,
-          timePointInMin: min,
-          toMin,
-          hitting: min >= fromMin && min <= toMin,
-        }),
-      );
+      // logger.info('Checking for hitting a time point ⏱️');
+      // logger.debug(
+      //   this.getDebugContext({
+      //     hours,
+      //     minutes,
+      //     fromMin,
+      //     timePointInMin: min,
+      //     toMin,
+      //     hitting: min >= fromMin && min <= toMin,
+      //   }),
+      // );
 
       if (min >= fromMin && min <= toMin) {
-        logger.info('Hitting a time point 🔘 ✅');
+        logger.info('Hitting a time point ⏱️');
         logger.debug(
           this.getDebugContext({
             fromMin,
@@ -983,7 +984,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         return true;
       }
     } else {
-      logger.info('The time should be in day range 🏙️ 🚨');
+      logger.info('The time should be in day range 🚨');
       logger.debug(
         this.getDebugContext({
           fromMin: 0,
@@ -1174,6 +1175,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
    */
   private get isTooSunny(): boolean {
     const { tooSunnyLux } = this.settings.properties.illumination;
+
     const { illumination } = this.state;
 
     if (this.isIlluminationReady) {
@@ -1209,11 +1211,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
        */
       (this.isCoverClose || this.isCoverCloserToClose) &&
       /**
-       * Открывание шторы возможно только при наличии движения.
+       * Открывание шторы возможно только при наличии движения
        */
       this.isMotion &&
       /**
-       * Открывание шторы возможно только днем.
+       * Открывание шторы возможно только днем
        */
       this.isDay
     );
@@ -1243,7 +1245,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
   }
 
   /**
-   * Когда стало менее жарко и менее солнечно, штора отрывается 🪭
+   * Когда стало менее жарко и солнечно, штора отрывается 🪭
    */
   private get isEnoughSunnyAndCool(): boolean {
     const { closeBySun } = this.settings.properties;
@@ -1285,13 +1287,15 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     if (this.state.position !== current) {
       logger.info('The position of the curtain has changed 🔁 🪟');
 
+      const previousState = cloneDeep(this.state);
+
       this.state.position = current;
 
       if (this.state.stop) {
         this.state.target = current;
       }
 
-      logger.debug(this.getDebugContext({ current }));
+      logger.debug(this.getDebugContext({ current, previousState }));
     }
   };
 
@@ -1307,6 +1311,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     const nextLighting = isLightingOn ? Lighting.ON : Lighting.OFF;
 
     if (this.state.lighting !== nextLighting) {
+      const previousState = cloneDeep(this.state);
+
       if (nextLighting === Lighting.ON) {
         logger.info('The lighting is on 💡');
 
@@ -1319,7 +1325,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         this.state.illumination.beforeTurningOnLighting = 0;
       }
 
-      logger.debug(this.getDebugContext({ nextLighting }));
+      logger.debug(this.getDebugContext({ nextLighting, previousState }));
 
       this.state.lighting = nextLighting;
     }
@@ -1421,7 +1427,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (nextTarget !== position.open) {
         nextTarget = position.open;
 
-        logger.info('Open because is enough sunny and cool 🆒 🍉 🪭');
+        logger.info('Open because is enough sunny 🌃 and cool 🪭');
         logger.trace(this.getDebugContext({ nextTarget, isBlocked: this.isBlocked(nextTarget) }));
       }
     } else if (this.isEnoughSunny && nextTarget !== position.open) {
@@ -1443,8 +1449,6 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
         return false;
       }
-
-      logger.info('A target was determined by the sensors 📡');
 
       this.setTarget(nextTarget);
 
@@ -1869,10 +1873,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     }
 
     logger.info('The output for change 🏃‍♀️‍➡️ position was computed 💻');
-    logger.debug({
-      ...this.getDebugContext(),
-      output: this.output,
-    });
+    logger.debug(this.getDebugContext({ output: this.output }));
 
     if (this.output.positions.length > 0) {
       this.state.stop = false;
@@ -1904,11 +1905,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       }
 
       logger.info('The message will be sent to the wirenboard controller 📟');
-      logger.debug({
-        ...this.getDebugContext(),
-        topic,
-        message,
-      });
+      logger.debug(this.getDebugContext({ topic, message }));
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
@@ -1939,11 +1936,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       }
 
       logger.info('The message will be sent to the wirenboard controller 📟');
-      logger.debug({
-        ...this.getDebugContext(),
-        topic,
-        message,
-      });
+      logger.debug(this.getDebugContext({ topic, message }));
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }

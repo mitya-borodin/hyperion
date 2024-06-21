@@ -634,7 +634,7 @@ export abstract class Macros<
       /**
        * Ширина скользящей в минутах.
        */
-      width: subMinutes(new Date(), 5),
+      width: subMinutes(new Date(), 10),
       stack: [],
     };
 
@@ -648,18 +648,18 @@ export abstract class Macros<
       return movingArrange.avg;
     }
 
-    logger('The procedure for moving the "moving average" has been started 🛝');
-    logger({
-      beforeMove: {
-        name: this.name,
-        now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        value,
-        sum: movingArrange.sum,
-        avg: movingArrange.avg,
-        width: movingArrange.width,
-        stack: movingArrange.stack.length,
-      },
-    });
+    // logger('The procedure for moving the "moving average" has been started 🛝');
+    // logger({
+    //   beforeMove: {
+    //     name: this.name,
+    //     now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+    //     value,
+    //     sum: movingArrange.sum,
+    //     avg: movingArrange.avg,
+    //     width: movingArrange.width,
+    //     stack: movingArrange.stack.length,
+    //   },
+    // });
 
     const stack = [];
 
@@ -679,17 +679,17 @@ export abstract class Macros<
 
     movingArrange.stack = stack;
 
-    logger({
-      afterMove: {
-        name: this.name,
-        now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
-        value,
-        sum: movingArrange.sum,
-        avg: movingArrange.avg,
-        width: movingArrange.width,
-        stack: movingArrange.stack.length,
-      },
-    });
+    // logger({
+    //   afterMove: {
+    //     name: this.name,
+    //     now: format(this.getDate(), 'yyyy.MM.dd HH:mm:ss OOOO'),
+    //     value,
+    //     sum: movingArrange.sum,
+    //     avg: movingArrange.avg,
+    //     width: movingArrange.width,
+    //     stack: movingArrange.stack.length,
+    //   },
+    // });
 
     this.movingArranges.set(name, movingArrange);
 
