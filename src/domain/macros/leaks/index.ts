@@ -449,14 +449,11 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
         logger.info('Forced behavior is close 🌵');
       }
 
-      logger.debug({
-        name: this.name,
-        now: this.now,
-        nextPublicState,
-        state: this.state,
-      });
-
       this.state.force = nextPublicState.force;
+
+      logger.debug(this.getDebugContext({ nextPublicState }));
+
+      logger.info('Run execute 🔄');
 
       this.execute();
     }
@@ -466,7 +463,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     return {
       name: this.name,
       now: this.now,
-      ...mixin,
+      mixin,
       state: this.state,
       phase: this.phase,
       isSwitchOpen: this.isSwitchOpen,
@@ -489,8 +486,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
    * Автоматизация по времени
    */
   private runExecution = () => {
-    logger.info('Starting execution by timer 🚥');
-    logger.debug(this.getDebugContext());
+    // logger.info('Starting execution by timer 🚥');
+    // logger.debug(this.getDebugContext());
 
     this.execute();
   };
@@ -1063,8 +1060,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
     this.computePhaseOutput();
 
-    logger.info('The output was computed 🍋 🧪 ✊🏻');
-    logger.debug(this.getDebugContext());
+    // logger.info('The output was computed 🍋 🧪 ✊🏻');
+    // logger.debug(this.getDebugContext());
   };
 
   private computePhaseOutput = (forceOff = false) => {
