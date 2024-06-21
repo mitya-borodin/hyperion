@@ -1872,8 +1872,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       }
     }
 
-    logger.info('The output for change 🏃‍♀️‍➡️ position was computed 💻');
-    logger.debug(this.getDebugContext({ output: this.output }));
+    // logger.info('The output for change 🏃‍♀️‍➡️ position was computed 💻');
+    // logger.debug(this.getDebugContext({ output: this.output }));
 
     if (this.output.positions.length > 0) {
       this.state.stop = false;
