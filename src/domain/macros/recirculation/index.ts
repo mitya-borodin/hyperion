@@ -276,7 +276,7 @@ export class RecirculationMacros extends Macros<
    * Автоматизация по времени.
    */
   private pumpRunOutTimer = () => {
-    logger.info('Checking the pump run-out time ⏱️');
+    // logger.info('Checking the pump run-out time ⏱️');
 
     if (this.state.pump === PumpState.ON && !this.isPumpRunOut) {
       logger.info('The pump will be stopped because the pump run-out time has ended 🛑');

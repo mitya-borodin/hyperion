@@ -1739,7 +1739,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
           'A discrepancy between the control position of the curtain and the internal position of the curtain macro was found ‼ 🪟',
         );
         logger.info('All curtains will be updated according to the internal state of the curtain macro 🪟');
-        logger.debug({ state: this.state, positionFromControl: control?.value });
+        logger.debug(this.getDebugContext({ positionFromControl: control?.value }));
 
         if (this.isBlocked(this.state.target)) {
           logger.info('Try to change position by (retry to apply next state) was blocked 🚫 😭');
