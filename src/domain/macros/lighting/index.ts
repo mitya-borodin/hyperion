@@ -182,11 +182,6 @@ export type LightingMacrosSettings = {
         onLux: number;
         offLux: number;
       };
-
-      /**
-       * Множитель порога выключения.
-       */
-      readonly mul: number;
     };
 
     /**
@@ -734,6 +729,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           logger(
             stringify({
               name: this.name,
+              now: this.now,
               autoOffBlockedFor: format(this.block.off, 'yyyy.MM.dd HH:mm:ss OOOO'),
             }),
           );
@@ -872,7 +868,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           hasIlluminationDevice,
           hasMotionDevice,
 
-          illuminationSettings: this.settings.properties.illumination.boundary.onLux,
+          illuminationSettings: this.settings.properties.illumination,
           illuminationState: this.state.illumination,
           autoOnByIllumination,
 
@@ -980,10 +976,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
           hasMotionDevice,
           hasNoiseDevice,
 
-          illuminationSettings:
-            this.state.switch === Switch.ON
-              ? this.settings.properties.illumination.boundary.offLux * this.settings.properties.illumination.mul
-              : this.settings.properties.illumination.boundary.offLux,
+          illuminationSettings: this.settings.properties.illumination,
           illuminationState: this.state.illumination,
 
           lastMotionDetected: this.lastMotionDetected,
