@@ -134,9 +134,11 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
             continue;
           }
 
-          const skippedControls = device.controls.filter(
-            ({ controlId }) => !this.controls.has(getControlId({ deviceId: device.deviceId, controlId })),
-          );
+          const skippedControls = device.controls.filter(({ controlId, value }) => {
+            const control = this.controls.get(getControlId({ deviceId: device.deviceId, controlId }));
+
+            return control ? control.value !== value && !control.value : false;
+          });
 
           if (skippedControls.length > 0) {
             this.apply(fromPrismaToHardwareDevice({ ...device, controls: skippedControls }));
@@ -422,6 +424,7 @@ export class HyperionDeviceRepository implements IHyperionDeviceRepository {
 
     if (force || compareDesc(this.nextDeviceSave, new Date()) === 1) {
       logger('Try to save devices and controls ⬆️ 🛟');
+      logger(stringify({ force, nextDeviceSave: this.nextDeviceSave }));
 
       this.isDeviceSavingInProgress = true;
 

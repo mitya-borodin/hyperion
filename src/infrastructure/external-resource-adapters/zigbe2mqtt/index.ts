@@ -445,7 +445,7 @@ export const runZigbee2mqtt = async ({
       const hyperionDevice = hyperionDevices.get(ieeeAddress ?? '');
       const payload = message;
 
-      logger('The result of set operation on zigbee device has been received ⬇️ ⛵️ 🌍 ⬇️');
+      logger('The result of ( SET ) operation on zigbee device has been received ⬇️ ⛵️ 🌍 ⬇️');
       logger(stringify({ topic, friendlyName, ieeeAddress, payload }));
 
       if (hyperionDevice) {

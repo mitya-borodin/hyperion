@@ -2,13 +2,13 @@
 /* eslint-disable unicorn/no-array-reduce */
 import { addDays, addMinutes, compareAsc, format, subDays } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
-import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
 import { config } from '../../../infrastructure/config';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
+import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
 import { HyperionDeviceControl } from '../../hyperion-control';
 import { HyperionDevice } from '../../hyperion-device';
@@ -23,7 +23,7 @@ import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4'
 import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-4-to-5';
 import { settings_from_5_to_6 } from './settings-mappers/5-settings-from-5-to-6';
 
-const logger = debug('hyperion:macros:lighting');
+const logger = getLogger('hyperion:macros:lighting');
 
 /**
  * ! SETTINGS
@@ -368,8 +368,11 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    */
   private day: [Date, Date];
 
-  private lastMotionDetected = new Date();
-  private lastNoseDetected = new Date();
+  private last = {
+    motion: new Date(),
+    noise: new Date(),
+  };
+
   private clock: NodeJS.Timeout;
 
   constructor(parameters: LightingMacrosParameters) {
@@ -416,6 +419,48 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.clock = setInterval(this.tic, 60 * 1000);
   }
 
+  private getDebugContext = (mixin = {}) => {
+    return {
+      name: this.name,
+      now: this.now,
+
+      day: this.day,
+
+      time: this.time,
+      isDay: this.isDay,
+      isNight: this.isNight,
+
+      block: this.block,
+      last: this.last,
+
+      isAutoOnEnabled: this.isAutoOnEnabled,
+
+      isAutoOnBlocked: this.isAutoOnBlocked,
+      isAutoOffBlocked: this.isAutoOffBlocked,
+
+      isLightingOn: this.isLightingOn,
+      isLightingOff: this.isLightingOff,
+
+      hasIlluminationDevice: this.hasIlluminationDevice,
+      hasMotionDevice: this.hasMotionDevice,
+      hasNoiseDevice: this.hasNoiseDevice,
+
+      isIlluminationDetected: this.isIlluminationDetected,
+      isMotionDetected: this.isMotionDetected,
+      isSilence: this.isSilence,
+
+      automaticSwitchingOnByIllumination: this.automaticSwitchingOnByIllumination,
+      automaticSwitchingOnByMotion: this.automaticSwitchingOnByMotion,
+
+      automaticSwitchingOffByIllumination: this.automaticSwitchingOffByIllumination,
+      automaticSwitchingOffByMovementAndNoise: this.automaticSwitchingOffByMovementAndNoise,
+
+      state: this.state,
+      output: this.output,
+      mixin,
+    };
+  };
+
   static parseSettings = (settings: string, version: number = VERSION): LightingMacrosSettings => {
     return Macros.migrate(
       settings,
@@ -455,14 +500,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   setState = (nextPublicState: string): void => {
     const nextState: LightingMacrosPublicState = LightingMacros.parsePublicState(nextPublicState, this.version);
 
-    logger('The next state was appeared ⏭️ ⏭️ ⏭️');
-    logger(
-      stringify({
-        name: this.name,
-        currentState: this.state,
-        nextState,
-      }),
-    );
+    logger.info('The next public state was supplied 📥');
+    logger.debug(this.getDebugContext({ nextState }));
 
     switch (nextState.force) {
       case LightingForce.ON: {
@@ -481,21 +520,15 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         break;
       }
       default: {
-        logger('An incorrect state was received 🚨');
-        logger(stringify({ name: this.name, currentState: this.state, nextState }));
+        logger.info('An incorrect state was received 🚨');
+        logger.debug(this.getDebugContext({ nextState }));
 
         return;
       }
     }
 
-    logger('The next state was applied ⏭️ ✅ ⏭️');
-    logger(
-      stringify({
-        name: this.name,
-        currentState: this.state,
-        nextState,
-      }),
-    );
+    logger.info('The next state 📥 was applied ✅');
+    logger.debug(this.getDebugContext({ nextState }));
 
     this.execute();
   };
@@ -513,9 +546,117 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return (
       Number.isInteger(silenceMin) &&
       silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(new Date(this.lastMotionDetected.getTime()), silenceMin)) === 1 &&
-      compareAsc(new Date(), addMinutes(new Date(this.lastNoseDetected.getTime()), silenceMin)) === 1
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
     );
+  }
+
+  private get isAutoOnEnabled(): boolean {
+    return this.settings.properties.autoOn;
+  }
+
+  private get isAutoOnBlocked(): boolean {
+    return compareAsc(this.block.on, new Date()) === 1;
+  }
+
+  private get isAutoOffBlocked(): boolean {
+    return compareAsc(this.block.off, new Date()) === 1;
+  }
+
+  private get isLightingOn(): boolean {
+    return this.state.switch === Switch.ON;
+  }
+
+  private get isLightingOff(): boolean {
+    return this.state.switch === Switch.OFF;
+  }
+
+  private get hasIlluminationDevice(): boolean {
+    return this.settings.devices.illuminations.length > 0;
+  }
+
+  private get hasMotionDevice(): boolean {
+    return this.settings.devices.motions.length > 0;
+  }
+
+  private get hasNoiseDevice(): boolean {
+    return this.settings.devices.noises.length > 0;
+  }
+
+  private get isIlluminationDetected(): boolean {
+    return this.state.illumination >= 0;
+  }
+
+  private get isMotionDetected(): boolean {
+    const { trigger } = this.settings.properties.motion;
+
+    return Number.isInteger(trigger) && trigger > 0 && this.state.motion >= trigger;
+  }
+
+  /**
+   * ! AutoOn по датчикам освещенности.
+   *
+   * * При наличии датчиков движения, освещенность становится фактором
+   * * блокировки включения, то есть пока не потемнеет, группа не
+   * * будет включена даже если есть движение.
+   */
+  private get automaticSwitchingOnByIllumination(): boolean {
+    return (
+      this.hasIlluminationDevice &&
+      this.isIlluminationDetected &&
+      this.state.illumination <= this.settings.properties.illumination.boundary.onLux
+    );
+  }
+
+  /**
+   * ! AutoOn по датчикам движения.
+   *
+   * Если имеются датчики освещенности, то учитывается
+   * значение освещенности перед проверкой движения.
+   */
+  private get automaticSwitchingOnByMotion(): boolean {
+    return this.hasIlluminationDevice
+      ? this.hasMotionDevice && this.automaticSwitchingOnByIllumination && this.isMotionDetected
+      : this.hasMotionDevice && this.isMotionDetected;
+  }
+
+  /**
+   * ! AutoOff по датчикам освещенности.
+   *
+   * Как только освещенность превышает заданный порог, группа будет выключена.
+   *
+   * Работает когда имеются датчики освещенности.
+   */
+  private get automaticSwitchingOffByIllumination(): boolean {
+    return (
+      this.hasIlluminationDevice &&
+      this.isIlluminationDetected &&
+      /**
+       * Если включено освещение, то автоматическое отключение по освещения выключается,
+       * остается только по полной тишине.
+       *
+       * ? А на кой тогда вообще учитывать освещенность для выключения,
+       * ? скорее всего сработает в случае, когда светильник и датчик в разных местах.
+       */
+      /**
+       * !this.isLightingOn &&
+       */
+      /**
+       * Нужно выставлять illumination.boundary.offLux выше освещенности которую дают светильники.
+       */
+      this.state.illumination >= this.settings.properties.illumination.boundary.offLux
+    );
+  }
+
+  /**
+   * ! AutoOff по датчикам движения и звука.
+   *
+   * Как только пропадает движение и шум группа будет выключена.
+   *
+   * Работает когда имеются датчики движения.
+   */
+  private get automaticSwitchingOffByMovementAndNoise(): boolean {
+    return (this.hasMotionDevice || this.hasNoiseDevice) && this.isSilence;
   }
 
   private collectSwitchers = () => {
@@ -538,10 +679,9 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       return;
     }
 
-    logger('The lighting internal state has been changed🍋');
-    logger(
-      stringify({
-        name: this.name,
+    logger.info('The lighting condition has been updated externally 🚥');
+    logger.debug(
+      this.getDebugContext({
         isSomeOn,
         nextState,
         lightings: this.settings.devices.lightings.map((lighting) => {
@@ -549,7 +689,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
             value: this.controls.get(getControlId(lighting))?.value,
           };
         }),
-        state: this.state,
       }),
     );
 
@@ -573,7 +712,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       );
 
       if (this.state.motion >= trigger) {
-        this.lastMotionDetected = new Date();
+        this.last.motion = new Date();
       }
     }
   };
@@ -588,7 +727,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       );
 
       if (this.state.noise >= trigger) {
-        this.lastNoseDetected = new Date();
+        this.last.noise = new Date();
       }
     }
   };
@@ -598,7 +737,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       const control = this.getFirstLightingControl();
 
       if (!control) {
-        logger('Not a single lamp will be found 🚨');
+        logger.error('Not a single lamp will be found 🚨');
+        logger.error(this.getDebugContext());
 
         return false;
       }
@@ -616,15 +756,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       this.computeOutput();
 
       if (this.output.lightings.length > 0) {
-        logger('The force state was determined 🫡 😡 😤 🚀');
-        logger(
-          stringify({
-            name: this.name,
-            currentState: this.state,
-            nextSwitchState,
-            output: this.output,
-          }),
-        );
+        logger.info('The force state was determined 🫡 😡 😤 🚀');
+        logger.debug(this.getDebugContext({ nextSwitchState }));
 
         this.state.switch = nextSwitchState;
 
@@ -644,7 +777,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       isSwitchHasBeenChange = this.isSwitchHasBeenUp();
 
       if (isSwitchHasBeenChange) {
-        logger('The switch would be closed 🔒');
+        logger.info('The switch would be closed 🔒');
       }
     }
 
@@ -652,7 +785,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       isSwitchHasBeenChange = this.isSwitchHasBeenDown();
 
       if (isSwitchHasBeenChange) {
-        logger('The switch was open 🔓');
+        logger.info('The switch was open 🔓');
       }
     }
 
@@ -660,19 +793,13 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       const control = this.getFirstLightingControl();
 
       if (!control) {
-        logger('Not a single lamp will be found 🚨');
+        logger.error('Not a single lamp will be found 🚨');
+        logger.error(this.getDebugContext());
 
         return false;
       }
 
-      logger(
-        stringify({
-          name: this.name,
-          state: this.state,
-          deviceId: current?.id,
-          controlId: current?.controls.map(({ id }) => id),
-        }),
-      );
+      logger.debug(this.getDebugContext({ deviceId: current?.id, controlId: current?.controls.map(({ id }) => id) }));
 
       let nextSwitchState: Switch = Switch.OFF;
 
@@ -695,8 +822,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       } else if (this.state.switch === Switch.OFF) {
         nextSwitchState = Switch.ON;
       } else {
-        logger('No handler found for the current state 🚨');
-        logger(stringify({ name: this.name, currentState: this.state }));
+        logger.error('No handler found for the current state 🚨');
+        logger.error(this.getDebugContext());
 
         nextSwitchState = Switch.OFF;
       }
@@ -710,29 +837,21 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
          * Блокировку можно выключить установив значение 0
          */
         if (nextSwitchState === Switch.OFF) {
+          logger.info('The lighting is ON 💡');
+
           this.block.on = addMinutes(new Date(), this.settings.properties.block.onMin);
 
-          logger('The auto ON block was activated ✅');
-          logger(
-            stringify({
-              name: this.name,
-              autoOnBlockedFor: format(this.block.on, 'yyyy.MM.dd HH:mm:ss OOOO'),
-            }),
-          );
+          logger.info('The auto ON block was activated ⏱️ 🛑');
+          logger.debug(this.getDebugContext({ autoOnBlockedFor: format(this.block.on, 'yyyy.MM.dd HH:mm:ss OOOO') }));
         }
 
         if (nextSwitchState === Switch.ON) {
-          logger('The auto OFF block was activated ✅');
+          logger.info('The lighting is OFF 🕯️');
 
           this.block.off = addMinutes(new Date(), this.settings.properties.block.offMin);
 
-          logger(
-            stringify({
-              name: this.name,
-              now: this.now,
-              autoOffBlockedFor: format(this.block.off, 'yyyy.MM.dd HH:mm:ss OOOO'),
-            }),
-          );
+          logger.info('The auto OFF block was activated ⏱️ 🛑');
+          logger.debug(this.getDebugContext({ autoOffBlockedFor: format(this.block.off, 'yyyy.MM.dd HH:mm:ss OOOO') }));
         }
 
         this.state.switch = nextSwitchState;
@@ -750,10 +869,10 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   protected sensorBasedComputing(): boolean {
     const previousState = this.state.switch;
 
-    const hasAutoOnChange = this.autoOn();
-    const hasAutoOffChange = this.autoOff();
+    this.autoOn();
+    this.autoOff();
 
-    if ((hasAutoOnChange || hasAutoOffChange) && previousState !== this.state.switch) {
+    if (previousState !== this.state.switch) {
       this.computeOutput();
       this.send();
 
@@ -766,53 +885,12 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   /**
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
-
   private autoOn = (): boolean => {
-    /**
-     * ! Pre flight check
-     */
-    const isAutoOnBlocked = compareAsc(this.block.on, new Date()) === 1;
-    const isAlreadyOn = this.state.switch === Switch.ON;
-    const isIlluminationDetected = this.state.illumination >= 0;
-
-    // if (this.name === 'Освещение хозяйственной') {
-    //   logger(
-    //     stringify({
-    //       name: this.name,
-    //       isAutoOnBlocked,
-    //       isAlreadyOn,
-    //       isIlluminationDetected,
-    //       state: this.state,
-    //     }),
-    //   );
-    // }
-
-    if (!this.settings.properties.autoOn || isAutoOnBlocked || isAlreadyOn) {
+    if (!this.isAutoOnEnabled || this.isAutoOnBlocked || this.isLightingOn) {
       return false;
     }
 
-    /**
-     * ! Devices
-     */
-    const hasIlluminationDevice = this.settings.devices.illuminations.length > 0;
-    const hasMotionDevice = this.settings.devices.motions.length > 0;
-
-    /**
-     * ! Settings
-     */
     let nextSwitchState: Switch = this.state.switch;
-
-    /**
-     * ! AutoOn по датчикам освещенности.
-     *
-     * * При наличии датчиков движения, освещенность становится фактором
-     * * блокировки включения, то есть пока не потемнеет, группа не
-     * * будет включена даже если есть движение.
-     */
-    const autoOnByIllumination =
-      hasIlluminationDevice &&
-      isIlluminationDetected &&
-      this.state.illumination <= this.settings.properties.illumination.boundary.onLux;
 
     /**
      *  Если датчики движения отсутствуют, можно включить группу без проверки движения.
@@ -820,32 +898,15 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      *  Если датчики движения, присутствуют, проверка продолжается и autoOnByIllumination
      *   выполняет роль блокировки по освещенности.
      */
-    if (autoOnByIllumination && !hasMotionDevice) {
+    if (this.automaticSwitchingOnByIllumination && !this.hasMotionDevice) {
       nextSwitchState = Switch.ON;
     }
 
-    /**
-     * ! AutoOn по датчикам движения.
-     */
-    const {
-      trigger,
-      schedule: { fromHour, toHour },
-    } = this.settings.properties.motion;
-
-    const hasMotionTrigger = Number.isInteger(trigger) && trigger > 0;
-
-    const motionDetected = this.state.motion >= trigger;
-
-    /**
-     * Если имеются датчики освещенности, то учитывается значение освещенности перед проверкой движения.
-     */
-    const autoOnByMotion = hasIlluminationDevice
-      ? hasMotionDevice && autoOnByIllumination && hasMotionTrigger && motionDetected
-      : hasMotionDevice && hasMotionTrigger && motionDetected;
+    const { fromHour, toHour } = this.settings.properties.motion.schedule;
 
     const isPartTimeActive = fromHour >= 0 && fromHour <= 23 && toHour >= 0 && toHour <= 23;
 
-    if (autoOnByMotion) {
+    if (this.automaticSwitchingOnByMotion) {
       if (isPartTimeActive) {
         if (this.hasHourOverlap(fromHour, toHour, 'hour')) {
           nextSwitchState = Switch.ON;
@@ -856,38 +917,14 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     if (nextSwitchState !== this.state.switch) {
-      logger('The AUTO ON change state 🪄');
-      logger(
-        stringify({
-          name: this.name,
-
-          isAutoOnBlocked,
-          isAlreadyOn,
-          isIlluminationDetected,
-
-          hasIlluminationDevice,
-          hasMotionDevice,
-
-          illuminationSettings: this.settings.properties.illumination,
-          illuminationState: this.state.illumination,
-          autoOnByIllumination,
-
-          // eslint-disable-next-line unicorn/consistent-destructuring
-          motionTriggerSettings: this.settings.properties.motion.trigger,
-          motionState: this.state.motion,
-
-          // eslint-disable-next-line unicorn/consistent-destructuring
-          motionScheduleSettings: this.settings.properties.motion.schedule,
-
-          hasMotionTrigger,
-          motionDetected,
-          autoOnByMotion,
-          isPartTimeActive,
-          hasHourOverlap: this.hasHourOverlap(fromHour, toHour, 'hour'),
-
+      logger.info('The automatic lighting switching ON 💡');
+      logger.debug(
+        this.getDebugContext({
           nextSwitchState,
-
-          state: this.state,
+          isPartTimeActive,
+          fromHour,
+          toHour,
+          hasHourOverlap: this.hasHourOverlap(fromHour, toHour, 'hour'),
         }),
       );
 
@@ -900,100 +937,23 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
   };
 
   private autoOff = (): boolean => {
-    /**
-     * ! Pre flight check
-     */
-    const isAutoOffBlocked = compareAsc(this.block.off, new Date()) === 1;
-    const isAlreadyOff = this.state.switch === Switch.OFF;
-    const isIlluminationDetected = this.state.illumination >= 0;
-    const isLightingOn = this.state.switch === Switch.ON;
-
-    if (isAutoOffBlocked || isAlreadyOff) {
+    if (this.isAutoOffBlocked || this.isLightingOff) {
       return false;
     }
 
-    /**
-     * ! Devices
-     */
-    const { illuminations, motions, noises } = this.settings.devices;
-
-    const hasIlluminationDevice = illuminations.length > 0;
-    const hasMotionDevice = motions.length > 0;
-    const hasNoiseDevice = noises.length > 0;
-
-    /**
-     * ! Settings
-     */
     let nextSwitchState: Switch = this.state.switch;
 
-    /**
-     * ! AutoOff по датчикам освещенности.
-     *
-     * Как только освещенность превышает заданный порог, группа будет выключена.
-     *
-     * Работает когда имеются датчики освещенности.
-     */
-    const autoOffByIllumination =
-      hasIlluminationDevice &&
-      isIlluminationDetected &&
-      /**
-       * Если включено освещение, то автоматическое отключение по освещения выключается,
-       * остается только по полной тишине.
-       */
-      !isLightingOn &&
-      this.state.illumination >= this.settings.properties.illumination.boundary.offLux;
-
-    if (autoOffByIllumination) {
+    if (this.automaticSwitchingOffByIllumination) {
       nextSwitchState = Switch.OFF;
     }
 
-    /**
-     * ! AutoOff по датчикам движения и звука.
-     *
-     * Как только пропадает движение и шум группа будет выключена.
-     *
-     * Работает когда имеются датчики движения.
-     */
-    const autoOffByMovementAndNoise = (hasMotionDevice || hasNoiseDevice) && this.isSilence;
-
-    if (autoOffByMovementAndNoise) {
+    if (this.automaticSwitchingOffByMovementAndNoise) {
       nextSwitchState = Switch.OFF;
     }
 
     if (nextSwitchState !== this.state.switch) {
-      logger('The AUTO OFF change state 🪄');
-      logger(
-        stringify({
-          name: this.name,
-
-          isAutoOffBlocked,
-          isAlreadyOff,
-          isIlluminationDetected,
-
-          isLightingOn,
-
-          hasIlluminationDevice,
-          hasMotionDevice,
-          hasNoiseDevice,
-
-          illuminationSettings: this.settings.properties.illumination,
-          illuminationState: this.state.illumination,
-
-          lastMotionDetected: this.lastMotionDetected,
-          lastNoseDetected: this.lastNoseDetected,
-
-          autoOffByIllumination,
-
-          silenceMin: this.settings.properties.silenceMin,
-          isSilence: this.isSilence,
-
-          autoOffByMovementAndNoise,
-
-          nextSwitchState,
-
-          state: this.state,
-        }),
-      );
+      logger.info('The automatic lighting switching OFF 🕯️');
+      logger.debug(stringify(this.getDebugContext({ nextSwitchState })));
 
       this.state.switch = nextSwitchState;
 
@@ -1014,15 +974,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       const control = this.controls.get(getControlId(lighting));
 
       if (!control || control.type !== type || !control.topic.write) {
-        logger('The control specified in the settings was not found, or matches the parameters 🚨');
-        logger(
-          stringify({
-            name: this.name,
-            device: lighting,
-            type,
-            controls: [...this.controls.values()],
-          }),
-        );
+        logger.error('The control specified in the settings was not found, or matches the parameters 🚨');
+        logger.error(this.getDebugContext({ device: lighting, type, controls: [...this.controls.values()] }));
 
         continue;
       }
@@ -1047,15 +1000,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     }
 
     this.output = output;
-
-    logger('The next output was computed ⏭️ 🍋');
-    logger(
-      stringify({
-        name: this.name,
-        nextState: this.state,
-        output: this.output,
-      }),
-    );
   }
 
   protected send() {
@@ -1066,32 +1010,19 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       const message = lighting.value;
 
       if (!hyperionDevice || !hyperionControl || !topic) {
-        logger(
+        logger.error(
           // eslint-disable-next-line max-len
           'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
         );
-        logger(
-          stringify({
-            name: this.name,
-            now: this.now,
-            hyperionDevice,
-            controlId: getControlId(lighting),
-            hyperionControl,
-            lighting,
-          }),
+        logger.error(
+          this.getDebugContext({ hyperionDevice, controlId: getControlId(lighting), hyperionControl, lighting }),
         );
 
         continue;
       }
 
-      logger('The message will be sent to the wirenboard controller 📟');
-      logger(
-        stringify({
-          name: this.name,
-          topic,
-          message,
-        }),
-      );
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug(this.getDebugContext({ topic, message }));
 
       emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
     }
@@ -1168,19 +1099,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
     this.day = [from, to];
 
-    logger({
-      name: this.name,
-      message: 'Setup setup auto off time ⏱️',
-      now,
-      year,
-      month,
-      date,
-
-      day: this.day,
-
-      offByTime,
-      hours,
-    });
+    logger.info('Setup setup auto off time ⏱️');
+    logger.debug(this.getDebugContext({ year, month, date, offByTime, hours }));
 
     /**
      * Если в момент старта сервиса 15 часов, а time установлен как 13, то нужно передвинуть диапазон на сутки вперед,
@@ -1230,40 +1150,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     const timeHasCome = hours === offByTime;
     const hasOverlapMomentAndDay = now.getTime() >= from.getTime() && now.getTime() <= to.getTime();
 
-    // logger({
-    //   name: this.name,
-    //   message: 'Tic tac ⏱️',
-    //   from,
-    //   fromMs: from.getTime(),
-    //   to,
-    //   toMs: to.getTime(),
-    //   now,
-    //   nowMs: now.getTime(),
-    //   hours,
-    //   offByTime,
-    //   timeHasCome,
-    //   hasOverlapMomentAndDay,
-    //   state: this.state,
-    // });
-
     if (timeHasCome && hasOverlapMomentAndDay) {
       this.day = [addDays(from, 1), addDays(to, 1)];
 
-      if (this.state.switch === Switch.ON) {
+      if (this.isLightingOn) {
         this.state.switch = Switch.OFF;
 
-        logger('The switch state was changed by clock 🪄');
-        logger(stringify({ name: this.name, state: this.state }));
+        logger.info('The lighting OFF by IME POINT 🕯️');
 
         this.block.on = addMinutes(new Date(), this.settings.properties.block.onMin);
 
-        logger('The auto ON block was activated ✅');
-        logger(
-          stringify({
-            name: this.name,
-            autoOnBlockedFor: format(this.block.on, 'yyyy.MM.dd HH:mm:ss OOOO'),
-          }),
-        );
+        logger.info('The auto ON block was activated ⏱️ 🛑');
+        logger.debug(this.getDebugContext({ autoOnBlockedFor: format(this.block.on, 'yyyy.MM.dd HH:mm:ss OOOO') }));
 
         this.computeOutput();
         this.send();

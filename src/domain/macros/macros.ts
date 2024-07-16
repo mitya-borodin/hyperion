@@ -10,7 +10,7 @@ import debug from 'debug';
 import cloneDeep from 'lodash.clonedeep';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
-import { getTimes, GetTimesResult } from 'suncalc';
+import { getTimes } from 'suncalc';
 import { v4 } from 'uuid';
 
 import { stringify } from '../../helpers/json-stringify';

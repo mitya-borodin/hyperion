@@ -192,9 +192,7 @@ export type LeaksMacrosSettings = {
       readonly close: string;
     };
 
-    readonly phase: {
-      readonly durationSec: number;
-    };
+    readonly valveRotationSec: number;
   };
 };
 
@@ -283,17 +281,29 @@ const createDefaultState = () => {
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
   private output: LeaksMacrosNextOutput;
 
-  private phase = {
-    durationOfValveMovement: new Date(),
-  };
+  private durationOfValveMovement = new Date();
 
   private timer: {
+    /**
+     * Таймер контроля процесса открывания/закрывания.
+     */
     controlProgressDuration: NodeJS.Timeout;
+
+    /**
+     * Таймер принудительного запуска, так как отсутствуют частые изменение внешних устройств.
+     */
     executionTimer: NodeJS.Timeout;
   };
 
   private block = {
+    /**
+     * Блокировка открывания, призвана избавиться от "дребезга" то есть частого переключения крана.
+     */
     open: new Date(),
+
+    /**
+     * Блокировка на время, приведения крана в состояние которое соответствует внутреннему состоянию макроса.
+     */
     matching: new Date(),
   };
 
@@ -334,10 +344,12 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
     this.timer = {
       controlProgressDuration: setInterval(this.controlProgressDuration, 5000),
-      executionTimer: setInterval(this.runExecution, 30 * 1000),
+      executionTimer: setInterval(this.runExecution, 15 * 1000),
     };
 
     this.checkPhaseCombination();
+
+    setTimeout(this.runExecution, 100);
   }
 
   /**
@@ -434,7 +446,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   setState = (nextPublicStateJson: string): void => {
     const nextPublicState = LeaksMacros.parsePublicState(nextPublicStateJson, this.version);
 
-    logger.info('The next public state was appeared ⏭️');
+    logger.info('The next public state was supplied 📥');
+    logger.debug(this.getDebugContext({ nextPublicState }));
 
     if (this.state.force !== nextPublicState.force) {
       if (nextPublicState.force === 'UNSPECIFIED') {
@@ -465,7 +478,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       now: this.now,
       mixin,
       state: this.state,
-      phase: this.phase,
+      output: this.output,
       isSwitchOpen: this.isSwitchOpen,
       isSwitchClose: this.isSwitchClose,
       isEnumOpen: this.isEnumOpen,
@@ -478,7 +491,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       block: this.block,
       hasMatchingBlock: this.hasMatchingBlock,
       hasOpenBlock: this.hasOpenBlock,
-      output: this.output,
+      durationOfValveMovement: this.durationOfValveMovement,
+      isRotationOfValveInTheProgress: this.isRotationOfValveInTheProgress,
+      isDurationOfValveMovementTooLong: this.isDurationOfValveMovementTooLong,
     };
   };
 
@@ -486,17 +501,19 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
    * Автоматизация по времени
    */
   private runExecution = () => {
-    // logger.info('Starting execution by timer 🚥');
-    // logger.debug(this.getDebugContext());
+    logger.info('Starting execution by timer 🚥');
+    logger.info({ name: this.name, now: this.now });
 
     this.execute();
   };
 
+  /**
+   * Отключает питание на реле, если движение длится дольше отведенного времени.
+   */
   private controlProgressDuration = () => {
     if (this.isPhaseOnWay && this.isDurationOfValveMovementTooLong) {
       logger.info('Duration of valve movement too long, need to stop movement 🛑 ✋');
 
-      this.setMatchingBlock();
       this.setOpenBlock();
 
       this.computePhaseOutput(true);
@@ -516,26 +533,50 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   }
 
   private collectValve = () => {
-    if (this.state.valve === ValveState.UNSPECIFIED) {
-      if (this.isSwitchOpen || this.isEnumOpen || this.isAnalogOpen || this.isPhaseOpen) {
-        logger.info('An open valve has been detected 🚰');
+    if (this.isRotationOfValveInTheProgress) {
+      logger.info('Skip collect values, because rotation ov valve in the progress ⏭️');
 
-        this.state.valve = ValveState.OPEN;
-      } else if (this.isSwitchClose || this.isEnumClose || this.isAnalogClose || this.isPhaseClose) {
-        logger.info('All valves are closed 🚰 🚫 ');
+      return false;
+    }
 
-        this.state.valve = ValveState.CLOSE;
-      } else {
-        logger.info('The position of the valves could not be determined, a closed position was selected 🛑 🔒 🚰');
+    let nextValve = this.state.valve;
 
-        this.state.valve = ValveState.CLOSE;
+    if (this.isSwitchOpen || this.isEnumOpen || this.isAnalogOpen || this.isPhaseOpen) {
+      nextValve = ValveState.OPEN;
+    } else if (this.isSwitchClose || this.isEnumClose || this.isAnalogClose || this.isPhaseClose) {
+      nextValve = ValveState.CLOSE;
+    } else if (!this.isPhaseOnWay) {
+      logger.warning('The position of the valves could not be determined, a closed position was selected 🛑 🔒 🚰');
+
+      this.state.valve = ValveState.CLOSE;
+
+      logger.debug(this.getDebugContext());
+
+      return;
+    }
+
+    if (this.state.valve !== nextValve) {
+      if (nextValve === ValveState.OPEN) {
+        logger.info('The valves are open 🚰 ✅');
       }
+
+      if (nextValve === ValveState.CLOSE) {
+        logger.info('The valves are close 🚰 🚫');
+      }
+
+      this.state.valve = nextValve;
 
       logger.debug(this.getDebugContext());
     }
   };
 
   private collectLeaks() {
+    if (this.isRotationOfValveInTheProgress) {
+      logger.info('Skip collect leaks, because rotation ov valve in the progress ⏭️');
+
+      return false;
+    }
+
     const { leaks } = this.settings.devices;
 
     const { leak } = this.settings.properties;
@@ -780,13 +821,17 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   }
 
   private get isDurationOfValveMovementTooLong(): boolean {
-    return compareAsc(new Date(), this.phase.durationOfValveMovement) === 1;
+    return compareAsc(new Date(), this.durationOfValveMovement) === 1;
+  }
+
+  private get isRotationOfValveInTheProgress(): boolean {
+    return compareAsc(this.durationOfValveMovement, new Date()) === 1;
   }
 
   private setDurationOfValveMovement = () => {
-    logger.info('The duration of value movement on the phases is set ⏱️ 🎯 💾');
+    logger.info('The duration of value movement is set ⏱️');
 
-    this.phase.durationOfValveMovement = addSeconds(new Date(), this.settings.properties.phase.durationSec);
+    this.durationOfValveMovement = addSeconds(new Date(), this.settings.properties.valveRotationSec);
   };
 
   private setOpenBlock = () => {
@@ -851,22 +896,30 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   /**
    * Автоматизации по датчикам.
    */
-
   protected sensorBasedComputing = (): boolean => {
+    if (this.isRotationOfValveInTheProgress) {
+      logger.info('Skip sensor based computing, because rotation ov valve in the progress ⏭️');
+
+      return false;
+    }
+
     let nextValve = this.state.valve;
 
     if (this.state.leak && this.state.valve === ValveState.OPEN) {
-      logger.info('The valves will be closed 🏜️ 🌵');
+      logger.info('The valves will be closed 🏜️ 🌵 🛑');
 
       nextValve = ValveState.CLOSE;
     }
 
     if (!this.state.leak && this.state.valve === ValveState.CLOSE) {
-      logger.info('The valves will be opened 🌊 💧');
+      logger.info('The valves will be opened 🌊 💧 ✅');
 
       nextValve = ValveState.OPEN;
     }
 
+    /**
+     * Обработка ситуации внутреннее открытое состояние не соответствует внешнему закрытому.
+     */
     if (
       this.state.valve === nextValve &&
       this.state.valve === ValveState.OPEN &&
@@ -889,6 +942,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       return false;
     }
 
+    /**
+     * Обработка ситуации внутреннее закрытое состояние не соответствует внешнему открытому.
+     */
     if (
       this.state.valve === nextValve &&
       this.state.valve === ValveState.CLOSE &&
@@ -929,9 +985,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
         this.setOpenBlock();
       }
 
-      this.setDurationOfValveMovement();
+      logger.info('The condition of the valve has been changed 🚰 🎯');
 
-      logger.info('The condition of the valve has been changed 🎲 🎯 💾');
+      this.setDurationOfValveMovement();
 
       this.state.valve = nextValve;
 

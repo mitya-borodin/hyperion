@@ -663,8 +663,9 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return {
       name: this.name,
       now: this.now,
-      state: this.state,
       mixin,
+      state: this.state,
+      output: this.output,
       time: this.time,
       isDay: this.isDay,
       isNight: this.isNight,
@@ -1314,13 +1315,13 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       const previousState = cloneDeep(this.state);
 
       if (nextLighting === Lighting.ON) {
-        logger.info('The lighting is on 💡');
+        logger.info('The lighting is ON 💡');
 
         this.state.illumination.beforeTurningOnLighting = this.state.illumination.average;
       }
 
       if (nextLighting === Lighting.OFF) {
-        logger.info('The lighting is off 🕯️');
+        logger.info('The lighting is OFF 🕯️');
 
         this.state.illumination.beforeTurningOnLighting = 0;
       }
