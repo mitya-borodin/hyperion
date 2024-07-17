@@ -50,7 +50,7 @@ export type LeaksMacrosSettings = {
     readonly leaks: Array<{
       readonly deviceId: string;
       readonly controlId: string;
-      readonly controlType: ControlType.SWITCH | ControlType.ENUM;
+      readonly controlType: ControlType.SWITCH | ControlType.ENUM | ControlType.VALUE;
     }>;
 
     /**
@@ -264,6 +264,7 @@ type LeaksMacrosNextOutput = {
 };
 
 const VERSION = 0;
+const BLOCK_MIN = 5;
 
 type LeaksMacrosParameters = MacrosParameters<string, string | undefined>;
 
@@ -293,9 +294,19 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
      * Таймер принудительного запуска, так как отсутствуют частые изменение внешних устройств.
      */
     executionTimer: NodeJS.Timeout;
+
+    /**
+     * Таймер принудительного опроса устройств.
+     */
+    requestValuesTimer: NodeJS.Timeout;
   };
 
   private block = {
+    /**
+     * Блокировка всех действий.
+     */
+    all: new Date(),
+
     /**
      * Блокировка открывания, призвана избавиться от "дребезга" то есть частого переключения крана.
      */
@@ -343,13 +354,15 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     };
 
     this.timer = {
-      controlProgressDuration: setInterval(this.controlProgressDuration, 5000),
-      executionTimer: setInterval(this.runExecution, 15 * 1000),
+      controlProgressDuration: setInterval(this.controlProgressDuration, 1000),
+      executionTimer: setInterval(this.runExecution, 10 * 1000),
+      requestValuesTimer: setInterval(this.requestValues, 60 * 1000),
     };
 
     this.checkPhaseCombination();
 
-    setTimeout(this.runExecution, 100);
+    setTimeout(this.requestValues, 50);
+    setTimeout(this.runExecution, 5000);
   }
 
   /**
@@ -489,8 +502,9 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       isPhaseOnWay: this.isPhaseOnWay,
       isPhaseClose: this.isPhaseClose,
       block: this.block,
-      hasMatchingBlock: this.hasMatchingBlock,
+      hasAllBlock: this.hasAllBlock,
       hasOpenBlock: this.hasOpenBlock,
+      hasMatchingBlock: this.hasMatchingBlock,
       durationOfValveMovement: this.durationOfValveMovement,
       isRotationOfValveInTheProgress: this.isRotationOfValveInTheProgress,
       isDurationOfValveMovementTooLong: this.isDurationOfValveMovementTooLong,
@@ -533,9 +547,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   }
 
   private collectValve = () => {
-    if (this.isRotationOfValveInTheProgress) {
-      logger.info('Skip collect values, because rotation ov valve in the progress ⏭️');
-
+    if (this.hasAllBlock || this.isRotationOfValveInTheProgress) {
       return false;
     }
 
@@ -571,9 +583,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   private collectLeaks() {
-    if (this.isRotationOfValveInTheProgress) {
-      logger.info('Skip collect leaks, because rotation ov valve in the progress ⏭️');
-
+    if (this.hasAllBlock || this.isRotationOfValveInTheProgress) {
       return false;
     }
 
@@ -585,7 +595,17 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
       const control = this.controls.get(getControlId(device));
 
       if (control) {
-        return control.value === control.on || control.value === leak.enum;
+        if (control.type === ControlType.SWITCH) {
+          return control.value === control.on;
+        }
+
+        if (control.type === ControlType.ENUM) {
+          return control.value === leak.enum;
+        }
+
+        if (control.type === ControlType.VALUE) {
+          return Number(control.value) > 0;
+        }
       }
 
       return false;
@@ -812,6 +832,10 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
     });
   }
 
+  private get hasAllBlock(): boolean {
+    return compareAsc(new Date(), this.block.all) === -1;
+  }
+
   private get hasMatchingBlock(): boolean {
     return compareAsc(new Date(), this.block.matching) === -1;
   }
@@ -835,7 +859,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   private setOpenBlock = () => {
-    this.block.open = addMinutes(new Date(), 5);
+    this.block.open = addMinutes(new Date(), BLOCK_MIN);
 
     logger.info('The open block 🚫 was activated ✅');
     logger.debug({
@@ -846,7 +870,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   };
 
   private setMatchingBlock = () => {
-    this.block.matching = addMinutes(new Date(), 5);
+    this.block.matching = addMinutes(new Date(), BLOCK_MIN);
 
     logger.info('The matching block 🚫 was activated ✅');
     logger.debug({
@@ -897,9 +921,7 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
    * Автоматизации по датчикам.
    */
   protected sensorBasedComputing = (): boolean => {
-    if (this.isRotationOfValveInTheProgress) {
-      logger.info('Skip sensor based computing, because rotation ov valve in the progress ⏭️');
-
+    if (this.hasAllBlock || this.isRotationOfValveInTheProgress) {
       return false;
     }
 
@@ -1486,5 +1508,62 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
   protected destroy() {
     clearInterval(this.timer.controlProgressDuration);
     clearInterval(this.timer.executionTimer);
+    clearInterval(this.timer.requestValuesTimer);
   }
+
+  private requestValues = () => {
+    const devices = [...this.settings.devices.leaks, ...this.settings.devices.switch, ...this.settings.devices.enum];
+
+    const hasReadTopic = devices.some((device) => !!this.controls.get(getControlId(device))?.topic.read);
+
+    if (!hasReadTopic) {
+      return;
+    }
+
+    logger.info('An attempt has begun to request the current values 💎');
+
+    for (const device of devices) {
+      const hyperionDevice = this.devices.get(device.deviceId);
+      const hyperionControl = this.controls.get(getControlId(device));
+      const topic = hyperionControl?.topic.read;
+      const message = '';
+
+      if (!topic) {
+        continue;
+      }
+
+      if (!hyperionDevice || !hyperionControl) {
+        logger.error(
+          // eslint-disable-next-line max-len
+          'It is impossible to send a message because the device has not been found, or the topic has not been defined 🚨',
+        );
+        logger.error({
+          name: this.name,
+          now: this.now,
+          hyperionDevice,
+          controlId: getControlId(device),
+          hyperionControl,
+          device,
+        });
+
+        continue;
+      }
+
+      logger.info('The message will be sent to the wirenboard controller 📟');
+      logger.debug({
+        name: this.name,
+        now: this.now,
+        state: this.state,
+        topic,
+        message,
+      });
+
+      emitWirenboardMessage({ eventBus: this.eventBus, topic, message });
+    }
+
+    this.block.all = addSeconds(new Date(), 10);
+
+    logger.info('The all block 🚫 was activated for 10 ⏱️ seconds ✅');
+    logger.debug(this.getDebugContext({ allBlock: format(this.block.all, 'yyyy.MM.dd HH:mm:ss OOOO') }));
+  };
 }
