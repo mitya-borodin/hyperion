@@ -527,6 +527,24 @@ type CurtainMacrosPrivateState = {
 
 type CurtainMacrosState = CurtainMacrosPublicState & CurtainMacrosPrivateState;
 
+const defaultState: CurtainMacrosState = {
+  target: -1,
+  position: -1,
+  direction: 'UNSPECIFIED',
+  stop: false,
+  lighting: Lighting.OFF,
+  illumination: {
+    measured: -1,
+    average: -1,
+    beforeTurningOnLighting: 0,
+  },
+  motion: -1,
+  noise: -1,
+  temperature: -1,
+};
+
+const createDefaultState = () => cloneDeep(defaultState);
+
 /**
  * ! OUTPUT
  */
@@ -552,27 +570,10 @@ type CurtainMacrosOutput = {
 
 const VERSION = 0;
 
+/**
+ * ! PARAMETERS
+ */
 type CurtainMacrosParameters = MacrosParameters<string, string | undefined>;
-
-const defaultState: CurtainMacrosState = {
-  target: -1,
-  position: -1,
-  direction: 'UNSPECIFIED',
-  stop: false,
-  lighting: Lighting.OFF,
-  illumination: {
-    measured: -1,
-    average: -1,
-    beforeTurningOnLighting: 0,
-  },
-  motion: -1,
-  noise: -1,
-  temperature: -1,
-};
-
-const createDefaultState = () => {
-  return cloneDeep(defaultState);
-};
 
 export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSettings, CurtainMacrosState> {
   private output: CurtainMacrosOutput;
@@ -607,7 +608,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   private timer: {
     timeBasedComputing: NodeJS.Timeout;
-    illuminationMovingArrange: NodeJS.Timeout;
+    computeMovingArrange: NodeJS.Timeout;
+    requestPositions: NodeJS.Timeout;
   };
 
   constructor(parameters: CurtainMacrosParameters) {
@@ -648,7 +650,8 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
     this.timer = {
       timeBasedComputing: setInterval(this.timeBasedComputing, 60 * 1000),
-      illuminationMovingArrange: setInterval(() => this.computeMovingArrange('illumination', -1), 60 * 1000),
+      computeMovingArrange: setInterval(() => this.computeMovingArrange('illumination', -1), 60 * 1000),
+      requestPositions: setInterval(() => this.requestPositions(), 2 * 60 * 1000),
     };
 
     this.skip.firstButtonChange = cloneDeep(this.settings.devices.buttons);
@@ -1737,9 +1740,10 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       if (control && String(this.state.target) !== String(control?.value)) {
         logger.info(
           // eslint-disable-next-line max-len
-          'A discrepancy between the control position of the curtain and the internal position of the curtain macro was found ‼ 🪟',
+          'A discrepancy between the control position of the curtain and the internal position of the curtain macro was found 🚨 🪟',
         );
-        logger.info('All curtains will be updated according to the internal state of the curtain macro 🪟');
+
+        logger.info('All curtains will be updated according to the internal state of the curtain macro 👷‍♂️ 🪟');
         logger.debug(this.getDebugContext({ positionFromControl: control?.value }));
 
         if (this.isBlocked(this.state.target)) {
@@ -1947,6 +1951,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
   protected destroy() {
     clearInterval(this.timer.timeBasedComputing);
-    clearInterval(this.timer.illuminationMovingArrange);
+    clearInterval(this.timer.computeMovingArrange);
+    clearInterval(this.timer.requestPositions);
   }
 }
