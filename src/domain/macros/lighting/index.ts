@@ -22,6 +22,7 @@ import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3'
 import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4';
 import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-4-to-5';
 import { settings_from_5_to_6 } from './settings-mappers/5-settings-from-5-to-6';
+import { settings_from_6_to_7 } from './settings-mappers/5-settings-from-6-to-7';
 
 const logger = getLogger('hyperion:macros:lighting');
 
@@ -76,30 +77,21 @@ export enum LightingForce {
  * 2. Вкл/Выкл через герконы
  *  Позволяет включать освещение в момент начала открывания двери.
  *  Для выключения света применяются правила основанные на освещенности, движении, шуме и времени.
- * 3. Вкл/Выкл через датчик освещенности
- *  Позволяет включать освещение при достижении определенного уровня освещенности, а так же
- *   выключать, в случае изменения освещенности в большую сторону.
- * 4. Вкл/Выкл через датчик движения
- *  Позволяет включать освещение при наличии движения и выключать при пропадании движения.
+ *  Отсутствует приоритет как у кнопок
+ * 3. Ограничение включения через датчик освещенности
+ *  Позволяет НЕ включать освещение пока не будет достигнут определенный уровень освещенности.
+ * 4. Вкл/Выкл через датчик движения и шума
+ *  Позволяет включать освещение при наличии движения и выключать при пропадании движения и шума.
+ *  Возможно задать задать задержку выключения при наличии движения и шума.
+ *  Если нет ни движения ни шума, то свет выключится через заданное время, например 1 минуту.
+ *  Если нет движения но есть шум, то свет выключится через заданное время, например 15 минут.
  * 5. Выключать освещение в определенный час суток
- *  Возможно задать, что освещение выключается в 0 часов, и при наступлении нуля часов
- *   освещение единоразово выключится
- * 6. Выключение освещения по датчику движения и шума
- *  Возможно задать задать задержку выключения при наличии движения и/или шума.
- *  Допустим если нет движения и есть шум то свет выключится через 10 минут, а если
- *   нет ни движения ни шума то через 1 минуту.
- * 7. Блокировка включения освещения по датчику освещенности
- *  Возможно задать значение освещенности выше которого освещение не будет включаться.
- * 8. Блокировка включения освещения по временному диапазону
+ *  Возможно задать час в который одноразово выключится освещение, как будто была нажата кнопка.
+ * 6. Блокировка включения освещения по временному диапазону
  *  Возможно задать диапазон часов в сутках когда автоматическое включение освещение активно например от 15 и до 0
- * 9. Блокировка по нажатию кнопки
+ * 7. Блокировка по нажатию кнопки
  *  Возможно задать время блокировки автоматического выключения или/и включения при выключении или включении через
  *    кнопку.
- *
- * В настройках макроса можно задать все необходимые параметры
- *  для реакции на освещенность, движение, переключатели, время.
- *
- * Все перечисленные возможности скомбинированы и работают сообща.
  *
  * Для добавления дополнительного сценария обращаться к dmitriy@borodin.site
  */
@@ -228,14 +220,28 @@ export type LightingMacrosSettings = {
     };
 
     /**
-     * Определение полной тишины.
+     * Задержка отключения, для случая когда нет движения но есть шум.
+     *
+     * Считается, что движение отсутствует спустя silenceMin с последнего обнаружения.
+     *
+     * Значение задается в минутах.
+     *
+     * Если > 0, то в случае отсутствия движения и при наличии шума,
+     * через указанное время произойдет отключение.
+     *
+     * Если указать <= 0, то проверка перестанет работать.
+     */
+    readonly noiseWithoutMotionMin: number;
+
+    /**
+     * Задержка отключения, для случая когда нет движения и нет шума.
      *
      * Значение задается в минутах.
      *
      * Если > 0, то в случае отсутствия шума и движения, через указанное время
      * будет определена полная тишина.
      *
-     * Если указать <= 0, то определение полной тишины будет отключено.
+     * Если указать <= 0, то проверка перестанет работать.
      */
     readonly silenceMin: number;
 
@@ -337,7 +343,7 @@ type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 /**
  * ! VERSION - текущая версия макроса освещения
  */
-const VERSION = 6;
+const VERSION = 7;
 
 const defaultState: LightingMacrosState = {
   force: LightingForce.UNSPECIFIED,
@@ -448,6 +454,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       isIlluminationDetected: this.isIlluminationDetected,
       isMotionDetected: this.isMotionDetected,
       isSilence: this.isSilence,
+      isNoiseWithoutMotion: this.isNoiseWithoutMotion,
 
       automaticSwitchingOnByIllumination: this.automaticSwitchingOnByIllumination,
       automaticSwitchingOnByMotion: this.automaticSwitchingOnByMotion,
@@ -457,6 +464,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
 
       state: this.state,
       output: this.output,
+
       mixin,
     };
   };
@@ -473,6 +481,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
         settings_from_3_to_4,
         settings_from_4_to_5,
         settings_from_5_to_6,
+        settings_from_6_to_7,
       ],
       'settings',
     );
@@ -548,6 +557,22 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       silenceMin > 0 &&
       compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
       compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
+    );
+  }
+
+  private get isNoiseWithoutMotion(): boolean {
+    const { noiseWithoutMotionMin, silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      Number.isInteger(noiseWithoutMotionMin) &&
+      noiseWithoutMotionMin > 0 &&
+      /**
+       * Спустя silenceMin + noiseWithoutMotionMin после последнего обнаружения
+       * движения, считаем, что пора выключать свет.
+       */
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin + noiseWithoutMotionMin)) === 1
     );
   }
 
@@ -656,7 +681,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
    * Работает когда имеются датчики движения.
    */
   private get automaticSwitchingOffByMovementAndNoise(): boolean {
-    return (this.hasMotionDevice || this.hasNoiseDevice) && this.isSilence;
+    return this.hasMotionDevice && this.hasNoiseDevice && (this.isSilence || this.isNoiseWithoutMotion);
   }
 
   private collectSwitchers = () => {
