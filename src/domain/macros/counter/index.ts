@@ -20,13 +20,16 @@ export enum CounterType {
    * Учет количества импульсов.
    *
    * Значение по умолчанию.
+   * Не учитывает ничего кроме как количество импульсов.
    */
   IMPULSE_COUNT = 'IMPULSE_COUNT',
 
   /**
-   * Учет количества переключения реле.
+   * Учет количества рабочих часов, при выборе этого типа счетчика
+   * Trigger может быть либо FRONT либо BACK, если выбрать BOTH, то
+   * работать будет как FRONT.
    */
-  RELAY_SWITCH_COUNT = 'RELAY_SWITCH_COUNT',
+  WORK_TIME = 'WORK_TIME',
 
   /**
    * Учет электричества, в кило ватах в час.
@@ -56,11 +59,11 @@ export enum CounterType {
 
 export enum UnitOfMeasurement {
   /**
-   * Количество переключений.
+   * Количество импульсов.
    *
    * Значение по умолчанию.
    */
-  SWITCHES = 'switches',
+  IMPULSE = 'impulse',
 
   /**
    * Время работы, сумма временных отрезков, от включения
@@ -96,8 +99,7 @@ export enum Trigger {
   /**
    * Реакция на изменение состояния контакта.
    *
-   * Значение по умолчанию, для всех типов CounterType кроме RELAY_SWITCH_COUNT
-   * для RELAY_SWITCH_COUNT значение по умолчанию будет FRONT.
+   * Значение по умолчанию.
    */
   BOTH = 'BOTH',
 }
@@ -105,16 +107,18 @@ export enum Trigger {
 /**
  * Импульсный счетчик
  *
- * Это устройство которое работает как ключ который при прохождение определенного
- * количества ресурса через прибор учета то замыкается то размыкается.
+ * Различные приборы учета имею импульсный выход который работает как ключ который при
+ * прохождение определенного количества ресурса через прибор учета то замыкает то размыкает ключ
+ * можно считать только замыкания или только размыкания или и то и то, для учета импульсов,
+ * которые в последствии умножаются на цену одно импульса которая берется из документации к прибору.
  *
- * Отслеживая частоту включений-выключений можно понять скорость расхода ресурса,
+ * Отслеживая частоту (время между переключениями) переключений можно понять скорость расхода ресурса, а
  * посчитав количество переключений можно понять объем расхода ресурса,
  * отслеживая включенное состояние можно посчитать моточасы устройств подключенных через реле.
  *
  * Макрос импульсного счетчика может учитывать:
  * - Количество импульсов (считается вне зависимости от выбранного типа ресурса)
- * - Моточасы или время нахождения переключателя в указанном положении (считается независимо от выбранного типа ресурса)
+ * - Моточасы или время нахождения переключателя в указанном положении
  * - Электричество
  * - Газ
  * - Тепло
@@ -138,7 +142,7 @@ export type CounterMacrosSettings = {
      * По умолчанию 0, ресурс не будет учитываться, будет учитываться
      * только количество переключений и время проведенное в каждом положении.
      */
-    readonly price: number;
+    readonly cost: number;
   };
 };
 
@@ -163,7 +167,7 @@ type CounterMacrosPrivateState = {
   /**
    * Количество импульсов.
    */
-  counter: number;
+  impulse: number;
 
   /**
    * Количество секунд засчитанных как рабочее время устройства подключенного к реле.
@@ -182,7 +186,7 @@ type CounterMacrosNextOutput = {
   /**
    * Количество импульсов.
    */
-  readonly counter: number;
+  readonly impulse: number;
 
   /**
    * Моточасы, > 0 будет только в случае CounterType => RELAY_SWITCH_COUNT.
@@ -190,9 +194,13 @@ type CounterMacrosNextOutput = {
   readonly workSec: number;
 
   /**
-   * Значение в единицах измерения.
+   * Значение в единицах измерения, impulse * properties.cost.
    */
   readonly amount: number;
+
+  /**
+   * Единица измерения счетчика.
+   */
   readonly unitOfMeasurement: UnitOfMeasurement;
 };
 
@@ -201,7 +209,7 @@ const VERSION = 0;
 type CounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
 const defaultState: CounterMacrosState = {
-  counter: 0,
+  impulse: 0,
   workSec: 0,
   amount: 0,
 };
@@ -242,10 +250,10 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
     });
 
     this.output = {
-      counter: -1,
+      impulse: -1,
       workSec: -1,
       amount: -1,
-      unitOfMeasurement: UnitOfMeasurement.SWITCHES,
+      unitOfMeasurement: UnitOfMeasurement.IMPULSE,
     };
   }
 
@@ -288,10 +296,10 @@ export class CounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSetti
 
   protected computeOutput = () => {
     const output: CounterMacrosNextOutput = {
-      counter: -1,
+      impulse: -1,
       workSec: -1,
       amount: -1,
-      unitOfMeasurement: UnitOfMeasurement.SWITCHES,
+      unitOfMeasurement: UnitOfMeasurement.IMPULSE,
     };
 
     this.output = output;
