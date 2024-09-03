@@ -22,66 +22,6 @@ const logger = getLogger('hyperion:macros:curtain');
  */
 
 /**
- * ! SETTINGS
- */
-
-/**
- * Тип переключателя (кнопка, геркон).
- *
- * От типа зависит приоритет у кнопки максимальный приоритет, после идет геркон.
- *
- * Для геркона уже будут проверяться имеющиеся блокировки действий.
- */
-export enum SwitchType {
-  BUTTON = 'BUTTON',
-  SEALED_CONTACT = 'SEALED_CONTACT',
-  RELAY = 'RELAY',
-}
-
-/**
- * Определяет по верхнему ("1", +5, true) или по нижнему ("0", 0, false) уровню случится реакция.
- * Значение по умолчанию DOWN.
- */
-export enum Trigger {
-  UP = 'UP',
-  DOWN = 'DOWN',
-}
-
-export enum Lighting {
-  ON = 'ON',
-  OFF = 'OFF',
-}
-
-/**
- * Правило определения числового значения по нескольким датчикам
- * MAX - берем максимальное среди всех
- * MIN - берем минимальное среди всех
- * AVG - берем среднее среди всех
- */
-export enum LevelDetection {
-  MAX = 'MAX',
-  MIN = 'MIN',
-  AVG = 'AVG',
-}
-
-/**
- * Направление движения крышки.
- */
-export enum OpenCloseByTimeDirection {
-  OPEN = 'OPEN',
-  CLOSE = 'CLOSE',
-}
-
-/**
- * Типы блокировок.
- */
-export enum BlockType {
-  OPEN = 'OPEN',
-  CLOSE = 'CLOSE',
-  ALL = 'ALL',
-}
-
-/**
  * ! Cover macros scenarios
  *
  * В описание роль крышки будет играть штора, но вместо шторы могут быть любые другие
@@ -186,6 +126,70 @@ export enum BlockType {
  * * 7. Закрыть по солнечной активности
  * Позволяет закрыть штору, если освещенность, температура
  * выше уставок и установилась полная тишина.
+ */
+
+/**
+ * ! SETTINGS
+ */
+
+/**
+ * Тип переключателя (кнопка, геркон).
+ *
+ * От типа зависит приоритет у кнопки максимальный приоритет, после идет геркон.
+ *
+ * Для геркона уже будут проверяться имеющиеся блокировки действий.
+ */
+export enum SwitchType {
+  BUTTON = 'BUTTON',
+  SEALED_CONTACT = 'SEALED_CONTACT',
+  RELAY = 'RELAY',
+}
+
+/**
+ * Определяет по верхнему ("1", +5, true) или по нижнему ("0", 0, false) уровню случится реакция.
+ * Значение по умолчанию DOWN.
+ */
+export enum Trigger {
+  UP = 'UP',
+  DOWN = 'DOWN',
+}
+
+export enum Lighting {
+  ON = 'ON',
+  OFF = 'OFF',
+}
+
+/**
+ * Правило определения числового значения по нескольким датчикам
+ * MAX - берем максимальное среди всех
+ * MIN - берем минимальное среди всех
+ * AVG - берем среднее среди всех
+ */
+export enum LevelDetection {
+  MAX = 'MAX',
+  MIN = 'MIN',
+  AVG = 'AVG',
+}
+
+/**
+ * Направление движения крышки.
+ */
+export enum OpenCloseByTimeDirection {
+  OPEN = 'OPEN',
+  CLOSE = 'CLOSE',
+}
+
+/**
+ * Типы блокировок.
+ */
+export enum BlockType {
+  OPEN = 'OPEN',
+  CLOSE = 'CLOSE',
+  ALL = 'ALL',
+}
+
+/**
+ * Перечень настроек которые требуются для создания экземпляра макроса.
  */
 export type CurtainMacrosSettings = {
   readonly devices: {

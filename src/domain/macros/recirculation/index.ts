@@ -13,6 +13,10 @@ import { MacrosType } from '../showcase';
 const logger = getLogger('hyperion:macros:recirculation');
 
 /**
+ * ! Recirculation macros scenarios
+ */
+
+/**
  * ! SETTINGS
  */
 
@@ -39,6 +43,8 @@ export enum LevelDetection {
 
 /**
  * Рециркуляция ГВС.
+
+ * Перечень настроек которые требуются для создания экземпляра макроса.
  */
 export type RecirculationMacrosSettings = {
   readonly devices: {

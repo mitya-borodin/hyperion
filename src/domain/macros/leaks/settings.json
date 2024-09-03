@@ -21,7 +21,7 @@
                   },
                   "controlType": {
                     "type": "string",
-                    "enum": ["switch", "enum"]
+                    "enum": ["switch", "enum", "value"]
                   }
                 },
                 "required": ["deviceId", "controlId", "controlType"],
@@ -244,24 +244,17 @@
               "required": ["open", "close"],
               "additionalProperties": false
             },
-            "phase": {
-              "type": "object",
-              "properties": {
-                "durationSec": {
-                  "type": "number"
-                }
-              },
-              "required": ["durationSec"],
-              "additionalProperties": false
+            "valveRotationSec": {
+              "type": "number"
             }
           },
-          "required": ["leak", "enum", "analog", "phase"],
+          "required": ["leak", "enum", "analog", "valveRotationSec"],
           "additionalProperties": false
         }
       },
       "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "Защита от протечек.\n\nПозволяет защищать от протечек воды и газа.\n\nМакрос отвечает только за изменение положение крана, и никак не заботится последствиями перекрытия крана.\n\nМакросы управляющие газовым или водяным оборудование должны отслеживать положение требуемых для их работы кранов, и если краны переходят в состояние ЗАКРЫТО, то прекращать работу оборудования."
+      "description": "Перечень настроек которые требуются для создания экземпляра макроса."
     }
   }
 }

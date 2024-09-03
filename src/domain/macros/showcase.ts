@@ -1,10 +1,10 @@
 import { BoilerMacros } from './boiler';
 import BoilerMacrosSettings from './boiler/settings.json';
 import BoilerMacrosPublicState from './boiler/state.json';
-import { CounterMacros } from './counter';
-import CounterMacrosSettings from './counter/settings.json';
-import CounterMacrosPublicState from './counter/state.json';
 import { CurtainMacros } from './curtain';
+import { ImpulseCounterMacros } from './impulse-counter';
+import CounterMacrosSettings from './impulse-counter/settings.json';
+import CounterMacrosPublicState from './impulse-counter/state.json';
 import { LeaksMacros } from './leaks';
 import LeaksMacrosSettings from './leaks/settings.json';
 import LeaksMacrosPublicState from './leaks/state.json';
@@ -139,7 +139,7 @@ export const macrosByType = {
   [MacrosType.LIGHTING]: LightingMacros,
   [MacrosType.COVER]: CurtainMacros,
   [MacrosType.HEATING]: LightingMacros,
-  [MacrosType.COUNTER]: CounterMacros,
+  [MacrosType.COUNTER]: ImpulseCounterMacros,
   [MacrosType.LEAKS]: LeaksMacros,
   [MacrosType.PUMP]: PumpMacros,
   [MacrosType.BOILER]: BoilerMacros,

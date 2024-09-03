@@ -178,7 +178,7 @@
       },
       "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "Рециркуляция ГВС."
+      "description": "Рециркуляция ГВС.\n\nПеречень настроек которые требуются для создания экземпляра макроса."
     },
     "LevelDetection": {
       "type": "string",
