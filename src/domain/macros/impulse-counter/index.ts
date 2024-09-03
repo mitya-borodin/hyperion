@@ -3,6 +3,7 @@ import defaultsDeep from 'lodash.defaultsdeep';
 
 import { getLogger } from '../../../infrastructure/logger';
 import { ControlType } from '../../control-type';
+import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
@@ -165,11 +166,13 @@ export type CounterMacrosSettings = {
  * Публичное состояние счетчика, на которое пользователь может влиять.
  */
 export type CounterMacrosPublicState = {
+  value: string;
+
   /**
    * Значение в единицах измерения, которое пользователь может задать, чтобы синхронизовать значение
    * прибора учета и макроса.
    */
-  readonly amount: number;
+  amount: number;
 };
 
 /**
@@ -235,6 +238,7 @@ const VERSION = 0;
 type CounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
 const defaultState: CounterMacrosState = {
+  value: '',
   impulse: 0,
   speed: 0,
   workSec: 0,
@@ -309,7 +313,19 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
 
   setState = (nextPublicState: string): void => {};
 
-  protected collecting() {}
+  protected collecting() {
+    const control = this.controls.get(getControlId(this.settings.devices));
+
+    if (
+      control &&
+      (control.value === control.on || control.value === control.off || control.value === control.toggle) &&
+      control.value !== this.state.value
+    ) {
+      this.state.value = control.value;
+      this.state.impulse++;
+      // TODO Add last impulse appear
+    }
+  }
 
   protected priorityComputation = () => {
     return false;
@@ -318,6 +334,7 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
   protected actionBasedComputing = (): boolean => {
     return false;
   };
+
   protected sensorBasedComputing = (): boolean => {
     return false;
   };
