@@ -203,6 +203,10 @@ export type LeaksMacrosSettings = {
 /**
  * ! STATE
  */
+
+/**
+ * Публичное состояние счетчика, на которое пользователь может влиять.
+ */
 export type LeaksMacrosPublicState = {
   /**
    * Жесткое закрытие/открытие крана, закрывает или открывает, и прерывает вычисление дальнейших стадий.
@@ -216,12 +220,26 @@ export type LeaksMacrosPublicState = {
   approve: 'UNSPECIFIED' | 'WAIT' | 'APPROVED' | 'CANCELED';
 };
 
+/**
+ * Внутренне состояние счетчика, на которое пользователь НЕ может влиять.
+ */
 export type LeaksMacrosPrivateState = {
   leak: boolean;
   valve: ValveState;
 };
 
 type LeaksMacrosState = LeaksMacrosPublicState & LeaksMacrosPrivateState;
+
+const defaultState: LeaksMacrosState = {
+  force: 'UNSPECIFIED',
+  leak: false,
+  approve: 'UNSPECIFIED',
+  valve: ValveState.UNSPECIFIED,
+};
+
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
 
 /**
  * ! OUTPUT
@@ -267,21 +285,21 @@ type LeaksMacrosNextOutput = {
   }>;
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
+
+/**
+ * Общая константа, задающая время блокировки для всех типов.
+ */
 const BLOCK_MIN = 5;
 
+/**
+ * ! CONSTRUCTOR PARAMS
+ */
 type LeaksMacrosParameters = MacrosParameters<string, string | undefined>;
-
-const defaultState: LeaksMacrosState = {
-  force: 'UNSPECIFIED',
-  leak: false,
-  approve: 'UNSPECIFIED',
-  valve: ValveState.UNSPECIFIED,
-};
-
-const createDefaultState = () => {
-  return cloneDeep(defaultState);
-};
 
 export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, LeaksMacrosState> {
   private output: LeaksMacrosNextOutput;

@@ -139,8 +139,16 @@ export type RecirculationMacrosSettings = {
 /**
  * ! STATE
  */
+
+/**
+ * Состояние макроса которое может изменить пользователь
+ */
 export type RecirculationMacrosPublicState = object;
 
+/**
+ * Внутреннее состояние макроса, которое не может изменить пользователь.
+ * Оно нужно для реализации внутреннего устройства макроса.
+ */
 export type RecirculationMacrosPrivateState = {
   pump: PumpState;
   leak: boolean;
@@ -149,6 +157,17 @@ export type RecirculationMacrosPrivateState = {
 };
 
 type RecirculationMacrosState = RecirculationMacrosPublicState & RecirculationMacrosPrivateState;
+
+const defaultState: RecirculationMacrosState = {
+  pump: PumpState.UNSPECIFIED,
+  leak: false,
+  motion: -1,
+  noise: -1,
+};
+
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
 
 /**
  * ! OUTPUT
@@ -161,20 +180,16 @@ type RecirculationMacrosNextOutput = {
   };
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
 
+/**
+ * ! CONSTRUCTOR PARAMS
+ */
 type RecirculationMacrosParameters = MacrosParameters<string, string | undefined>;
-
-const defaultState: RecirculationMacrosState = {
-  pump: PumpState.UNSPECIFIED,
-  leak: false,
-  motion: -1,
-  noise: -1,
-};
-
-const createDefaultState = () => {
-  return cloneDeep(defaultState);
-};
 
 export class RecirculationMacros extends Macros<
   MacrosType.RECIRCULATION,
@@ -270,9 +285,6 @@ export class RecirculationMacros extends Macros<
       return createDefaultState();
     }
 
-    /**
-     * TODO Передать схему, только для публичного стейта
-     */
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 

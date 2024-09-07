@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable unicorn/no-empty-file */
 import debug from 'debug';
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
@@ -9,14 +10,6 @@ import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
 const logger = debug('hyperion:macros:pump');
-
-/**
- * ! SETTINGS
- */
-export enum DeviceState {
-  ON = 'ON',
-  OFF = 'OFF',
-}
 
 /**
  * Насос холодного водоснабжения, с защитой от протечек.
@@ -31,6 +24,16 @@ export enum DeviceState {
  * чтобы при пропадании питания контактор переключилось в открытое
  * положение и выключил насос.
  */
+
+/**
+ * ! SETTINGS
+ */
+
+export enum DeviceState {
+  ON = 'ON',
+  OFF = 'OFF',
+}
+
 export type PumpMacrosSettings = {
   readonly deviceId: string;
   readonly controlId: string;
@@ -51,14 +54,29 @@ export type PumpMacrosSettings = {
 /**
  * ! STATE
  */
+
+/**
+ * Состояние макроса которое может изменить пользователь
+ */
 export type PumpMacrosPublicState = {};
 
+/**
+ * Внутреннее состояние макроса, которое не может изменить пользователь.
+ * Оно нужно для реализации внутреннего устройства макроса.
+ */
 export type PumpMacrosPrivateState = {
   pump: DeviceState;
   leak: boolean;
 };
 
 type PumpMacrosState = PumpMacrosPublicState & PumpMacrosPrivateState;
+
+const defaultState: PumpMacrosState = {
+  leak: false,
+  pump: DeviceState.OFF,
+};
+
+const createDefaultState = () => cloneDeep(defaultState);
 
 /**
  * ! OUTPUT
@@ -71,8 +89,15 @@ type PumpMacrosNextOutput = {
   };
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
 
+/**
+ * ! CONSTRUCTOR PARAMS
+ */
 type PumpMacrosParameters = MacrosParameters<string, string | undefined>;
 
 export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, PumpMacrosState> {
@@ -100,19 +125,7 @@ export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, Pump
 
       settings,
 
-      state: defaultsDeep(state, {
-        disable: {
-          coldWater: false,
-          hotWater: false,
-          recirculation: false,
-        },
-        hotWaterTemperature: 60,
-        coldWaterPumps: {},
-        valves: {},
-        boilerPumps: {},
-        heatRequests: {},
-        recirculationPumps: {},
-      }),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -124,45 +137,23 @@ export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, Pump
   }
 
   static parseSettings = (settings: string, version: number = VERSION): PumpMacrosSettings => {
-    // if (version === VERSION) {
-    //   logger('Settings in the current version ✅');
-    //   logger(stringify({ from: version, to: VERSION }));
-
-    // /**
-    //  * TODO Проверять через JSON Schema
-    //  */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [() => {}].slice(version, VERSION + 1);
-
-    // logger(mappers);
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return JSON.parse(settings);
+    return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string): PumpMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): PumpMacrosState => {
     if (!state) {
-      return {
-        pump: DeviceState.OFF,
-        leak: false,
-      };
+      return createDefaultState();
     }
 
-    /**
-     * TODO Проверять через JSON Schema
-     */
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
 
-    return JSON.parse(state);
+  static parsePublicState = (state?: string, version: number = VERSION): PumpMacrosPublicState => {
+    if (!state) {
+      return createDefaultState();
+    }
+
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
   setState = (nextPublicState: string): void => {};

@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/no-empty-file */
 import debug from 'debug';
+import cloneDeep from 'lodash.clonedeep';
 import defaultsDeep from 'lodash.defaultsdeep';
 
 import { stringify } from '../../../helpers/json-stringify';
@@ -10,7 +11,18 @@ import { MacrosType } from '../showcase';
 const logger = debug('hyperion:macros:boiler');
 
 /**
+ * ! Boiler macros scenarios
+ *
+ * Макрос реализует возможность параллельной загрузки бойлера,
+ *  параллельной относительно отопления и вентиляции.
+ */
+
+/**
  * ! SETTINGS
+ */
+
+/**
+ * Состояние устройств.
  */
 export enum DeviceState {
   ON = 'ON',
@@ -18,7 +30,7 @@ export enum DeviceState {
 }
 
 /**
- * Параллельная загрузка бойлера.
+ * Перечень настроек которые требуются для создания экземпляра макроса.
  */
 export type BoilerMacrosSettings = {
   /**
@@ -80,6 +92,14 @@ export type BoilerMacrosPrivateState = {
 
 type BoilerMacrosState = BoilerMacrosPublicState & BoilerMacrosPrivateState;
 
+const defaultState: BoilerMacrosState = {
+  temperatureTarget: 60,
+  temperature: 60,
+  pump: DeviceState.OFF,
+};
+
+const createDefaultState = () => cloneDeep(defaultState);
+
 /**
  * ! OUTPUT
  */
@@ -97,8 +117,15 @@ type BoilerMacrosNextOutput = {
   }>;
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
 
+/**
+ * ! CONSTRUCTOR PARAMS
+ */
 type BoilerMacrosParameters = MacrosParameters<string, string | undefined>;
 
 export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings, BoilerMacrosState> {
@@ -126,19 +153,7 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
 
       settings,
 
-      state: defaultsDeep(state, {
-        disable: {
-          coldWater: false,
-          hotWater: false,
-          recirculation: false,
-        },
-        hotWaterTemperature: 60,
-        coldWaterPumps: {},
-        valves: {},
-        boilerPumps: {},
-        heatRequests: {},
-        recirculationPumps: {},
-      }),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -151,46 +166,23 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
   }
 
   static parseSettings = (settings: string, version: number = VERSION): BoilerMacrosSettings => {
-    // if (version === VERSION) {
-    //   logger('Settings in the current version ✅');
-    //   logger(stringify({ from: version, to: VERSION }));
-
-    // /**
-    //  * TODO Проверять через JSON Schema
-    //  */
-
-    //   return JSON.parse(settings);
-    // }
-
-    // logger('Migrate settings was started 🚀');
-    // logger(stringify({ from: version, to: VERSION }));
-
-    // const mappers = [() => {}].slice(version, VERSION + 1);
-
-    // logger(mappers);
-
-    // const result = mappers.reduce((accumulator, mapper) => mapper(accumulator), JSON.parse(settings));
-
-    // logger(stringify(result));
-    // logger('Migrate settings was finished ✅');
-
-    return JSON.parse(settings);
+    return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string): BoilerMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): BoilerMacrosState => {
     if (!state) {
-      return {
-        temperatureTarget: 60,
-        temperature: 60,
-        pump: DeviceState.OFF,
-      };
+      return createDefaultState();
     }
 
-    /**
-     * TODO Проверять через JSON Schema
-     */
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
 
-    return JSON.parse(state);
+  static parsePublicState = (state?: string, version: number = VERSION): BoilerMacrosPublicState => {
+    if (!state) {
+      return createDefaultState();
+    }
+
+    return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
   setState = (nextPublicState: string): void => {};

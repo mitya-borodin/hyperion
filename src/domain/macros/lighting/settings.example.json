@@ -1,0 +1,77 @@
+{
+  "devices": {
+    "noises": [
+      {
+        "deviceId": "wb-msw-v3_121",
+        "controlId": "Sound Level",
+        "controlType": "sound_level"
+      }
+    ],
+    "motions": [
+      {
+        "deviceId": "wb-msw-v3_121",
+        "controlId": "Current Motion",
+        "controlType": "value"
+      }
+    ],
+    "lightings": [
+      {
+        "deviceId": "wb-mr6cu_49",
+        "controlId": "K4",
+        "controlType": "switch"
+      },
+      {
+        "deviceId": "wb-mr6cu_49",
+        "controlId": "K5",
+        "controlType": "switch"
+      }
+    ],
+    "switchers": [
+      {
+        "deviceId": "wb-gpio",
+        "controlId": "EXT2_IN1",
+        "controlType": "switch"
+      }
+    ],
+    "illuminations": [
+      {
+        "deviceId": "wb-msw-v3_121",
+        "controlId": "Illuminance",
+        "controlType": "lux"
+      }
+    ]
+  },
+  "properties": {
+    "block": {
+      "onMin": 30,
+      "offMin": 30
+    },
+    "noise": {
+      "trigger": 50,
+      "detection": "MAX"
+    },
+    "autoOn": true,
+    "motion": {
+      "trigger": 100,
+      "schedule": {
+        "toHour": 0,
+        "fromHour": 15
+      },
+      "detection": "MAX"
+    },
+    "switcher": {
+      "everyOn": false,
+      "trigger": "DOWN"
+    },
+    "offByTime": -1,
+    "silenceMin": 5,
+    "illumination": {
+      "boundary": {
+        "onLux": 5,
+        "offLux": 200
+      },
+      "detection": "MAX"
+    },
+    "noiseWithoutMotionMin": 30
+  }
+}

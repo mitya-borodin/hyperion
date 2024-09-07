@@ -161,7 +161,7 @@ Promise.all([
   }),
 
   /**
-   * ! COVER MACROS
+   * ! CURTAIN MACROS
    */
   generate({
     type: 'CurtainMacrosSettings',

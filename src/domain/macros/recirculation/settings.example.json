@@ -1,122 +1,122 @@
 {
   "devices": {
     "pump": {
+      "deviceId": "wb-mr6cu_16",
       "controlId": "K5",
-      "controlType": "switch",
-      "deviceId": "wb-mr6cu_16"
+      "controlType": "switch"
     },
-    "switcher": [],
-    "motions": [
+    "leaks": [
       {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_102"
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN2",
+        "controlType": "switch"
       },
       {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_108"
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN3",
+        "controlType": "switch"
       },
       {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_121"
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN4",
+        "controlType": "switch"
       },
       {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_122"
-      },
-      {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_123"
-      },
-      {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_128"
-      },
-      {
-        "controlId": "Current Motion",
-        "controlType": "value",
-        "deviceId": "wb-msw-v3_129"
+        "deviceId": "wb-gpio",
+        "controlId": "EXT3_IN5",
+        "controlType": "switch"
       }
     ],
     "noises": [
       {
+        "deviceId": "wb-msw-v3_102",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_102"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_108",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_108"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_121",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_121"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_122",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_122"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_123",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_123"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_128",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_128"
+        "controlType": "sound_level"
       },
       {
+        "deviceId": "wb-msw-v3_129",
         "controlId": "Sound Level",
-        "controlType": "sound_level",
-        "deviceId": "wb-msw-v3_129"
+        "controlType": "sound_level"
       }
     ],
-    "leaks": [
+    "motions": [
       {
-        "controlId": "EXT3_IN2",
-        "controlType": "switch",
-        "deviceId": "wb-gpio"
+        "deviceId": "wb-msw-v3_102",
+        "controlId": "Current Motion",
+        "controlType": "value"
       },
       {
-        "controlId": "EXT3_IN3",
-        "controlType": "switch",
-        "deviceId": "wb-gpio"
+        "deviceId": "wb-msw-v3_108",
+        "controlId": "Current Motion",
+        "controlType": "value"
       },
       {
-        "controlId": "EXT3_IN4",
-        "controlType": "switch",
-        "deviceId": "wb-gpio"
+        "deviceId": "wb-msw-v3_121",
+        "controlId": "Current Motion",
+        "controlType": "value"
       },
       {
-        "controlId": "EXT3_IN5",
-        "controlType": "switch",
-        "deviceId": "wb-gpio"
+        "deviceId": "wb-msw-v3_122",
+        "controlId": "Current Motion",
+        "controlType": "value"
+      },
+      {
+        "deviceId": "wb-msw-v3_123",
+        "controlId": "Current Motion",
+        "controlType": "value"
+      },
+      {
+        "deviceId": "wb-msw-v3_128",
+        "controlId": "Current Motion",
+        "controlType": "value"
+      },
+      {
+        "deviceId": "wb-msw-v3_129",
+        "controlId": "Current Motion",
+        "controlType": "value"
       }
-    ]
+    ],
+    "switcher": []
   },
   "properties": {
-    "runMin": 30,
-    "hotMin": 120,
-    "motion": {
-      "trigger": 75,
-      "detection": "MAX"
+    "leak": {
+      "enum": "UNSPECIFIED"
     },
     "noise": {
       "trigger": 60,
       "detection": "MAX"
     },
-    "silenceMin": 1,
-    "leak": {
-      "enum": "UNSPECIFIED"
-    }
+    "hotMin": 120,
+    "motion": {
+      "trigger": 75,
+      "detection": "MAX"
+    },
+    "runMin": 10,
+    "silenceMin": 1
   }
 }

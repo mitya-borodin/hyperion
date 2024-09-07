@@ -1,0 +1,40 @@
+{
+  "devices": {
+    "enum": [],
+    "leaks": [
+      {
+        "deviceId": "0xa4c1388fe880daeb",
+        "controlId": "gas",
+        "controlType": "switch"
+      },
+      {
+        "deviceId": "0xa4c1388fe880daeb",
+        "controlId": "gas_value",
+        "controlType": "value"
+      }
+    ],
+    "phase": [],
+    "analog": [],
+    "switch": [
+      {
+        "deviceId": "0xa4c1388313fe8ddd",
+        "controlId": "state",
+        "controlType": "switch"
+      }
+    ]
+  },
+  "properties": {
+    "enum": {
+      "open": "UNSPECIFIED",
+      "close": "UNSPECIFIED"
+    },
+    "leak": {
+      "enum": "UNSPECIFIED"
+    },
+    "analog": {
+      "open": "10000",
+      "close": "0"
+    },
+    "valveRotationSec": 20
+  }
+}

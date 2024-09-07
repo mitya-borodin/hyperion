@@ -307,10 +307,14 @@ type ImpulseCounterMacrosNextOutput = {
   readonly hasConsumption: boolean;
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
 
 /**
- * ! CONSTRUCTOR
+ * ! CONSTRUCTOR PARAMS
  */
 type ImpulseCounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
@@ -509,6 +513,13 @@ export class ImpulseCounterMacros extends Macros<
     clearInterval(this.timer.computeSpeed);
   }
 
+  /**
+   * ! INTERNAL_IMPLEMENTATION
+   */
+
+  /**
+   * Расчет скорости расхода ресурсов.
+   */
   private computeSpeed = () => {
     const { type, cost, timeToStopSec } = this.settings.properties;
 

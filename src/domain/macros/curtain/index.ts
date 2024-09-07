@@ -18,19 +18,24 @@ import { MacrosType } from '../showcase';
 const logger = getLogger('hyperion:macros:curtain');
 
 /**
- * TODO Добавить функциональность, при открывания шторы, когда окно открыто в режиме
- * TODO   проветривания, с возможность указания высоты открывания.
+ * TODO 1. Добавить функциональность, при открывания шторы, когда окно открыто в режиме
+ * TODO     проветривания, с возможность указания высоты открывания.
  *
- * TODO Добавить возможность, блокировать закрывание шторы, если окно открыто полностью.
+ * TODO 2. Добавить возможность, блокировать закрывание шторы, если окно открыто полностью.
  *
- *
+ * TODO 3. Сделать пропуск нажатия кнопки, в случае, если не обнаружено движение,
+ * TODO     сделать возможность связывать кнопку с разными датчиками движения,
+ * TODO     чтобы можно было связать кнопку в другой комнате.
  */
 
 /**
- * ! Cover macros scenarios
+ * ! Curtain macros scenarios
  *
  * В описание роль крышки будет играть штора, но вместо шторы могут быть любые другие
- *  устройства типа Cover https://www.zigbee2mqtt.io/guide/usage/exposes.html#specific
+ *  устройства типа Curtain https://www.zigbee2mqtt.io/guide/usage/exposes.html#specific
+ *
+ * ! Для разных крышек, будут разные сценарии, этот макрос реализует сценарии только для штор,
+ * !  разных типов и комбинаций.
  *
  * Шторы управляются при помощи:
  *  Кнопок
@@ -566,9 +571,9 @@ const createDefaultState = () => cloneDeep(defaultState);
  */
 
 /**
- * В результате макрос решает, каким способом по влиять на крышку
- * указать положение через position, либо задать state чтобы контроллер крышки
- * сделал всю работу, и полностью открыл, закрыл, остановил крышку.
+ * В результате макрос решает, каким способом по влиять на штору
+ *  указать положение через position, либо задать state чтобы контроллер крышки
+ *  сделал всю работу, и полностью открыл, закрыл, остановил штору.
  */
 type CurtainMacrosOutput = {
   states: Array<{
@@ -585,14 +590,18 @@ type CurtainMacrosOutput = {
   }>;
 };
 
+/**
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
+ */
 const VERSION = 0;
 
 /**
- * ! CONSTRUCTOR
+ * ! CONSTRUCTOR PARAMS
  */
 type CurtainMacrosParameters = MacrosParameters<string, string | undefined>;
 
-export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSettings, CurtainMacrosState> {
+export class CurtainMacros extends Macros<MacrosType.CURTAIN, CurtainMacrosSettings, CurtainMacrosState> {
   private output: CurtainMacrosOutput;
 
   private last = {
@@ -641,7 +650,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       eventBus: parameters.eventBus,
 
-      type: MacrosType.COVER,
+      type: MacrosType.CURTAIN,
 
       id: parameters.id,
 
@@ -697,11 +706,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       last: this.last,
       isMotion: this.isMotion,
       isSilence: this.isSilence,
-      isCoverClose: this.isCoverClose,
-      isCoverMiddle: this.isCoverMiddle,
-      isCoverOpen: this.isCoverOpen,
-      isCoverCloserToOpen: this.isCoverCloserToOpen,
-      isCoverCloserToClose: this.isCoverCloserToClose,
+      isCurtainClose: this.isCurtainClose,
+      isCurtainMiddle: this.isCurtainMiddle,
+      isCurtainOpen: this.isCurtainOpen,
+      isCurtainCloserToOpen: this.isCurtainCloserToOpen,
+      isCurtainCloserToClose: this.isCurtainCloserToClose,
       isIlluminationReady: this.isIlluminationReady,
       isCloseBySunReady: this.isCloseBySunReady,
       isTooSunny: this.isTooSunny,
@@ -1078,11 +1087,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return this.state.position !== this.state.target && !this.state.stop;
   }
 
-  private get isCoverOpen(): boolean {
+  private get isCurtainOpen(): boolean {
     return this.state.position === this.settings.properties.position.open && !this.state.stop;
   }
 
-  private get isCoverCloserToOpen(): boolean {
+  private get isCurtainCloserToOpen(): boolean {
     const { position: settings } = this.settings.properties;
 
     const { position } = this.state;
@@ -1094,7 +1103,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return position < settings.close / 2;
   }
 
-  private get isCoverMiddle(): boolean {
+  private get isCurtainMiddle(): boolean {
     const { position: settings } = this.settings.properties;
 
     const { position, stop } = this.state;
@@ -1102,11 +1111,11 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
     return (position !== settings.close && position !== settings.open) || stop;
   }
 
-  private get isCoverCloserToClose(): boolean {
-    return !this.isCoverCloserToOpen;
+  private get isCurtainCloserToClose(): boolean {
+    return !this.isCurtainCloserToOpen;
   }
 
-  private get isCoverClose(): boolean {
+  private get isCurtainClose(): boolean {
     return this.state.position === this.settings.properties.position.close && !this.state.stop;
   }
 
@@ -1205,7 +1214,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
         /**
          * Решение принимается при открытой шторе
          */
-        (this.isCoverOpen || this.isCoverCloserToOpen) &&
+        (this.isCurtainOpen || this.isCurtainCloserToOpen) &&
         /**
          * Решение принимается только в рамках дня.
          */
@@ -1230,7 +1239,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при закрытой шторе
        */
-      (this.isCoverClose || this.isCoverCloserToClose) &&
+      (this.isCurtainClose || this.isCurtainCloserToClose) &&
       /**
        * Открывание шторы возможно только при наличии движения
        */
@@ -1257,7 +1266,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при открытой шторе
        */
-      (this.isCoverOpen || this.isCoverCloserToOpen) &&
+      (this.isCurtainOpen || this.isCurtainCloserToOpen) &&
       /**
        * Решение принимается только в рамках дня.
        */
@@ -1280,7 +1289,7 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
       /**
        * Решение принимается при закрытой шторе
        */
-      (this.isCoverClose || this.isCoverCloserToClose) &&
+      (this.isCurtainClose || this.isCurtainCloserToClose) &&
       /**
        * Открывание шторы возможно только при наличии движения.
        */
@@ -1529,19 +1538,19 @@ export class CurtainMacros extends Macros<MacrosType.COVER, CurtainMacrosSetting
 
       let target: number = this.state.position;
 
-      if (this.isCoverOpen) {
+      if (this.isCurtainOpen) {
         target = position.close;
 
         this.state.direction = 'CLOSE';
 
         logger.info('The curtain will be closed as it is in a fully open state 🔒 🚹');
-      } else if (this.isCoverClose) {
+      } else if (this.isCurtainClose) {
         target = position.open;
 
         this.state.direction = 'OPEN';
 
         logger.info('The curtain will be open since it is in a completely closed state 🔓 🚹');
-      } else if (this.isCoverMiddle) {
+      } else if (this.isCurtainMiddle) {
         switch (this.state.direction) {
           case 'OPEN': {
             target = position.close;

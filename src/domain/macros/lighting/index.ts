@@ -289,19 +289,11 @@ export type LightingMacrosSettings = {
  */
 
 /**
- * ! PUBLIC STATE
- */
-
-/**
  * Состояние макроса которое может изменить пользователь
  */
 export type LightingMacrosPublicState = {
   force: LightingForce;
 };
-
-/**
- * ! PRIVATE STATE
- */
 
 /**
  * Внутреннее состояние макроса, которое не может изменить пользователь.
@@ -318,11 +310,20 @@ export type LightingMacrosPrivateState = {
   time: number;
 };
 
-/**
- * ! FULL STATE
- */
-
 type LightingMacrosState = LightingMacrosPublicState & LightingMacrosPrivateState;
+
+const defaultState: LightingMacrosState = {
+  force: LightingForce.UNSPECIFIED,
+  switch: Switch.OFF,
+  illumination: -1,
+  motion: -1,
+  noise: -1,
+  time: 1,
+};
+
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
 
 /**
  * ! OUTPUT
@@ -345,22 +346,10 @@ type LightingMacrosOutput = {
 type LightingMacrosParameters = MacrosParameters<string, string | undefined>;
 
 /**
- * ! VERSION - текущая версия макроса освещения
+ * Версия макроса, к версии привязана схеме настроек, состояния и их валидация при запуске,
+ *  так же к схеме привязаны миграции схем при запуске.
  */
 const VERSION = 7;
-
-const defaultState: LightingMacrosState = {
-  force: LightingForce.UNSPECIFIED,
-  switch: Switch.OFF,
-  illumination: -1,
-  motion: -1,
-  noise: -1,
-  time: 1,
-};
-
-const createDefaultState = () => {
-  return cloneDeep(defaultState);
-};
 
 export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSettings, LightingMacrosState> {
   private output: LightingMacrosOutput;
@@ -504,9 +493,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
       return defaultsDeep(state, createDefaultState());
     }
 
-    /**
-     * TODO Передать схему, только для публичного стейта
-     */
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
