@@ -126,9 +126,7 @@
       {
         "blockMin": 60,
         "direction": "OPEN",
-        "timePointMin": [
-          600
-        ]
+        "timePointMin": [600]
       }
     ]
   }
