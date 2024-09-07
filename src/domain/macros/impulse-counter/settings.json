@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/definitions/CounterMacrosSettings",
+  "$ref": "#/definitions/ImpulseCounterMacrosSettings",
   "definitions": {
-    "CounterMacrosSettings": {
+    "ImpulseCounterMacrosSettings": {
       "type": "object",
       "properties": {
         "devices": {
@@ -21,49 +21,55 @@
             }
           },
           "required": ["deviceId", "controlId", "controlType"],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "Единственное устройство, которое позволяет отслеживать переключения ключа в приборе учета."
         },
         "properties": {
           "type": "object",
           "properties": {
             "type": {
-              "$ref": "#/definitions/CounterType"
+              "$ref": "#/definitions/CounterType",
+              "description": "Тип счетчика, определяет поведение и единицу измерения."
             },
             "trigger": {
-              "$ref": "#/definitions/Trigger"
+              "$ref": "#/definitions/Trigger",
+              "description": "Настройка реакции на переключение ключа, в приборе учета."
             },
-            "price": {
+            "unitOfMeasurement": {
+              "$ref": "#/definitions/UnitOfMeasurement",
+              "description": "Единица измерения, определяет суффикс и формат числа."
+            },
+            "cost": {
               "type": "number",
-              "description": "Стоимость одного импульса."
+              "description": "Стоимость одного импульса, в единичной единичной размерности (метры, литры, ваты, джоули),  НЕ кило, мега, гига, ваты,  НЕ кубические метры, дециметры, сантиметры.\n\nПо умолчанию 0, ресурс не будет учитываться, будет учитываться  только количество переключений и время проведенное в каждом положении.\n\nНапример, 1 импульс может стоит 10 литров, или 10 ват, или 10 джоулей  или любой другой единицы измерения."
+            },
+            "timeToStopSec": {
+              "type": "number",
+              "description": "Минимальное время прохождения одного цикла учета в приборе учета.\n\nДля каждого прибора это время будет разное и определить его можно через натурное испытание, следующим  способом, для прибора учета воды, нужно по немного открывать кран, чтобы увидеть когда он начнет реагировать,  на поток воды и после чего замерить время прохождения одного круга учета до появления импульса.\n\nТаким образом мы откалибруем время после которого учитывать скорость нет смысла, и мы будем считать, что  расход ресурса окончен.\n\nДля других приборов аналогично, газ, электричество, тепло.\n\nС теплом и электричеством немного сложнее,  так как для постепенного расхода электричества, нужна будет управляемая нагрузка, а для  расхода тепла, нужно зимнее время и сильно проветренная комната, чтобы по немного приоткрывать  подачу теплоносителя в один прибор или приборы."
             }
           },
-          "required": ["type", "trigger", "price"],
+          "required": ["type", "trigger", "unitOfMeasurement", "cost", "timeToStopSec"],
           "additionalProperties": false
         }
       },
       "required": ["devices", "properties"],
       "additionalProperties": false,
-      "description": "Импульсный счетчик воды, газа, электричества, тепла, количества (верхних, нижних) уровней на переключателях, время работы и/или простоя реле."
+      "description": "Перечень настроек которые требуются для создания экземпляра макроса."
     },
     "CounterType": {
       "type": "string",
-      "enum": [
-        "UNSPECIFIED",
-        "COLD_WATER",
-        "HOT_WATER",
-        "GAS",
-        "ELECTRICITY",
-        "HEAT",
-        "RELAY_ON",
-        "RELAY_OFF",
-        "SWITCH"
-      ],
-      "description": "Тип счетчика, по типу уже определяется единица измерения и поведение."
+      "enum": ["IMPULSE_COUNT", "WORK_TIME", "ELECTRICITY", "GAS", "HEAT", "COLD_WATER", "HOT_WATER"],
+      "description": "Тип счетчика, по типу определяется поведение и единицы измерения."
     },
     "Trigger": {
       "type": "string",
       "enum": ["FRONT", "BACK", "BOTH"],
       "description": "Типа реакции."
+    },
+    "UnitOfMeasurement": {
+      "type": "string",
+      "enum": ["impulse", "sec", "m^3", "kW/h"],
+      "description": "Единицы измерения"
     }
   }
 }

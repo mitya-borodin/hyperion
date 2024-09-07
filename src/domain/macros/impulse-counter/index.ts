@@ -7,7 +7,7 @@ import { getControlId } from '../get-control-id';
 import { Macros, MacrosParameters } from '../macros';
 import { MacrosType } from '../showcase';
 
-const logger = getLogger('hyperion:macros:counter');
+const logger = getLogger('hyperion:macros:impulse-counter');
 
 /**
  * ! Impulse counter macros scenarios
@@ -83,6 +83,28 @@ export enum CounterType {
 }
 
 /**
+ * Типа реакции.
+ */
+export enum Trigger {
+  /**
+   * Реакция только на замкнутый контакт, после разомкнутого.
+   */
+  FRONT = 'FRONT',
+
+  /**
+   * Реакция только на разомкнутый контакт, после замкнутого.
+   */
+  BACK = 'BACK',
+
+  /**
+   * Реакция на изменение состояния контакта.
+   *
+   * Значение по умолчанию.
+   */
+  BOTH = 'BOTH',
+}
+
+/**
  * Единицы измерения
  */
 export enum UnitOfMeasurement {
@@ -113,31 +135,13 @@ export enum UnitOfMeasurement {
 }
 
 /**
- * Типа реакции.
- */
-export enum Trigger {
-  /**
-   * Реакция только на замкнутый контакт, после разомкнутого.
-   */
-  FRONT = 'FRONT',
-
-  /**
-   * Реакция только на разомкнутый контакт, после замкнутого.
-   */
-  BACK = 'BACK',
-
-  /**
-   * Реакция на изменение состояния контакта.
-   *
-   * Значение по умолчанию.
-   */
-  BOTH = 'BOTH',
-}
-
-/**
  * Перечень настроек которые требуются для создания экземпляра макроса.
  */
-export type CounterMacrosSettings = {
+export type ImpulseCounterMacrosSettings = {
+  /**
+   * Единственное устройство, которое позволяет отслеживать переключения
+   * ключа в приборе учета.
+   */
   readonly devices: {
     readonly deviceId: string;
     readonly controlId: string;
@@ -145,32 +149,69 @@ export type CounterMacrosSettings = {
   };
 
   readonly properties: {
+    /**
+     * Тип счетчика, определяет поведение и единицу измерения.
+     */
     readonly type: CounterType;
-    readonly trigger: Trigger;
-    readonly initOfMeasurement: UnitOfMeasurement;
 
     /**
-     * Стоимость одного импульса.
+     * Настройка реакции на переключение ключа, в приборе учета.
+     */
+    readonly trigger: Trigger;
+
+    /**
+     * Единица измерения, определяет суффикс и формат числа.
+     */
+    readonly unitOfMeasurement: UnitOfMeasurement;
+
+    /**
+     * Стоимость одного импульса, в единичной единичной размерности (метры, литры, ваты, джоули),
+     *  НЕ кило, мега, гига, ваты,
+     *  НЕ кубические метры, дециметры, сантиметры.
      *
      * По умолчанию 0, ресурс не будет учитываться, будет учитываться
      *  только количество переключений и время проведенное в каждом положении.
+     *
+     * Например, 1 импульс может стоит 10 литров, или 10 ват, или 10 джоулей
+     *  или любой другой единицы измерения.
      */
     readonly cost: number;
+
+    /**
+     * Минимальное время прохождения одного цикла учета в приборе учета.
+     *
+     * Для каждого прибора это время будет разное и определить его можно через натурное испытание, следующим
+     *  способом, для прибора учета воды, нужно по немного открывать кран, чтобы увидеть когда он начнет реагировать,
+     *  на поток воды и после чего замерить время прохождения одного круга учета до появления импульса.
+     *
+     * Таким образом мы откалибруем время после которого учитывать скорость нет смысла, и мы будем считать, что
+     *  расход ресурса окончен.
+     *
+     * Для других приборов аналогично, газ, электричество, тепло.
+     *
+     * С теплом и электричеством немного сложнее,
+     *  так как для постепенного расхода электричества, нужна будет управляемая нагрузка, а для
+     *  расхода тепла, нужно зимнее время и сильно проветренная комната, чтобы по немного приоткрывать
+     *  подачу теплоносителя в один прибор или приборы.
+     */
+    readonly timeToStopSec: number;
   };
 };
 
 /**
  * ! STATE
  */
+
 /**
  * Публичное состояние счетчика, на которое пользователь может влиять.
  */
-export type CounterMacrosPublicState = {
-  value: string;
-
+export type ImpulseCounterMacrosPublicState = {
   /**
-   * Значение в единицах измерения, которое пользователь может задать, чтобы синхронизовать значение
-   * прибора учета и макроса.
+   * Значение в единицах cost.
+   *
+   * Так как это фактически impulse * cost => amount, за все время учета.
+   *
+   * В дальнейшем можно скруглять к кило, мега, гига.
    */
   amount: number;
 };
@@ -178,16 +219,27 @@ export type CounterMacrosPublicState = {
 /**
  * Внутренне состояние счетчика, на которое пользователь НЕ может влиять.
  */
-type CounterMacrosPrivateState = {
+export type ImpulseCounterMacrosPrivateState = {
+  /**
+   * Последнее положение ключа, по нему определяется произошел или не произошел переход,
+   *  в следующее состояние.
+   */
+  value: string;
+
   /**
    * Количество импульсов.
    */
   impulse: number;
 
   /**
-   * Скорость импульсов в час.
+   * Скорость расхода cost в секунду, считается для всех типов кроме CounterType => WORK_TIME.
    */
   speed: number;
+
+  /**
+   * Поле предоставляющее информацию, о том, есть ли расход ресурса.
+   */
+  hasConsumption: boolean;
 
   /**
    * Количество секунд засчитанных как рабочее время устройства подключенного к реле.
@@ -197,7 +249,20 @@ type CounterMacrosPrivateState = {
   workSec: number;
 };
 
-type CounterMacrosState = CounterMacrosPublicState & CounterMacrosPrivateState;
+type ImpulseCounterMacrosState = ImpulseCounterMacrosPublicState & ImpulseCounterMacrosPrivateState;
+
+const defaultState: ImpulseCounterMacrosState = {
+  value: '',
+  impulse: 0,
+  speed: 0,
+  hasConsumption: false,
+  workSec: 0,
+  amount: 0,
+};
+
+const createDefaultState = () => {
+  return cloneDeep(defaultState);
+};
 
 /**
  * ! OUTPUT
@@ -206,14 +271,14 @@ type CounterMacrosState = CounterMacrosPublicState & CounterMacrosPrivateState;
 /**
  * Результат работы макроса.
  */
-type CounterMacrosNextOutput = {
+type ImpulseCounterMacrosNextOutput = {
   /**
    * Количество импульсов.
    */
   readonly impulse: number;
 
   /**
-   * Скорость импульсов за все время, считается для всех типов кроме CounterType => WORK_TIME.
+   * Скорость расхода cost в секунду, считается для всех типов кроме CounterType => WORK_TIME.
    */
   readonly speed: number;
 
@@ -223,7 +288,11 @@ type CounterMacrosNextOutput = {
   readonly workSec: number;
 
   /**
-   * Значение в единицах измерения, impulse * properties.cost.
+   * Значение в единицах cost.
+   *
+   * Так как это фактически impulse * cost => amount, за все время учета.
+   *
+   * В дальнейшем можно скруглять к кило, мега, гига.
    */
   readonly amount: number;
 
@@ -231,28 +300,34 @@ type CounterMacrosNextOutput = {
    * Единица измерения счетчика.
    */
   readonly unitOfMeasurement: UnitOfMeasurement;
+
+  /**
+   * Поле предоставляющее информацию, о том, есть ли расход ресурса.
+   */
+  readonly hasConsumption: boolean;
 };
 
 const VERSION = 0;
 
-type CounterMacrosParameters = MacrosParameters<string, string | undefined>;
+/**
+ * ! CONSTRUCTOR
+ */
+type ImpulseCounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
-const defaultState: CounterMacrosState = {
-  value: '',
-  impulse: 0,
-  speed: 0,
-  workSec: 0,
-  amount: 0,
-};
+export class ImpulseCounterMacros extends Macros<
+  MacrosType.COUNTER,
+  ImpulseCounterMacrosSettings,
+  ImpulseCounterMacrosState
+> {
+  private lastTwoImpulseTuple = [new Date(0), new Date(0)];
 
-const createDefaultState = () => {
-  return cloneDeep(defaultState);
-};
+  private timer: {
+    computeSpeed: NodeJS.Timeout;
+  };
 
-export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacrosSettings, CounterMacrosState> {
-  private output: CounterMacrosNextOutput;
+  private output: ImpulseCounterMacrosNextOutput;
 
-  constructor(parameters: CounterMacrosParameters) {
+  constructor(parameters: ImpulseCounterMacrosParameters) {
     const settings = ImpulseCounterMacros.parseSettings(parameters.settings, parameters.version);
     const state = ImpulseCounterMacros.parseState(parameters.state);
 
@@ -283,9 +358,14 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
     this.output = {
       impulse: -1,
       speed: -1,
+      hasConsumption: false,
       workSec: -1,
       amount: -1,
       unitOfMeasurement: UnitOfMeasurement.IMPULSE,
+    };
+
+    this.timer = {
+      computeSpeed: setInterval(this.computeSpeed, 1000),
     };
   }
 
@@ -294,16 +374,17 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
       name: this.name,
       now: this.now,
       state: this.state,
+      lastTwoImpulseTuple: this.lastTwoImpulseTuple,
       mixin,
       output: this.output,
     };
   };
 
-  static parseSettings = (settings: string, version: number = VERSION): CounterMacrosSettings => {
+  static parseSettings = (settings: string, version: number = VERSION): ImpulseCounterMacrosSettings => {
     return Macros.migrate(settings, version, VERSION, [], 'settings');
   };
 
-  static parseState = (state?: string, version: number = VERSION): CounterMacrosState => {
+  static parseState = (state?: string, version: number = VERSION): ImpulseCounterMacrosState => {
     if (!state) {
       return createDefaultState();
     }
@@ -311,19 +392,86 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
     return Macros.migrate(state, version, VERSION, [], 'state');
   };
 
-  setState = (nextPublicState: string): void => {};
+  static parsePublicState = (state?: string, version: number = VERSION): ImpulseCounterMacrosPublicState => {
+    if (!state) {
+      return createDefaultState();
+    }
+
+    return Macros.migrate(state, version, VERSION, [], 'state');
+  };
+
+  setState = (nextStateJson: string): void => {
+    const nextState = ImpulseCounterMacros.parsePublicState(nextStateJson, this.version);
+
+    this.state.amount = nextState.amount;
+    this.state.impulse = Math.round(nextState.amount / this.settings.properties.cost);
+  };
 
   protected collecting() {
+    const { type, trigger, cost } = this.settings.properties;
+
+    const currentImpulseValue = this.state.value;
+
     const control = this.controls.get(getControlId(this.settings.devices));
 
     if (
       control &&
-      (control.value === control.on || control.value === control.off || control.value === control.toggle) &&
-      control.value !== this.state.value
+      (control.value === control.on || control.value === control.off) &&
+      control.value !== currentImpulseValue
     ) {
-      this.state.value = control.value;
-      this.state.impulse++;
-      // TODO Add last impulse appear
+      const nextImpulseValue = control.value;
+
+      if (trigger === Trigger.BOTH) {
+        this.state.impulse++;
+      }
+
+      if (trigger === Trigger.FRONT && currentImpulseValue === control.off && nextImpulseValue === control.on) {
+        this.state.impulse++;
+      }
+
+      if (trigger === Trigger.BACK && currentImpulseValue === control.on && nextImpulseValue === control.off) {
+        this.state.impulse++;
+      }
+
+      if (type === CounterType.WORK_TIME) {
+        /**
+         * После запуска счетчика, this.impulse содержит tuple из двух дат со значением 0,
+         *  нужно дождаться, когда появится первый импульс, и после этого, начать считать мото-часы.
+         */
+        const [, currentImpulse] = this.lastTwoImpulseTuple;
+
+        const currentImpulseMs = currentImpulse.getTime();
+
+        if (currentImpulseMs === 0) {
+          this.lastTwoImpulseTuple.push(new Date());
+          this.lastTwoImpulseTuple.splice(0, 1);
+
+          return;
+        }
+
+        const workSec = Math.abs(currentImpulseMs - Date.now()) / 1000;
+
+        if (
+          (trigger === Trigger.FRONT || trigger === Trigger.BOTH) &&
+          currentImpulseValue === control.on &&
+          nextImpulseValue === control.off
+        ) {
+          this.state.workSec += workSec;
+        }
+
+        if (trigger === Trigger.BACK && currentImpulseValue === control.off && nextImpulseValue === control.on) {
+          this.state.workSec += workSec;
+        }
+      } else {
+        this.state.amount = this.state.impulse * cost;
+      }
+
+      this.state.value = nextImpulseValue;
+
+      this.lastTwoImpulseTuple.push(new Date());
+      this.lastTwoImpulseTuple.splice(0, 1);
+
+      this.computeSpeed();
     }
   }
 
@@ -340,9 +488,10 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
   };
 
   protected computeOutput = () => {
-    const output: CounterMacrosNextOutput = {
+    const output: ImpulseCounterMacrosNextOutput = {
       impulse: -1,
       speed: -1,
+      hasConsumption: false,
       workSec: -1,
       amount: -1,
       unitOfMeasurement: UnitOfMeasurement.IMPULSE,
@@ -356,5 +505,88 @@ export class ImpulseCounterMacros extends Macros<MacrosType.COUNTER, CounterMacr
 
   protected send = () => {};
 
-  protected destroy() {}
+  protected destroy() {
+    clearInterval(this.timer.computeSpeed);
+  }
+
+  private computeSpeed = () => {
+    const { type, cost, timeToStopSec } = this.settings.properties;
+
+    if (type === CounterType.WORK_TIME) {
+      this.state.speed = 0;
+      this.state.hasConsumption = false;
+
+      return;
+    }
+
+    const [previousImpulse, currentImpulse] = this.lastTwoImpulseTuple;
+
+    const previousImpulseMs = previousImpulse.getTime();
+    const currentImpulseMs = currentImpulse.getTime();
+
+    if (previousImpulseMs === 0 || currentImpulseMs === 0) {
+      /**
+       * В случае, если не появились первые два импульса, после старта счетчика, расчет скорости невозможен.
+       *
+       * Необходимо дождаться появления первых двух импульсов.
+       */
+
+      this.state.speed = 0;
+      this.state.hasConsumption = false;
+
+      return;
+    }
+
+    const timeBetweenLastImpulseAndNowSec = Math.abs(currentImpulseMs - Date.now()) / 1000;
+
+    if (timeBetweenLastImpulseAndNowSec > timeToStopSec) {
+      /**
+       * Если время между последним импульсом и текущим моментом больше timeToStopSec
+       *  расчет скорости останавливается, и считается, что расход закончился.
+       */
+
+      this.state.speed = 0;
+      this.state.hasConsumption = false;
+    } else {
+      /**
+       * В этом случае, считаем, что расход имеется, и можно определять скорость.
+       */
+
+      const timeBetweenImpulsesSec = Math.abs(previousImpulseMs - currentImpulseMs) / 1000;
+
+      if (timeBetweenImpulsesSec > timeToStopSec) {
+        /**
+         * Случай, когда случился только первый импульс, после остановки расхода.
+         *
+         * Как только появится второй импульс, можно будет узнать скорость между этими импульсами.
+         */
+
+        this.state.speed = 0;
+        this.state.hasConsumption = false;
+
+        return;
+      }
+
+      /**
+       * Мы знаем значение минимального расхода это timeToStopSec
+       *
+       * Мы знаем расстояние между импульсами.
+       *
+       * Мы знаем цену одного импульса.
+       *
+       * При timeToStopSec скорость будет равна cost / timeToStopSec => 10 литров / 30 сек =>
+       *  0.33 литра/сек => 0.33 * 60 * 60 => 1188 л/час.
+       *
+       * Моментальный расход равен cost / timeBetweenImpulsesSec => 10 литров на 7 сек =>
+       *  1.42 литра/сек => 1.42 * 60 * 60 => 5142 л/час.
+       *
+       * При появлении нового импульса, у нас появляется возможность, рассчитать скорость,
+       *  таким образом мы будем узнавать о скорости, только при появлении импульсов.
+       *
+       * Между импульсами, мы считаем, что скорость одинаковая.
+       */
+      this.state.speed = cost / timeBetweenImpulsesSec;
+      this.state.hasConsumption = true;
+    }
+  };
 }

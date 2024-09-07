@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/ImpulseCounterMacrosPublicState",
+  "definitions": {
+    "ImpulseCounterMacrosPublicState": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Значение в единицах cost.\n\nТак как это фактически impulse * cost => amount, за все время учета.\n\nВ дальнейшем можно скруглять к кило, мега, гига."
+        }
+      },
+      "required": ["amount"],
+      "additionalProperties": false,
+      "description": "Публичное состояние счетчика, на которое пользователь может влиять."
+    }
+  }
+}

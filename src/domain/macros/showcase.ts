@@ -1,22 +1,22 @@
 import { BoilerMacros } from './boiler';
+import BoilerMacrosPublicState from './boiler/public-state.json';
 import BoilerMacrosSettings from './boiler/settings.json';
-import BoilerMacrosPublicState from './boiler/state.json';
 import { CurtainMacros } from './curtain';
 import { ImpulseCounterMacros } from './impulse-counter';
+import CounterMacrosPublicState from './impulse-counter/public-state.json';
 import CounterMacrosSettings from './impulse-counter/settings.json';
-import CounterMacrosPublicState from './impulse-counter/state.json';
 import { LeaksMacros } from './leaks';
+import LeaksMacrosPublicState from './leaks/public-state.json';
 import LeaksMacrosSettings from './leaks/settings.json';
-import LeaksMacrosPublicState from './leaks/state.json';
 import { LightingMacros } from './lighting';
+import LightingMacrosPublicState from './lighting/public-state.json';
 import LightingMacrosSettings from './lighting/settings.json';
-import LightingMacrosPublicState from './lighting/state.json';
 import { PumpMacros } from './pump';
+import PumpMacrosPublicState from './pump/public-state.json';
 import PumpMacrosSettings from './pump/settings.json';
-import PumpMacrosPublicState from './pump/state.json';
 import { RecirculationMacros } from './recirculation';
+import RecirculationMacrosPublicState from './recirculation/public-state.json';
 import RecirculationMacrosSettings from './recirculation/settings.json';
-import RecirculationMacrosPublicState from './recirculation/state.json';
 
 /**
  * Витрина позволяет фронту:
@@ -272,4 +272,4 @@ export const macrosShowcase = {
  * ! ADD_MACROS - Добавить экспорт json схемы
  */
 export { default as lightingMacrosSettingsSchema } from './lighting/settings.json';
-export { default as lightingMacrosStateSchema } from './lighting/state.json';
+export { default as lightingMacrosStateSchema } from './lighting/public-state.json';

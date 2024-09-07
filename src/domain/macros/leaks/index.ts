@@ -216,7 +216,7 @@ export type LeaksMacrosPublicState = {
   approve: 'UNSPECIFIED' | 'WAIT' | 'APPROVED' | 'CANCELED';
 };
 
-type LeaksMacrosPrivateState = {
+export type LeaksMacrosPrivateState = {
   leak: boolean;
   valve: ValveState;
 };

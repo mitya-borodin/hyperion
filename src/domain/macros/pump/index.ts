@@ -53,7 +53,7 @@ export type PumpMacrosSettings = {
  */
 export type PumpMacrosPublicState = {};
 
-type PumpMacrosPrivateState = {
+export type PumpMacrosPrivateState = {
   pump: DeviceState;
   leak: boolean;
 };

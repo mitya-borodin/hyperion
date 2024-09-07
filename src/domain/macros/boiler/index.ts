@@ -66,7 +66,7 @@ export type BoilerMacrosPublicState = {
   temperatureTarget: number;
 };
 
-type BoilerMacrosPrivateState = {
+export type BoilerMacrosPrivateState = {
   /**
    * Текущая температура.
    */

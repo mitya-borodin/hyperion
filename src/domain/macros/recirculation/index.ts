@@ -141,7 +141,7 @@ export type RecirculationMacrosSettings = {
  */
 export type RecirculationMacrosPublicState = object;
 
-type RecirculationMacrosPrivateState = {
+export type RecirculationMacrosPrivateState = {
   pump: PumpState;
   leak: boolean;
   motion: number;

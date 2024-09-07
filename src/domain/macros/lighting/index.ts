@@ -307,7 +307,7 @@ export type LightingMacrosPublicState = {
  * Внутреннее состояние макроса, которое не может изменить пользователь.
  * Оно нужно для реализации внутреннего устройства макроса.
  */
-type LightingMacrosPrivateState = {
+export type LightingMacrosPrivateState = {
   switch: Switch;
   illumination: number;
   motion: number;

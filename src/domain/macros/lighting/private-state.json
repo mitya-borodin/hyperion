@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/LightingMacrosPrivateState",
+  "definitions": {
+    "LightingMacrosPrivateState": {
+      "type": "object",
+      "properties": {
+        "switch": {
+          "$ref": "#/definitions/Switch"
+        },
+        "illumination": {
+          "type": "number"
+        },
+        "motion": {
+          "type": "number"
+        },
+        "noise": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number",
+          "description": "Время в часах на текущие сутки 0...23"
+        }
+      },
+      "required": ["switch", "illumination", "motion", "noise", "time"],
+      "additionalProperties": false,
+      "description": "Внутреннее состояние макроса, которое не может изменить пользователь. Оно нужно для реализации внутреннего устройства макроса."
+    },
+    "Switch": {
+      "type": "string",
+      "enum": ["ON", "OFF"],
+      "description": "Состояние переключателя (реле, кнопка)"
+    }
+  }
+}

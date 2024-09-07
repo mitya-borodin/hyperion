@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/CurtainMacrosPrivateState",
+  "definitions": {
+    "CurtainMacrosPrivateState": {
+      "type": "object",
+      "properties": {
+        "position": {
+          "type": "number"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["UNSPECIFIED", "OPEN", "CLOSE"],
+          "description": "Хранит последнее направление движения шторы."
+        },
+        "stop": {
+          "type": "boolean",
+          "description": "Если true, то последнее сообщение было STOP."
+        },
+        "lighting": {
+          "$ref": "#/definitions/Lighting"
+        },
+        "illumination": {
+          "type": "object",
+          "properties": {
+            "measured": {
+              "type": "number"
+            },
+            "average": {
+              "type": "number"
+            },
+            "beforeTurningOnLighting": {
+              "type": "number",
+              "description": "Знание о том, какой уровень освещенности был до включения освещения полезен, для того, чтобы не \"задирать\" скользящую среднюю."
+            }
+          },
+          "required": ["measured", "average", "beforeTurningOnLighting"],
+          "additionalProperties": false
+        },
+        "motion": {
+          "type": "number"
+        },
+        "noise": {
+          "type": "number"
+        },
+        "temperature": {
+          "type": "number"
+        }
+      },
+      "required": ["position", "direction", "stop", "lighting", "illumination", "motion", "noise", "temperature"],
+      "additionalProperties": false,
+      "description": "Внутренне состояние счетчика, на которое пользователь НЕ может влиять."
+    },
+    "Lighting": {
+      "type": "string",
+      "enum": ["ON", "OFF"]
+    }
+  }
+}

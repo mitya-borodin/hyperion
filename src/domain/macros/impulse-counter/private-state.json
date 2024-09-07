@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/ImpulseCounterMacrosPrivateState",
+  "definitions": {
+    "ImpulseCounterMacrosPrivateState": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Последнее положение ключа, по нему определяется произошел или не произошел переход,  в следующее состояние."
+        },
+        "impulse": {
+          "type": "number",
+          "description": "Количество импульсов."
+        },
+        "speed": {
+          "type": "number",
+          "description": "Скорость расхода cost в секунду, считается для всех типов кроме CounterType => WORK_TIME."
+        },
+        "hasConsumption": {
+          "type": "boolean",
+          "description": "Поле предоставляющее информацию, о том, есть ли расход ресурса."
+        },
+        "workSec": {
+          "type": "number",
+          "description": "Количество секунд засчитанных как рабочее время устройства подключенного к реле.\n\nМоточасы учитываются только для CounterType => WORK_TIME."
+        }
+      },
+      "required": ["value", "impulse", "speed", "hasConsumption", "workSec"],
+      "additionalProperties": false,
+      "description": "Внутренне состояние счетчика, на которое пользователь НЕ может влиять."
+    }
+  }
+}

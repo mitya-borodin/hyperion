@@ -41,7 +41,13 @@ Promise.all([
     type: 'LightingMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'lighting/index.ts'),
-    output: resolve(basePath, 'lighting/state.json'),
+    output: resolve(basePath, 'lighting/public-state.json'),
+  }),
+  generate({
+    type: 'LightingMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'lighting/index.ts'),
+    output: resolve(basePath, 'lighting/private-state.json'),
   }),
 
   /**
@@ -57,23 +63,35 @@ Promise.all([
     type: 'BoilerMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'boiler/index.ts'),
-    output: resolve(basePath, 'boiler/state.json'),
+    output: resolve(basePath, 'boiler/public-state.json'),
+  }),
+  generate({
+    type: 'BoilerMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'boiler/index.ts'),
+    output: resolve(basePath, 'boiler/private-state.json'),
   }),
 
   /**
-   * ! COUNTER MACROS
+   * ! IMPULSE COUNTER MACROS
    */
   generate({
-    type: 'CounterMacrosSettings',
+    type: 'ImpulseCounterMacrosSettings',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'counter/index.ts'),
-    output: resolve(basePath, 'counter/settings.json'),
+    path: resolve(basePath, 'impulse-counter/index.ts'),
+    output: resolve(basePath, 'impulse-counter/settings.json'),
   }),
   generate({
-    type: 'CounterMacrosPublicState',
+    type: 'ImpulseCounterMacrosPrivateState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
-    path: resolve(basePath, 'counter/index.ts'),
-    output: resolve(basePath, 'counter/state.json'),
+    path: resolve(basePath, 'impulse-counter/index.ts'),
+    output: resolve(basePath, 'impulse-counter/private-state.json'),
+  }),
+  generate({
+    type: 'ImpulseCounterMacrosPublicState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'impulse-counter/index.ts'),
+    output: resolve(basePath, 'impulse-counter/public-state.json'),
   }),
 
   /**
@@ -89,7 +107,13 @@ Promise.all([
     type: 'LeaksMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'leaks/index.ts'),
-    output: resolve(basePath, 'leaks/state.json'),
+    output: resolve(basePath, 'leaks/public-state.json'),
+  }),
+  generate({
+    type: 'LeaksMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'leaks/index.ts'),
+    output: resolve(basePath, 'leaks/private-state.json'),
   }),
 
   /**
@@ -105,11 +129,17 @@ Promise.all([
     type: 'PumpMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'pump/index.ts'),
-    output: resolve(basePath, 'pump/state.json'),
+    output: resolve(basePath, 'pump/public-state.json'),
+  }),
+  generate({
+    type: 'PumpMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'pump/index.ts'),
+    output: resolve(basePath, 'pump/private-state.json'),
   }),
 
   /**
-   * ! PUMP MACROS
+   * ! RECIRCULATION MACROS
    */
   generate({
     type: 'RecirculationMacrosSettings',
@@ -121,8 +151,15 @@ Promise.all([
     type: 'RecirculationMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'recirculation/index.ts'),
-    output: resolve(basePath, 'recirculation/state.json'),
+    output: resolve(basePath, 'recirculation/public-state.json'),
   }),
+  generate({
+    type: 'RecirculationMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'recirculation/index.ts'),
+    output: resolve(basePath, 'recirculation/private-state.json'),
+  }),
+
   /**
    * ! COVER MACROS
    */
@@ -136,7 +173,13 @@ Promise.all([
     type: 'CurtainMacrosPublicState',
     tsconfig: resolve(__dirname, '../tsconfig.build.json'),
     path: resolve(basePath, 'curtain/index.ts'),
-    output: resolve(basePath, 'curtain/state.json'),
+    output: resolve(basePath, 'curtain/public-state.json'),
+  }),
+  generate({
+    type: 'CurtainMacrosPrivateState',
+    tsconfig: resolve(__dirname, '../tsconfig.build.json'),
+    path: resolve(basePath, 'curtain/index.ts'),
+    output: resolve(basePath, 'curtain/private-state.json'),
   }),
 ])
   .then(() => {

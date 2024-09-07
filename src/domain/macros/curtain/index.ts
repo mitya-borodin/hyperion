@@ -18,7 +18,12 @@ import { MacrosType } from '../showcase';
 const logger = getLogger('hyperion:macros:curtain');
 
 /**
- * TODO Добавить блокировку открывания, по датчиком открытия окна.
+ * TODO Добавить функциональность, при открывания шторы, когда окно открыто в режиме
+ * TODO   проветривания, с возможность указания высоты открывания.
+ *
+ * TODO Добавить возможность, блокировать закрывание шторы, если окно открыто полностью.
+ *
+ *
  */
 
 /**
@@ -482,6 +487,10 @@ export type CurtainMacrosSettings = {
 /**
  * ! STATE
  */
+
+/**
+ * Публичное состояние счетчика, на которое пользователь может влиять.
+ */
 export type CurtainMacrosPublicState = {
   /**
    * Положение шторы, от 0 до 100.
@@ -504,7 +513,10 @@ export type CurtainMacrosPublicState = {
   target: number;
 };
 
-type CurtainMacrosPrivateState = {
+/**
+ * Внутренне состояние счетчика, на которое пользователь НЕ может влиять.
+ */
+export type CurtainMacrosPrivateState = {
   position: number;
   /**
    * Хранит последнее направление движения шторы.
@@ -552,6 +564,7 @@ const createDefaultState = () => cloneDeep(defaultState);
 /**
  * ! OUTPUT
  */
+
 /**
  * В результате макрос решает, каким способом по влиять на крышку
  * указать положение через position, либо задать state чтобы контроллер крышки
@@ -575,7 +588,7 @@ type CurtainMacrosOutput = {
 const VERSION = 0;
 
 /**
- * ! PARAMETERS
+ * ! CONSTRUCTOR
  */
 type CurtainMacrosParameters = MacrosParameters<string, string | undefined>;
 
