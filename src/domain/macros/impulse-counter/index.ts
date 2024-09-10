@@ -143,9 +143,11 @@ export type ImpulseCounterMacrosSettings = {
    * ключа в приборе учета.
    */
   readonly devices: {
-    readonly deviceId: string;
-    readonly controlId: string;
-    readonly controlType: ControlType.SWITCH;
+    readonly counter: {
+      readonly deviceId: string;
+      readonly controlId: string;
+      readonly controlType: ControlType.SWITCH;
+    };
   };
 
   readonly properties: {
@@ -319,7 +321,7 @@ const VERSION = 0;
 type ImpulseCounterMacrosParameters = MacrosParameters<string, string | undefined>;
 
 export class ImpulseCounterMacros extends Macros<
-  MacrosType.COUNTER,
+  MacrosType.IMPULSE_COUNTER,
   ImpulseCounterMacrosSettings,
   ImpulseCounterMacrosState
 > {
@@ -343,7 +345,7 @@ export class ImpulseCounterMacros extends Macros<
 
       eventBus: parameters.eventBus,
 
-      type: MacrosType.COUNTER,
+      type: MacrosType.IMPULSE_COUNTER,
 
       id: parameters.id,
 
@@ -416,7 +418,7 @@ export class ImpulseCounterMacros extends Macros<
 
     const currentImpulseValue = this.state.value;
 
-    const control = this.controls.get(getControlId(this.settings.devices));
+    const control = this.controls.get(getControlId(this.settings.devices.counter));
 
     if (
       control &&

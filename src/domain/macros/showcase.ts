@@ -3,8 +3,8 @@ import BoilerMacrosPublicState from './boiler/public-state.json';
 import BoilerMacrosSettings from './boiler/settings.json';
 import { CurtainMacros } from './curtain';
 import { ImpulseCounterMacros } from './impulse-counter';
-import CounterMacrosPublicState from './impulse-counter/public-state.json';
-import CounterMacrosSettings from './impulse-counter/settings.json';
+import ImpulseCounterMacrosPublicState from './impulse-counter/public-state.json';
+import ImpulseCounterMacrosSettings from './impulse-counter/settings.json';
 import { LeaksMacros } from './leaks';
 import LeaksMacrosPublicState from './leaks/public-state.json';
 import LeaksMacrosSettings from './leaks/settings.json';
@@ -39,7 +39,7 @@ export enum MacrosType {
   HUMIDIFICATION = 'HUMIDIFICATION',
   CONDITIONING = 'CONDITIONING',
   BOILER = 'BOILER',
-  COUNTER = 'COUNTER',
+  IMPULSE_COUNTER = 'IMPULSE_COUNTER',
   LEAKS = 'LEAKS',
   PUMP = 'PUMP',
   RECIRCULATION = 'RECIRCULATION',
@@ -81,8 +81,8 @@ export const toDomainMacrosType = (input: unknown): MacrosType => {
     return MacrosType.BOILER;
   }
 
-  if (input === MacrosType.COUNTER) {
-    return MacrosType.COUNTER;
+  if (input === MacrosType.IMPULSE_COUNTER) {
+    return MacrosType.IMPULSE_COUNTER;
   }
 
   if (input === MacrosType.LEAKS) {
@@ -139,7 +139,7 @@ export const macrosByType = {
   [MacrosType.LIGHTING]: LightingMacros,
   [MacrosType.CURTAIN]: CurtainMacros,
   [MacrosType.HEATING]: LightingMacros,
-  [MacrosType.COUNTER]: ImpulseCounterMacros,
+  [MacrosType.IMPULSE_COUNTER]: ImpulseCounterMacros,
   [MacrosType.LEAKS]: LeaksMacros,
   [MacrosType.PUMP]: PumpMacros,
   [MacrosType.BOILER]: BoilerMacros,
@@ -177,13 +177,13 @@ export const macrosShowcase = {
       ' воздуха в системе вентиляции. По средством управления котлами, насосными узлами, ' +
       'термостатическими приводами, смесительными устройствами.',
   },
-  [MacrosType.COUNTER]: {
-    name: 'Счетчик',
+  [MacrosType.IMPULSE_COUNTER]: {
+    name: 'Импульсный счетчик',
     description:
       'Позволяет создать счетчики воды, газа, электричества, тепла, количества (верхних, нижних) уровней' +
       ' на переключателях, время работы, простоя реле.',
-    settings: CounterMacrosSettings,
-    state: CounterMacrosPublicState,
+    settings: ImpulseCounterMacrosSettings,
+    state: ImpulseCounterMacrosPublicState,
   },
   [MacrosType.LEAKS]: {
     name: 'Протечка',
