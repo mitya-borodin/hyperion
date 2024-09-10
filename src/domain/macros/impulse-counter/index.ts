@@ -10,6 +10,15 @@ import { MacrosType } from '../showcase';
 const logger = getLogger('hyperion:macros:impulse-counter');
 
 /**
+ * TODO 1. Сделать хранение и загрузку состояния из БД для всех макросов.
+ *
+ * TODO 2. Рассчитать output.
+ *
+ * TODO 3. Опубликовать Output как контролы устройства "Импульсный счетчик", и они автоматом попадут в историю
+ * TODO     + контролами можно будет пользоваться.
+ */
+
+/**
  * ! Impulse counter macros scenarios
  *
  * Прибор учета - это физическое устройство, которое позволяет считать "импульсы",
@@ -478,6 +487,9 @@ export class ImpulseCounterMacros extends Macros<
       this.lastTwoImpulseTuple.splice(0, 1);
 
       this.computeSpeed();
+
+      logger.info('It was counted ✅');
+      logger.debug(this.getDebugContext());
     }
   }
 
