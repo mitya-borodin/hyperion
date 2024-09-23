@@ -539,141 +539,6 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     this.collectNoise();
   }
 
-  private get isSilence(): boolean {
-    const { silenceMin } = this.settings.properties;
-
-    return (
-      Number.isInteger(silenceMin) &&
-      silenceMin > 0 &&
-      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
-      compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
-    );
-  }
-
-  private get isNoiseWithoutMotion(): boolean {
-    const { noiseWithoutMotionMin, silenceMin } = this.settings.properties;
-
-    return (
-      Number.isInteger(silenceMin) &&
-      silenceMin > 0 &&
-      Number.isInteger(noiseWithoutMotionMin) &&
-      noiseWithoutMotionMin > 0 &&
-      /**
-       * Спустя silenceMin + noiseWithoutMotionMin после последнего обнаружения
-       * движения, считаем, что пора выключать свет.
-       */
-      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin + noiseWithoutMotionMin)) === 1
-    );
-  }
-
-  private get isAutoOnEnabled(): boolean {
-    return this.settings.properties.autoOn;
-  }
-
-  private get isAutoOnBlocked(): boolean {
-    return compareAsc(this.block.on, new Date()) === 1;
-  }
-
-  private get isAutoOffBlocked(): boolean {
-    return compareAsc(this.block.off, new Date()) === 1;
-  }
-
-  private get isLightingOn(): boolean {
-    return this.state.switch === Switch.ON;
-  }
-
-  private get isLightingOff(): boolean {
-    return this.state.switch === Switch.OFF;
-  }
-
-  private get hasIlluminationDevice(): boolean {
-    return this.settings.devices.illuminations.length > 0;
-  }
-
-  private get hasMotionDevice(): boolean {
-    return this.settings.devices.motions.length > 0;
-  }
-
-  private get hasNoiseDevice(): boolean {
-    return this.settings.devices.noises.length > 0;
-  }
-
-  private get isIlluminationDetected(): boolean {
-    return this.state.illumination >= 0;
-  }
-
-  private get isMotionDetected(): boolean {
-    const { trigger } = this.settings.properties.motion;
-
-    return Number.isInteger(trigger) && trigger > 0 && this.state.motion >= trigger;
-  }
-
-  /**
-   * ! AutoOn по датчикам освещенности.
-   *
-   * * При наличии датчиков движения, освещенность становится фактором
-   * * блокировки включения, то есть пока не потемнеет, группа не
-   * * будет включена даже если есть движение.
-   */
-  private get automaticSwitchingOnByIllumination(): boolean {
-    return (
-      this.hasIlluminationDevice &&
-      this.isIlluminationDetected &&
-      this.state.illumination <= this.settings.properties.illumination.boundary.onLux
-    );
-  }
-
-  /**
-   * ! AutoOn по датчикам движения.
-   *
-   * Если имеются датчики освещенности, то учитывается
-   * значение освещенности перед проверкой движения.
-   */
-  private get automaticSwitchingOnByMotion(): boolean {
-    return this.hasIlluminationDevice
-      ? this.hasMotionDevice && this.automaticSwitchingOnByIllumination && this.isMotionDetected
-      : this.hasMotionDevice && this.isMotionDetected;
-  }
-
-  /**
-   * ! AutoOff по датчикам освещенности.
-   *
-   * Как только освещенность превышает заданный порог, группа будет выключена.
-   *
-   * Работает когда имеются датчики освещенности.
-   */
-  private get automaticSwitchingOffByIllumination(): boolean {
-    return (
-      this.hasIlluminationDevice &&
-      this.isIlluminationDetected &&
-      /**
-       * Если включено освещение, то автоматическое отключение по освещения выключается,
-       * остается только по полной тишине.
-       *
-       * ? А на кой тогда вообще учитывать освещенность для выключения,
-       * ? скорее всего сработает в случае, когда светильник и датчик в разных местах.
-       */
-      /**
-       * !this.isLightingOn &&
-       */
-      /**
-       * Нужно выставлять illumination.boundary.offLux выше освещенности которую дают светильники.
-       */
-      this.state.illumination >= this.settings.properties.illumination.boundary.offLux
-    );
-  }
-
-  /**
-   * ! AutoOff по датчикам движения и звука.
-   *
-   * Как только пропадает движение и шум группа будет выключена.
-   *
-   * Работает когда имеются датчики движения.
-   */
-  private get automaticSwitchingOffByMovementAndNoise(): boolean {
-    return this.hasMotionDevice && this.hasNoiseDevice && (this.isSilence || this.isNoiseWithoutMotion);
-  }
-
   private collectSwitchers = () => {
     /**
      * Актуализация состояния освещения по внешнему состоянию каждой группы освещения.
@@ -897,6 +762,141 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     return false;
   }
 
+  private get isSilence(): boolean {
+    const { silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin)) === 1 &&
+      compareAsc(new Date(), addMinutes(new Date(this.last.noise.getTime()), silenceMin)) === 1
+    );
+  }
+
+  private get isNoiseWithoutMotion(): boolean {
+    const { noiseWithoutMotionMin, silenceMin } = this.settings.properties;
+
+    return (
+      Number.isInteger(silenceMin) &&
+      silenceMin > 0 &&
+      Number.isInteger(noiseWithoutMotionMin) &&
+      noiseWithoutMotionMin > 0 &&
+      /**
+       * Спустя silenceMin + noiseWithoutMotionMin после последнего обнаружения
+       * движения, считаем, что пора выключать свет.
+       */
+      compareAsc(new Date(), addMinutes(new Date(this.last.motion.getTime()), silenceMin + noiseWithoutMotionMin)) === 1
+    );
+  }
+
+  private get isAutoOnEnabled(): boolean {
+    return this.settings.properties.autoOn;
+  }
+
+  private get isAutoOnBlocked(): boolean {
+    return compareAsc(this.block.on, new Date()) === 1;
+  }
+
+  private get isAutoOffBlocked(): boolean {
+    return compareAsc(this.block.off, new Date()) === 1;
+  }
+
+  private get isLightingOn(): boolean {
+    return this.state.switch === Switch.ON;
+  }
+
+  private get isLightingOff(): boolean {
+    return this.state.switch === Switch.OFF;
+  }
+
+  private get hasIlluminationDevice(): boolean {
+    return this.settings.devices.illuminations.length > 0;
+  }
+
+  private get hasMotionDevice(): boolean {
+    return this.settings.devices.motions.length > 0;
+  }
+
+  private get hasNoiseDevice(): boolean {
+    return this.settings.devices.noises.length > 0;
+  }
+
+  private get isIlluminationDetected(): boolean {
+    return this.state.illumination >= 0;
+  }
+
+  private get isMotionDetected(): boolean {
+    const { trigger } = this.settings.properties.motion;
+
+    return Number.isInteger(trigger) && trigger > 0 && this.state.motion >= trigger;
+  }
+
+  /**
+   * ! AutoOn по датчикам освещенности.
+   *
+   * * При наличии датчиков движения, освещенность становится фактором
+   * * блокировки включения, то есть пока не потемнеет, группа не
+   * * будет включена даже если есть движение.
+   */
+  private get automaticSwitchingOnByIllumination(): boolean {
+    return (
+      this.hasIlluminationDevice &&
+      this.isIlluminationDetected &&
+      this.state.illumination <= this.settings.properties.illumination.boundary.onLux
+    );
+  }
+
+  /**
+   * ! AutoOn по датчикам движения.
+   *
+   * Если имеются датчики освещенности, то учитывается
+   * значение освещенности перед проверкой движения.
+   */
+  private get automaticSwitchingOnByMotion(): boolean {
+    return this.hasIlluminationDevice
+      ? this.hasMotionDevice && this.automaticSwitchingOnByIllumination && this.isMotionDetected
+      : this.hasMotionDevice && this.isMotionDetected;
+  }
+
+  /**
+   * ! AutoOff по датчикам освещенности.
+   *
+   * Как только освещенность превышает заданный порог, группа будет выключена.
+   *
+   * Работает когда имеются датчики освещенности.
+   */
+  private get automaticSwitchingOffByIllumination(): boolean {
+    return (
+      this.hasIlluminationDevice &&
+      this.isIlluminationDetected &&
+      /**
+       * Если включено освещение, то автоматическое отключение по освещения выключается,
+       * остается только по полной тишине.
+       *
+       * ? А на кой тогда вообще учитывать освещенность для выключения,
+       * ? скорее всего сработает в случае, когда светильник и датчик в разных местах.
+       */
+      /**
+       * !this.isLightingOn &&
+       */
+      /**
+       * Нужно выставлять illumination.boundary.offLux выше освещенности которую дают светильники.
+       */
+      this.state.illumination >= this.settings.properties.illumination.boundary.offLux
+    );
+  }
+
+  /**
+   * ! AutoOff по датчикам движения и звука.
+   *
+   * Как только пропадает движение и шум группа будет выключена.
+   *
+   * Работает когда имеются датчики движения.
+   */
+  private get automaticSwitchingOffByMovementAndNoise(): boolean {
+    return this.hasMotionDevice && this.hasNoiseDevice && (this.isSilence || this.isNoiseWithoutMotion);
+  }
+
   /**
    * Обработка состояния переключателя, в роли переключателя может быть: кнопка, герметичный контакт, реле.
    */
@@ -915,6 +915,8 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
      */
     if (this.automaticSwitchingOnByIllumination && !this.hasMotionDevice) {
       nextSwitchState = Switch.ON;
+
+      logger.info('The lighting will be turned on as it has become dark 🌃, and the motion sensors are not set 🏃🏼‍♀️ 🚫');
     }
 
     const { fromHour, toHour } = this.settings.properties.motion.schedule;
@@ -924,9 +926,16 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     if (this.automaticSwitchingOnByMotion) {
       if (isPartTimeActive) {
         if (this.hasHourOverlap(fromHour, toHour, 'hour')) {
+          logger.info(
+            'The lighting will be turned on as soon as it gets dark 🌃 and movement 🏃🏼‍♀️' +
+              ' is detected 🕵️‍♀️ and the time is right ⏱️',
+          );
+
           nextSwitchState = Switch.ON;
         }
       } else {
+        logger.info('The lighting will be turned on as soon as it gets dark 🌃 and movement 🏃🏼‍♀️ is detected 🕵️‍♀️');
+
         nextSwitchState = Switch.ON;
       }
     }
@@ -959,10 +968,18 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
     let nextSwitchState: Switch = this.state.switch;
 
     if (this.automaticSwitchingOffByIllumination) {
+      logger.info(
+        'The lighting will be turned off because the illumination is greater than the specified threshold 🌇',
+      );
+
       nextSwitchState = Switch.OFF;
     }
 
     if (this.automaticSwitchingOffByMovementAndNoise) {
+      logger.info(
+        'The lighting will be turned off because silence has been established 🔇 or no person has been detected 🆑',
+      );
+
       nextSwitchState = Switch.OFF;
     }
 
