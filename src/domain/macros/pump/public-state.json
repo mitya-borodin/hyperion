@@ -5,7 +5,7 @@
     "PumpMacrosPublicState": {
       "type": "object",
       "additionalProperties": false,
-      "description": "! STATE"
+      "description": "Состояние макроса которое может изменить пользователь"
     }
   }
 }

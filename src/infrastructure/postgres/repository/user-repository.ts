@@ -6,12 +6,7 @@ import omit from 'lodash.omit';
 import { User, UserStatus } from '../../../domain/user';
 import { ErrorType } from '../../../helpers/error-type';
 import { FindParameters, FindResult } from '../../../helpers/find-types';
-import {
-  CreateUserParameters,
-  IUserRepository,
-  UpdateUserParameters,
-  UserOutput,
-} from '../../../ports/user-repository';
+import { CreateUserParameters, UserPort, UpdateUserParameters, UserOutput } from '../../../ports/user-port';
 import { Config } from '../../config';
 import { toDomainUser } from '../../mappers/user-mapper';
 
@@ -22,7 +17,7 @@ export type UserRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class UserRepository implements IUserRepository {
+export class UserRepository implements UserPort {
   private config: Config;
   private client: PrismaClient;
 

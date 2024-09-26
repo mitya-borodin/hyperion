@@ -26,9 +26,9 @@ import { JwtPayload } from '../../../domain/user';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../../helpers/error-type';
 import { Config } from '../../../infrastructure/config';
 import { emitWirenboardMessage } from '../../../infrastructure/external-resource-adapters/wirenboard/emit-wb-message';
-import { IHyperionDeviceRepository } from '../../../ports/hyperion-device-repository';
-import { IRefreshSessionRepository } from '../../../ports/refresh-session-repository';
-import { IUserRepository } from '../../../ports/user-repository';
+import { HyperionDevicePort } from '../../../ports/hyperion-device-port';
+import { RefreshSessionPort } from '../../../ports/refresh-session-port';
+import { UserPort } from '../../../ports/user-port';
 
 import { emitGqlDeviceSubscriptionEvent } from './helpers/emit-gql-device-subscription-event';
 import { emitGqlMacrosSubscriptionEvent } from './helpers/emit-gql-macros-subscription-event';
@@ -45,9 +45,9 @@ export type GetResolvers = {
   fastify: FastifyInstance;
   config: Config;
   eventBus: EventEmitter;
-  userRepository: IUserRepository;
-  refreshSessionRepository: IRefreshSessionRepository;
-  hyperionDeviceRepository: IHyperionDeviceRepository;
+  userRepository: UserPort;
+  refreshSessionRepository: RefreshSessionPort;
+  hyperionDeviceRepository: HyperionDevicePort;
   macrosEngine: MacrosEngine;
 };
 

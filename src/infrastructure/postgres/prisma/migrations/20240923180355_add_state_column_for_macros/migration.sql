@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Macros" ADD COLUMN     "state" JSONB NOT NULL DEFAULT '{}',
+ALTER COLUMN "name" SET DEFAULT '',
+ALTER COLUMN "description" SET DEFAULT '',
+ALTER COLUMN "type" SET DEFAULT '',
+ALTER COLUMN "labels" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "settings" SET DEFAULT '{}';

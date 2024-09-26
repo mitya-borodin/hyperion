@@ -13,7 +13,7 @@ export type UpdateUserParameters = { id: string } & Partial<
 export type UserOutput = Omit<User, 'hash' | 'salt'>;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface IUserRepository {
+export interface UserPort {
   get(id: string): Promise<Error | User>;
 
   getByEmail(email: string): Promise<Error | User | null>;

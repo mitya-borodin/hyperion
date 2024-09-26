@@ -223,6 +223,7 @@ export class RecirculationMacros extends Macros<
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.RECIRCULATION,

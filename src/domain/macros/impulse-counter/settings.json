@@ -8,19 +8,26 @@
         "devices": {
           "type": "object",
           "properties": {
-            "deviceId": {
-              "type": "string"
-            },
-            "controlId": {
-              "type": "string"
-            },
-            "controlType": {
-              "type": "string",
-              "const": "switch",
-              "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+            "counter": {
+              "type": "object",
+              "properties": {
+                "deviceId": {
+                  "type": "string"
+                },
+                "controlId": {
+                  "type": "string"
+                },
+                "controlType": {
+                  "type": "string",
+                  "const": "switch",
+                  "description": "Переключатели это устройства у которых явно определено значение в состоянии ON и в состоянии OFF."
+                }
+              },
+              "required": ["deviceId", "controlId", "controlType"],
+              "additionalProperties": false
             }
           },
-          "required": ["deviceId", "controlId", "controlType"],
+          "required": ["counter"],
           "additionalProperties": false,
           "description": "Единственное устройство, которое позволяет отслеживать переключения ключа в приборе учета."
         },

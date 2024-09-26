@@ -113,6 +113,7 @@ export class PumpMacros extends Macros<MacrosType.PUMP, PumpMacrosSettings, Pump
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.PUMP,

@@ -3,15 +3,15 @@ import debug from 'debug';
 import { RefreshSession } from '../../../domain/refresh-session';
 import { ErrorType } from '../../../helpers/error-type';
 import { verifyTwoFa as verifyTwoFaAdapter } from '../../../infrastructure/external-resource-adapters/two-fa';
-import { IRefreshSessionRepository } from '../../../ports/refresh-session-repository';
-import { IUserRepository, UserOutput } from '../../../ports/user-repository';
+import { RefreshSessionPort } from '../../../ports/refresh-session-port';
+import { UserPort, UserOutput } from '../../../ports/user-port';
 import { createRefreshSession } from '../create-refresh-session';
 
 const logger = debug('hyperion-verify-two-fa');
 
 export type VerifyTwoFa = {
-  userRepository: IUserRepository;
-  refreshSessionRepository: IRefreshSessionRepository;
+  userRepository: UserPort;
+  refreshSessionRepository: RefreshSessionPort;
   fingerprint: string;
   email: string;
   totp: string;

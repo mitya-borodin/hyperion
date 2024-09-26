@@ -16,6 +16,7 @@ import { v4 } from 'uuid';
 import { stringify } from '../../helpers/json-stringify';
 import { JsonObject } from '../../helpers/json-types';
 import { config } from '../../infrastructure/config';
+import { MacrosPort, MacrosData } from '../../ports/macros-settings-port';
 import { ControlType, toDomainControlType } from '../control-type';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -44,8 +45,11 @@ export enum LevelDetection {
  */
 
 export type SettingsBase = { [key: string]: unknown };
+export type StateBase = JsonObject;
 
 export type MacrosParameters<SETTINGS, STATE> = {
+  readonly macrosRepository: MacrosPort;
+
   readonly eventBus: EventEmitter;
 
   readonly id?: string;
@@ -84,7 +88,7 @@ export type MacrosAccept = {
   controls: Map<string, HyperionDeviceControl>;
 };
 
-export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE extends JsonObject = JsonObject> = {
+export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE extends StateBase = StateBase> = {
   type: MacrosType;
 
   id: string;
@@ -100,13 +104,14 @@ export type MacrosEject<SETTINGS extends SettingsBase = SettingsBase, STATE exte
 export abstract class Macros<
   TYPE extends MacrosType = MacrosType,
   SETTINGS extends SettingsBase = SettingsBase,
-  STATE extends JsonObject = JsonObject,
+  STATE extends StateBase = StateBase,
 > {
   readonly version: number;
 
   /**
    * ! Общие зависимости всех макросов
    */
+  protected readonly macrosRepository: MacrosPort;
   protected readonly eventBus: EventEmitter;
 
   /**
@@ -130,7 +135,7 @@ export abstract class Macros<
   readonly type: TYPE;
   readonly settings: SETTINGS;
   readonly controlTypes: Map<string, ControlType>;
-  protected readonly state: STATE;
+  readonly state: STATE;
 
   /**
    * ! Внутреннее состояние макроса
@@ -142,6 +147,7 @@ export abstract class Macros<
 
   constructor({
     version,
+    macrosRepository,
     eventBus,
     id,
     name,
@@ -158,6 +164,7 @@ export abstract class Macros<
   }: MacrosParameters<SETTINGS, STATE> & PrivateMacrosParameters<TYPE>) {
     this.version = version;
 
+    this.macrosRepository = macrosRepository;
     this.eventBus = eventBus;
 
     this.previous = new Map();
@@ -195,6 +202,8 @@ export abstract class Macros<
           sensorBasedComputingThrottleMs,
         ) as () => boolean;
       }
+
+      this.saveState = throttle(this.saveState.bind(this), 500) as () => Promise<MacrosData | Error>;
     });
   }
 
@@ -283,6 +292,16 @@ export abstract class Macros<
   };
 
   abstract setState(nextStateJson: string): void;
+
+  /**
+   * Сохраняет состояние макроса в базу, не чаще чем раз в 500 мс.
+   */
+  protected saveState(): Promise<MacrosData | Error> {
+    logger('Try to save macros state 💾');
+    logger(JSON.stringify(this.state, null, 2));
+
+    return this.macrosRepository.saveState(this);
+  }
 
   accept({ previous, current, devices, controls }: MacrosAccept): void {
     this.previous = previous;

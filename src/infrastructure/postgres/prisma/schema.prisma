@@ -138,10 +138,11 @@ model History {
 
 model Macros {
   id          String   @id @default(uuid())
-  name        String
-  description String
-  type        String
-  labels      String[]
-  settings    Json
+  name        String?
+  description String?
+  type        String?
+  labels      String[] @default([])
   version     Int      @default(0)
+  settings    Json?
+  state       Json?
 }

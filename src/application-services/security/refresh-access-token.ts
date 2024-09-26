@@ -3,13 +3,13 @@ import debug from 'debug';
 import { RefreshSession } from '../../domain/refresh-session';
 import { CodeType, createCode } from '../../helpers/create-code';
 import { ErrorType } from '../../helpers/error-type';
-import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
-import { UserOutput } from '../../ports/user-repository';
+import { RefreshSessionPort } from '../../ports/refresh-session-port';
+import { UserOutput } from '../../ports/user-port';
 
 const logger = debug('hyperion-refresh-access-token');
 
 export type RefreshAccessToken = {
-  refreshSessionRepository: IRefreshSessionRepository;
+  refreshSessionRepository: RefreshSessionPort;
   fingerprint: string;
   refreshToken: string;
 };

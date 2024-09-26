@@ -2,12 +2,12 @@ import debug from 'debug';
 
 import { UserStatus } from '../../domain/user';
 import { ErrorType } from '../../helpers/error-type';
-import { IUserRepository } from '../../ports/user-repository';
+import { UserPort } from '../../ports/user-port';
 
 const logger = debug('hyperion-delete-user');
 
 export type DeleteUser = {
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   userId: string;
 };
 

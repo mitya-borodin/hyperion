@@ -13,7 +13,8 @@
         }
       },
       "required": ["leak", "valve"],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Внутренне состояние счетчика, на которое пользователь НЕ может влиять."
     },
     "ValveState": {
       "type": "string",

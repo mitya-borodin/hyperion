@@ -1,38 +1,38 @@
 import { PrismaClient } from '@prisma/client';
-import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { JsonValue } from '../../../helpers/json-types';
-import { IMacrosSettingsPort, MacrosSettings } from '../../../ports/macros-settings-port';
+import { MacrosPort, MacrosData, MacrosState } from '../../../ports/macros-settings-port';
+import { getLogger } from '../../logger';
 import { toDomainMacrosSettings } from '../../mappers/macros-settings-mapper';
 
-const logger = debug('hyperion-macros-settings-repository');
+const logger = getLogger('hyperion-macros-repository');
 
-export type MacrosSettingsRepositoryParameters = {
+export type MacrosRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class MacrosSettingsRepository implements IMacrosSettingsPort {
+export class MacrosRepository implements MacrosPort {
   private client: PrismaClient;
 
-  constructor({ client }: MacrosSettingsRepositoryParameters) {
+  constructor({ client }: MacrosRepositoryParameters) {
     this.client = client;
   }
 
-  async getAll(): Promise<MacrosSettings[]> {
+  async getAll(): Promise<MacrosData[]> {
     try {
       const prismaMacrosEject = await this.client.macros.findMany();
 
       return prismaMacrosEject.map((prismaMacrosEject) => toDomainMacrosSettings(prismaMacrosEject));
     } catch (error) {
-      logger('Failed to get all macros settings 🚨');
-      logger(JSON.stringify({ error }, null, 2));
+      logger.error('Failed to get all macros settings 🚨');
+      logger.error({ error });
 
       return [];
     }
   }
 
-  async upsert(parameters: MacrosSettings): Promise<Error | MacrosSettings> {
+  async upsert(parameters: MacrosData): Promise<Error | MacrosData> {
     try {
       const prismaMacrosSetting = await this.client.macros.upsert({
         where: {
@@ -47,6 +47,7 @@ export class MacrosSettingsRepository implements IMacrosSettingsPort {
           labels: parameters.labels,
 
           settings: parameters.settings as JsonValue,
+          state: parameters.state as JsonValue,
 
           version: parameters.version,
         },
@@ -59,6 +60,7 @@ export class MacrosSettingsRepository implements IMacrosSettingsPort {
           labels: parameters.labels,
 
           settings: parameters.settings as JsonValue,
+          state: parameters.state as JsonValue,
 
           version: parameters.version,
         },
@@ -66,14 +68,34 @@ export class MacrosSettingsRepository implements IMacrosSettingsPort {
 
       return toDomainMacrosSettings(prismaMacrosSetting);
     } catch (error) {
-      logger('Failed to upsert macros settings 🚨');
-      logger(JSON.stringify({ parameters, error }, null, 2));
+      logger.error('Failed to upsert macros settings 🚨');
+      logger.error({ parameters, error });
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }
   }
 
-  async destroy(id: string): Promise<Error | MacrosSettings> {
+  async saveState(parameters: MacrosState): Promise<Error | MacrosData> {
+    try {
+      const prismaMacrosSetting = await this.client.macros.update({
+        where: {
+          id: parameters.id,
+        },
+        data: {
+          state: parameters.state as JsonValue,
+        },
+      });
+
+      return toDomainMacrosSettings(prismaMacrosSetting);
+    } catch (error) {
+      logger.error('Failed to update macros state 🚨');
+      logger.error({ parameters, error });
+
+      return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
+    }
+  }
+
+  async destroy(id: string): Promise<Error | MacrosData> {
     try {
       const [prismaMacrosSetting] = await this.client.$transaction([
         this.client.macros.delete({
@@ -100,8 +122,8 @@ export class MacrosSettingsRepository implements IMacrosSettingsPort {
 
       return toDomainMacrosSettings(prismaMacrosSetting);
     } catch (error) {
-      logger('Failed to destroy macros settings 🚨');
-      logger(JSON.stringify({ id, error }, null, 2));
+      logger.error('Failed to destroy macros settings 🚨');
+      logger.error({ id, error });
 
       return new Error(ErrorType.UNEXPECTED_BEHAVIOR);
     }

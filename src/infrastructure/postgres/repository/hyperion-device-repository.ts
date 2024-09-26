@@ -16,11 +16,11 @@ import { stringify } from '../../../helpers/json-stringify';
 import {
   HyperionState,
   HyperionStateUpdate,
-  IHyperionDeviceRepository,
+  HyperionDevicePort,
   MarkupHyperionControl,
   MarkupHyperionDevice,
   SetControlValue,
-} from '../../../ports/hyperion-device-repository';
+} from '../../../ports/hyperion-device-port';
 import { fromHardwareToHyperionDevice } from '../../mappers/from-hardware-to-hyperion-device-mapper';
 import { fromHyperionToPrisma } from '../../mappers/from-hyperion-to-prisma-mapper';
 import { fromPrismaToHardwareDevice } from '../../mappers/from-prisma-to-hardware-device-mapper';
@@ -32,7 +32,7 @@ type HyperionDeviceRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class HyperionDeviceRepository implements IHyperionDeviceRepository {
+export class HyperionDeviceRepository implements HyperionDevicePort {
   private client: PrismaClient;
 
   private history = new Map<string, History[]>();

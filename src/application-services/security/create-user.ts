@@ -5,13 +5,13 @@ import { createPasswordHash } from '../../helpers/create-password-hash';
 import { ErrorExplanation } from '../../helpers/custom-error';
 import { ErrorCode, ErrorMessage } from '../../helpers/error-type';
 import { Config } from '../../infrastructure/config';
-import { IUserRepository, UserOutput } from '../../ports/user-repository';
+import { UserPort, UserOutput } from '../../ports/user-port';
 
 const logger = debug('hyperion-create-user');
 
 export type CreateUser = {
   config: Config;
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   name: string;
   email: string;
   role: UserRole;

@@ -2,12 +2,12 @@ import debug from 'debug';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { verifyTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
-import { IUserRepository } from '../../../ports/user-repository';
+import { UserPort } from '../../../ports/user-port';
 
 const logger = debug('hyperion-confirm-two-fa');
 
 export type ConfirmTwoFa = {
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   userId: string;
   totp: string;
 };

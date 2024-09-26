@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 
 import { EventBus } from '../../domain/event-bus';
-import { HyperionStateUpdate } from '../../ports/hyperion-device-repository';
+import { HyperionStateUpdate } from '../../ports/hyperion-device-port';
 
 type EmitGqlDeviceSubscriptionEvent = {
   eventBus: EventEmitter;

@@ -3,12 +3,12 @@ import { toDataURL } from 'qrcode';
 
 import { ErrorType } from '../../../helpers/error-type';
 import { createTwoFa } from '../../../infrastructure/external-resource-adapters/two-fa';
-import { IUserRepository } from '../../../ports/user-repository';
+import { UserPort } from '../../../ports/user-port';
 
 const logger = debug('hyperion-activate-two-fa');
 
 export type ActivateTwoFa = {
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   userId: string;
 };
 

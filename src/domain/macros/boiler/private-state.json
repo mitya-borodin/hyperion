@@ -20,7 +20,7 @@
     "DeviceState": {
       "type": "string",
       "enum": ["ON", "OFF"],
-      "description": "! SETTINGS"
+      "description": "Состояние устройств."
     }
   }
 }

@@ -7,7 +7,7 @@ import { ErrorExplanation } from '../../helpers/custom-error';
 import { ErrorCode, ErrorMessage, ErrorType } from '../../helpers/error-type';
 import { Config } from '../../infrastructure/config';
 import { verifyGeetestCaptcha } from '../../infrastructure/external-resource-adapters/geetest';
-import { IUserRepository, UserOutput } from '../../ports/user-repository';
+import { UserPort, UserOutput } from '../../ports/user-port';
 
 const logger = debug('hyperion-sign-in');
 
@@ -16,7 +16,7 @@ export type SignIn = {
   email: string;
   password: string;
   captcha: CaptchaParameters;
-  userRepository: IUserRepository;
+  userRepository: UserPort;
 };
 
 export const signIn = async ({

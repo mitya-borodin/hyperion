@@ -22,7 +22,7 @@ import { settings_from_2_to_3 } from './settings-mappers/2-settings-from-2-to-3'
 import { settings_from_3_to_4 } from './settings-mappers/3-settings-from-3-to-4';
 import { settings_from_4_to_5 } from './settings-mappers/4-settings-from-4-to-5';
 import { settings_from_5_to_6 } from './settings-mappers/5-settings-from-5-to-6';
-import { settings_from_6_to_7 } from './settings-mappers/5-settings-from-6-to-7';
+import { settings_from_6_to_7 } from './settings-mappers/6-settings-from-6-to-7';
 
 const logger = getLogger('hyperion:macros:lighting');
 
@@ -384,6 +384,7 @@ export class LightingMacros extends Macros<MacrosType.LIGHTING, LightingMacrosSe
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.LIGHTING,

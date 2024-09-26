@@ -352,6 +352,7 @@ export class ImpulseCounterMacros extends Macros<
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.IMPULSE_COUNTER,
@@ -364,7 +365,7 @@ export class ImpulseCounterMacros extends Macros<
 
       settings,
 
-      state: defaultsDeep(state, { value: 0 }),
+      state: defaultsDeep(state, createDefaultState()),
 
       devices: parameters.devices,
       controls: parameters.controls,
@@ -487,6 +488,8 @@ export class ImpulseCounterMacros extends Macros<
       this.lastTwoImpulseTuple.splice(0, 1);
 
       this.computeSpeed();
+
+      this.saveState();
 
       logger.info('It was counted ✅');
       logger.debug(this.getDebugContext());

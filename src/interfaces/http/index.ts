@@ -23,9 +23,9 @@ import { MacrosEngine } from '../../domain/macros/engine';
 import { JwtPayload, UNKNOWN_USER_ID, UserRole } from '../../domain/user';
 import { Config } from '../../infrastructure/config';
 import { register } from '../../infrastructure/prometheus';
-import { IHyperionDeviceRepository } from '../../ports/hyperion-device-repository';
-import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
-import { IUserRepository } from '../../ports/user-repository';
+import { HyperionDevicePort } from '../../ports/hyperion-device-port';
+import { RefreshSessionPort } from '../../ports/refresh-session-port';
+import { UserPort } from '../../ports/user-port';
 
 import { getResolvers } from './graphql/get-resolvers';
 import { routerFastifyPlugin } from './router';
@@ -35,9 +35,9 @@ const logger = debug('hyperion-create-http-interface');
 type CreateHttpInterfaceParameters = {
   config: Config;
   eventBus: EventEmitter;
-  userRepository: IUserRepository;
-  refreshSessionRepository: IRefreshSessionRepository;
-  hyperionDeviceRepository: IHyperionDeviceRepository;
+  userRepository: UserPort;
+  refreshSessionRepository: RefreshSessionPort;
+  hyperionDeviceRepository: HyperionDevicePort;
   macrosEngine: MacrosEngine;
 };
 

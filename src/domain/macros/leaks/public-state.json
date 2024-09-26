@@ -18,7 +18,7 @@
       },
       "required": ["force", "approve"],
       "additionalProperties": false,
-      "description": "! STATE"
+      "description": "Публичное состояние счетчика, на которое пользователь может влиять."
     }
   }
 }

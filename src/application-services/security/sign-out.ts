@@ -1,12 +1,12 @@
 import debug from 'debug';
 
 import { ErrorType } from '../../helpers/error-type';
-import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
+import { RefreshSessionPort } from '../../ports/refresh-session-port';
 
 const logger = debug('hyperion-sign-out');
 
 export type SignOut = {
-  refreshSessionRepository: IRefreshSessionRepository;
+  refreshSessionRepository: RefreshSessionPort;
   refreshToken: string;
 };
 

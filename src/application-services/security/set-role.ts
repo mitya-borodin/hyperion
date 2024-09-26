@@ -1,8 +1,8 @@
 import { UserRole } from '../../domain/user';
-import { IUserRepository } from '../../ports/user-repository';
+import { UserPort } from '../../ports/user-port';
 
 export type SetRole = {
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   userId: string;
   role: UserRole;
 };

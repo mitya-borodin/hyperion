@@ -1,12 +1,12 @@
 import debug from 'debug';
 
 import { SettingType } from '../../../domain/settings';
-import { ISettingsRepository } from '../../../ports/settings-repository';
+import { SettingsPort } from '../../../ports/settings-port';
 
 const logger = debug('hyperion-settings-seed');
 
 export type SettingsSeed = {
-  settingsRepository: ISettingsRepository;
+  settingsRepository: SettingsPort;
 };
 
 export const settingsSeed = async ({ settingsRepository }: SettingsSeed) => {

@@ -16,7 +16,7 @@ import { runZigbee2mqtt } from './infrastructure/external-resource-adapters/zigb
 import { getLogger } from './infrastructure/logger';
 import { waitSeedingComplete } from './infrastructure/postgres/repository/helpers/wait-seeding-complete';
 import { HyperionDeviceRepository } from './infrastructure/postgres/repository/hyperion-device-repository';
-import { MacrosSettingsRepository } from './infrastructure/postgres/repository/macros-settings-repository';
+import { MacrosRepository } from './infrastructure/postgres/repository/macros-repository';
 import { RefreshSessionRepository } from './infrastructure/postgres/repository/refresh-session-repository';
 import { UserRepository } from './infrastructure/postgres/repository/user-repository';
 import { createHttpInterface } from './interfaces/http';
@@ -36,8 +36,8 @@ export const run = () => {
     const userRepository = new UserRepository({ config, client: prismaClient });
     const refreshSessionRepository = new RefreshSessionRepository({ client: prismaClient });
     const hyperionDeviceRepository = new HyperionDeviceRepository({ client: prismaClient });
-    const macrosSettingsRepository = new MacrosSettingsRepository({ client: prismaClient });
-    const macrosEngine = new MacrosEngine({ eventBus, hyperionDeviceRepository, macrosSettingsRepository });
+    const macrosRepository = new MacrosRepository({ client: prismaClient });
+    const macrosEngine = new MacrosEngine({ eventBus, hyperionDeviceRepository, macrosRepository });
 
     /**
      * ! RUN COLLECT HARDWARE DEVICE

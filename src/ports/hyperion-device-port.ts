@@ -54,7 +54,7 @@ export type HyperionState = {
   controls: Map<string, HyperionDeviceControl>;
 };
 
-export interface IHyperionDeviceRepository {
+export interface HyperionDevicePort {
   apply(hardwareDevice: HardwareDevice): Error | HyperionStateUpdate;
 
   getHyperionState(bypass?: boolean): Promise<HyperionState>;

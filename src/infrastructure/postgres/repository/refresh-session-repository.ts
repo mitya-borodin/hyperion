@@ -4,8 +4,8 @@ import omit from 'lodash.omit';
 
 import { RefreshSession } from '../../../domain/refresh-session';
 import { ErrorType } from '../../../helpers/error-type';
-import { CreateRefreshSession, IRefreshSessionRepository } from '../../../ports/refresh-session-repository';
-import { UserOutput } from '../../../ports/user-repository';
+import { CreateRefreshSession, RefreshSessionPort } from '../../../ports/refresh-session-port';
+import { UserOutput } from '../../../ports/user-port';
 import { toDomainUser } from '../../mappers/user-mapper';
 
 const logger = debug('hyperion-refresh-session-repository');
@@ -14,7 +14,7 @@ export type RefreshSessionRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class RefreshSessionRepository implements IRefreshSessionRepository {
+export class RefreshSessionRepository implements RefreshSessionPort {
   private client: PrismaClient;
 
   constructor({ client }: RefreshSessionRepositoryParameters) {

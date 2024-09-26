@@ -8,14 +8,14 @@ import { HardwareDevice } from '../domain/hardware-device';
 import { stringify } from '../helpers/json-stringify';
 import { emitGqlDeviceSubscriptionEvent } from '../interfaces/http/graphql/helpers/emit-gql-device-subscription-event';
 import { SubscriptionDeviceType } from '../interfaces/http/graphql/subscription';
-import { IHyperionDeviceRepository } from '../ports/hyperion-device-repository';
+import { HyperionDevicePort } from '../ports/hyperion-device-port';
 
 import { emitHyperionStateUpdate } from './helpers/emit-hyperion-state-update';
 
 const logger = debug('hyperion-run-collect-hardware-device');
 
 type RunCollectHardwareDevice = {
-  hyperionDeviceRepository: IHyperionDeviceRepository;
+  hyperionDeviceRepository: HyperionDevicePort;
   eventBus: EventEmitter;
 };
 

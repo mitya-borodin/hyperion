@@ -2,13 +2,13 @@ import debug from 'debug';
 
 import { RefreshSession } from '../../domain/refresh-session';
 import { CodeType, createCode } from '../../helpers/create-code';
-import { IRefreshSessionRepository } from '../../ports/refresh-session-repository';
-import { UserOutput } from '../../ports/user-repository';
+import { RefreshSessionPort } from '../../ports/refresh-session-port';
+import { UserOutput } from '../../ports/user-port';
 
 const logger = debug('hyperion-create-refresh-session');
 
 type CreateRefreshSessionParameters = {
-  refreshSessionRepository: IRefreshSessionRepository;
+  refreshSessionRepository: RefreshSessionPort;
   fingerprint: string;
   userId: string;
 };

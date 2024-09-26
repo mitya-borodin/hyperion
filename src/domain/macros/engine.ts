@@ -5,8 +5,8 @@ import debug from 'debug';
 
 import { ErrorType } from '../../helpers/error-type';
 import { stringify } from '../../helpers/json-stringify';
-import { HyperionStateUpdate, IHyperionDeviceRepository } from '../../ports/hyperion-device-repository';
-import { IMacrosSettingsPort } from '../../ports/macros-settings-port';
+import { HyperionStateUpdate, HyperionDevicePort } from '../../ports/hyperion-device-port';
+import { MacrosPort } from '../../ports/macros-settings-port';
 import { EventBus } from '../event-bus';
 import { HyperionDeviceControl } from '../hyperion-control';
 import { HyperionDevice } from '../hyperion-device';
@@ -39,22 +39,22 @@ type Setup = {
 
 type MacrosEngineParameters = {
   eventBus: EventEmitter;
-  hyperionDeviceRepository: IHyperionDeviceRepository;
-  macrosSettingsRepository: IMacrosSettingsPort;
+  hyperionDeviceRepository: HyperionDevicePort;
+  macrosRepository: MacrosPort;
 };
 
 export class MacrosEngine {
   private readonly eventBus: EventEmitter;
-  private readonly hyperionDeviceRepository: IHyperionDeviceRepository;
-  private readonly macrosSettingsRepository: IMacrosSettingsPort;
+  private readonly hyperionDeviceRepository: HyperionDevicePort;
+  private readonly macrosRepository: MacrosPort;
   private devices: Map<string, HyperionDevice>;
   private controls: Map<string, HyperionDeviceControl>;
   private readonly macros: Map<string, Macros>;
 
-  constructor({ eventBus, hyperionDeviceRepository, macrosSettingsRepository }: MacrosEngineParameters) {
+  constructor({ eventBus, hyperionDeviceRepository, macrosRepository }: MacrosEngineParameters) {
     this.eventBus = eventBus;
     this.hyperionDeviceRepository = hyperionDeviceRepository;
-    this.macrosSettingsRepository = macrosSettingsRepository;
+    this.macrosRepository = macrosRepository;
 
     this.devices = new Map();
     this.controls = new Map();
@@ -90,7 +90,7 @@ export class MacrosEngine {
       }),
     );
 
-    const allMacrosSettings = await this.macrosSettingsRepository.getAll();
+    const allMacrosSettings = await this.macrosRepository.getAll();
 
     for (const macrosSettings of allMacrosSettings) {
       const macros = await this.setup({
@@ -108,10 +108,9 @@ export class MacrosEngine {
         settings: JSON.stringify(macrosSettings.settings),
 
         /**
-         * Состояние не хранится в БД, каждый макрос знает своё дефолтное
-         * публичное состояние.
+         * Состояние хранится в БД, но если его там нет, то макрос знает свое дефолтное состояние.
          */
-        state: undefined,
+        state: JSON.stringify(macrosSettings.state),
 
         version: macrosSettings.version,
       });
@@ -163,6 +162,7 @@ export class MacrosEngine {
 
       if (Macros) {
         macros = new Macros({
+          macrosRepository: this.macrosRepository,
           eventBus: this.eventBus,
 
           id,
@@ -190,10 +190,10 @@ export class MacrosEngine {
       }
 
       if (macros) {
-        const result = await this.macrosSettingsRepository.upsert(macros);
+        const macrosData = await this.macrosRepository.upsert(macros);
 
-        if (result instanceof Error) {
-          return result;
+        if (macrosData instanceof Error) {
+          return macrosData;
         }
 
         this.macros.set(macros.id, macros);
@@ -236,10 +236,10 @@ export class MacrosEngine {
     const macros = this.macros.get(id);
 
     if (macros) {
-      const macrosSettings = await this.macrosSettingsRepository.destroy(id);
+      const macrosData = await this.macrosRepository.destroy(id);
 
-      if (macrosSettings instanceof Error) {
-        return macrosSettings;
+      if (macrosData instanceof Error) {
+        return macrosData;
       }
 
       this.macros.delete(id);

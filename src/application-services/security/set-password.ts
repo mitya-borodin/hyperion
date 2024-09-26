@@ -1,10 +1,10 @@
 import { createPasswordHash } from '../../helpers/create-password-hash';
 import { Config } from '../../infrastructure/config';
-import { IUserRepository } from '../../ports/user-repository';
+import { UserPort } from '../../ports/user-port';
 
 export type SetPassword = {
   config: Config;
-  userRepository: IUserRepository;
+  userRepository: UserPort;
   userId: string;
   password: string;
 };

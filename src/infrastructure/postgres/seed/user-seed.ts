@@ -5,13 +5,13 @@ import debug from 'debug';
 
 import { UserRole } from '../../../domain/user';
 import { createPasswordHash } from '../../../helpers/create-password-hash';
-import { IUserRepository } from '../../../ports/user-repository';
+import { UserPort } from '../../../ports/user-port';
 import { Config } from '../../config';
 
 export type UserSeed = {
   config: Config;
 
-  userRepository: IUserRepository;
+  userRepository: UserPort;
 };
 
 export const userSeed = async ({ config, userRepository }: UserSeed) => {

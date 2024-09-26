@@ -14,7 +14,7 @@ import { HyperionDevice } from '../../../domain/hyperion-device';
 import { ErrorType } from '../../../helpers/error-type';
 import { isJson } from '../../../helpers/is-json';
 import { stringify } from '../../../helpers/json-stringify';
-import { HyperionStateUpdate, IHyperionDeviceRepository } from '../../../ports/hyperion-device-repository';
+import { HyperionStateUpdate, HyperionDevicePort } from '../../../ports/hyperion-device-port';
 import { Config } from '../../config';
 import { getMqttClient } from '../get-mqtt-client';
 import { MqttMessage, publishMqttMessage } from '../publish-mqtt-message';
@@ -27,7 +27,7 @@ type RunZigbee2mqtt = {
   signal: AbortSignal;
   config: Config;
   eventBus: EventEmitter;
-  hyperionDeviceRepository: IHyperionDeviceRepository;
+  hyperionDeviceRepository: HyperionDevicePort;
 };
 
 type RunZigbee2mqttResult = {
@@ -43,10 +43,7 @@ const accept = (hyperionState: HyperionStateUpdate) => {
   hyperionDevices = hyperionState.devices;
 };
 
-const fillIeeeAddressByFriendlyName = async (
-  signal: AbortSignal,
-  hyperionDeviceRepository: IHyperionDeviceRepository,
-) => {
+const fillIeeeAddressByFriendlyName = async (signal: AbortSignal, hyperionDeviceRepository: HyperionDevicePort) => {
   return await retry(
     signal,
     async (signal: AbortSignal, attempt: number) => {

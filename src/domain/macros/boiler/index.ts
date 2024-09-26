@@ -141,6 +141,7 @@ export class BoilerMacros extends Macros<MacrosType.BOILER, BoilerMacrosSettings
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.BOILER,

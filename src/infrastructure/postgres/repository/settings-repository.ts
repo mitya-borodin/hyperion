@@ -3,7 +3,7 @@ import debug from 'debug';
 
 import { Settings, SettingType } from '../../../domain/settings';
 import { ErrorType } from '../../../helpers/error-type';
-import { CreateSettingParameters, ISettingsRepository } from '../../../ports/settings-repository';
+import { CreateSettingParameters, SettingsPort } from '../../../ports/settings-port';
 import { toDomainSettings } from '../../mappers/settings-mapper';
 
 const logger = debug('hyperion-settings-repository');
@@ -12,7 +12,7 @@ export type SettingsRepositoryParameters = {
   client: PrismaClient;
 };
 
-export class SettingsRepository implements ISettingsRepository {
+export class SettingsRepository implements SettingsPort {
   private client: PrismaClient;
 
   constructor({ client }: SettingsRepositoryParameters) {

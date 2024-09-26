@@ -651,6 +651,7 @@ export class CurtainMacros extends Macros<MacrosType.CURTAIN, CurtainMacrosSetti
        */
       version: VERSION,
 
+      macrosRepository: parameters.macrosRepository,
       eventBus: parameters.eventBus,
 
       type: MacrosType.CURTAIN,
