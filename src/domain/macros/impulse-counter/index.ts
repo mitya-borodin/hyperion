@@ -10,8 +10,6 @@ import { MacrosType } from '../showcase';
 const logger = getLogger('hyperion:macros:impulse-counter');
 
 /**
- * TODO 1. Сделать хранение и загрузку состояния из БД для всех макросов.
- *
  * TODO 2. Рассчитать output.
  *
  * TODO 3. Опубликовать Output как контролы устройства "Импульсный счетчик",
