@@ -565,20 +565,6 @@ export class ImpulseCounterMacros extends Macros<
 
     const timeBetweenLastImpulseAndNowSec = Math.abs(currentImpulseMs - Date.now()) / 1000;
 
-    logger.info('Compute speed 🏃🏼‍♀️');
-    logger.debug({
-      type,
-      cost,
-      timeToStopSec,
-      previousImpulse,
-      previousImpulseMs,
-      currentImpulse,
-      currentImpulseMs,
-      now: Date.now(),
-      timeBetweenLastImpulseAndNowSec,
-      'timeBetweenLastImpulseAndNowSec > timeToStopSec': timeBetweenLastImpulseAndNowSec > timeToStopSec,
-    });
-
     if (timeBetweenLastImpulseAndNowSec > timeToStopSec) {
       if (this.state.speed !== 0 || this.state.hasConsumption !== false) {
         /**
@@ -589,9 +575,12 @@ export class ImpulseCounterMacros extends Macros<
         this.state.speed = 0;
         this.state.hasConsumption = false;
 
-        logger.info('STOP CONSUMPTION 🛑 🛑 🛑 🛑 🛑');
+        logger.info('The speed became zero 🛑');
+        logger.debug(this.getDebugContext({ timeBetweenLastImpulseAndNowSec }));
 
         this.saveState();
+
+        return;
       }
     } else {
       /**
@@ -599,13 +588,6 @@ export class ImpulseCounterMacros extends Macros<
        */
 
       const timeBetweenImpulsesSec = Math.abs(previousImpulseMs - currentImpulseMs) / 1000;
-
-      logger.debug({
-        previousImpulseMs,
-        currentImpulseMs,
-        timeBetweenImpulsesSec,
-        timeToStopSec,
-      });
 
       if (timeBetweenImpulsesSec > timeToStopSec) {
         /**
@@ -616,6 +598,11 @@ export class ImpulseCounterMacros extends Macros<
 
         this.state.speed = 0;
         this.state.hasConsumption = false;
+
+        logger.info('The speed became zero 🛑');
+        logger.debug(this.getDebugContext({ timeBetweenLastImpulseAndNowSec, timeBetweenImpulsesSec }));
+
+        this.saveState();
 
         return;
       }
@@ -641,7 +628,8 @@ export class ImpulseCounterMacros extends Macros<
       this.state.speed = cost / timeBetweenImpulsesSec;
       this.state.hasConsumption = true;
 
-      logger.info('DURING CONSUMPTION ✅ ✅ ✅ ✅ ✅ ✅');
+      logger.info('The speed became more then zero ✅');
+      logger.debug(this.getDebugContext({ timeBetweenLastImpulseAndNowSec, timeBetweenImpulsesSec }));
     }
   };
 }
