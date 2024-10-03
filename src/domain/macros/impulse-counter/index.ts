@@ -579,7 +579,10 @@ export class ImpulseCounterMacros extends Macros<
       'timeBetweenLastImpulseAndNowSec > timeToStopSec': timeBetweenLastImpulseAndNowSec > timeToStopSec,
     });
 
-    if (timeBetweenLastImpulseAndNowSec > timeToStopSec) {
+    if (
+      timeBetweenLastImpulseAndNowSec > timeToStopSec &&
+      (this.state.speed !== 0 || this.state.hasConsumption !== false)
+    ) {
       /**
        * Если время между последним импульсом и текущим моментом больше timeToStopSec
        *  расчет скорости останавливается, и считается, что расход закончился.
@@ -587,6 +590,10 @@ export class ImpulseCounterMacros extends Macros<
 
       this.state.speed = 0;
       this.state.hasConsumption = false;
+
+      logger.info('STOP CONSUMPTION 🛑 🛑 🛑 🛑 🛑');
+
+      this.saveState();
     } else {
       /**
        * В этом случае, считаем, что расход имеется, и можно определять скорость.
@@ -634,6 +641,8 @@ export class ImpulseCounterMacros extends Macros<
        */
       this.state.speed = cost / timeBetweenImpulsesSec;
       this.state.hasConsumption = true;
+
+      logger.info('DURING CONSUMPTION ✅ ✅ ✅ ✅ ✅ ✅');
     }
   };
 }
