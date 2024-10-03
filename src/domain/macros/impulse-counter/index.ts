@@ -576,6 +576,7 @@ export class ImpulseCounterMacros extends Macros<
       currentImpulseMs,
       now: Date.now(),
       timeBetweenLastImpulseAndNowSec,
+      'timeBetweenLastImpulseAndNowSec > timeToStopSec': timeBetweenLastImpulseAndNowSec > timeToStopSec,
     });
 
     if (timeBetweenLastImpulseAndNowSec > timeToStopSec) {
