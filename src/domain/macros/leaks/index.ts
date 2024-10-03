@@ -378,8 +378,8 @@ export class LeaksMacros extends Macros<MacrosType.LEAKS, LeaksMacrosSettings, L
 
     this.timer = {
       controlProgressDuration: setInterval(this.controlProgressDuration, 1000),
-      executionTimer: setInterval(this.runExecution, 10 * 1000),
       requestValuesTimer: setInterval(this.requestValues, 60 * 1000),
+      executionTimer: setInterval(this.runExecution, 10 * 1000),
     };
 
     this.checkPhaseCombination();

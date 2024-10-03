@@ -565,6 +565,19 @@ export class ImpulseCounterMacros extends Macros<
 
     const timeBetweenLastImpulseAndNowSec = Math.abs(currentImpulseMs - Date.now()) / 1000;
 
+    logger.info('Compute speed 🏃🏼‍♀️');
+    logger.debug({
+      type,
+      cost,
+      timeToStopSec,
+      previousImpulse,
+      previousImpulseMs,
+      currentImpulse,
+      currentImpulseMs,
+      now: Date.now(),
+      timeBetweenLastImpulseAndNowSec,
+    });
+
     if (timeBetweenLastImpulseAndNowSec > timeToStopSec) {
       /**
        * Если время между последним импульсом и текущим моментом больше timeToStopSec
@@ -579,6 +592,13 @@ export class ImpulseCounterMacros extends Macros<
        */
 
       const timeBetweenImpulsesSec = Math.abs(previousImpulseMs - currentImpulseMs) / 1000;
+
+      logger.debug({
+        previousImpulseMs,
+        currentImpulseMs,
+        timeBetweenImpulsesSec,
+        timeToStopSec,
+      });
 
       if (timeBetweenImpulsesSec > timeToStopSec) {
         /**
