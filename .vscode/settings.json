@@ -36,7 +36,7 @@
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
   },
   "[dockerfile]": {
     "editor.defaultFormatter": "ms-azuretools.vscode-docker"
@@ -188,6 +188,7 @@
     "мото",
     "Моточасов",
     "Моточасы",
+    "обраткой",
     "однозонной",
     "пилетного",
     "Пресет",
